@@ -406,17 +406,95 @@ function initScrollAnimations() {
   });
 }
 
+// ===== FEATURED SLIDER =====
+function initFeaturedSlider() {
+  const slider = document.getElementById('featured-slider');
+  const prevBtn = document.getElementById('featured-prev');
+  const nextBtn = document.getElementById('featured-next');
+  const dotsContainer = document.getElementById('featured-dots');
+  
+  if (!slider || !prevBtn || !nextBtn) return;
+  
+  const cards = slider.querySelectorAll('.featured-card');
+  let currentIndex = 0;
+  
+  // Create dots
+  cards.forEach((_, i) => {
+    const dot = document.createElement('button');
+    dot.classList.add('slider-dot');
+    if (i === 0) dot.classList.add('active');
+    dot.addEventListener('click', () => goToSlide(i));
+    dotsContainer.appendChild(dot);
+  });
+  
+  function updateSlider() {
+    cards.forEach((card, i) => {
+      card.classList.toggle('active', i === currentIndex);
+    });
+    const dots = dotsContainer.querySelectorAll('.slider-dot');
+    dots.forEach((dot, i) => {
+      dot.classList.toggle('active', i === currentIndex);
+    });
+  }
+  
+  function goToSlide(index) {
+    currentIndex = index;
+    updateSlider();
+  }
+  
+  function nextSlide() {
+    currentIndex = (currentIndex + 1) % cards.length;
+    updateSlider();
+  }
+  
+  function prevSlide() {
+    currentIndex = (currentIndex - 1 + cards.length) % cards.length;
+    updateSlider();
+  }
+  
+  prevBtn.addEventListener('click', prevSlide);
+  nextBtn.addEventListener('click', nextSlide);
+  
+  // Initialize first slide
+  updateSlider();
+}
+
+// ===== SCROLL SLIDER =====
+function initScrollSlider(gridId, prevId, nextId) {
+  const grid = document.getElementById(gridId);
+  const prevBtn = document.getElementById(prevId);
+  const nextBtn = document.getElementById(nextId);
+  
+  if (!grid || !prevBtn || !nextBtn) return;
+  
+  const scrollAmount = 340;
+  
+  prevBtn.addEventListener('click', () => {
+    grid.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+  });
+  
+  nextBtn.addEventListener('click', () => {
+    grid.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  });
+}
+
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
   renderDomesticTours();
   renderInternationalTours();
   renderCars('cars-grid');
-  renderPosts('stories-grid', 3);
+  renderPosts('stories-grid', 6);
   initTourTabs();
   fetchWeather();
   initModal();
   initContactForm();
+  
+  // Initialize sliders
+  initFeaturedSlider();
+  initScrollSlider('domestic-tours-grid', 'domestic-prev', 'domestic-next');
+  initScrollSlider('international-tours-grid', 'international-prev', 'international-next');
+  initScrollSlider('cars-grid', 'cars-prev', 'cars-next');
 
   // Cars page full list
   const carsStack = document.getElementById('cars-stack');

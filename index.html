@@ -70,23 +70,68 @@
       <h2>This Season's Best Deal</h2>
       <div class="divider"></div>
     </div>
-    <div class="featured-card">
-      <div class="featured-img">
-        <img src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=900&q=80" alt="School Excursions" loading="lazy">
-        <span class="featured-badge">🎒 Best Offer</span>
-      </div>
-      <div class="featured-body">
-        <div class="tag">Education & Groups</div>
-        <h3>School Excursions – Best Offer This Season</h3>
-        <p>Give students a journey they'll never forget. Our educational tours combine history, culture, and adventure across Georgia's most iconic sites — fully supervised, budget-friendly and packed with learning moments.</p>
-        <div class="featured-meta">
-          <span><span class="icon">📅</span> Flexible Dates</span>
-          <span><span class="icon">👥</span> 10–50 Students</span>
-          <span><span class="icon">✅</span> All Inclusive</span>
+    <div class="featured-slider-wrapper">
+      <button class="slider-arrow slider-arrow-left" id="featured-prev" aria-label="Previous">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+      <div class="featured-slider" id="featured-slider">
+        <div class="featured-card" data-featured="0">
+          <div class="featured-img">
+            <img src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=900&q=80" alt="School Excursions" loading="lazy">
+            <span class="featured-badge">Best Offer</span>
+          </div>
+          <div class="featured-body">
+            <div class="tag">Education & Groups</div>
+            <h3>School Excursions – Best Offer This Season</h3>
+            <p>Give students a journey they'll never forget. Our educational tours combine history, culture, and adventure across Georgia's most iconic sites — fully supervised, budget-friendly and packed with learning moments.</p>
+            <div class="featured-meta">
+              <span><span class="icon">📅</span> Flexible Dates</span>
+              <span><span class="icon">👥</span> 10–50 Students</span>
+              <span><span class="icon">✅</span> All Inclusive</span>
+            </div>
+            <a href="tours.html" class="btn-primary">Learn More →</a>
+          </div>
         </div>
-        <a href="tours.html" class="btn-primary">Learn More →</a>
+        <div class="featured-card" data-featured="1">
+          <div class="featured-img">
+            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=80" alt="Mountain Adventure" loading="lazy">
+            <span class="featured-badge">Popular</span>
+          </div>
+          <div class="featured-body">
+            <div class="tag">Adventure</div>
+            <h3>Kazbegi Mountain Expedition</h3>
+            <p>Experience the breathtaking Caucasus mountains with our expert guides. Hike to the iconic Gergeti Trinity Church and witness stunning panoramic views of Mount Kazbek.</p>
+            <div class="featured-meta">
+              <span><span class="icon">📅</span> Year Round</span>
+              <span><span class="icon">👥</span> 2–12 People</span>
+              <span><span class="icon">✅</span> Guide Included</span>
+            </div>
+            <a href="tours.html" class="btn-primary">Learn More →</a>
+          </div>
+        </div>
+        <div class="featured-card" data-featured="2">
+          <div class="featured-img">
+            <img src="https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=900&q=80" alt="Wine Tour" loading="lazy">
+            <span class="featured-badge">New</span>
+          </div>
+          <div class="featured-body">
+            <div class="tag">Wine & Culture</div>
+            <h3>Kakheti Wine Heritage Tour</h3>
+            <p>Discover the birthplace of wine with tastings at family wineries, traditional qvevri cellars, and delicious Georgian cuisine. Perfect for wine lovers and culture enthusiasts.</p>
+            <div class="featured-meta">
+              <span><span class="icon">📅</span> Apr – Oct</span>
+              <span><span class="icon">👥</span> 4–15 People</span>
+              <span><span class="icon">✅</span> Meals Included</span>
+            </div>
+            <a href="tours.html" class="btn-primary">Learn More →</a>
+          </div>
+        </div>
       </div>
+      <button class="slider-arrow slider-arrow-right" id="featured-next" aria-label="Next">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
     </div>
+    <div class="slider-dots" id="featured-dots"></div>
   </div>
 </section>
 
@@ -94,14 +139,22 @@
 <section class="domestic-tours-section">
   <div class="container">
     <div class="section-header">
-      <span class="section-tag">🏔️ Local Adventures</span>
+      <span class="section-tag">Local Adventures</span>
       <h2>Domestic Tours</h2>
       <p>Perfect for solo travelers and short stays. Explore Georgia's wonders in a day with our expert guides.</p>
       <div class="divider"></div>
     </div>
-    <div class="domestic-tours-grid" id="domestic-tours-grid"></div>
+    <div class="tours-slider-wrapper">
+      <button class="slider-arrow slider-arrow-left" id="domestic-prev" aria-label="Previous">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+      <div class="domestic-tours-grid" id="domestic-tours-grid"></div>
+      <button class="slider-arrow slider-arrow-right" id="domestic-next" aria-label="Next">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+    </div>
     <div style="text-align:center;margin-top:2.5rem;">
-      <a href="domestic-tours.html" class="btn-outline">View All Domestic Tours →</a>
+      <a href="domestic-tours.html" class="btn-view-all">View All Domestic Tours <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
     </div>
   </div>
 </section>
@@ -110,14 +163,22 @@
 <section class="international-tours-section">
   <div class="container">
     <div class="section-header">
-      <span class="section-tag">✈️ Multi-Day Adventures</span>
+      <span class="section-tag">Multi-Day Adventures</span>
       <h2>International Tours</h2>
       <p>Immerse yourself in Georgia's rich culture, cuisine, and landscapes. Perfect for longer stays and immersive experiences.</p>
       <div class="divider"></div>
     </div>
-    <div class="international-tours-grid" id="international-tours-grid"></div>
+    <div class="tours-slider-wrapper">
+      <button class="slider-arrow slider-arrow-left" id="international-prev" aria-label="Previous">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+      <div class="international-tours-grid" id="international-tours-grid"></div>
+      <button class="slider-arrow slider-arrow-right" id="international-next" aria-label="Next">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+    </div>
     <div style="text-align:center;margin-top:2.5rem;">
-      <a href="international-tours.html" class="btn-outline">View All International Tours →</a>
+      <a href="international-tours.html" class="btn-view-all">View All International Tours <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
     </div>
   </div>
 </section>
@@ -131,7 +192,15 @@
       <p>Comfortable, reliable vehicles for every type of trip — from mountain roads to city transfers.</p>
       <div class="divider"></div>
     </div>
-    <div class="cars-grid" id="cars-grid"></div>
+    <div class="cars-slider-wrapper">
+      <button class="slider-arrow slider-arrow-left slider-arrow-dark" id="cars-prev" aria-label="Previous">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+      <div class="cars-grid" id="cars-grid"></div>
+      <button class="slider-arrow slider-arrow-right slider-arrow-dark" id="cars-next" aria-label="Next">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+    </div>
   </div>
 </section>
 
