@@ -31,29 +31,78 @@ const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 const facebookProvider = new FacebookAuthProvider();
 
+// Track if user is logged in
+let isLoggedIn = false;
+
 // Update navbar with user info
 function updateNavbar(user) {
   const userBtn = document.getElementById('nav-user-btn');
+  const userDropdown = document.getElementById('nav-user-dropdown');
   const logoutLink = document.querySelector('.user-logout');
+  const dropdownMenu = document.querySelector('.user-dropdown-menu');
   
   if (!userBtn) return;
   
   if (user) {
+    isLoggedIn = true;
     const displayName = user.displayName || user.email.split('@')[0];
     userBtn.textContent = displayName;
     userBtn.classList.add('logged-in');
     
+    // Enable dropdown functionality when logged in
+    if (dropdownMenu) {
+      dropdownMenu.style.display = '';
+    }
+    
     // Add logout functionality
     if (logoutLink) {
-      logoutLink.addEventListener('click', (e) => {
+      logoutLink.onclick = (e) => {
         e.preventDefault();
         logOut();
-      });
+      };
     }
   } else {
+    isLoggedIn = false;
     userBtn.textContent = 'Login';
     userBtn.classList.remove('logged-in');
+    
+    // Hide dropdown menu when not logged in
+    if (dropdownMenu) {
+      dropdownMenu.style.display = 'none';
+    }
   }
+}
+
+// Handle navbar button click
+function setupNavbarClick() {
+  const userBtn = document.getElementById('nav-user-btn');
+  const dropdownMenu = document.querySelector('.user-dropdown-menu');
+  
+  if (!userBtn) return;
+  
+  userBtn.addEventListener('click', (e) => {
+    if (!isLoggedIn) {
+      // Not logged in - redirect to login page
+      e.preventDefault();
+      window.location.href = 'login.html';
+    } else {
+      // Logged in - toggle dropdown
+      e.preventDefault();
+      if (dropdownMenu) {
+        const isVisible = dropdownMenu.style.opacity === '1';
+        dropdownMenu.style.opacity = isVisible ? '0' : '1';
+        dropdownMenu.style.visibility = isVisible ? 'hidden' : 'visible';
+      }
+    }
+  });
+  
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (dropdownMenu && !e.target.closest('.nav-user-dropdown')) {
+      dropdownMenu.style.opacity = '0';
+      dropdownMenu.style.visibility = 'hidden';
+    }
+  });
 }
 
 // Listen for auth state changes on all pages
@@ -65,6 +114,13 @@ onAuthStateChanged(auth, (user) => {
     updateLoginPageUI(user);
   }
 });
+
+// Setup navbar click after DOM loads
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupNavbarClick);
+} else {
+  setupNavbarClick();
+}
 
 // Update login page UI
 function updateLoginPageUI(user) {
@@ -87,6 +143,15 @@ function updateLoginPageUI(user) {
   } else {
     loginForm.classList.remove('hidden');
     userProfile.classList.remove('active');
+  }
+}
+
+// Redirect to home page after login
+function redirectAfterLogin() {
+  if (window.location.pathname.includes('login.html')) {
+    setTimeout(() => {
+      window.location.href = 'index.html';
+    }, 1000);
   }
 }
 
@@ -116,6 +181,8 @@ function showSuccess(message) {
 async function signInWithGoogle() {
   try {
     const result = await signInWithPopup(auth, googleProvider);
+    showSuccess('Welcome! Redirecting...');
+    redirectAfterLogin();
     return result.user;
   } catch (error) {
     console.error('Google sign in error:', error.code, error.message);
@@ -138,6 +205,8 @@ async function signInWithGoogle() {
 async function signInWithFacebook() {
   try {
     const result = await signInWithPopup(auth, facebookProvider);
+    showSuccess('Welcome! Redirecting...');
+    redirectAfterLogin();
     return result.user;
   } catch (error) {
     console.error('Facebook sign in error:', error);
@@ -166,7 +235,8 @@ async function signUpWithEmail(email, password, displayName) {
       displayName: displayName
     });
     
-    showSuccess('Account created successfully!');
+    showSuccess('Account created! Redirecting...');
+    redirectAfterLogin();
     return result.user;
   } catch (error) {
     console.error('Email sign up error:', error);
@@ -189,6 +259,8 @@ async function signUpWithEmail(email, password, displayName) {
 async function signInWithEmail(email, password) {
   try {
     const result = await signInWithEmailAndPassword(auth, email, password);
+    showSuccess('Welcome back! Redirecting...');
+    redirectAfterLogin();
     return result.user;
   } catch (error) {
     console.error('Email sign in error:', error);
@@ -213,6 +285,7 @@ async function signInWithEmail(email, password) {
 async function logOut() {
   try {
     await signOut(auth);
+    window.location.href = 'index.html';
   } catch (error) {
     console.error('Sign out error:', error);
     showError('Failed to sign out. Please try again.');

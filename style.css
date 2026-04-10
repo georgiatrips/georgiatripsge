@@ -143,6 +143,10 @@ ul { list-style: none; }
   right: 0; left: auto;
 }
 
+.user-dropdown-menu {
+  display: none;
+}
+
 .nav-cta.logged-in {
   background: var(--teal) !important; color: var(--white) !important;
   max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
