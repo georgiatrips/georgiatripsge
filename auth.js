@@ -25,11 +25,14 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
+console.log("[v0] Firebase Config:", firebaseConfig);
 const app = initializeApp(firebaseConfig);
+console.log("[v0] Firebase initialized successfully");
 const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 const facebookProvider = new FacebookAuthProvider();
+console.log("[v0] Auth providers initialized");
 
 // Update navbar with user info
 function updateNavbar(user) {
@@ -107,10 +110,12 @@ function showSuccess(message) {
 // Google Sign In
 async function signInWithGoogle() {
   try {
+    console.log("[v0] Starting Google Sign In...");
     const result = await signInWithPopup(auth, googleProvider);
+    console.log("[v0] Google Sign In successful:", result.user.email);
     return result.user;
   } catch (error) {
-    console.error('Google sign in error:', error);
+    console.error('[v0] Google sign in error:', error.code, error.message);
     let errorText = 'Failed to sign in with Google. Please try again.';
     
     if (error.code === 'auth/popup-closed-by-user') {
