@@ -121,6 +121,28 @@ ul { list-style: none; }
   border-radius: 30px !important;
 }
 .nav-cta:hover { background: #e6a800 !important; }
+.nav-user-dropdown {
+  position: relative;
+}
+
+.nav-user-btn {
+  max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  cursor: pointer !important; border: none; background: transparent;
+  font-family: inherit; font-size: inherit; padding: 0.5rem 1rem !important;
+}
+
+.nav-user-btn.logged-in {
+  background: var(--teal) !important; color: var(--white) !important;
+  border-radius: 30px !important; font-weight: 700 !important;
+  transition: background var(--transition) !important;
+}
+
+.nav-user-btn.logged-in:hover { background: #25b0a3 !important; }
+
+.nav-user-dropdown .dropdown-menu {
+  right: 0; left: auto;
+}
+
 .nav-cta.logged-in {
   background: var(--teal) !important; color: var(--white) !important;
   max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;

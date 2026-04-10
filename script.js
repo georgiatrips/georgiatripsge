@@ -144,9 +144,9 @@ function initNavbar() {
   }
 
   // Dropdown menu functionality
-  const dropdowns = document.querySelectorAll('.nav-dropdown');
+  const dropdowns = document.querySelectorAll('.nav-dropdown, .nav-user-dropdown');
   dropdowns.forEach(dropdown => {
-    const btn = dropdown.querySelector('.nav-dropdown-btn');
+    const btn = dropdown.querySelector('.nav-dropdown-btn, .nav-user-btn');
     const menu = dropdown.querySelector('.dropdown-menu');
     
     if (btn) {

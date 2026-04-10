@@ -25,29 +25,34 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-console.log("[v0] Firebase Config:", firebaseConfig);
 const app = initializeApp(firebaseConfig);
-console.log("[v0] Firebase initialized successfully");
 const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 const facebookProvider = new FacebookAuthProvider();
-console.log("[v0] Auth providers initialized");
 
 // Update navbar with user info
 function updateNavbar(user) {
-  const navCta = document.querySelector('.nav-cta');
-  if (!navCta) return;
+  const userBtn = document.getElementById('nav-user-btn');
+  const logoutLink = document.querySelector('.user-logout');
+  
+  if (!userBtn) return;
   
   if (user) {
     const displayName = user.displayName || user.email.split('@')[0];
-    navCta.textContent = displayName;
-    navCta.href = 'login.html';
-    navCta.classList.add('logged-in');
+    userBtn.textContent = displayName;
+    userBtn.classList.add('logged-in');
+    
+    // Add logout functionality
+    if (logoutLink) {
+      logoutLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        logOut();
+      });
+    }
   } else {
-    navCta.textContent = 'Login';
-    navCta.href = 'login.html';
-    navCta.classList.remove('logged-in');
+    userBtn.textContent = 'Login';
+    userBtn.classList.remove('logged-in');
   }
 }
 
@@ -110,12 +115,10 @@ function showSuccess(message) {
 // Google Sign In
 async function signInWithGoogle() {
   try {
-    console.log("[v0] Starting Google Sign In...");
     const result = await signInWithPopup(auth, googleProvider);
-    console.log("[v0] Google Sign In successful:", result.user.email);
     return result.user;
   } catch (error) {
-    console.error('[v0] Google sign in error:', error.code, error.message);
+    console.error('Google sign in error:', error.code, error.message);
     let errorText = 'Failed to sign in with Google. Please try again.';
     
     if (error.code === 'auth/popup-closed-by-user') {
