@@ -1,0 +1,223 @@
+// Firebase Auth Module - Handles authentication across all pages
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { 
+  getAuth, 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  FacebookAuthProvider,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
+  onAuthStateChanged, 
+  signOut 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAuLpaONrIUwnJJ3ycgzWWlSTiujotfo4U",
+  authDomain: "georgiatripsge.firebaseapp.com",
+  projectId: "georgiatripsge",
+  storageBucket: "georgiatripsge.firebasestorage.app",
+  messagingSenderId: "458133209260",
+  appId: "1:458133209260:web:884340052c037e6fcd9f09",
+  measurementId: "G-KVGPVEVHQ0"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
+const facebookProvider = new FacebookAuthProvider();
+
+// Update navbar with user info
+function updateNavbar(user) {
+  const navCta = document.querySelector('.nav-cta');
+  if (!navCta) return;
+  
+  if (user) {
+    const displayName = user.displayName || user.email.split('@')[0];
+    navCta.textContent = displayName;
+    navCta.href = 'login.html';
+    navCta.classList.add('logged-in');
+  } else {
+    navCta.textContent = 'Login';
+    navCta.href = 'login.html';
+    navCta.classList.remove('logged-in');
+  }
+}
+
+// Listen for auth state changes on all pages
+onAuthStateChanged(auth, (user) => {
+  updateNavbar(user);
+  
+  // If on login page, update the UI
+  if (window.location.pathname.includes('login.html')) {
+    updateLoginPageUI(user);
+  }
+});
+
+// Update login page UI
+function updateLoginPageUI(user) {
+  const loginForm = document.getElementById('login-form');
+  const userProfile = document.getElementById('user-profile');
+  const userAvatar = document.getElementById('user-avatar');
+  const userName = document.getElementById('user-name');
+  const userEmail = document.getElementById('user-email');
+  
+  if (!loginForm || !userProfile) return;
+  
+  if (user) {
+    loginForm.classList.add('hidden');
+    userProfile.classList.add('active');
+    if (userAvatar) {
+      userAvatar.src = user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'User') + '&background=2EC4B6&color=fff';
+    }
+    if (userName) userName.textContent = user.displayName || 'User';
+    if (userEmail) userEmail.textContent = user.email;
+  } else {
+    loginForm.classList.remove('hidden');
+    userProfile.classList.remove('active');
+  }
+}
+
+// Show error message
+function showError(message) {
+  const errorMessage = document.getElementById('error-message');
+  if (!errorMessage) return;
+  errorMessage.textContent = message;
+  errorMessage.classList.add('show');
+  setTimeout(() => {
+    errorMessage.classList.remove('show');
+  }, 5000);
+}
+
+// Show success message
+function showSuccess(message) {
+  const successMessage = document.getElementById('success-message');
+  if (!successMessage) return;
+  successMessage.textContent = message;
+  successMessage.classList.add('show');
+  setTimeout(() => {
+    successMessage.classList.remove('show');
+  }, 5000);
+}
+
+// Google Sign In
+async function signInWithGoogle() {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user;
+  } catch (error) {
+    console.error('Google sign in error:', error);
+    let errorText = 'Failed to sign in with Google. Please try again.';
+    
+    if (error.code === 'auth/popup-closed-by-user') {
+      errorText = 'Sign in was cancelled.';
+    } else if (error.code === 'auth/popup-blocked') {
+      errorText = 'Pop-up was blocked. Please allow pop-ups for this site.';
+    } else if (error.code === 'auth/network-request-failed') {
+      errorText = 'Network error. Please check your connection.';
+    }
+    
+    showError(errorText);
+    throw error;
+  }
+}
+
+// Facebook Sign In
+async function signInWithFacebook() {
+  try {
+    const result = await signInWithPopup(auth, facebookProvider);
+    return result.user;
+  } catch (error) {
+    console.error('Facebook sign in error:', error);
+    let errorText = 'Failed to sign in with Facebook. Please try again.';
+    
+    if (error.code === 'auth/popup-closed-by-user') {
+      errorText = 'Sign in was cancelled.';
+    } else if (error.code === 'auth/popup-blocked') {
+      errorText = 'Pop-up was blocked. Please allow pop-ups for this site.';
+    } else if (error.code === 'auth/account-exists-with-different-credential') {
+      errorText = 'An account already exists with the same email. Try signing in with a different method.';
+    }
+    
+    showError(errorText);
+    throw error;
+  }
+}
+
+// Email/Password Sign Up
+async function signUpWithEmail(email, password, displayName) {
+  try {
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+    
+    // Update profile with display name
+    await updateProfile(result.user, {
+      displayName: displayName
+    });
+    
+    showSuccess('Account created successfully!');
+    return result.user;
+  } catch (error) {
+    console.error('Email sign up error:', error);
+    let errorText = 'Failed to create account. Please try again.';
+    
+    if (error.code === 'auth/email-already-in-use') {
+      errorText = 'This email is already registered. Please sign in instead.';
+    } else if (error.code === 'auth/invalid-email') {
+      errorText = 'Please enter a valid email address.';
+    } else if (error.code === 'auth/weak-password') {
+      errorText = 'Password should be at least 6 characters.';
+    }
+    
+    showError(errorText);
+    throw error;
+  }
+}
+
+// Email/Password Sign In
+async function signInWithEmail(email, password) {
+  try {
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    return result.user;
+  } catch (error) {
+    console.error('Email sign in error:', error);
+    let errorText = 'Failed to sign in. Please try again.';
+    
+    if (error.code === 'auth/user-not-found') {
+      errorText = 'No account found with this email. Please sign up first.';
+    } else if (error.code === 'auth/wrong-password') {
+      errorText = 'Incorrect password. Please try again.';
+    } else if (error.code === 'auth/invalid-email') {
+      errorText = 'Please enter a valid email address.';
+    } else if (error.code === 'auth/too-many-requests') {
+      errorText = 'Too many failed attempts. Please try again later.';
+    }
+    
+    showError(errorText);
+    throw error;
+  }
+}
+
+// Sign Out
+async function logOut() {
+  try {
+    await signOut(auth);
+  } catch (error) {
+    console.error('Sign out error:', error);
+    showError('Failed to sign out. Please try again.');
+    throw error;
+  }
+}
+
+// Export functions for use in login page
+window.firebaseAuth = {
+  signInWithGoogle,
+  signInWithFacebook,
+  signUpWithEmail,
+  signInWithEmail,
+  logOut,
+  auth
+};

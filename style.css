@@ -121,6 +121,11 @@ ul { list-style: none; }
   border-radius: 30px !important;
 }
 .nav-cta:hover { background: #e6a800 !important; }
+.nav-cta.logged-in {
+  background: var(--teal) !important; color: var(--white) !important;
+  max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.nav-cta.logged-in:hover { background: #25b0a3 !important; }
 .nav-login {
   border: 1.5px solid rgba(46,196,182,0.5) !important; color: var(--teal) !important;
   font-weight: 600 !important; padding: 0.5rem 1rem !important;

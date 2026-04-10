@@ -20,8 +20,8 @@
     background: var(--white);
     border-radius: 20px;
     box-shadow: var(--card-shadow);
-    padding: 3rem;
-    max-width: 420px;
+    padding: 2.5rem;
+    max-width: 440px;
     width: 100%;
     text-align: center;
     border: 1px solid rgba(11,60,93,0.06);
@@ -46,44 +46,63 @@
     margin-bottom: 0.5rem;
     letter-spacing: -0.5px;
   }
-  .login-card p {
+  .login-card p.subtitle {
     color: var(--text-mid);
     font-size: 0.95rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     line-height: 1.6;
   }
-  .google-btn {
+  
+  /* Auth Buttons */
+  .auth-btn {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 12px;
     width: 100%;
-    padding: 0.9rem 1.5rem;
+    padding: 0.85rem 1.5rem;
     background: var(--white);
     border: 2px solid rgba(11,60,93,0.12);
     border-radius: 50px;
     font-family: 'Montserrat', sans-serif;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 600;
     color: var(--dark-blue);
     cursor: pointer;
     transition: all var(--transition);
+    margin-bottom: 0.75rem;
   }
-  .google-btn:hover {
+  .auth-btn:hover {
     border-color: var(--teal);
     background: rgba(46,196,182,0.04);
     transform: translateY(-2px);
     box-shadow: 0 4px 16px rgba(11,60,93,0.1);
   }
-  .google-btn svg {
+  .auth-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .auth-btn svg {
     width: 20px;
     height: 20px;
+    flex-shrink: 0;
   }
+  .auth-btn.facebook-btn {
+    background: #1877F2;
+    border-color: #1877F2;
+    color: white;
+  }
+  .auth-btn.facebook-btn:hover {
+    background: #166FE5;
+    border-color: #166FE5;
+  }
+  
   .divider-text {
     display: flex;
     align-items: center;
     gap: 1rem;
-    margin: 1.5rem 0;
+    margin: 1.25rem 0;
     color: var(--text-light);
     font-size: 0.85rem;
   }
@@ -94,13 +113,99 @@
     height: 1px;
     background: rgba(11,60,93,0.1);
   }
+  
+  /* Form Styles */
+  .auth-form {
+    text-align: left;
+  }
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  .form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--dark-blue);
+    margin-bottom: 0.4rem;
+  }
+  .form-group input {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 2px solid rgba(11,60,93,0.12);
+    border-radius: 12px;
+    font-size: 0.95rem;
+    transition: all var(--transition);
+    background: var(--white);
+    color: var(--dark-blue);
+  }
+  .form-group input:focus {
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgba(46,196,182,0.1);
+  }
+  .form-group input::placeholder {
+    color: var(--text-light);
+  }
+  
+  .submit-btn {
+    width: 100%;
+    padding: 0.9rem 1.5rem;
+    background: var(--dark-blue);
+    color: var(--white);
+    border: none;
+    border-radius: 50px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+    margin-top: 0.5rem;
+  }
+  .submit-btn:hover {
+    background: #0a2e47;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(11,60,93,0.2);
+  }
+  .submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+  
+  /* Tab Toggle */
+  .auth-tabs {
+    display: flex;
+    background: rgba(11,60,93,0.06);
+    border-radius: 50px;
+    padding: 4px;
+    margin-bottom: 1.5rem;
+  }
+  .auth-tab {
+    flex: 1;
+    padding: 0.65rem 1rem;
+    background: transparent;
+    border: none;
+    border-radius: 50px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-mid);
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .auth-tab.active {
+    background: var(--white);
+    color: var(--dark-blue);
+    box-shadow: 0 2px 8px rgba(11,60,93,0.1);
+  }
+  
   .login-footer {
-    margin-top: 2rem;
-    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
     border-top: 1px solid rgba(11,60,93,0.08);
   }
   .login-footer p {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--text-light);
     margin-bottom: 0;
   }
@@ -112,7 +217,7 @@
     text-decoration: underline;
   }
   
-  /* User Profile (shown when logged in) */
+  /* User Profile */
   .user-profile {
     display: none;
   }
@@ -182,16 +287,29 @@
     letter-spacing: 0.5px;
   }
   
-  .error-message {
-    background: rgba(220, 53, 69, 0.1);
-    color: #dc3545;
+  .error-message, .success-message {
     padding: 0.75rem 1rem;
     border-radius: 8px;
     font-size: 0.85rem;
     margin-bottom: 1rem;
     display: none;
   }
-  .error-message.show {
+  .error-message {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+  }
+  .success-message {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+  }
+  .error-message.show, .success-message.show {
+    display: block;
+  }
+  
+  .auth-panel {
+    display: none;
+  }
+  .auth-panel.active {
     display: block;
   }
 </style>
@@ -230,20 +348,91 @@
       <div class="logo-icon">
         <img src="logo.png" alt="Georgia Trips">
       </div>
-      <h1>Welcome Back</h1>
-      <p>Sign in to your account to manage bookings, save favorite tours and access exclusive deals.</p>
+      <h1>Welcome</h1>
+      <p class="subtitle">Sign in or create an account to manage bookings and access exclusive deals.</p>
       
       <div class="error-message" id="error-message"></div>
+      <div class="success-message" id="success-message"></div>
       
-      <button class="google-btn" id="google-signin-btn">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-        </svg>
-        Continue with Google
-      </button>
+      <!-- Auth Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="signin">Sign In</button>
+        <button class="auth-tab" data-tab="signup">Sign Up</button>
+      </div>
+      
+      <!-- Sign In Panel -->
+      <div class="auth-panel active" id="signin-panel">
+        <!-- Social Login Buttons -->
+        <button class="auth-btn" id="google-signin-btn">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Continue with Google
+        </button>
+        
+        <button class="auth-btn facebook-btn" id="facebook-signin-btn">
+          <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+          </svg>
+          Continue with Facebook
+        </button>
+        
+        <div class="divider-text">or sign in with email</div>
+        
+        <form class="auth-form" id="email-signin-form">
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="signin-email" placeholder="your@email.com" required>
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="signin-password" placeholder="Enter your password" required>
+          </div>
+          <button type="submit" class="submit-btn">Sign In</button>
+        </form>
+      </div>
+      
+      <!-- Sign Up Panel -->
+      <div class="auth-panel" id="signup-panel">
+        <!-- Social Login Buttons -->
+        <button class="auth-btn" id="google-signup-btn">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Sign up with Google
+        </button>
+        
+        <button class="auth-btn facebook-btn" id="facebook-signup-btn">
+          <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+          </svg>
+          Sign up with Facebook
+        </button>
+        
+        <div class="divider-text">or create account with email</div>
+        
+        <form class="auth-form" id="email-signup-form">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="signup-name" placeholder="Your name" required>
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="signup-email" placeholder="your@email.com" required>
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="signup-password" placeholder="At least 6 characters" required minlength="6">
+          </div>
+          <button type="submit" class="submit-btn">Create Account</button>
+        </form>
+      </div>
       
       <div class="login-footer">
         <p>By signing in, you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a></p>
@@ -256,9 +445,7 @@
       <img src="" alt="Profile" class="user-avatar" id="user-avatar">
       <div class="user-name" id="user-name"></div>
       <div class="user-email" id="user-email"></div>
-      <button class="logout-btn" id="logout-btn">
-        Sign Out
-      </button>
+      <button class="logout-btn" id="logout-btn">Sign Out</button>
       <div class="login-footer">
         <p>Ready to explore? <a href="tours.html">Browse Tours</a></p>
       </div>
@@ -279,115 +466,99 @@
   <div class="footer-bottom"><p>2025 Georgia Trips. All rights reserved.</p></div>
 </footer>
 
-<!-- Firebase SDK -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
-
-  // Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyAuLpaONrIUwnJJ3ycgzWWlSTiujotfo4U",
-    authDomain: "georgiatripsge.firebaseapp.com",
-    projectId: "georgiatripsge",
-    storageBucket: "georgiatripsge.firebasestorage.app",
-    messagingSenderId: "458133209260",
-    appId: "1:458133209260:web:884340052c037e6fcd9f09",
-    measurementId: "G-KVGPVEVHQ0"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-  const auth = getAuth(app);
-  const provider = new GoogleAuthProvider();
-
-  // DOM Elements
-  const loginForm = document.getElementById('login-form');
-  const userProfile = document.getElementById('user-profile');
-  const googleSigninBtn = document.getElementById('google-signin-btn');
-  const logoutBtn = document.getElementById('logout-btn');
-  const userAvatar = document.getElementById('user-avatar');
-  const userName = document.getElementById('user-name');
-  const userEmail = document.getElementById('user-email');
-  const errorMessage = document.getElementById('error-message');
-
-  // Show error message
-  function showError(message) {
-    errorMessage.textContent = message;
-    errorMessage.classList.add('show');
-    setTimeout(() => {
-      errorMessage.classList.remove('show');
-    }, 5000);
-  }
-
-  // Update UI based on auth state
-  function updateUI(user) {
-    if (user) {
-      loginForm.classList.add('hidden');
-      userProfile.classList.add('active');
-      userAvatar.src = user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'User') + '&background=2EC4B6&color=fff';
-      userName.textContent = user.displayName || 'User';
-      userEmail.textContent = user.email;
-    } else {
-      loginForm.classList.remove('hidden');
-      userProfile.classList.remove('active');
-    }
-  }
-
-  // Listen for auth state changes
-  onAuthStateChanged(auth, (user) => {
-    updateUI(user);
-  });
-
-  // Google Sign In
-  googleSigninBtn.addEventListener('click', async () => {
-    try {
-      googleSigninBtn.disabled = true;
-      googleSigninBtn.textContent = 'Signing in...';
-      
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      updateUI(user);
-    } catch (error) {
-      console.error('Sign in error:', error);
-      let errorText = 'Failed to sign in. Please try again.';
-      
-      if (error.code === 'auth/popup-closed-by-user') {
-        errorText = 'Sign in was cancelled.';
-      } else if (error.code === 'auth/popup-blocked') {
-        errorText = 'Pop-up was blocked. Please allow pop-ups for this site.';
-      } else if (error.code === 'auth/network-request-failed') {
-        errorText = 'Network error. Please check your connection.';
-      }
-      
-      showError(errorText);
-    } finally {
-      googleSigninBtn.disabled = false;
-      googleSigninBtn.innerHTML = `
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-        </svg>
-        Continue with Google
-      `;
-    }
-  });
-
-  // Sign Out
-  logoutBtn.addEventListener('click', async () => {
-    try {
-      await signOut(auth);
-      updateUI(null);
-    } catch (error) {
-      console.error('Sign out error:', error);
-      showError('Failed to sign out. Please try again.');
-    }
-  });
-</script>
-
 <script src="script.js"></script>
+<script type="module" src="auth.js"></script>
+<script type="module">
+  // Tab switching
+  const tabs = document.querySelectorAll('.auth-tab');
+  const panels = document.querySelectorAll('.auth-panel');
+  
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      
+      const targetPanel = tab.dataset.tab;
+      panels.forEach(p => p.classList.remove('active'));
+      document.getElementById(`${targetPanel}-panel`).classList.add('active');
+    });
+  });
+  
+  // Wait for auth module to load
+  function waitForAuth() {
+    return new Promise((resolve) => {
+      const check = () => {
+        if (window.firebaseAuth) {
+          resolve(window.firebaseAuth);
+        } else {
+          setTimeout(check, 100);
+        }
+      };
+      check();
+    });
+  }
+  
+  async function initAuth() {
+    const auth = await waitForAuth();
+    
+    // Google Sign In
+    document.getElementById('google-signin-btn').addEventListener('click', async () => {
+      try {
+        await auth.signInWithGoogle();
+      } catch (e) {}
+    });
+    
+    document.getElementById('google-signup-btn').addEventListener('click', async () => {
+      try {
+        await auth.signInWithGoogle();
+      } catch (e) {}
+    });
+    
+    // Facebook Sign In
+    document.getElementById('facebook-signin-btn').addEventListener('click', async () => {
+      try {
+        await auth.signInWithFacebook();
+      } catch (e) {}
+    });
+    
+    document.getElementById('facebook-signup-btn').addEventListener('click', async () => {
+      try {
+        await auth.signInWithFacebook();
+      } catch (e) {}
+    });
+    
+    // Email Sign In
+    document.getElementById('email-signin-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('signin-email').value;
+      const password = document.getElementById('signin-password').value;
+      
+      try {
+        await auth.signInWithEmail(email, password);
+      } catch (e) {}
+    });
+    
+    // Email Sign Up
+    document.getElementById('email-signup-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('signup-name').value;
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+      
+      try {
+        await auth.signUpWithEmail(email, password, name);
+      } catch (e) {}
+    });
+    
+    // Logout
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      try {
+        await auth.logOut();
+      } catch (e) {}
+    });
+  }
+  
+  initAuth();
+</script>
 </body>
 </html>
