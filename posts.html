@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stories & Blog – Georgia Trips</title>
+<meta name="description" content="Travel guides, insider tips and authentic stories from Georgia. Read about culture, food, wine, adventure and more.">
+<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="nav-logo">
+    <div class="logo-icon"><img src="logo.png" alt="Georgia Trips Logo" class="logo-img"></div>
+    Georgia<span>Trips</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <div class="nav-dropdown">
+      <button class="nav-dropdown-btn">Tours ▼</button>
+      <div class="dropdown-menu">
+        <a href="domestic-tours.html">🏔️ Domestic Tours</a>
+        <a href="international-tours.html">✈️ International Tours</a>
+      </div>
+    </div>
+    <a href="cars.html">Cars</a>
+    <a href="posts.html" class="active">Posts</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="#" class="nav-login">🔐 Login</a>
+    <a href="contact.html" class="nav-cta">✦ Book Now</a>
+  </div>
+  <button class="nav-toggle" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="page-hero">
+  <span class="section-tag">Travel Stories</span>
+  <h1>Stories & Blog</h1>
+  <p>Honest guides, local insights and inspiring tales from the heart of the Caucasus.</p>
+  <div class="breadcrumb">
+    <a href="index.html">Home</a>
+    <span class="sep">›</span>
+    <span class="current">Posts</span>
+  </div>
+</div>
+
+<section class="posts-full-section" style="padding:5rem 2rem;">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">All Articles</span>
+      <h2>Latest from the Blog</h2>
+      <p>Practical travel advice and inspiring stories — updated regularly by our local team.</p>
+      <div class="divider"></div>
+    </div>
+    <div class="posts-grid" id="posts-page-grid"></div>
+  </div>
+</section>
+
+<!-- Newsletter -->
+<section style="background:var(--dark-blue);padding:4rem 2rem;">
+  <div class="container" style="max-width:640px;text-align:center;">
+    <span class="section-tag" style="color:var(--teal);">Newsletter</span>
+    <h2 style="font-family:'Montserrat',sans-serif;font-size:2rem;font-weight:800;color:var(--white);margin:0.5rem 0 1rem;letter-spacing:-0.5px;">Get Travel Tips in Your Inbox</h2>
+    <p style="color:rgba(255,255,255,0.65);margin-bottom:2rem;">Join 2,000+ travelers who get our weekly Georgian travel inspiration and exclusive deals.</p>
+    <div style="display:flex;gap:0.75rem;max-width:440px;margin:0 auto;flex-wrap:wrap;">
+      <input type="email" placeholder="your@email.com" style="flex:1;min-width:200px;padding:0.8rem 1rem;border-radius:30px;border:1.5px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:var(--white);font-family:'Poppins',sans-serif;outline:none;">
+      <button class="btn-primary" style="border-radius:30px;">Subscribe ✦</button>
+    </div>
+    <p style="font-size:0.78rem;color:rgba(255,255,255,0.35);margin-top:1rem;">No spam. Unsubscribe any time.</p>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="nav-logo" style="margin-bottom:1rem;"><div class="logo-icon">✦</div>Georgia<span>Trips</span></div>
+      <p>Your trusted travel partner in Georgia.</p>
+      <div class="footer-social"><a href="#" class="social-btn">📸</a><a href="#" class="social-btn">f</a><a href="#" class="social-btn">💬</a></div>
+    </div>
+    <div class="footer-col"><h4>Quick Links</h4><ul><li><a href="index.html">Home</a></li><li><a href="tours.html">Tours</a></li><li><a href="cars.html">Cars</a></li><li><a href="about.html">About</a></li></ul></div>
+    <div class="footer-col"><h4>Categories</h4><ul><li><a href="#">Culture</a></li><li><a href="#">Food & Wine</a></li><li><a href="#">Adventure</a></li><li><a href="#">Travel Tips</a></li></ul></div>
+    <div class="footer-col"><h4>Contact</h4><div class="footer-contact-item"><span class="icon">📞</span><span>+995 555 123 456</span></div><div class="footer-contact-item"><span class="icon">✉️</span><span>hello@georgiatrips.ge</span></div></div>
+  </div>
+  <div class="footer-bottom"><p>© 2025 Georgia Trips. All rights reserved.</p></div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

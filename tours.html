@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tours – Georgia Trips</title>
+<meta name="description" content="Explore one-day tours, multi-day packages, flexible excursions and upcoming scheduled departures across Georgia.">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="tours-page.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+</head>
+<body>
+
+<!-- ── NAVBAR ─────────────────────────────────────────────── -->
+<nav class="navbar">
+  <a href="index.html" class="nav-logo">
+    <div class="logo-icon"><img src="logo.png" alt="Georgia Trips Logo" class="logo-img"></div>
+    Georgia<span>Trips</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <div class="nav-dropdown">
+      <button class="nav-dropdown-btn active">Tours ▼</button>
+      <div class="dropdown-menu">
+        <a href="domestic-tours.html">🏔️ Domestic Tours</a>
+        <a href="international-tours.html">✈️ International Tours</a>
+      </div>
+    </div>
+    <a href="cars.html">Cars</a>
+    <a href="posts.html">Posts</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="#" class="nav-login">🔐 Login</a>
+    <a href="contact.html" class="nav-cta">✦ Book Now</a>
+  </div>
+  <button class="nav-toggle" aria-label="Toggle menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- ── PAGE HERO ──────────────────────────────────────────── -->
+<div class="page-hero">
+  <span class="section-tag">Curated Experiences</span>
+  <h1>Our Tours</h1>
+  <p>From ancient monasteries to towering peaks — explore Georgia your way with handcrafted experiences for every traveller.</p>
+  <div class="breadcrumb">
+    <a href="index.html">Home</a>
+    <span class="sep">&#8250;</span>
+    <span class="current">Tours</span>
+  </div>
+</div>
+
+<!-- ── TOUR FILTER SECTION ────────────────────────────────── -->
+<section class="filter-section">
+  <div class="container">
+
+    <div class="section-header">
+      <span class="section-tag">Browse</span>
+      <h2>Find Your Perfect Tour</h2>
+      <p>Select a category below to explore the right experience for your schedule, group and adventure level.</p>
+      <div class="divider"></div>
+    </div>
+
+    <!-- Filter tabs — built by tours-page.js -->
+    <div class="filter-tabs-wrapper" role="tablist" aria-label="Tour categories">
+      <div id="tab-indicator" aria-hidden="true"></div>
+      <div id="tours-filter-tabs" style="display:flex;gap:4px;width:100%;"></div>
+    </div>
+
+    <!-- Category description bar -->
+    <div id="tours-category-bar"></div>
+
+    <!-- Results count -->
+    <div class="tours-meta-row">
+      <span id="tours-result-count"></span>
+    </div>
+
+    <!-- Tour grid — only selected category shown -->
+    <div id="tours-filter-grid" role="list" aria-live="polite" aria-label="Tour results"></div>
+
+  </div>
+</section>
+
+<!-- ── WHY CHOOSE US ──────────────────────────────────────── -->
+<section style="background:var(--dark-blue);padding:4.5rem 2rem;">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag" style="color:var(--teal);">Why Us</span>
+      <h2 style="color:var(--white);">Why Book With Georgia Trips</h2>
+      <div class="divider" style="background:var(--yellow);"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem;margin-top:1rem;">
+      <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:2rem;text-align:center;">
+        <div style="font-size:2.5rem;margin-bottom:1rem;">&#127956;</div>
+        <h4 style="font-family:'Montserrat',sans-serif;color:var(--white);font-weight:700;margin-bottom:0.5rem;">Expert Local Guides</h4>
+        <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Certified, bilingual guides with deep knowledge of Georgian history, culture and terrain.</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:2rem;text-align:center;">
+        <div style="font-size:2.5rem;margin-bottom:1rem;">&#128654;</div>
+        <h4 style="font-family:'Montserrat',sans-serif;color:var(--white);font-weight:700;margin-bottom:0.5rem;">Comfortable Transport</h4>
+        <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Modern, air-conditioned vehicles maintained to the highest safety standards for every route.</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:2rem;text-align:center;">
+        <div style="font-size:2.5rem;margin-bottom:1rem;">&#128176;</div>
+        <h4 style="font-family:'Montserrat',sans-serif;color:var(--white);font-weight:700;margin-bottom:0.5rem;">Best Price Guarantee</h4>
+        <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Transparent pricing, no hidden fees, and a price-match promise on comparable tours.</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:2rem;text-align:center;">
+        <div style="font-size:2.5rem;margin-bottom:1rem;">&#128274;</div>
+        <h4 style="font-family:'Montserrat',sans-serif;color:var(--white);font-weight:700;margin-bottom:0.5rem;">Safe &amp; Insured</h4>
+        <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Every tour includes travel insurance coverage, first aid and 24/7 emergency support.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ─────────────────────────────────────────────── -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="nav-logo" style="margin-bottom:1rem;"><div class="logo-icon">&#10022;</div>Georgia<span>Trips</span></div>
+      <p>Your trusted travel partner in Georgia. Crafting genuine experiences since 2017.</p>
+      <div class="footer-social">
+        <a href="#" class="social-btn" aria-label="Instagram">&#128248;</a>
+        <a href="#" class="social-btn" aria-label="Facebook">f</a>
+        <a href="#" class="social-btn" aria-label="WhatsApp">&#128172;</a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Quick Links</h4>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="tours.html">Tours</a></li>
+        <li><a href="cars.html">Cars</a></li>
+        <li><a href="about.html">About</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Tour Types</h4>
+      <ul>
+        <li><a href="tours.html">One-Day Tours</a></li>
+        <li><a href="tours.html">Multi-Day Tours</a></li>
+        <li><a href="tours.html">Flexible Tours</a></li>
+        <li><a href="tours.html">Upcoming Dates</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <div class="footer-contact-item"><span class="icon">&#128205;</span><span>5 Rustaveli Ave, Tbilisi</span></div>
+      <div class="footer-contact-item"><span class="icon">&#128222;</span><span>+995 555 123 456</span></div>
+      <div class="footer-contact-item"><span class="icon">&#9993;</span><span>hello@georgiatrips.ge</span></div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&#169; 2025 Georgia Trips. All rights reserved.</p>
+    <p><a href="#">Privacy Policy</a> &middot; <a href="#">Terms</a></p>
+  </div>
+</footer>
+
+<!-- ── BOOKING MODAL ──────────────────────────────────────── -->
+<div class="modal-backdrop" id="book-modal" role="dialog" aria-modal="true" aria-labelledby="modal-tour-name">
+  <div class="modal">
+    <button class="modal-close" aria-label="Close">&#10005;</button>
+    <h3 id="modal-tour-name">Tour Name</h3>
+    <div class="price" id="modal-tour-price"></div>
+    <p>Fill in your details and our team will confirm your reservation within 24 hours.</p>
+    <div class="form-group"><label for="m-name">Full Name</label><input type="text" id="m-name" placeholder="Your full name"></div>
+    <div class="form-group"><label for="m-email">Email</label><input type="email" id="m-email" placeholder="your@email.com"></div>
+    <div class="form-row">
+      <div class="form-group"><label for="m-people">No. of People</label><input type="number" id="m-people" placeholder="e.g. 2" min="1"></div>
+      <div class="form-group"><label for="m-date">Preferred Date</label><input type="date" id="m-date"></div>
+    </div>
+    <button class="btn-primary" style="width:100%;justify-content:center;" onclick="closeModal()">Send Booking Request &#10022;</button>
+  </div>
+</div>
+
+<!-- Scripts: shared → data → page module -->
+<script src="script.js"></script>
+<script src="tours-data.js"></script>
+<script src="tours-page.js"></script>
+
+</body>
+</html>

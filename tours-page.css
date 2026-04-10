@@ -1,0 +1,485 @@
+/* ============================================================
+   GEORGIA TRIPS — Tours Page Styles
+   Scoped styles for the tours filtering system
+   ============================================================ */
+
+/* ── FILTER TABS WRAPPER ─────────────────────────────────── */
+.filter-section {
+  background: var(--white);
+  padding: 0 2rem 4rem;
+  position: relative;
+}
+
+.filter-section .section-header {
+  padding-top: 4rem;
+}
+
+.filter-tabs-wrapper {
+  position: relative;
+  background: var(--light-bg);
+  border-radius: 18px;
+  padding: 6px;
+  border: 1px solid rgba(11, 60, 93, 0.08);
+  display: flex;
+  gap: 4px;
+  margin-bottom: 2.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.filter-tabs-wrapper::-webkit-scrollbar { display: none; }
+
+/* Sliding background indicator */
+#tab-indicator {
+  position: absolute;
+  top: 6px;
+  height: calc(100% - 12px);
+  background: var(--dark-blue);
+  border-radius: 13px;
+  transition: left 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+              width 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 0;
+  box-shadow: 0 4px 16px rgba(11, 60, 93, 0.25);
+}
+
+/* ── INDIVIDUAL TAB BUTTON ───────────────────────────────── */
+.filter-tab {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.65rem 1.25rem;
+  border-radius: 13px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.filter-tab__icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.filter-tab__label {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-mid);
+  transition: color 0.2s ease;
+}
+
+.filter-tab__count {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.18rem 0.5rem;
+  border-radius: 20px;
+  background: rgba(11, 60, 93, 0.08);
+  color: var(--text-light);
+  transition: background 0.2s ease, color 0.2s ease;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.filter-tab:hover .filter-tab__label { color: var(--dark-blue); }
+
+.filter-tab--active .filter-tab__label { color: var(--white); }
+.filter-tab--active .filter-tab__count {
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--white);
+}
+
+/* ── CATEGORY DESCRIPTION BAR ────────────────────────────── */
+.category-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  background: linear-gradient(135deg, rgba(11,60,93,0.04) 0%, rgba(46,196,182,0.06) 100%);
+  border: 1px solid rgba(46, 196, 182, 0.18);
+  border-radius: 12px;
+  padding: 1rem 1.4rem;
+  margin-bottom: 2rem;
+  animation: fadeSlideIn 0.3s ease;
+}
+
+.category-bar__icon {
+  font-size: 1.4rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.category-bar__text {
+  font-size: 0.9rem;
+  color: var(--text-mid);
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ── RESULTS META ROW ────────────────────────────────────── */
+.tours-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+#tours-result-count {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-light);
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* ── GRID TRANSITIONS ────────────────────────────────────── */
+#tours-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.75rem;
+  transition: opacity 0.2s ease;
+  min-height: 200px;
+}
+
+.grid--exit {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.grid--enter .tour-card {
+  animation: cardFadeUp 0.38s ease both;
+}
+
+@keyframes cardFadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── TOUR CARD — BASE ────────────────────────────────────── */
+.tour-card {
+  background: var(--white);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(11, 60, 93, 0.07);
+  box-shadow: 0 2px 16px rgba(11, 60, 93, 0.08);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.28s cubic-bezier(0.4,0,0.2,1),
+              box-shadow 0.28s cubic-bezier(0.4,0,0.2,1);
+}
+
+.tour-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 14px 40px rgba(11, 60, 93, 0.16);
+}
+
+/* ── CARD IMAGE AREA ─────────────────────────────────────── */
+.tour-card__img-wrap {
+  position: relative;
+  height: 218px;
+  overflow: hidden;
+}
+
+.tour-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.55s ease;
+}
+
+.tour-card:hover .tour-card__img { transform: scale(1.07); }
+
+.tour-card__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,0.38) 100%);
+  pointer-events: none;
+}
+
+.tour-card__top-badges {
+  position: absolute;
+  top: 0.85rem;
+  left: 0.85rem;
+  right: 0.85rem;
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+/* ── BADGES ──────────────────────────────────────────────── */
+.tour-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  letter-spacing: 0.2px;
+  backdrop-filter: blur(6px);
+}
+
+.tour-badge--duration {
+  background: rgba(11, 60, 93, 0.82);
+  color: var(--white);
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.tour-badge--date {
+  background: rgba(244, 180, 0, 0.92);
+  color: #3a2600;
+  border: 1px solid rgba(244,180,0,0.5);
+  font-weight: 800;
+}
+
+.tour-badge--difficulty {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+}
+
+/* ── CARD BODY ───────────────────────────────────────────── */
+.tour-card__body {
+  padding: 1.35rem 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.tour-card__title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--dark-blue);
+  line-height: 1.3;
+  margin-bottom: 0.6rem;
+  letter-spacing: -0.2px;
+}
+
+.tour-card__desc {
+  font-size: 0.875rem;
+  color: var(--text-mid);
+  line-height: 1.65;
+  margin-bottom: 1rem;
+  flex: 1;
+}
+
+/* ── HIGHLIGHTS LIST ─────────────────────────────────────── */
+.tour-highlights {
+  list-style: none;
+  margin: 0 0 1.1rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.tour-highlight {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.8rem;
+  color: var(--text-mid);
+  font-weight: 500;
+}
+
+.highlight-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--teal);
+  flex-shrink: 0;
+}
+
+/* ── CARD FOOTER ─────────────────────────────────────────── */
+.tour-card__footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-top: 1px solid rgba(11, 60, 93, 0.07);
+  padding-top: 1rem;
+  margin-bottom: 1rem;
+  gap: 0.75rem;
+}
+
+.tour-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tour-meta-item {
+  font-size: 0.78rem;
+  color: var(--text-light);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tour-card__price-block {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.tour-price {
+  display: block;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--dark-blue);
+  line-height: 1.1;
+}
+
+.tour-price-label {
+  font-size: 0.72rem;
+  color: var(--text-light);
+  font-weight: 500;
+}
+
+/* ── BOOK BUTTON ─────────────────────────────────────────── */
+.btn-book {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0.72rem 1rem;
+  border-radius: 10px;
+  border: none;
+  background: var(--dark-blue);
+  color: var(--white);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 0.87rem;
+  cursor: pointer;
+  transition: background 0.22s ease, transform 0.18s ease, box-shadow 0.22s ease;
+  letter-spacing: 0.2px;
+}
+
+.btn-book:hover {
+  background: #0a2e47;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(11, 60, 93, 0.28);
+}
+
+.btn-book--upcoming {
+  background: var(--teal);
+}
+
+.btn-book--upcoming:hover {
+  background: #22a99d;
+  box-shadow: 0 6px 20px rgba(46, 196, 182, 0.35);
+}
+
+.btn-arrow {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+.btn-book:hover .btn-arrow { transform: translateX(4px); }
+
+/* ── UPCOMING CARD SPECIFICS ─────────────────────────────── */
+.tour-card--upcoming .tour-card__img-wrap { height: 200px; }
+
+.upcoming-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.upcoming-header .tour-card__title { margin-bottom: 0; }
+
+.spots-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  padding: 0.28rem 0.65rem;
+  border-radius: 20px;
+  background: rgba(11, 60, 93, 0.07);
+  color: var(--text-light);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.spots-label--urgent {
+  background: rgba(244, 70, 70, 0.1);
+  color: #c03030;
+  animation: pulse 2s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.65; }
+}
+
+/* ── EMPTY STATE ─────────────────────────────────────────── */
+.tours-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 4rem 2rem;
+  animation: fadeSlideIn 0.3s ease;
+}
+
+.tours-empty__icon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+}
+
+.tours-empty h3 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--dark-blue);
+  margin-bottom: 0.5rem;
+}
+
+.tours-empty p {
+  color: var(--text-mid);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.tours-empty a { color: var(--teal); font-weight: 600; }
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .filter-tabs-wrapper {
+    border-radius: 14px;
+    padding: 5px;
+    gap: 2px;
+  }
+
+  .filter-tab {
+    padding: 0.55rem 0.9rem;
+    gap: 5px;
+  }
+
+  .filter-tab__label {
+    font-size: 0.8rem;
+  }
+
+  .filter-tab__count { display: none; }
+
+  #tours-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .upcoming-header {
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-tab__icon { display: none; }
+}

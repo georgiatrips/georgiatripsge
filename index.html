@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Georgia Trips – Explore Georgia With Us</title>
+<meta name="description" content="Discover Georgia with expert guided tours, comfortable transport and authentic travel experiences. Book your Georgian adventure today.">
+<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="index.html" class="nav-logo">
+    <div class="logo-icon"><img src="logo.png" alt="Georgia Trips Logo" class="logo-img"></div>
+    Georgia<span>Trips</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html" class="active">Home</a>
+    <div class="nav-dropdown">
+      <button class="nav-dropdown-btn">Tours ▼</button>
+      <div class="dropdown-menu">
+        <a href="domestic-tours.html">🏔️ Domestic Tours</a>
+        <a href="international-tours.html">✈️ International Tours</a>
+      </div>
+    </div>
+    <a href="cars.html">Cars</a>
+    <a href="posts.html">Posts</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="#" class="nav-login">🔐 Login</a>
+    <a href="contact.html" class="nav-cta">✦ Book Now</a>
+  </div>
+  <button class="nav-toggle" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-badge">Discover the Caucasus</div>
+    <h1>Explore <em>Georgia</em><br>With Us</h1>
+    <p>Ancient culture, breathtaking mountains, world-class wine and legendary hospitality — all in one extraordinary destination.</p>
+    <div class="hero-btns">
+      <a href="tours.html" class="btn-primary">✦ Book Now</a>
+      <a href="about.html" class="btn-outline">Learn More →</a>
+    </div>
+  </div>
+  <div class="hero-scroll">
+    <span>Scroll</span>
+    <div class="scroll-dot"></div>
+  </div>
+</section>
+
+<!-- FEATURED SECTION -->
+<section class="featured-section">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">Special Offer</span>
+      <h2>This Season's Best Deal</h2>
+      <div class="divider"></div>
+    </div>
+    <div class="featured-card">
+      <div class="featured-img">
+        <img src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=900&q=80" alt="School Excursions" loading="lazy">
+        <span class="featured-badge">🎒 Best Offer</span>
+      </div>
+      <div class="featured-body">
+        <div class="tag">Education & Groups</div>
+        <h3>School Excursions – Best Offer This Season</h3>
+        <p>Give students a journey they'll never forget. Our educational tours combine history, culture, and adventure across Georgia's most iconic sites — fully supervised, budget-friendly and packed with learning moments.</p>
+        <div class="featured-meta">
+          <span><span class="icon">📅</span> Flexible Dates</span>
+          <span><span class="icon">👥</span> 10–50 Students</span>
+          <span><span class="icon">✅</span> All Inclusive</span>
+        </div>
+        <a href="tours.html" class="btn-primary">Learn More →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DOMESTIC TOURS SECTION -->
+<section class="domestic-tours-section">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">🏔️ Local Adventures</span>
+      <h2>Domestic Tours</h2>
+      <p>Perfect for solo travelers and short stays. Explore Georgia's wonders in a day with our expert guides.</p>
+      <div class="divider"></div>
+    </div>
+    <div class="domestic-tours-grid" id="domestic-tours-grid"></div>
+    <div style="text-align:center;margin-top:2.5rem;">
+      <a href="domestic-tours.html" class="btn-outline">View All Domestic Tours →</a>
+    </div>
+  </div>
+</section>
+
+<!-- INTERNATIONAL TOURS SECTION -->
+<section class="international-tours-section">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">✈️ Multi-Day Adventures</span>
+      <h2>International Tours</h2>
+      <p>Immerse yourself in Georgia's rich culture, cuisine, and landscapes. Perfect for longer stays and immersive experiences.</p>
+      <div class="divider"></div>
+    </div>
+    <div class="international-tours-grid" id="international-tours-grid"></div>
+    <div style="text-align:center;margin-top:2.5rem;">
+      <a href="international-tours.html" class="btn-outline">View All International Tours →</a>
+    </div>
+  </div>
+</section>
+
+<!-- TRANSPORT SECTION -->
+<section class="transport-section">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">Transport</span>
+      <h2>Transport Services</h2>
+      <p>Comfortable, reliable vehicles for every type of trip — from mountain roads to city transfers.</p>
+      <div class="divider"></div>
+    </div>
+    <div class="cars-grid" id="cars-grid"></div>
+  </div>
+</section>
+
+<!-- STORIES SECTION -->
+<section class="stories-section">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">Blog</span>
+      <h2>Stories</h2>
+      <p>Travel guides, local tips and authentic stories from the heart of the Caucasus.</p>
+      <div class="divider"></div>
+    </div>
+    <div class="posts-grid" id="stories-grid"></div>
+    <div style="text-align:center;margin-top:2.5rem;">
+      <a href="posts.html" class="btn-outline" style="display:inline-flex;color:var(--dark-blue);border-color:var(--dark-blue);">View All Stories →</a>
+    </div>
+  </div>
+</section>
+
+<!-- MAP SECTION -->
+<section class="map-section">
+  <div class="map-container">
+    <div class="map-overlay-info">
+      <h3>Our Destinations</h3>
+      <div class="map-location"><div class="map-dot"></div><span>Tbilisi – Capital City</span></div>
+      <div class="map-location"><div class="map-dot"></div><span>Kazbegi – Caucasus Mountains</span></div>
+      <div class="map-location"><div class="map-dot"></div><span>Kakheti – Wine Region</span></div>
+      <div class="map-location"><div class="map-dot"></div><span>Batumi – Black Sea Coast</span></div>
+      <div class="map-location"><div class="map-dot"></div><span>Svaneti – Ancient Highlands</span></div>
+    </div>
+    <iframe class="map-frame"
+      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1452498.4059474706!2d41.6!3d42.3!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x40440cd7c2f304f3%3A0x9f3f7fa31b6e2e4a!2sGeorgia!5e0!3m2!1sen!2sge!4v1"
+      allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+      title="Georgia Map">
+    </iframe>
+  </div>
+</section>
+
+<!-- WEATHER SECTION -->
+<section class="weather-section">
+  <div class="container">
+    <div class="section-header" style="margin-bottom:2rem;">
+      <span class="section-tag" style="color:var(--teal);">Live</span>
+      <h2 style="color:var(--white);">Georgia Weather</h2>
+      <div class="divider" style="background:var(--yellow);"></div>
+    </div>
+    <div class="weather-widget" id="weather-widget">
+      <p class="weather-loading">⏳ Fetching live weather…</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="nav-logo" style="margin-bottom:1rem;">
+        <div class="logo-icon">✦</div>
+        Georgia<span>Trips</span>
+      </div>
+      <p>Your trusted travel partner in Georgia. We craft unforgettable experiences for solo travelers, groups and school excursions.</p>
+      <div class="footer-social">
+        <a href="#" class="social-btn" aria-label="Instagram">📸</a>
+        <a href="#" class="social-btn" aria-label="Facebook">f</a>
+        <a href="#" class="social-btn" aria-label="WhatsApp">💬</a>
+        <a href="#" class="social-btn" aria-label="YouTube">▶</a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Quick Links</h4>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="tours.html">Tours</a></li>
+        <li><a href="cars.html">Cars</a></li>
+        <li><a href="posts.html">Posts</a></li>
+        <li><a href="about.html">About</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Tours</h4>
+      <ul>
+        <li><a href="tours.html">One-Day Tours</a></li>
+        <li><a href="tours.html">Full Packages</a></li>
+        <li><a href="tours.html">School Groups</a></li>
+        <li><a href="tours.html">Private Tours</a></li>
+        <li><a href="contact.html">Custom Trip</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Contact Us</h4>
+      <div class="footer-contact-item">
+        <span class="icon">📍</span>
+        <span>5 Rustaveli Avenue, Tbilisi, Georgia</span>
+      </div>
+      <div class="footer-contact-item">
+        <span class="icon">📞</span>
+        <span>+995 555 123 456</span>
+      </div>
+      <div class="footer-contact-item">
+        <span class="icon">✉️</span>
+        <span>hello@georgiatrips.ge</span>
+      </div>
+      <div class="footer-contact-item">
+        <span class="icon">🕐</span>
+        <span>Mon–Sat: 9:00 – 19:00</span>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 Georgia Trips. All rights reserved. Built with ❤️ in Tbilisi.</p>
+    <p><a href="#">Privacy Policy</a> · <a href="#">Terms</a></p>
+  </div>
+</footer>
+
+<!-- BOOKING MODAL -->
+<div class="modal-backdrop" id="book-modal">
+  <div class="modal">
+    <button class="modal-close" aria-label="Close">✕</button>
+    <h3 id="modal-tour-name">Tour Name</h3>
+    <div class="price" id="modal-tour-price"></div>
+    <p>Ready to book this tour? Fill out your details and our team will confirm your reservation within 24 hours.</p>
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" placeholder="Your full name">
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" placeholder="your@email.com">
+    </div>
+    <div class="form-group">
+      <label>Number of People</label>
+      <input type="number" placeholder="e.g. 2" min="1">
+    </div>
+    <div class="form-group">
+      <label>Preferred Date</label>
+      <input type="date">
+    </div>
+    <button class="btn-primary" style="width:100%;justify-content:center;" onclick="closeModal()">Send Booking Request ✦</button>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
