@@ -29,8 +29,14 @@
     <a href="posts.html">Posts</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
-    <a href="#" class="nav-login">🔐 Login</a>
-    <a href="contact.html" class="nav-cta">✦ Book Now</a>
+    <div class="nav-user-dropdown" id="nav-user-dropdown">
+      <button class="nav-cta nav-user-btn" id="nav-user-btn">Login</button>
+      <div class="dropdown-menu user-dropdown-menu">
+        <a href="profile.html" class="user-profile-link">My Profile</a>
+        <a href="saved-tours.html" class="user-saved-tours">Saved Tours</a>
+        <a href="#" class="user-logout">Sign Out</a>
+      </div>
+    </div>
   </div>
   <button class="nav-toggle" aria-label="Menu">
     <span></span><span></span><span></span>
@@ -218,24 +224,24 @@
       <h4>Contact Us</h4>
       <div class="footer-contact-item">
         <span class="icon">📍</span>
-        <span>5 Rustaveli Avenue, Tbilisi, Georgia</span>
+        <span>27 Kutaisi St, Batumi 6010</span>
       </div>
       <div class="footer-contact-item">
         <span class="icon">📞</span>
-        <span>+995 555 123 456</span>
+        <span>+995 504 22 00 20</span>
       </div>
       <div class="footer-contact-item">
         <span class="icon">✉️</span>
-        <span>hello@georgiatrips.ge</span>
+        <span>georgiatrips5@gmail.com</span>
       </div>
       <div class="footer-contact-item">
         <span class="icon">🕐</span>
-        <span>Mon–Sat: 9:00 – 19:00</span>
+        <span>Monday – Sunday: 10:00 – 19:00</span>
       </div>
     </div>
   </div>
   <div class="footer-bottom">
-    <p>© 2025 Georgia Trips. All rights reserved. Built with ❤️ in Tbilisi.</p>
+    <p>© 2026 Georgia Trips. All rights reserved. Built with ❤️ in Tbilisi.</p>
     <p><a href="#">Privacy Policy</a> · <a href="#">Terms</a></p>
   </div>
 </footer>
@@ -268,5 +274,6 @@
 </div>
 
 <script src="script.js"></script>
+<script type="module" src="auth.js"></script>
 </body>
 </html>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Saved Tours - Georgia Trips</title>
+<meta name="description" content="View your saved tours and favorite destinations with Georgia Trips.">
+<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+  .saved-section {
+    min-height: calc(100vh - 68px);
+    padding: 3rem 2rem;
+    background: var(--light-bg);
+  }
+  .saved-container {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .saved-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  .saved-header h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--dark-blue);
+    margin-bottom: 0.5rem;
+  }
+  .saved-header p {
+    color: var(--text-mid);
+    font-size: 1rem;
+  }
+  .saved-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--white);
+    border-radius: 20px;
+    box-shadow: var(--card-shadow);
+  }
+  .saved-empty-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    background: rgba(46,196,182,0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .saved-empty-icon svg {
+    width: 40px;
+    height: 40px;
+    color: var(--teal);
+  }
+  .saved-empty h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.25rem;
+    color: var(--dark-blue);
+    margin-bottom: 0.5rem;
+  }
+  .saved-empty p {
+    color: var(--text-mid);
+    margin-bottom: 1.5rem;
+  }
+  .browse-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0.85rem 2rem;
+    background: var(--teal);
+    color: var(--white);
+    border-radius: 50px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all var(--transition);
+  }
+  .browse-btn:hover {
+    background: #25b0a3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(46,196,182,0.3);
+  }
+  .saved-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+  .saved-card {
+    background: var(--white);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    transition: all var(--transition);
+    border: 1px solid rgba(11,60,93,0.06);
+  }
+  .saved-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(11,60,93,0.12);
+  }
+  .saved-card-image {
+    height: 180px;
+    overflow: hidden;
+    position: relative;
+  }
+  .saved-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition);
+  }
+  .saved-card:hover .saved-card-image img {
+    transform: scale(1.05);
+  }
+  .remove-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    background: var(--white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition);
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .remove-btn:hover {
+    background: #dc3545;
+    color: white;
+  }
+  .remove-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  .saved-card-content {
+    padding: 1.25rem;
+  }
+  .saved-card-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--dark-blue);
+    margin-bottom: 0.5rem;
+  }
+  .saved-card-location {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-mid);
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+  }
+  .saved-card-price {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    color: var(--teal);
+    font-size: 1.1rem;
+  }
+  .not-logged-in {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--white);
+    border-radius: 20px;
+    box-shadow: var(--card-shadow);
+  }
+  .not-logged-in h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.5rem;
+    color: var(--dark-blue);
+    margin-bottom: 1rem;
+  }
+  .not-logged-in p {
+    color: var(--text-mid);
+    margin-bottom: 2rem;
+  }
+  .login-redirect-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0.85rem 2.5rem;
+    background: var(--teal);
+    color: var(--white);
+    border-radius: 50px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all var(--transition);
+  }
+  .login-redirect-btn:hover {
+    background: #25b0a3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(46,196,182,0.3);
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="nav-logo">
+    <div class="logo-icon"><img src="logo.png" alt="Georgia Trips Logo" class="logo-img"></div>
+    Georgia<span>Trips</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <div class="nav-dropdown">
+      <button class="nav-dropdown-btn">Tours</button>
+      <div class="dropdown-menu">
+        <a href="domestic-tours.html">Domestic Tours</a>
+        <a href="international-tours.html">International Tours</a>
+      </div>
+    </div>
+    <a href="cars.html">Cars</a>
+    <a href="posts.html">Posts</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <div class="nav-user-dropdown" id="nav-user-dropdown">
+      <button class="nav-cta nav-user-btn" id="nav-user-btn">Login</button>
+      <div class="dropdown-menu user-dropdown-menu">
+        <a href="profile.html" class="user-profile-link">My Profile</a>
+        <a href="saved-tours.html" class="user-saved-tours">Saved Tours</a>
+        <a href="#" class="user-logout">Sign Out</a>
+      </div>
+    </div>
+  </div>
+  <button class="nav-toggle" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<section class="saved-section">
+  <div class="saved-container">
+    <!-- Not Logged In State -->
+    <div class="not-logged-in" id="not-logged-in">
+      <h1>Please Sign In</h1>
+      <p>You need to be logged in to view your saved tours.</p>
+      <a href="login.html" class="login-redirect-btn">Sign In</a>
+    </div>
+    
+    <!-- Logged In State -->
+    <div id="saved-content" style="display: none;">
+      <div class="saved-header">
+        <h1>Saved Tours</h1>
+        <p>Your favorite destinations and tours</p>
+      </div>
+      
+      <!-- Empty State -->
+      <div class="saved-empty" id="empty-state">
+        <div class="saved-empty-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+        </div>
+        <h2>No Saved Tours Yet</h2>
+        <p>Start exploring and save your favorite tours for later!</p>
+        <a href="tours.html" class="browse-btn">Browse Tours</a>
+      </div>
+      
+      <!-- Tours Grid (hidden for now - would be populated from database) -->
+      <div class="saved-grid" id="saved-grid" style="display: none;">
+        <!-- Tours would be dynamically loaded here -->
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="nav-logo" style="margin-bottom:1rem;"><div class="logo-icon"></div>Georgia<span>Trips</span></div>
+      <p>Your trusted travel partner in Georgia.</p>
+    </div>
+    <div class="footer-col"><h4>Quick Links</h4><ul><li><a href="index.html">Home</a></li><li><a href="tours.html">Tours</a></li><li><a href="cars.html">Cars</a></li><li><a href="about.html">About</a></li></ul></div>
+    <div class="footer-col"><h4>Tours</h4><ul><li><a href="tours.html">One-Day Tours</a></li><li><a href="tours.html">Full Packages</a></li><li><a href="contact.html">Custom Trip</a></li></ul></div>
+    <div class="footer-col"><h4>Contact</h4><div class="footer-contact-item"><span class="icon">📞</span><span>+995 504 22 00 20</span></div><div class="footer-contact-item"><span class="icon">✉️</span><span>georgiatrips5@gmail.com</span></div></div>
+  </div>
+  <div class="footer-bottom"><p>© 2026 Georgia Trips. All rights reserved.</p></div>
+</footer>
+
+<script src="script.js"></script>
+<script type="module" src="auth.js"></script>
+<script type="module">
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  
+  function waitForAuth() {
+    return new Promise((resolve) => {
+      const check = () => {
+        if (window.firebaseAuth) {
+          resolve(window.firebaseAuth);
+        } else {
+          setTimeout(check, 100);
+        }
+      };
+      check();
+    });
+  }
+  
+  async function initSavedTours() {
+    const auth = await waitForAuth();
+    
+    onAuthStateChanged(auth.auth, (user) => {
+      const notLoggedIn = document.getElementById('not-logged-in');
+      const savedContent = document.getElementById('saved-content');
+      
+      if (user) {
+        notLoggedIn.style.display = 'none';
+        savedContent.style.display = 'block';
+        
+        // TODO: Load saved tours from database
+        // For now, show empty state
+      } else {
+        notLoggedIn.style.display = 'block';
+        savedContent.style.display = 'none';
+      }
+    });
+  }
+  
+  initSavedTours();
+</script>
+</body>
+</html>
