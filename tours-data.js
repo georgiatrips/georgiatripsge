@@ -21,6 +21,7 @@ const TOURS = [
     img: 'https://images.unsplash.com/photo-1587826080692-f439cd0b70da?w=700&q=80',
     desc: 'Visit Georgia\'s ancient capital Mtskheta and the iconic Jvari Church perched above the confluence of the Mtkvari and Aragvi rivers.',
     highlights: ['Svetitskhoveli Cathedral', 'Jvari Monastery', 'Shio-Mgvime Cave Monastery'],
+    isFeatured: false,
   },
   {
     id: 'od-2',
@@ -33,6 +34,7 @@ const TOURS = [
     img: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=700&q=80',
     desc: 'Explore the cradle of wine civilization. Visit Alaverdi Monastery, taste Rkatsiteli and Saperavi in a family cellar, and wander Sighnaghi\'s cobblestone streets.',
     highlights: ['Alaverdi Monastery', 'Sighnaghi Old Town', 'Qvevri wine tasting'],
+    isFeatured: false,
   },
   {
     id: 'od-3',
@@ -45,6 +47,7 @@ const TOURS = [
     img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=80',
     desc: 'Journey along the Georgian Military Highway to the breathtaking Kazbegi region. Hike to Gergeti Trinity Church at 2,170 m with panoramic Caucasus views.',
     highlights: ['Gergeti Trinity Church', 'Mount Kazbek views', 'Ananuri Fortress'],
+    isFeatured: false,
   },
   {
     id: 'od-4',
@@ -57,6 +60,7 @@ const TOURS = [
     img: 'https://images.unsplash.com/photo-1565008576549-57569a49371d?w=700&q=80',
     desc: 'Dive deep into the layers of Old Tbilisi — sulfur baths, Persian-era caravanserais, colorful balconies and the best local street food spots.',
     highlights: ['Abanotubani Sulphur Baths', 'Narikala Fortress', 'Dry Bridge Market'],
+    isFeatured: false,
   },
 
   // ── MULTI-DAY TOURS ────────────────────────────────────────
@@ -71,6 +75,7 @@ const TOURS = [
     img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=700&q=80',
     desc: 'The perfect introduction to Georgia: Tbilisi, Mtskheta, Gori, Uplistsikhe cave city, Borjomi spa resort and the Surami Fortress. History at every turn.',
     highlights: ['Uplistsikhe Cave City', 'Borjomi Mineral Springs', 'Stalin Museum, Gori'],
+    isFeatured: false,
   },
   {
     id: 'md-2',
@@ -83,6 +88,7 @@ const TOURS = [
     img: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=700&q=80',
     desc: 'From the snowy peaks of Kazbegi to the subtropical beaches of Batumi — experience Georgia\'s full geographic and cultural range in one epic week.',
     highlights: ['Kazbegi Highlands', 'Kutaisi & Bagrati Cathedral', 'Batumi Boulevard'],
+    isFeatured: false,
   },
   {
     id: 'md-3',
@@ -95,6 +101,7 @@ const TOURS = [
     img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=700&q=80',
     desc: 'Off-the-beaten-path villages, medieval Svaneti towers, Mestia, Ushguli — the highest inhabited village in Europe — and remote Tusheti gorges.',
     highlights: ['Ushguli Village (UNESCO)', 'Mestia Tower Houses', 'Tusheti Road'],
+    isFeatured: false,
   },
   {
     id: 'md-4',
@@ -107,6 +114,7 @@ const TOURS = [
     img: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=700&q=80',
     desc: 'A four-day deep dive into Georgian wine culture: Kakheti\'s qvevri cellars, Telavi old town, Gremi Castle and a stay in a family guesthouse among vineyards.',
     highlights: ['Telavi Old Town', 'Gremi Fortress', 'Qvevri wine making'],
+    isFeatured: false,
   },
 
   // ── FLEXIBLE TOURS ─────────────────────────────────────────
@@ -121,6 +129,7 @@ const TOURS = [
     img: 'https://images.unsplash.com/photo-1587826080692-f439cd0b70da?w=700&q=80',
     desc: 'Design your own Tbilisi day. Choose your start time, your sites and your pace. A private guide adapts entirely to your interests — art, history, food or all three.',
     highlights: ['Fully customizable itinerary', 'Private licensed guide', 'Hotel pickup included'],
+    isFeatured: false,
   },
   {
     id: 'fl-2',
@@ -133,6 +142,7 @@ const TOURS = [
     img: 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=700&q=80',
     desc: 'Educational tours tailored for school groups — curriculum-linked content, safe transport, bilingual guides and flexible multi-day options. Prices on request.',
     highlights: ['Curriculum-linked content', 'Supervised at all times', 'Budget-friendly rates'],
+    isFeatured: false,
   },
   {
     id: 'fl-3',
@@ -145,6 +155,7 @@ const TOURS = [
     img: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=700&q=80',
     desc: 'A curated romantic journey through Georgia — boutique guesthouses, candlelit dinners, private wine tastings and sunset views over the Caucasus.',
     highlights: ['Boutique accommodations', 'Private experiences only', 'Fully personalized'],
+    isFeatured: false,
   },
   {
     id: 'fl-4',
@@ -157,6 +168,7 @@ const TOURS = [
     img: 'https://images.unsplash.com/photo-1565008576549-57569a49371d?w=700&q=80',
     desc: 'Built for photographers. We time routes around golden hour, access restricted viewpoints, and move at a slow deliberate pace wherever the light takes you.',
     highlights: ['Golden hour scheduling', 'Hidden viewpoints', 'Any destination'],
+    isFeatured: false,
   },
 
   // ── UPCOMING TOURS ─────────────────────────────────────────
@@ -174,6 +186,7 @@ const TOURS = [
     dateRange: 'June 10 – 15, 2025',
     dateStart: '2025-06-10',
     spotsLeft: 3,
+    isFeatured: false,
   },
   {
     id: 'up-2',
@@ -189,6 +202,7 @@ const TOURS = [
     dateRange: 'June 20 – 22, 2025',
     dateStart: '2025-06-20',
     spotsLeft: 7,
+    isFeatured: false,
   },
   {
     id: 'up-3',
@@ -204,6 +218,7 @@ const TOURS = [
     dateRange: 'July 4 – 5, 2025',
     dateStart: '2025-07-04',
     spotsLeft: 5,
+    isFeatured: false,
   },
   {
     id: 'up-4',
@@ -219,6 +234,7 @@ const TOURS = [
     dateRange: 'July 18 – 19, 2025',
     dateStart: '2025-07-18',
     spotsLeft: 10,
+    isFeatured: false,
   },
   {
     id: 'up-5',
@@ -234,6 +250,7 @@ const TOURS = [
     dateRange: 'Aug 1 – 4, 2025',
     dateStart: '2025-08-01',
     spotsLeft: 8,
+    isFeatured: false,
   },
 ];
 

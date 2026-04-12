@@ -418,6 +418,59 @@ function initScrollAnimations() {
   });
 }
 
+// ===== RENDER FEATURED TOURS =====
+function renderFeaturedTours() {
+  const slider = document.getElementById('featured-slider');
+  const dotsContainer = document.getElementById('featured-dots');
+  if (!slider || !dotsContainer) return;
+  
+  const featuredStatus = JSON.parse(localStorage.getItem('toursFeaturedStatus')) || {};
+  const featuredTours = TOURS.filter(tour => featuredStatus[tour.id] === true);
+  
+  // If no featured tours, keep the default ones
+  if (featuredTours.length === 0) {
+    return;
+  }
+  
+  // Clear existing featured cards
+  slider.innerHTML = '';
+  dotsContainer.innerHTML = '';
+  
+  // Create featured cards from featured tours
+  featuredTours.forEach((tour, index) => {
+    const card = document.createElement('div');
+    card.className = 'featured-card';
+    card.setAttribute('data-featured', index);
+    card.innerHTML = `
+      <div class="featured-img">
+        <img src="${tour.img}" alt="${tour.title}" loading="lazy">
+        <span class="featured-badge">Featured</span>
+      </div>
+      <div class="featured-body">
+        <div class="tag">${tour.category === 'one-day' ? 'Domestic' : 'International'}</div>
+        <h3>${tour.title}</h3>
+        <p>${tour.desc}</p>
+        <div class="featured-meta">
+          <span><span class="icon">📅</span> ${tour.duration}</span>
+          <span><span class="icon">👥</span> ${tour.groupSize}</span>
+          <span><span class="icon">💰</span> ${tour.price}</span>
+        </div>
+        <a href="tours.html" class="btn-primary">Learn More →</a>
+      </div>
+    `;
+    slider.appendChild(card);
+  });
+  
+  // Create dots
+  featuredTours.forEach((_, i) => {
+    const dot = document.createElement('button');
+    dot.classList.add('slider-dot');
+    if (i === 0) dot.classList.add('active');
+    dot.addEventListener('click', () => goToSlide(i));
+    dotsContainer.appendChild(dot);
+  });
+}
+
 // ===== FEATURED SLIDER =====
 function initFeaturedSlider() {
   const slider = document.getElementById('featured-slider');
@@ -430,14 +483,18 @@ function initFeaturedSlider() {
   const cards = slider.querySelectorAll('.featured-card');
   let currentIndex = 0;
   
-  // Create dots
-  cards.forEach((_, i) => {
-    const dot = document.createElement('button');
-    dot.classList.add('slider-dot');
-    if (i === 0) dot.classList.add('active');
-    dot.addEventListener('click', () => goToSlide(i));
-    dotsContainer.appendChild(dot);
-  });
+  if (cards.length === 0) return;
+  
+  // Create dots if not already created by renderFeaturedTours
+  if (dotsContainer && dotsContainer.children.length === 0) {
+    cards.forEach((_, i) => {
+      const dot = document.createElement('button');
+      dot.classList.add('slider-dot');
+      if (i === 0) dot.classList.add('active');
+      dot.addEventListener('click', () => goToSlide(i));
+      dotsContainer.appendChild(dot);
+    });
+  }
   
   function updateSlider() {
     cards.forEach((card, i) => {
@@ -508,6 +565,7 @@ function initScrollSlider(gridId, prevId, nextId) {
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
+  renderFeaturedTours();
   renderDomesticTours();
   renderInternationalTours();
   renderCars('cars-grid');
@@ -538,6 +596,12 @@ document.addEventListener('DOMContentLoaded', () => {
   renderPosts('posts-page-grid');
 
   setTimeout(initScrollAnimations, 100);
+  
+  // Listen for tours updated from admin panel
+  window.addEventListener('toursUpdated', () => {
+    renderFeaturedTours();
+    initFeaturedSlider();
+  });
 });
 
 function initTourTabsPage() {

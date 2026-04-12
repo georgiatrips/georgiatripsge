@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel – Georgia Trips</title>
+  <meta name="description" content="Manage tours, toggle featured status, and organize tour categories.">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    :root {
+      --admin-bg: #f5f5f5;
+      --admin-border: #ddd;
+      --admin-text: #333;
+      --admin-accent: #2c5f8d;
+      --admin-success: #28a745;
+      --admin-danger: #dc3545;
+    }
+
+    .admin-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: var(--admin-bg);
+      min-height: 100vh;
+    }
+
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 2px solid var(--admin-border);
+    }
+
+    .admin-header h1 {
+      font-size: 2rem;
+      color: var(--admin-text);
+      margin: 0;
+    }
+
+    .admin-tabs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid var(--admin-border);
+    }
+
+    .admin-tab {
+      padding: 1rem 1.5rem;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 1rem;
+      color: #666;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s ease;
+    }
+
+    .admin-tab.active {
+      color: var(--admin-accent);
+      border-bottom-color: var(--admin-accent);
+    }
+
+    .admin-tab:hover {
+      color: var(--admin-accent);
+    }
+
+    .admin-tab-content {
+      display: none;
+    }
+
+    .admin-tab-content.active {
+      display: block;
+    }
+
+    .tours-section {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .category-header {
+      background: #f9f9f9;
+      padding: 1.5rem;
+      border-bottom: 2px solid var(--admin-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .category-header h2 {
+      margin: 0;
+      color: var(--admin-text);
+      font-size: 1.3rem;
+    }
+
+    .category-tour-count {
+      background: var(--admin-accent);
+      color: white;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .tours-list {
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .tour-item {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 1rem;
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--admin-border);
+      align-items: center;
+    }
+
+    .tour-item:last-child {
+      border-bottom: none;
+    }
+
+    .tour-info {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .tour-thumb {
+      width: 60px;
+      height: 60px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: #eee;
+    }
+
+    .tour-details {
+      flex: 1;
+    }
+
+    .tour-title {
+      font-weight: 600;
+      color: var(--admin-text);
+      margin: 0 0 0.3rem 0;
+      font-size: 0.95rem;
+    }
+
+    .tour-meta {
+      font-size: 0.85rem;
+      color: #666;
+      margin: 0;
+    }
+
+    .tour-price {
+      font-weight: 600;
+      color: var(--admin-accent);
+      font-size: 1rem;
+    }
+
+    .toggle-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 50px;
+      height: 26px;
+      background: #ccc;
+      border-radius: 13px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      border: none;
+      padding: 0;
+    }
+
+    .toggle-switch.active {
+      background: var(--admin-success);
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: left 0.3s ease;
+    }
+
+    .toggle-switch.active::after {
+      left: 27px;
+    }
+
+    .featured-badge {
+      background: var(--admin-success);
+      color: white;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-info {
+      text-align: center;
+      padding: 2rem;
+      color: #666;
+    }
+
+    .btn-logout {
+      background: var(--admin-danger);
+      color: white;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: background 0.3s ease;
+    }
+
+    .btn-logout:hover {
+      background: #c82333;
+    }
+
+    @media (max-width: 768px) {
+      .tour-item {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .tour-info {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .admin-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+      }
+
+      .admin-tabs {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ADMIN CONTAINER -->
+<div class="admin-container">
+  
+  <!-- HEADER -->
+  <div class="admin-header">
+    <h1>🎛️ Admin Panel</h1>
+    <button class="btn-logout" onclick="logoutAdmin()">Logout</button>
+  </div>
+
+  <!-- TABS -->
+  <div class="admin-tabs">
+    <button class="admin-tab active" onclick="switchTab('tours')">Tour Management</button>
+    <button class="admin-tab" onclick="switchTab('stats')">Statistics</button>
+  </div>
+
+  <!-- TAB: TOURS -->
+  <div id="tours" class="admin-tab-content active">
+    
+    <!-- DOMESTIC TOURS -->
+    <div class="tours-section" style="margin-bottom: 2rem;">
+      <div class="category-header">
+        <h2>🏔️ Domestic Tours</h2>
+        <span class="category-tour-count" id="domestic-count">0</span>
+      </div>
+      <div class="tours-list" id="domestic-tours-list"></div>
+    </div>
+
+    <!-- INTERNATIONAL TOURS -->
+    <div class="tours-section" style="margin-bottom: 2rem;">
+      <div class="category-header">
+        <h2>✈️ International Tours</h2>
+        <span class="category-tour-count" id="international-count">0</span>
+      </div>
+      <div class="tours-list" id="international-tours-list"></div>
+    </div>
+
+  </div>
+
+  <!-- TAB: STATISTICS -->
+  <div id="stats" class="admin-tab-content">
+    <div class="tours-section">
+      <div class="status-info">
+        <h2>📊 Featured Tours Summary</h2>
+        <p style="font-size: 1.1rem; margin-top: 1rem;">
+          Total Featured Tours: <span id="featured-count" style="font-weight: 600; color: var(--admin-accent);">0</span>
+        </p>
+        <p style="font-size: 0.95rem; color: #666; margin-top: 2rem;">
+          Enable featured status for tours to display them in the "This Season's Best Deal" section on the homepage.
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- SCRIPTS -->
+<script src="tours-data.js"></script>
+<script>
+  // ===== LOAD AND DISPLAY TOURS =====
+  function loadAdminPanel() {
+    const featuredStatus = JSON.parse(localStorage.getItem('toursFeaturedStatus')) || {};
+    
+    // Separate tours by category
+    const domesticTours = TOURS.filter(t => t.category === 'one-day');
+    const internationalTours = TOURS.filter(t => t.category === 'multi-day');
+    
+    // Render domestic tours
+    const domesticList = document.getElementById('domestic-tours-list');
+    domesticList.innerHTML = domesticTours.map(tour => createTourItem(tour, featuredStatus)).join('');
+    document.getElementById('domestic-count').textContent = domesticTours.length;
+    
+    // Render international tours
+    const internationalList = document.getElementById('international-tours-list');
+    internationalList.innerHTML = internationalTours.map(tour => createTourItem(tour, featuredStatus)).join('');
+    document.getElementById('international-count').textContent = internationalTours.length;
+    
+    // Update featured count
+    const featuredCount = Object.values(featuredStatus).filter(v => v === true).length;
+    document.getElementById('featured-count').textContent = featuredCount;
+  }
+
+  function createTourItem(tour, featuredStatus) {
+    const isFeatured = featuredStatus[tour.id] || false;
+    return `
+      <div class="tour-item">
+        <div class="tour-info">
+          <img src="${tour.img}" alt="${tour.title}" class="tour-thumb">
+          <div class="tour-details">
+            <h3 class="tour-title">${tour.title}</h3>
+            <p class="tour-meta">${tour.duration} • ${tour.groupSize}</p>
+          </div>
+        </div>
+        <div>
+          <p class="tour-price">${tour.price}</p>
+        </div>
+        <div class="toggle-wrapper">
+          ${isFeatured ? '<span class="featured-badge">Featured</span>' : ''}
+          <button class="toggle-switch${isFeatured ? ' active' : ''}" 
+                  onclick="toggleTourFeatured('${tour.id}', this)"
+                  aria-label="Toggle featured status for ${tour.title}">
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  function toggleTourFeatured(tourId, toggleBtn) {
+    const featuredStatus = JSON.parse(localStorage.getItem('toursFeaturedStatus')) || {};
+    
+    // Toggle the status
+    featuredStatus[tourId] = !featuredStatus[tourId];
+    
+    // Save to localStorage
+    localStorage.setItem('toursFeaturedStatus', JSON.stringify(featuredStatus));
+    
+    // Update UI
+    toggleBtn.classList.toggle('active');
+    
+    // Update badge
+    const badge = toggleBtn.parentElement.querySelector('.featured-badge');
+    if (featuredStatus[tourId]) {
+      if (!badge) {
+        const newBadge = document.createElement('span');
+        newBadge.className = 'featured-badge';
+        newBadge.textContent = 'Featured';
+        toggleBtn.parentElement.insertBefore(newBadge, toggleBtn);
+      }
+    } else {
+      if (badge) badge.remove();
+    }
+    
+    // Update featured count
+    const featuredCount = Object.values(featuredStatus).filter(v => v === true).length;
+    document.getElementById('featured-count').textContent = featuredCount;
+    
+    // Trigger event so other pages can update
+    window.dispatchEvent(new CustomEvent('toursUpdated'));
+  }
+
+  function switchTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.admin-tab-content').forEach(el => {
+      el.classList.remove('active');
+    });
+    document.querySelectorAll('.admin-tab').forEach(el => {
+      el.classList.remove('active');
+    });
+    
+    // Show selected tab
+    document.getElementById(tabName).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  function logoutAdmin() {
+    localStorage.removeItem('adminLoggedIn');
+    window.location.href = 'index.html';
+  }
+
+  // Load on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    // Check if admin is logged in
+    if (!localStorage.getItem('adminLoggedIn')) {
+      // Simple password check (in production, use proper auth)
+      const password = prompt('Enter admin password:');
+      if (password === 'admin123') {
+        localStorage.setItem('adminLoggedIn', 'true');
+        loadAdminPanel();
+      } else {
+        alert('Incorrect password');
+        window.location.href = 'index.html';
+      }
+    } else {
+      loadAdminPanel();
+    }
+  });
+</script>
+
+</body>
+</html>
