@@ -530,6 +530,34 @@
       const targetPanel = tab.dataset.tab;
       panels.forEach(p => p.classList.remove('active'));
       document.getElementById(`${targetPanel}-panel`).classList.add('active');
+      
+      // გავასუფთაოთ ფორმები და ღილაკები tab გადართვისას
+      const signupForm = document.getElementById('email-signup-form');
+      const signinForm = document.getElementById('email-signin-form');
+      
+      if (signupForm) {
+        signupForm.reset();
+        const signupBtn = signupForm.querySelector('button');
+        if (signupBtn) {
+          signupBtn.disabled = false;
+          signupBtn.textContent = 'Create Account';
+        }
+      }
+      
+      if (signinForm) {
+        signinForm.reset();
+        const signinBtn = signinForm.querySelector('button');
+        if (signinBtn) {
+          signinBtn.disabled = false;
+          signinBtn.textContent = 'Sign In';
+        }
+      }
+      
+      // დავმალოთ შეტყობინებები
+      const errorMsg = document.getElementById('error-message');
+      const successMsg = document.getElementById('success-message');
+      if (errorMsg) errorMsg.classList.remove('show');
+      if (successMsg) successMsg.classList.remove('show');
     });
   });
   
@@ -597,11 +625,23 @@
     document.getElementById('forgot-password-btn').addEventListener('click', async (e) => {
       e.preventDefault();
       const emailField = document.getElementById('signin-email');
-      const email = emailField.value;
+      const email = emailField.value.trim();
+      const errorMessage = document.getElementById('error-message');
       
       if (!email) {
-        auth.showError('Please type your email address in the field above.');
+        // აჩვენე შეცდომის შეტყობინება და მონიშნე email ველი
+        if (errorMessage) {
+          errorMessage.textContent = 'Please enter your email address in the Email field above, then click "Forgot Password?"';
+          errorMessage.classList.add('show');
+          setTimeout(() => errorMessage.classList.remove('show'), 6000);
+        }
         emailField.focus();
+        emailField.style.borderColor = '#dc3545';
+        emailField.style.boxShadow = '0 0 0 3px rgba(220, 53, 69, 0.15)';
+        setTimeout(() => {
+          emailField.style.borderColor = '';
+          emailField.style.boxShadow = '';
+        }, 3000);
         return;
       }
 
@@ -620,6 +660,7 @@
     document.getElementById('email-signup-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = e.target.querySelector('button');
+      const form = e.target;
       const name = document.getElementById('signup-name').value;
       const email = document.getElementById('signup-email').value;
       const password = document.getElementById('signup-password').value;
@@ -627,7 +668,12 @@
       btn.disabled = true;
       btn.textContent = 'Creating Account...';
       try {
-        await auth.signUpWithEmail(email, password, name);
+        const result = await auth.signUpWithEmail(email, password, name);
+        // წარმატების შემთხვევაში, ღილაკი რჩება დაბლოკილი countdown-ის დროს
+        // countdown ფუნქცია თავად გაასუფთავებს ფორმას და განბლოკავს ღილაკს
+        if (result && result.success) {
+          btn.textContent = 'Check your email!';
+        }
       } catch (err) {
         btn.disabled = false;
         btn.textContent = 'Create Account';
@@ -635,6 +681,7 @@
         // თუ ელ-ფოსტა უკვე არსებობს, ავტომატურად გადავიყვანოთ Sign In ტაბზე
         if (err.code === 'auth/email-already-in-use') {
           setTimeout(() => {
+            form.reset();
             document.querySelector('.auth-tab[data-tab="signin"]').click();
             document.getElementById('signin-email').value = email;
           }, 2000);

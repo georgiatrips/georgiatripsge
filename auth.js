@@ -188,6 +188,42 @@ function showSuccess(message) {
   }, 5000);
 }
 
+// Show success message with countdown
+function showSuccessWithCountdown(message, seconds) {
+  const successMessage = document.getElementById('success-message');
+  if (!successMessage) return;
+  
+  let remaining = seconds;
+  successMessage.innerHTML = `${message} <strong>(${remaining}s)</strong>`;
+  successMessage.classList.add('show');
+  
+  const countdownInterval = setInterval(() => {
+    remaining--;
+    if (remaining > 0) {
+      successMessage.innerHTML = `${message} <strong>(${remaining}s)</strong>`;
+    } else {
+      clearInterval(countdownInterval);
+      successMessage.classList.remove('show');
+      
+      // გადავიყვანოთ Sign In ტაბზე და გავასუფთაოთ ფორმა
+      if (window.location.pathname.includes('login.html')) {
+        // გავასუფთაოთ Sign Up ფორმა
+        const signupForm = document.getElementById('email-signup-form');
+        if (signupForm) {
+          signupForm.reset();
+          const btn = signupForm.querySelector('button');
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Create Account';
+          }
+        }
+        // გადავიყვანოთ Sign In ტაბზე
+        document.querySelector('.auth-tab[data-tab="signin"]').click();
+      }
+    }
+  }, 1000);
+}
+
 // Google Sign In
 async function signInWithGoogle() {
   try {
@@ -262,15 +298,10 @@ async function signUpWithEmail(email, password, displayName) {
     await sendEmailVerification(result.user, actionCodeSettings);
     await signOut(auth); 
 
-    showSuccess('Account created! Please check your email and verify it before signing in.');
+    // აჩვენე წარმატების შეტყობინება და დარჩი ამ გვერდზე
+    showSuccessWithCountdown('Account created! Verification link sent to your email. Redirecting to Sign In...', 12);
     
-    // გადავიყვანოთ Sign In ტაბზე რეგისტრაციის შემდეგ
-    if (window.location.pathname.includes('login.html')) {
-      setTimeout(() => {
-        document.querySelector('.auth-tab[data-tab="signin"]').click();
-      }, 3000);
-    }
-    return null;
+    return { success: true, email: email };
   } catch (error) {
     console.error('Email sign up error:', error);
     let errorText = 'Failed to create account. Please try again.';
