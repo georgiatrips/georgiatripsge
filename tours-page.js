@@ -82,9 +82,14 @@ function renderStandardCard(tour) {
             <span class="tour-price-label">per person</span>
           </div>
         </div>
-        <button class="btn-book" onclick="openBookModal('${tour.title}', '${tour.price}')">
-          Book This Tour <span class="btn-arrow">→</span>
-        </button>
+        <div style="display: flex; gap: 0.75rem;">
+          <button class="btn-details" onclick="goToTourDetail('${tour.id}')">
+            Learn More <span class="btn-arrow">→</span>
+          </button>
+          <button class="btn-book" onclick="openBookModal('${tour.title}', '${tour.price}', '${tour.id}')">
+            Book <span class="btn-arrow">→</span>
+          </button>
+        </div>
       </div>
     </article>`;
 }
@@ -126,9 +131,14 @@ function renderUpcomingCard(tour) {
             <span class="tour-price-label">per person</span>
           </div>
         </div>
-        <button class="btn-book btn-book--upcoming" onclick="openBookModal('${tour.title}', '${tour.price}')">
-          Reserve a Spot <span class="btn-arrow">→</span>
-        </button>
+        <div style="display: flex; gap: 0.75rem;">
+          <button class="btn-details" onclick="goToTourDetail('${tour.id}')">
+            Learn More <span class="btn-arrow">→</span>
+          </button>
+          <button class="btn-book btn-book--upcoming" onclick="openBookModal('${tour.title}', '${tour.price}', '${tour.id}')">
+            Reserve <span class="btn-arrow">→</span>
+          </button>
+        </div>
       </div>
     </article>`;
 }
@@ -313,7 +323,14 @@ function createTourCard(tour) {
   return card;
 }
 
-// Run when DOM is ready
+// ── NAVIGATION FUNCTIONS ────────────────────────────────────
+function goToTourDetail(tourId) {
+  // Save the tour ID in sessionStorage for the detail page
+  sessionStorage.setItem('selectedTourId', tourId);
+  window.location.href = 'tour-detail.html';
+}
+
+// ── RUN WHEN DOM IS READY ────────────────────────────────────
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initToursPage);
 } else {

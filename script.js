@@ -376,7 +376,15 @@ function getWeatherIcon(code) {
 }
 
 // ===== MODAL =====
-function openBookModal(tourName, price) {
+function openBookModal(tourName, price, tourId) {
+  // If tourId provided, save and navigate to detail page
+  if (tourId) {
+    sessionStorage.setItem('selectedTourId', tourId);
+    window.location.href = 'tour-detail.html';
+    return;
+  }
+  
+  // Otherwise show modal on current page
   const modal = document.getElementById('book-modal');
   if (!modal) return;
   document.getElementById('modal-tour-name').textContent = tourName;
