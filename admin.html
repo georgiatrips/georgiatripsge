@@ -634,22 +634,8 @@
   </button>
 </nav>
 
-<!-- Access Denied (shown when not admin) -->
-<div class="access-denied" id="access-denied" style="display: none;">
-  <div class="access-denied-icon">&#128274;</div>
-  <h1>Access Denied</h1>
-  <p>You don&apos;t have permission to access the admin panel. Please sign in with an administrator account.</p>
-  <a href="login.html" class="btn-primary">Sign In</a>
-</div>
-
-<!-- Loading State -->
-<div class="access-denied" id="loading-state">
-  <div class="loading-spinner"></div>
-  <p style="margin-top: 1rem;">Checking permissions...</p>
-</div>
-
 <!-- Admin Panel -->
-<div class="admin-container" id="admin-panel" style="display: none;">
+<div class="admin-container" id="admin-panel">
   <div class="admin-header">
     <h1>Admin Panel</h1>
     <div class="admin-tabs">
@@ -713,19 +699,26 @@
         </div>
         <div class="form-row">
           <div class="form-group">
+            <label>Tour Type *</label>
+            <select id="tour-type" required>
+              <option value="">Select type</option>
+              <option value="domestic">Domestic Tour</option>
+              <option value="international">International Tour</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label>Category *</label>
             <select id="tour-category" required>
               <option value="">Select category</option>
               <option value="one-day">One-Day Tour</option>
               <option value="multi-day">Multi-Day Tour</option>
-              <option value="flexible">Flexible Tour</option>
-              <option value="upcoming">Upcoming Tour</option>
+              <option value="fixed">Fixed Tour</option>
             </select>
           </div>
-          <div class="form-group">
-            <label>Price *</label>
-            <input type="text" id="tour-price" required placeholder="e.g. $79">
-          </div>
+        </div>
+        <div class="form-group">
+          <label>Price *</label>
+          <input type="text" id="tour-price" required placeholder="e.g. $79">
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -753,10 +746,7 @@
           <label>Highlights (comma separated)</label>
           <input type="text" id="tour-highlights" placeholder="e.g. Gergeti Church, Mount Kazbek, Ananuri Fortress">
         </div>
-        <div class="form-group" id="upcoming-fields" style="display: none;">
-          <label>Date Range (for upcoming tours)</label>
-          <input type="text" id="tour-daterange" placeholder="e.g. June 10 – 15, 2025">
-        </div>
+        
         <div class="form-group">
           <label>Tour Image *</label>
           <div class="image-upload">
@@ -965,9 +955,6 @@
 <script type="module" src="script.js"></script>
 <script type="module">
 import { 
-  auth, 
-  onAuthStateChanged, 
-  isAdmin,
   uploadImage,
   getTours, addTour, updateTour, deleteTour,
   getCars, addCar, updateCar, deleteCar,
@@ -981,21 +968,7 @@ let carsData = [];
 let postsData = [];
 let featuredData = [];
 
-// Check authentication
-onAuthStateChanged(auth, async (user) => {
-  document.getElementById('loading-state').style.display = 'none';
-  
-  if (user && isAdmin(user.email)) {
-    document.getElementById('admin-panel').style.display = 'block';
-    document.getElementById('access-denied').style.display = 'none';
-    await loadAllData();
-  } else {
-    document.getElementById('admin-panel').style.display = 'none';
-    document.getElementById('access-denied').style.display = 'flex';
-  }
-});
-
-// Load all data
+// Load all data on page load
 async function loadAllData() {
   showLoading('Loading data...');
   try {
@@ -1016,6 +989,9 @@ async function loadAllData() {
   hideLoading();
 }
 
+// Initialize on page load
+loadAllData();
+
 // Tab switching
 document.querySelectorAll('.admin-tab').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -1026,11 +1002,7 @@ document.querySelectorAll('.admin-tab').forEach(tab => {
   });
 });
 
-// Show/hide upcoming fields based on category
-document.getElementById('tour-category').addEventListener('change', (e) => {
-  document.getElementById('upcoming-fields').style.display = 
-    e.target.value === 'upcoming' ? 'block' : 'none';
-});
+
 
 // ============ TOURS ============
 
@@ -1050,12 +1022,13 @@ function renderTours() {
     <div class="admin-card" data-id="${tour.id}">
       <div class="admin-card-img">
         <img src="${tour.img}" alt="${tour.title}">
-        <span class="admin-card-badge">${tour.category}</span>
+        <span class="admin-card-badge">${tour.tourType || 'domestic'}</span>
       </div>
       <div class="admin-card-body">
         <h3 class="admin-card-title">${tour.title}</h3>
         <p class="admin-card-desc">${tour.desc}</p>
         <div class="admin-card-meta">
+          <span>${tour.category}</span>
           <span>${tour.price}</span>
           <span>${tour.duration || ''}</span>
         </div>
@@ -1074,7 +1047,6 @@ window.openTourModal = function(tourId = null) {
   document.getElementById('tour-image-url').value = '';
   document.getElementById('tour-image-preview').classList.remove('show');
   document.getElementById('tour-modal-title').textContent = 'Add New Tour';
-  document.getElementById('upcoming-fields').style.display = 'none';
   document.getElementById('tour-modal').classList.add('open');
 };
 
@@ -1088,6 +1060,7 @@ window.editTour = function(id) {
   
   document.getElementById('tour-id').value = tour.id;
   document.getElementById('tour-title').value = tour.title;
+  document.getElementById('tour-type').value = tour.tourType || 'domestic';
   document.getElementById('tour-category').value = tour.category;
   document.getElementById('tour-price').value = tour.price;
   document.getElementById('tour-duration').value = tour.duration || '';
@@ -1095,15 +1068,11 @@ window.editTour = function(id) {
   document.getElementById('tour-difficulty').value = tour.difficulty || 'Easy';
   document.getElementById('tour-desc').value = tour.desc;
   document.getElementById('tour-highlights').value = (tour.highlights || []).join(', ');
-  document.getElementById('tour-daterange').value = tour.dateRange || '';
   document.getElementById('tour-image-url').value = tour.img;
   
   const preview = document.getElementById('tour-image-preview');
   preview.src = tour.img;
   preview.classList.add('show');
-  
-  document.getElementById('upcoming-fields').style.display = 
-    tour.category === 'upcoming' ? 'block' : 'none';
   
   document.getElementById('tour-modal-title').textContent = 'Edit Tour';
   document.getElementById('tour-modal').classList.add('open');
@@ -1128,6 +1097,7 @@ window.saveTour = async function() {
     
     const tourData = {
       title: document.getElementById('tour-title').value,
+      tourType: document.getElementById('tour-type').value,
       category: document.getElementById('tour-category').value,
       price: document.getElementById('tour-price').value,
       duration: document.getElementById('tour-duration').value,
@@ -1135,7 +1105,6 @@ window.saveTour = async function() {
       difficulty: document.getElementById('tour-difficulty').value,
       desc: document.getElementById('tour-desc').value,
       highlights: document.getElementById('tour-highlights').value.split(',').map(h => h.trim()).filter(h => h),
-      dateRange: document.getElementById('tour-daterange').value,
       img: imageUrl
     };
     
