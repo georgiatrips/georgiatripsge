@@ -39,6 +39,9 @@ const facebookProvider = new FacebookAuthProvider();
 // Track if user is logged in
 let isLoggedIn = false;
 
+// Track if registration is in progress (to prevent auto-redirect)
+let isRegistrationInProgress = false;
+
 // Update navbar with user info
 function updateNavbar(user) {
   const userBtn = document.getElementById('nav-user-btn');
@@ -120,8 +123,8 @@ function setupNavbarClick() {
 onAuthStateChanged(auth, (user) => {
   updateNavbar(user);
 
-  // If on login page, update the UI
-  if (window.location.pathname.includes('login.html')) {
+  // If on login page, update the UI (but NOT during registration)
+  if (window.location.pathname.includes('login.html') && !isRegistrationInProgress) {
     updateLoginPageUI(user);
   }
 });
@@ -280,6 +283,9 @@ function getBaseUrl() {
 
 // Email/Password Sign Up
 async function signUpWithEmail(email, password, displayName) {
+  // დავაყენოთ ფლაგი რომ რეგისტრაცია მიმდინარეობს
+  isRegistrationInProgress = true;
+  
   try {
     const result = await createUserWithEmailAndPassword(auth, email, password);
     
@@ -301,8 +307,16 @@ async function signUpWithEmail(email, password, displayName) {
     // აჩვენე წარმატების შეტყობინება და დარჩი ამ გვერდზე
     showSuccessWithCountdown('Account created! Verification link sent to your email. Redirecting to Sign In...', 12);
     
+    // ფლაგის გაუქმება countdown-ის შემდეგ
+    setTimeout(() => {
+      isRegistrationInProgress = false;
+    }, 13000);
+    
     return { success: true, email: email };
   } catch (error) {
+    // შეცდომის შემთხვევაში გავაუქმოთ ფლაგი
+    isRegistrationInProgress = false;
+    
     console.error('Email sign up error:', error);
     let errorText = 'Failed to create account. Please try again.';
     
