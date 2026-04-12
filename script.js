@@ -78,6 +78,29 @@ async function fetchFeaturedFromFirebase() {
   }
 }
 
+// ===== GET FEATURED TOURS FROM TOURS DATA =====
+function getFeaturedToursFromData(tours) {
+  // Filter tours that have isFeatured = true
+  const featured = tours.filter(tour => tour.isFeatured === true);
+  
+  // Transform tour data to featured card format
+  return featured.map(tour => ({
+    id: tour.id,
+    title: tour.title,
+    img: tour.img,
+    desc: tour.desc,
+    tag: tour.category === 'one-day' ? 'One-Day Adventure' : 
+         tour.category === 'multi-day' ? 'Multi-Day Experience' : 
+         tour.category === 'upcoming' ? 'Upcoming Event' : 'Flexible Tour',
+    badge: tour.type === 'domestic' ? '🏔️ Georgia' : '✈️ International',
+    meta: [
+      tour.price,
+      tour.duration || 'Flexible',
+      tour.difficulty || 'Easy'
+    ]
+  }));
+}
+
 // ===== NAVBAR =====
 function initNavbar() {
   const navbar = document.querySelector('.navbar');
@@ -169,14 +192,14 @@ function renderTours(filter = 'all') {
 function renderDomesticTours() {
   const grid = document.getElementById('domestic-tours-grid');
   if (!grid) return;
-  const domesticTours = toursData.filter(tour => tour.category === 'one-day' || tour.category === 'oneday');
+  const domesticTours = toursData.filter(tour => (tour.type || tour.tourType) === 'domestic' || tour.category === 'one-day' || tour.category === 'oneday');
   grid.innerHTML = domesticTours.length > 0 ? domesticTours.map(renderTourCard).join('') : '<p style="text-align:center;color:var(--text-mid);">No domestic tours available yet. Check back soon!</p>';
 }
 
 function renderInternationalTours() {
   const grid = document.getElementById('international-tours-grid');
   if (!grid) return;
-  const internationalTours = toursData.filter(tour => tour.category === 'multi-day' || tour.category === 'full');
+  const internationalTours = toursData.filter(tour => (tour.type || tour.tourType) === 'international' || tour.category === 'multi-day' || tour.category === 'full');
   grid.innerHTML = internationalTours.length > 0 ? internationalTours.map(renderTourCard).join('') : '<p style="text-align:center;color:var(--text-mid);">No international tours available yet. Check back soon!</p>';
 }
 
@@ -536,6 +559,11 @@ async function loadDataAndInit() {
     ]);
   } catch (error) {
     console.error('Error loading data:', error);
+  }
+
+  // If no featured data from Firebase, use tours data with isFeatured flag
+  if (featuredData.length === 0 && toursData.length > 0) {
+    featuredData = getFeaturedToursFromData(toursData);
   }
 
   // Render everything

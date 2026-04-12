@@ -153,6 +153,19 @@
   color: var(--white);
 }
 
+.admin-card-featured {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  background: #FFD700;
+  color: #333;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+}
+
 .admin-card-body {
   padding: 1.25rem;
 }
@@ -386,6 +399,46 @@
   border-radius: 8px;
   margin-top: 1rem;
   display: none;
+}
+
+/* Toggle Switch Styles */
+.toggle-switch {
+  display: flex;
+  align-items: center;
+}
+
+.toggle-checkbox {
+  display: none;
+}
+
+.toggle-label {
+  position: relative;
+  width: 50px;
+  height: 28px;
+  background: #ccc;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  display: flex;
+  align-items: center;
+  padding: 0 3px;
+}
+
+.toggle-label .toggle-inner {
+  width: 24px;
+  height: 24px;
+  background: white;
+  border-radius: 12px;
+  transition: transform 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.toggle-checkbox:checked + .toggle-label {
+  background: var(--teal);
+}
+
+.toggle-checkbox:checked + .toggle-label .toggle-inner {
+  transform: translateX(20px);
 }
 
 .image-preview.show {
@@ -652,6 +705,14 @@
       <h2>Manage Tours</h2>
       <button class="btn-add" onclick="openTourModal()">+ Add Tour</button>
     </div>
+    
+    <!-- Tour Type Tabs -->
+    <div class="admin-tabs" style="margin-bottom: 1.5rem;">
+      <button class="admin-tab tour-type-tab active" data-type="all">All Tours</button>
+      <button class="admin-tab tour-type-tab" data-type="domestic">🏔️ Domestic Tours</button>
+      <button class="admin-tab tour-type-tab" data-type="international">✈️ International Tours</button>
+    </div>
+    
     <div class="items-grid" id="tours-list"></div>
   </div>
 
@@ -721,9 +782,14 @@
           <input type="text" id="tour-price" required placeholder="e.g. $79">
         </div>
         <div class="form-group">
-          <label style="display: flex; align-items: center; gap: 10px;">
-            <input type="checkbox" id="tour-featured" style="width: auto; margin: 0;">
+          <label style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0;">
             <span>Featured (This Season's Best Deal)</span>
+            <div class="toggle-switch">
+              <input type="checkbox" id="tour-featured" class="toggle-checkbox">
+              <label for="tour-featured" class="toggle-label">
+                <span class="toggle-inner"></span>
+              </label>
+            </div>
           </label>
         </div>
         <div class="form-row">
@@ -998,13 +1064,23 @@ async function loadAllData() {
 // Initialize on page load
 loadAllData();
 
-// Tab switching
-document.querySelectorAll('.admin-tab').forEach(tab => {
+// Tab switching for panels
+document.querySelectorAll('.admin-tab:not(.tour-type-tab)').forEach(tab => {
   tab.addEventListener('click', () => {
-    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.admin-tab:not(.tour-type-tab)').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
     tab.classList.add('active');
     document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+  });
+});
+
+// Tab switching for tour types
+document.querySelectorAll('.tour-type-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tour-type-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTourTypeFilter = tab.dataset.type;
+    renderTours();
   });
 });
 
@@ -1012,9 +1088,19 @@ document.querySelectorAll('.admin-tab').forEach(tab => {
 
 // ============ TOURS ============
 
+// Track current tour type filter
+let currentTourTypeFilter = 'all';
+
 function renderTours() {
   const container = document.getElementById('tours-list');
-  if (toursData.length === 0) {
+  
+  // Filter tours by type
+  let filteredTours = toursData;
+  if (currentTourTypeFilter !== 'all') {
+    filteredTours = toursData.filter(tour => (tour.type || tour.tourType) === currentTourTypeFilter);
+  }
+  
+  if (filteredTours.length === 0) {
     container.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1;">
         <div class="empty-state-icon">&#127956;</div>
@@ -1024,11 +1110,12 @@ function renderTours() {
     return;
   }
   
-  container.innerHTML = toursData.map(tour => `
+  container.innerHTML = filteredTours.map(tour => `
     <div class="admin-card" data-id="${tour.id}">
       <div class="admin-card-img">
         <img src="${tour.img}" alt="${tour.title}">
-        <span class="admin-card-badge">${tour.tourType || 'domestic'}</span>
+        <span class="admin-card-badge">${tour.type || tour.tourType || 'domestic'}</span>
+        ${tour.isFeatured ? '<span class="admin-card-featured">★ Featured</span>' : ''}
       </div>
       <div class="admin-card-body">
         <h3 class="admin-card-title">${tour.title}</h3>
@@ -1066,9 +1153,10 @@ window.editTour = function(id) {
   
   document.getElementById('tour-id').value = tour.id;
   document.getElementById('tour-title').value = tour.title;
-  document.getElementById('tour-type').value = tour.tourType || 'domestic';
+  document.getElementById('tour-type').value = tour.type || tour.tourType || 'domestic';
   document.getElementById('tour-category').value = tour.category;
   document.getElementById('tour-price').value = tour.price;
+  document.getElementById('tour-featured').checked = tour.isFeatured || false;
   document.getElementById('tour-duration').value = tour.duration || '';
   document.getElementById('tour-group').value = tour.groupSize || '';
   document.getElementById('tour-difficulty').value = tour.difficulty || 'Easy';
@@ -1103,9 +1191,11 @@ window.saveTour = async function() {
     
     const tourData = {
       title: document.getElementById('tour-title').value,
+      type: document.getElementById('tour-type').value,
       tourType: document.getElementById('tour-type').value,
       category: document.getElementById('tour-category').value,
       price: document.getElementById('tour-price').value,
+      isFeatured: document.getElementById('tour-featured').checked,
       duration: document.getElementById('tour-duration').value,
       groupSize: document.getElementById('tour-group').value,
       difficulty: document.getElementById('tour-difficulty').value,
