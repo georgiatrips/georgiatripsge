@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tours – Georgia Trips</title>
-<meta name="description" content="Explore one-day tours, multi-day packages, flexible excursions and upcoming scheduled departures across Georgia.">
+<title>International Tours – Georgia Trips</title>
+<meta name="description" content="Explore international tours from Georgia - multi-country adventures and cross-border experiences.">
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="tours-page.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 </head>
 <body>
 
-<!-- ── NAVBAR ─────────────────────────────────────────────── -->
+<!-- NAVBAR -->
 <nav class="navbar">
   <a href="index.html" class="nav-logo">
     <div class="logo-icon"><img src="logo.png" alt="Georgia Trips Logo" class="logo-img"></div>
@@ -20,10 +20,10 @@
   <div class="nav-links">
     <a href="index.html">Home</a>
     <div class="nav-dropdown">
-      <button class="nav-dropdown-btn active">Tours ▼</button>
+      <button class="nav-dropdown-btn active">Tours</button>
       <div class="dropdown-menu">
-        <a href="domestic-tours.html">🏔️ Domestic Tours</a>
-        <a href="international-tours.html">✈️ International Tours</a>
+        <a href="domestic-tours.html">Domestic Tours</a>
+        <a href="international-tours.html" class="active">International Tours</a>
       </div>
     </div>
     <a href="cars.html">Cars</a>
@@ -44,50 +44,53 @@
   </button>
 </nav>
 
-<!-- ── PAGE HERO ──────────────────────────────────────────── -->
+<!-- PAGE HERO -->
 <div class="page-hero">
-  <span class="section-tag">Curated Experiences</span>
-  <h1>Our Tours</h1>
-  <p>From ancient monasteries to towering peaks — explore Georgia your way with handcrafted experiences for every traveller.</p>
+  <span class="section-tag">Explore Beyond Borders</span>
+  <h1>International Tours</h1>
+  <p>Discover amazing destinations beyond Georgia with our international tour packages - from neighboring countries to worldwide adventures.</p>
   <div class="breadcrumb">
     <a href="index.html">Home</a>
     <span class="sep">&#8250;</span>
-    <span class="current">Tours</span>
+    <a href="tours.html">Tours</a>
+    <span class="sep">&#8250;</span>
+    <span class="current">International Tours</span>
   </div>
 </div>
 
-<!-- ── TOUR FILTER SECTION ────────────────────────────────── -->
+<!-- TOUR FILTER SECTION -->
 <section class="filter-section">
   <div class="container">
 
     <div class="section-header">
       <span class="section-tag">Browse</span>
-      <h2>Find Your Perfect Tour</h2>
-      <p>Select a category below to explore the right experience for your schedule, group and adventure level.</p>
+      <h2>Find Your Perfect Adventure</h2>
+      <p>Select a category below to explore international travel experiences.</p>
       <div class="divider"></div>
     </div>
 
-    <!-- Filter tabs — built by tours-page.js -->
+    <!-- Filter tabs -->
     <div class="filter-tabs-wrapper" role="tablist" aria-label="Tour categories">
       <div id="tab-indicator" aria-hidden="true"></div>
       <div id="tours-filter-tabs" style="display:flex;gap:4px;width:100%;"></div>
     </div>
 
-    <!-- Category description bar -->
-    <div id="tours-category-bar"></div>
-
     <!-- Results count -->
     <div class="tours-meta-row">
-      <span id="tours-result-count"></span>
+      <span id="tours-result-count">Loading tours...</span>
     </div>
 
-    <!-- Tour grid — only selected category shown -->
-    <div id="tours-filter-grid" role="list" aria-live="polite" aria-label="Tour results"></div>
+    <!-- Tour grid -->
+    <div id="tours-filter-grid" role="list" aria-live="polite" aria-label="Tour results">
+      <div class="tours-empty">
+        <div class="tours-empty__icon">Loading...</div>
+      </div>
+    </div>
 
   </div>
 </section>
 
-<!-- ── WHY CHOOSE US ──────────────────────────────────────── -->
+<!-- WHY CHOOSE US -->
 <section style="background:var(--dark-blue);padding:4.5rem 2rem;">
   <div class="container">
     <div class="section-header">
@@ -99,28 +102,28 @@
       <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:2rem;text-align:center;">
         <div style="font-size:2.5rem;margin-bottom:1rem;">&#127956;</div>
         <h4 style="font-family:'Montserrat',sans-serif;color:var(--white);font-weight:700;margin-bottom:0.5rem;">Expert Local Guides</h4>
-        <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Certified, bilingual guides with deep knowledge of Georgian history, culture and terrain.</p>
+        <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Certified, bilingual guides with deep knowledge of each destination.</p>
       </div>
       <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:2rem;text-align:center;">
         <div style="font-size:2.5rem;margin-bottom:1rem;">&#128654;</div>
         <h4 style="font-family:'Montserrat',sans-serif;color:var(--white);font-weight:700;margin-bottom:0.5rem;">Comfortable Transport</h4>
-        <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Modern, air-conditioned vehicles maintained to the highest safety standards for every route.</p>
+        <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Modern, air-conditioned vehicles and comfortable travel arrangements.</p>
       </div>
       <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:2rem;text-align:center;">
         <div style="font-size:2.5rem;margin-bottom:1rem;">&#128176;</div>
         <h4 style="font-family:'Montserrat',sans-serif;color:var(--white);font-weight:700;margin-bottom:0.5rem;">Best Price Guarantee</h4>
-        <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Transparent pricing, no hidden fees, and a price-match promise on comparable tours.</p>
+        <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Transparent pricing, no hidden fees, and competitive international rates.</p>
       </div>
       <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:2rem;text-align:center;">
         <div style="font-size:2.5rem;margin-bottom:1rem;">&#128274;</div>
         <h4 style="font-family:'Montserrat',sans-serif;color:var(--white);font-weight:700;margin-bottom:0.5rem;">Safe &amp; Insured</h4>
-        <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Every tour includes travel insurance coverage, first aid and 24/7 emergency support.</p>
+        <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Every tour includes international travel insurance and 24/7 support.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── FOOTER ─────────────────────────────────────────────── -->
+<!-- FOOTER -->
 <footer class="footer">
   <div class="footer-grid">
     <div class="footer-brand">
@@ -150,27 +153,26 @@
     <div class="footer-col">
       <h4>Tour Types</h4>
       <ul>
-        <li><a href="domestic-tours.html">One-Day Tours</a></li>
-        <li><a href="international-tours.html">Multi-Day Tours</a></li>
-        <li><a href="tours.html">Fixed Tours</a></li>
+        <li><a href="domestic-tours.html">Domestic Tours</a></li>
+        <li><a href="international-tours.html">International Tours</a></li>
       </ul>
     </div>
     <div class="footer-col">
       <h4>Contact</h4>
-      <div class="footer-contact-item"><span class="icon">📍</span><span>27 Kutaisi St, Batumi 6010</span></div>
-      <div class="footer-contact-item"><span class="icon">📞</span><span>+995 504 22 00 20</span></div>
-      <div class="footer-contact-item"><span class="icon">✉️</span><span>georgiatrips5@gmail.com</span></div>
-      <div class="footer-contact-item"><span class="icon">🕐</span><span>Mon – Sun: 10:00 – 19:00</span></div>
+      <div class="footer-contact-item"><span class="icon">&#128205;</span><span>27 Kutaisi St, Batumi 6010</span></div>
+      <div class="footer-contact-item"><span class="icon">&#128222;</span><span>+995 504 22 00 20</span></div>
+      <div class="footer-contact-item"><span class="icon">&#9993;</span><span>georgiatrips5@gmail.com</span></div>
+      <div class="footer-contact-item"><span class="icon">&#128336;</span><span>Mon – Sun: 10:00 – 19:00</span></div>
     </div>
   </div>
   <div class="footer-bottom">
-    <p>© 2026 Georgia Trips. All rights reserved.</p>
-    <p><a href="#">Privacy Policy</a> · <a href="#">Terms</a></p>
+    <p>&copy; 2026 Georgia Trips. All rights reserved.</p>
+    <p><a href="#">Privacy Policy</a> &middot; <a href="#">Terms</a></p>
     <p>developed by <a href="https://www.instagram.com/lominadzee10/" target="_blank">lominadzee10</a></p>
   </div>
 </footer>
 
-<!-- ── BOOKING MODAL ──────────────────────────────────────── -->
+<!-- BOOKING MODAL -->
 <div class="modal-backdrop" id="book-modal" role="dialog" aria-modal="true" aria-labelledby="modal-tour-name">
   <div class="modal">
     <button class="modal-close" aria-label="Close">&#10005;</button>
@@ -187,11 +189,214 @@
   </div>
 </div>
 
-<!-- Scripts: shared → data → page module -->
-<script src="script.js"></script>
-  <script src="tours-data.js"></script>
-  <script src="tours-page.js"></script>
-  <script type="module" src="auth.js"></script>
-  
-  </body>
-  </html>
+<script type="module" src="script.js"></script>
+<script type="module" src="auth.js"></script>
+<script type="module">
+import { getTours } from './firebase-config.js';
+
+// Tour type filter
+const TOUR_TYPE = 'international';
+
+// Categories
+const TOUR_CATEGORIES = [
+  { key: 'one-day', label: 'One-Day Tours' },
+  { key: 'multi-day', label: 'Multi-Day Tours' },
+  { key: 'fixed', label: 'Fixed Tours' }
+];
+
+let allTours = [];
+let activeCategory = 'one-day';
+
+// Helper functions
+function getDifficultyColor(difficulty) {
+  const map = {
+    'Easy': { bg: 'rgba(46,196,182,0.12)', color: '#0e9488', border: 'rgba(46,196,182,0.3)' },
+    'Moderate': { bg: 'rgba(244,180,0,0.12)', color: '#b38000', border: 'rgba(244,180,0,0.3)' },
+    'Challenging': { bg: 'rgba(220,60,60,0.1)', color: '#c03030', border: 'rgba(220,60,60,0.25)' }
+  };
+  return map[difficulty] || map['Easy'];
+}
+
+function formatHighlights(highlights) {
+  if (!highlights || !highlights.length) return '';
+  return highlights.map(h => `<li class="tour-highlight"><span class="highlight-dot"></span>${h}</li>`).join('');
+}
+
+function renderTourCard(tour) {
+  const diff = getDifficultyColor(tour.difficulty);
+  return `
+    <article class="tour-card tour-card--standard" data-id="${tour.id}">
+      <div class="tour-card__img-wrap">
+        <img src="${tour.img}" alt="${tour.title}" loading="lazy" class="tour-card__img">
+        <div class="tour-card__overlay"></div>
+        <div class="tour-card__top-badges">
+          <span class="tour-badge tour-badge--duration">&#9201; ${tour.duration || '1 Day'}</span>
+        </div>
+        <span class="tour-badge tour-badge--difficulty" style="
+          background:${diff.bg}; color:${diff.color}; border:1px solid ${diff.border};
+          position:absolute; bottom:0.85rem; left:0.85rem;
+        ">${tour.difficulty || 'Easy'}</span>
+      </div>
+      <div class="tour-card__body">
+        <h3 class="tour-card__title">${tour.title}</h3>
+        <p class="tour-card__desc">${tour.desc}</p>
+        <ul class="tour-highlights">
+          ${formatHighlights(tour.highlights)}
+        </ul>
+        <div class="tour-card__footer">
+          <div class="tour-card__meta">
+            <span class="tour-meta-item">&#128101; ${tour.groupSize || 'Up to 10'}</span>
+          </div>
+          <div class="tour-card__price-block">
+            <span class="tour-price">${tour.price}</span>
+            <span class="tour-price-label">per person</span>
+          </div>
+        </div>
+        <button class="btn-book" onclick="openBookModal('${tour.title}', '${tour.price}')">
+          Book This Tour <span class="btn-arrow">&#8594;</span>
+        </button>
+      </div>
+    </article>`;
+}
+
+function renderEmptyState(categoryLabel) {
+  return `
+    <div class="tours-empty">
+      <div class="tours-empty__icon">&#128506;</div>
+      <h3>No tours found</h3>
+      <p>No ${categoryLabel} are available right now.<br>Check back soon or <a href="contact.html">contact us</a> for a custom trip.</p>
+    </div>`;
+}
+
+function getFilteredTours(categoryKey) {
+  return allTours.filter(t => t.tourType === TOUR_TYPE && t.category === categoryKey);
+}
+
+function getTourCount(categoryKey) {
+  return getFilteredTours(categoryKey).length;
+}
+
+function renderToursGrid(categoryKey) {
+  const grid = document.getElementById('tours-filter-grid');
+  const countEl = document.getElementById('tours-result-count');
+  if (!grid) return;
+
+  const tours = getFilteredTours(categoryKey);
+  const cat = TOUR_CATEGORIES.find(c => c.key === categoryKey);
+  const label = cat ? cat.label : 'Tours';
+
+  if (countEl) {
+    countEl.textContent = tours.length === 1
+      ? `1 tour found`
+      : `${tours.length} tours found`;
+  }
+
+  grid.classList.add('grid--exit');
+
+  setTimeout(() => {
+    if (tours.length === 0) {
+      grid.innerHTML = renderEmptyState(label);
+    } else {
+      grid.innerHTML = tours.map(renderTourCard).join('');
+    }
+    grid.classList.remove('grid--exit');
+    grid.classList.add('grid--enter');
+
+    const cards = grid.querySelectorAll('.tour-card');
+    cards.forEach((card, i) => {
+      card.style.animationDelay = `${i * 60}ms`;
+    });
+
+    setTimeout(() => {
+      grid.classList.remove('grid--enter');
+    }, 400 + cards.length * 60);
+  }, 220);
+}
+
+function buildFilterTabs() {
+  const container = document.getElementById('tours-filter-tabs');
+  if (!container) return;
+
+  container.innerHTML = TOUR_CATEGORIES.map(cat => {
+    const count = getTourCount(cat.key);
+    const isActive = cat.key === activeCategory;
+    return `
+      <button
+        class="filter-tab${isActive ? ' filter-tab--active' : ''}"
+        data-category="${cat.key}"
+        aria-pressed="${isActive}"
+      >
+        <span class="filter-tab__label">${cat.label}</span>
+        <span class="filter-tab__count">${count}</span>
+      </button>`;
+  }).join('');
+
+  container.querySelectorAll('.filter-tab').forEach(btn => {
+    btn.addEventListener('click', () => handleTabClick(btn.dataset.category));
+  });
+}
+
+function handleTabClick(categoryKey) {
+  if (categoryKey === activeCategory) return;
+  activeCategory = categoryKey;
+
+  document.querySelectorAll('.filter-tab').forEach(btn => {
+    const isActive = btn.dataset.category === categoryKey;
+    btn.classList.toggle('filter-tab--active', isActive);
+    btn.setAttribute('aria-pressed', isActive);
+  });
+
+  moveActiveIndicator(categoryKey);
+  renderToursGrid(categoryKey);
+}
+
+function moveActiveIndicator(categoryKey) {
+  const activeBtn = document.querySelector(`.filter-tab[data-category="${categoryKey}"]`);
+  const indicator = document.getElementById('tab-indicator');
+  if (!activeBtn || !indicator) return;
+
+  const btnRect = activeBtn.getBoundingClientRect();
+  const containerRect = activeBtn.closest('.filter-tabs-wrapper').getBoundingClientRect();
+
+  indicator.style.left = `${btnRect.left - containerRect.left}px`;
+  indicator.style.width = `${btnRect.width}px`;
+}
+
+// Book modal functions
+window.openBookModal = function(name, price) {
+  document.getElementById('modal-tour-name').textContent = name;
+  document.getElementById('modal-tour-price').textContent = price;
+  document.getElementById('book-modal').classList.add('open');
+};
+
+window.closeModal = function() {
+  document.getElementById('book-modal').classList.remove('open');
+};
+
+// Initialize
+async function init() {
+  try {
+    allTours = await getTours();
+    buildFilterTabs();
+    renderToursGrid(activeCategory);
+    requestAnimationFrame(() => moveActiveIndicator(activeCategory));
+    
+    window.addEventListener('resize', () => {
+      moveActiveIndicator(activeCategory);
+    });
+  } catch (error) {
+    console.error('Error loading tours:', error);
+    document.getElementById('tours-filter-grid').innerHTML = `
+      <div class="tours-empty">
+        <div class="tours-empty__icon">&#9888;</div>
+        <h3>Error loading tours</h3>
+        <p>Please try again later.</p>
+      </div>`;
+  }
+}
+
+init();
+</script>
+
+</body>
+</html>

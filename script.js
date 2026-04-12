@@ -1,130 +1,82 @@
-// ===== DATA =====
-const toursData = [
-  {
-    id: 1, category: 'oneday',
-    title: 'Mtskheta & Jvari Monastery',
-    price: '$49', perPerson: true,
-    desc: 'Visit Georgia\'s ancient capital and the iconic Jvari Church overlooking the confluence of two great rivers.',
-    img: 'https://images.unsplash.com/photo-1587826080692-f439cd0b70da?w=600&q=80',
-    duration: '1 Day', group: 'Up to 10'
-  },
-  {
-    id: 2, category: 'oneday',
-    title: 'Kakheti Wine Region',
-    price: '$65', perPerson: true,
-    desc: 'Explore the cradle of wine, visit cellars, taste local Rkatsiteli and Saperavi vintages in beautiful valleys.',
-    img: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=600&q=80',
-    duration: '1 Day', group: 'Up to 12'
-  },
-  {
-    id: 3, category: 'oneday',
-    title: 'Kazbegi Mountain Day',
-    price: '$79', perPerson: true,
-    desc: 'Journey to the majestic Kazbegi region, see Gergeti Trinity Church and breathtaking Caucasus peaks.',
-    img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
-    duration: '1 Day', group: 'Up to 8'
-  },
-  {
-    id: 4, category: 'full',
-    title: 'Best of Georgia – 5 Days',
-    price: '$420', perPerson: true,
-    desc: 'Tbilisi, Mtskheta, Gori, Uplistsikhe cave city, Borjomi spa resort and the Surami Fortress. A journey through history.',
-    img: 'https://images.unsplash.com/photo-1565008576549-57569a49371d?w=600&q=80',
-    duration: '5 Days', group: 'Up to 8'
-  },
-  {
-    id: 5, category: 'full',
-    title: 'Mountains & Coast – 7 Days',
-    price: '$680', perPerson: true,
-    desc: 'From the snowy peaks of Kazbegi to the subtropical beaches of Batumi — experience Georgia\'s full range.',
-    img: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&q=80',
-    duration: '7 Days', group: 'Up to 10'
-  },
-  {
-    id: 6, category: 'full',
-    title: 'Hidden Georgia – 10 Days',
-    price: '$990', perPerson: true,
-    desc: 'Off-the-beaten-path villages, Svaneti towers, Mestia, Ushguli, Tusheti highlands and secret gorges.',
-    img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&q=80',
-    duration: '10 Days', group: 'Up to 6'
-  }
-];
+// ===== DATA (loaded from Firebase) =====
+let toursData = [];
+let carsData = [];
+let postsData = [];
+let featuredData = [];
 
-const carsData = [
-  {
-    id: 1, type: 'SUV',
-    title: 'Toyota Land Cruiser 200',
-    info: 'Perfect for mountain roads and off-road adventures. Powerful, spacious and reliable for any terrain Georgia offers.',
-    img: 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=600&q=80',
-    seats: '7 Seats', ac: 'Full A/C', drive: '4x4 Drive', price: '$180/day'
-  },
-  {
-    id: 2, type: 'Minivan',
-    title: 'Mercedes Sprinter',
-    info: 'Ideal for group travel. Comfortable seating with luggage space, air conditioning, and WiFi on board.',
-    img: 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=600&q=80',
-    seats: '14 Seats', ac: 'Climate', drive: 'Auto', price: '$220/day'
-  },
-  {
-    id: 3, type: 'Sedan',
-    title: 'Mercedes E-Class',
-    info: 'Premium comfort for VIP transfers and city tours. Professional driver, bottled water, and leather interior.',
-    img: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=600&q=80',
-    seats: '3 Seats', ac: 'Full A/C', drive: 'Auto', price: '$140/day'
-  },
-  {
-    id: 4, type: 'SUV',
-    title: 'Mitsubishi Delica',
-    info: 'A beloved 4WD van for adventurous groups heading to Svaneti, Tusheti or any remote mountain destination.',
-    img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80',
-    seats: '8 Seats', ac: 'A/C', drive: '4WD', price: '$160/day'
-  }
-];
+// Firebase Firestore imports
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { 
+  getFirestore, 
+  collection, 
+  getDocs, 
+  query, 
+  orderBy 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-const postsData = [
-  {
-    id: 1, category: 'Culture',
-    title: 'Georgian Polyphonic Singing: A Living Heritage',
-    text: 'Discover the ancient art of Georgian polyphony, recognized by UNESCO, and where to experience it live in Tbilisi and the villages.',
-    img: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80',
-    date: 'Apr 2025', readTime: '5 min read'
-  },
-  {
-    id: 2, category: 'Food',
-    title: 'The Ultimate Guide to Georgian Food & Khinkali',
-    text: 'From khachapuri to churchkhela, we guide you through the unmissable dishes and the best spots to eat like a local in Tbilisi.',
-    img: 'https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=600&q=80',
-    date: 'Mar 2025', readTime: '7 min read'
-  },
-  {
-    id: 3, category: 'Adventure',
-    title: 'Trekking in Svaneti: What No One Tells You',
-    text: 'Honest advice about trekking Georgia\'s most remote highland — the trails, weather, guesthouses, and the incredible Ushguli village.',
-    img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80',
-    date: 'Feb 2025', readTime: '9 min read'
-  },
-  {
-    id: 4, category: 'Travel Tips',
-    title: 'Tbilisi in 48 Hours: The Perfect Itinerary',
-    text: 'Two days isn\'t long, but with this guide you\'ll cover the Old Town, Narikala, Rustaveli Avenue, and the best rooftop bars.',
-    img: 'https://images.unsplash.com/photo-1565008576549-57569a49371d?w=600&q=80',
-    date: 'Jan 2025', readTime: '6 min read'
-  },
-  {
-    id: 5, category: 'Wine',
-    title: 'Qvevri Wine: Ancient Tradition in a Clay Pot',
-    text: 'Georgia invented wine 8,000 years ago. We explore the Kakheti region\'s natural winemakers and the unique qvevri clay vessel method.',
-    img: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=600&q=80',
-    date: 'Dec 2024', readTime: '8 min read'
-  },
-  {
-    id: 6, category: 'School Tours',
-    title: 'Planning a School Excursion to Georgia: Full Guide',
-    text: 'Everything teachers and parents need to know about bringing students to Georgia — safety, logistics, educational value, and budgeting.',
-    img: 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=600&q=80',
-    date: 'Nov 2024', readTime: '10 min read'
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAuLpaONrIUwnJJ3ycgzWWlSTiujotfo4U",
+  authDomain: "georgiatripsge.firebaseapp.com",
+  projectId: "georgiatripsge",
+  storageBucket: "georgiatripsge.firebasestorage.app",
+  messagingSenderId: "458133209260",
+  appId: "1:458133209260:web:884340052c037e6fcd9f09",
+  measurementId: "G-KVGPVEVHQ0"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ===== FETCH DATA FROM FIREBASE =====
+async function fetchToursFromFirebase() {
+  try {
+    const toursRef = collection(db, 'tours');
+    const q = query(toursRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error fetching tours:', error);
+    return [];
   }
-];
+}
+
+async function fetchCarsFromFirebase() {
+  try {
+    const carsRef = collection(db, 'cars');
+    const q = query(carsRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error fetching cars:', error);
+    return [];
+  }
+}
+
+async function fetchPostsFromFirebase() {
+  try {
+    const postsRef = collection(db, 'posts');
+    const q = query(postsRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    return [];
+  }
+}
+
+async function fetchFeaturedFromFirebase() {
+  try {
+    const featuredRef = collection(db, 'featuredTours');
+    const q = query(featuredRef, orderBy('order', 'asc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error fetching featured tours:', error);
+    return [];
+  }
+}
 
 // ===== NAVBAR =====
 function initNavbar() {
@@ -158,8 +110,8 @@ function initNavbar() {
     }
     
     // Close dropdown when clicking a link
-    const links = dropdown.querySelectorAll('.dropdown-menu a');
-    links.forEach(link => {
+    const dLinks = dropdown.querySelectorAll('.dropdown-menu a');
+    dLinks.forEach(link => {
       link.addEventListener('click', () => {
         menu.style.opacity = '0';
         menu.style.visibility = 'hidden';
@@ -176,14 +128,25 @@ function initNavbar() {
 
 // ===== TOUR CARDS =====
 function renderTourCard(tour) {
-  const badge = tour.category === 'oneday'
-    ? `<span class="tour-card-badge badge-oneday">One Day</span>`
-    : `<span class="tour-card-badge badge-full">Full Package</span>`;
+  let badgeClass = 'badge-oneday';
+  let badgeText = 'One Day';
+  
+  if (tour.category === 'multi-day' || tour.category === 'full') {
+    badgeClass = 'badge-full';
+    badgeText = 'Multi Day';
+  } else if (tour.category === 'flexible') {
+    badgeClass = 'badge-full';
+    badgeText = 'Flexible';
+  } else if (tour.category === 'upcoming') {
+    badgeClass = 'badge-full';
+    badgeText = 'Upcoming';
+  }
+  
   return `
     <div class="tour-card" data-category="${tour.category}">
       <div class="tour-card-img">
         <img src="${tour.img}" alt="${tour.title}" loading="lazy">
-        ${badge}
+        <span class="tour-card-badge ${badgeClass}">${badgeText}</span>
       </div>
       <div class="tour-card-body">
         <h3 class="tour-card-title">${tour.title}</h3>
@@ -200,21 +163,21 @@ function renderTours(filter = 'all') {
   const grid = document.getElementById('tours-grid');
   if (!grid) return;
   const filtered = filter === 'all' ? toursData : toursData.filter(t => t.category === filter);
-  grid.innerHTML = filtered.map(renderTourCard).join('');
+  grid.innerHTML = filtered.length > 0 ? filtered.map(renderTourCard).join('') : '<p style="text-align:center;color:var(--text-mid);grid-column:1/-1;">No tours available yet.</p>';
 }
 
 function renderDomesticTours() {
   const grid = document.getElementById('domestic-tours-grid');
   if (!grid) return;
-  const domesticTours = toursData.filter(tour => tour.category === 'oneday');
-  grid.innerHTML = domesticTours.map(renderTourCard).join('');
+  const domesticTours = toursData.filter(tour => tour.category === 'one-day' || tour.category === 'oneday');
+  grid.innerHTML = domesticTours.length > 0 ? domesticTours.map(renderTourCard).join('') : '<p style="text-align:center;color:var(--text-mid);">No domestic tours available yet. Check back soon!</p>';
 }
 
 function renderInternationalTours() {
   const grid = document.getElementById('international-tours-grid');
   if (!grid) return;
-  const internationalTours = toursData.filter(tour => tour.category === 'full');
-  grid.innerHTML = internationalTours.map(renderTourCard).join('');
+  const internationalTours = toursData.filter(tour => tour.category === 'multi-day' || tour.category === 'full');
+  grid.innerHTML = internationalTours.length > 0 ? internationalTours.map(renderTourCard).join('') : '<p style="text-align:center;color:var(--text-mid);">No international tours available yet. Check back soon!</p>';
 }
 
 function initTourTabs() {
@@ -238,11 +201,11 @@ function renderCarCard(car) {
       <div class="car-card-body">
         <span class="car-type-badge">${car.type}</span>
         <h3 class="car-card-title">${car.title}</h3>
-        <p class="car-card-info">${car.info}</p>
+        <p class="car-card-info">${car.info || car.desc || ''}</p>
         <div class="car-features">
-          <span class="car-feature">🪑 ${car.seats}</span>
-          <span class="car-feature">❄️ ${car.ac}</span>
-          <span class="car-feature">🚗 ${car.drive}</span>
+          <span class="car-feature">${car.seats || ''}</span>
+          <span class="car-feature">${car.ac || ''}</span>
+          <span class="car-feature">${car.drive || ''}</span>
         </div>
       </div>
     </div>`;
@@ -251,7 +214,7 @@ function renderCarCard(car) {
 function renderCars(containerId = 'cars-grid') {
   const grid = document.getElementById(containerId);
   if (!grid) return;
-  grid.innerHTML = carsData.map(renderCarCard).join('');
+  grid.innerHTML = carsData.length > 0 ? carsData.map(renderCarCard).join('') : '<p style="text-align:center;color:rgba(255,255,255,0.6);">No vehicles available yet.</p>';
 }
 
 // ===== CAR FULL CARDS (cars page) =====
@@ -265,15 +228,15 @@ function renderCarFullCard(car) {
       </div>
       <div class="tour-card__body">
         <h3 class="tour-card__title">${car.title}</h3>
-        <p class="tour-card__desc">${car.info} Whether you need airport transfers, city tours, or multi-day mountain excursions, we ensure comfort and safety throughout.</p>
+        <p class="tour-card__desc">${car.info || car.desc || ''} Whether you need airport transfers, city tours, or multi-day mountain excursions, we ensure comfort and safety throughout.</p>
         <ul class="tour-highlights">
-          <li class="tour-highlight"><span class="highlight-dot"></span>${car.seats}</li>
-          <li class="tour-highlight"><span class="highlight-dot"></span>${car.ac}</li>
-          <li class="tour-highlight"><span class="highlight-dot"></span>${car.drive}</li>
+          <li class="tour-highlight"><span class="highlight-dot"></span>${car.seats || 'Comfortable seating'}</li>
+          <li class="tour-highlight"><span class="highlight-dot"></span>${car.ac || 'Air Conditioning'}</li>
+          <li class="tour-highlight"><span class="highlight-dot"></span>${car.drive || 'Professional Driver'}</li>
         </ul>
         <div class="tour-card__footer">
           <div class="tour-card__meta">
-            <span class="tour-meta-item">✅ Driver included</span>
+            <span class="tour-meta-item">Driver included</span>
           </div>
           <div class="tour-card__price-block">
             <span class="tour-price">${car.price}</span>
@@ -281,7 +244,7 @@ function renderCarFullCard(car) {
           </div>
         </div>
         <button class="btn-book" onclick="openBookModal('${car.title} Transfer','Contact Us')">
-          Book This Vehicle <span class="btn-arrow">→</span>
+          Book This Vehicle <span class="btn-arrow">-></span>
         </button>
       </div>
     </article>`;
@@ -297,12 +260,12 @@ function renderPostCard(post) {
       </div>
       <div class="post-card-body">
         <div class="post-meta">
-          <span>📅 ${post.date}</span>
-          <span>⏱ ${post.readTime}</span>
+          <span>${post.date || ''}</span>
+          <span>${post.readTime || ''}</span>
         </div>
         <h3 class="post-card-title">${post.title}</h3>
-        <p class="post-card-text">${post.text}</p>
-        <span class="post-read-more">Read More →</span>
+        <p class="post-card-text">${post.text || post.content || ''}</p>
+        <span class="post-read-more">Read More -></span>
       </div>
     </div>`;
 }
@@ -311,7 +274,39 @@ function renderPosts(containerId = 'posts-grid', count = null) {
   const grid = document.getElementById(containerId);
   if (!grid) return;
   const data = count ? postsData.slice(0, count) : postsData;
-  grid.innerHTML = data.map(renderPostCard).join('');
+  grid.innerHTML = data.length > 0 ? data.map(renderPostCard).join('') : '<p style="text-align:center;color:var(--text-mid);grid-column:1/-1;">No posts available yet.</p>';
+}
+
+// ===== FEATURED SLIDER =====
+function renderFeaturedSlider() {
+  const slider = document.getElementById('featured-slider');
+  if (!slider) return;
+  
+  if (featuredData.length === 0) {
+    slider.innerHTML = '<p style="text-align:center;color:var(--text-mid);padding:3rem;">No featured offers available yet.</p>';
+    return;
+  }
+  
+  slider.innerHTML = featuredData.map((featured, index) => `
+    <div class="featured-card" data-featured="${index}" ${index === 0 ? 'style="display:grid;"' : ''}>
+      <div class="featured-img">
+        <img src="${featured.img}" alt="${featured.title}" loading="lazy">
+        <span class="featured-badge">${featured.badge}</span>
+      </div>
+      <div class="featured-body">
+        <div class="tag">${featured.tag}</div>
+        <h3>${featured.title}</h3>
+        <p>${featured.desc}</p>
+        <div class="featured-meta">
+          ${(featured.meta || []).map(m => `<span><span class="icon"></span>${m}</span>`).join('')}
+        </div>
+        <a href="tours.html" class="btn-primary">Learn More -></a>
+      </div>
+    </div>
+  `).join('');
+  
+  // Reinitialize slider after rendering
+  initFeaturedSlider();
 }
 
 // ===== WEATHER =====
@@ -323,7 +318,7 @@ async function fetchWeather() {
   const lat = 41.6938, lon = 44.8015, city = 'Tbilisi, Georgia';
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relativehumidity_2m,windspeed_10m&timezone=Asia%2FTbilisi`;
 
-  const weatherIcons = { 0:'☀️', 1:'🌤️', 2:'⛅', 3:'☁️', 45:'🌫️', 48:'🌫️', 51:'🌦️', 53:'🌦️', 55:'🌧️', 61:'🌧️', 63:'🌧️', 65:'🌧️', 71:'❄️', 73:'❄️', 75:'❄️', 80:'🌦️', 81:'🌧️', 82:'⛈️', 95:'⛈️', 96:'⛈️', 99:'⛈️' };
+  const weatherIcons = { 0:'Clear', 1:'Mainly clear', 2:'Partly cloudy', 3:'Overcast', 45:'Foggy', 48:'Foggy', 51:'Light drizzle', 53:'Drizzle', 55:'Heavy drizzle', 61:'Slight rain', 63:'Moderate rain', 65:'Heavy rain', 71:'Light snow', 73:'Moderate snow', 75:'Heavy snow', 80:'Light showers', 81:'Moderate showers', 82:'Heavy showers', 95:'Thunderstorm', 96:'Thunderstorm', 99:'Thunderstorm' };
   const weatherDescs = { 0:'Clear sky', 1:'Mainly clear', 2:'Partly cloudy', 3:'Overcast', 45:'Foggy', 48:'Foggy', 51:'Light drizzle', 53:'Drizzle', 55:'Heavy drizzle', 61:'Slight rain', 63:'Moderate rain', 65:'Heavy rain', 71:'Light snow', 73:'Moderate snow', 75:'Heavy snow', 80:'Light showers', 81:'Moderate showers', 82:'Heavy showers', 95:'Thunderstorm', 96:'Thunderstorm', 99:'Thunderstorm' };
 
   try {
@@ -331,7 +326,7 @@ async function fetchWeather() {
     const data = await res.json();
     const cw = data.current_weather;
     const code = cw.weathercode;
-    const icon = weatherIcons[code] || '🌡️';
+    const icon = getWeatherIcon(code);
     const desc = weatherDescs[code] || 'Unknown';
     const wind = Math.round(cw.windspeed);
 
@@ -339,17 +334,22 @@ async function fetchWeather() {
       <div class="weather-left">
         <h3>Current Weather</h3>
         <div class="city">${city}</div>
-        <div class="weather-temp">${Math.round(cw.temperature)}°C</div>
+        <div class="weather-temp">${Math.round(cw.temperature)}C</div>
         <div class="weather-desc">${desc}</div>
         <div class="weather-details">
-          <div class="weather-detail"><span>💨 Wind: ${wind} km/h</span></div>
-          <div class="weather-detail"><span>🕐 Updated live</span></div>
+          <div class="weather-detail"><span>Wind: ${wind} km/h</span></div>
+          <div class="weather-detail"><span>Updated live</span></div>
         </div>
       </div>
       <div class="weather-icon-large">${icon}</div>`;
   } catch {
-    widget.innerHTML = `<p class="weather-error">Live weather temporarily unavailable. Tbilisi is typically warm and sunny — perfect for exploring!</p>`;
+    widget.innerHTML = `<p class="weather-error">Live weather temporarily unavailable. Tbilisi is typically warm and sunny - perfect for exploring!</p>`;
   }
+}
+
+function getWeatherIcon(code) {
+  const icons = { 0:'Sun', 1:'Sun/Cloud', 2:'Clouds', 3:'Clouds', 45:'Fog', 48:'Fog', 51:'Rain', 53:'Rain', 55:'Rain', 61:'Rain', 63:'Rain', 65:'Rain', 71:'Snow', 73:'Snow', 75:'Snow', 80:'Rain', 81:'Rain', 82:'Storm', 95:'Storm', 96:'Storm', 99:'Storm' };
+  return icons[code] || 'Weather';
 }
 
 // ===== MODAL =====
@@ -428,25 +428,33 @@ function initFeaturedSlider() {
   if (!slider || !prevBtn || !nextBtn) return;
   
   const cards = slider.querySelectorAll('.featured-card');
+  if (cards.length === 0) return;
+  
   let currentIndex = 0;
   
-  // Create dots
-  cards.forEach((_, i) => {
-    const dot = document.createElement('button');
-    dot.classList.add('slider-dot');
-    if (i === 0) dot.classList.add('active');
-    dot.addEventListener('click', () => goToSlide(i));
-    dotsContainer.appendChild(dot);
-  });
+  // Clear and create dots
+  if (dotsContainer) {
+    dotsContainer.innerHTML = '';
+    cards.forEach((_, i) => {
+      const dot = document.createElement('button');
+      dot.classList.add('slider-dot');
+      if (i === 0) dot.classList.add('active');
+      dot.addEventListener('click', () => goToSlide(i));
+      dotsContainer.appendChild(dot);
+    });
+  }
   
   function updateSlider() {
     cards.forEach((card, i) => {
+      card.style.display = i === currentIndex ? 'grid' : 'none';
       card.classList.toggle('active', i === currentIndex);
     });
-    const dots = dotsContainer.querySelectorAll('.slider-dot');
-    dots.forEach((dot, i) => {
-      dot.classList.toggle('active', i === currentIndex);
-    });
+    if (dotsContainer) {
+      const dots = dotsContainer.querySelectorAll('.slider-dot');
+      dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === currentIndex);
+      });
+    }
   }
   
   function goToSlide(index) {
@@ -505,32 +513,58 @@ function initScrollSlider(gridId, prevId, nextId) {
   window.addEventListener('resize', updateArrowsVisibility);
 }
 
-// ===== INIT =====
-document.addEventListener('DOMContentLoaded', () => {
-  initNavbar();
+// ===== LOAD ALL DATA AND INIT =====
+async function loadDataAndInit() {
+  // Show loading state
+  const domesticGrid = document.getElementById('domestic-tours-grid');
+  const internationalGrid = document.getElementById('international-tours-grid');
+  const carsGrid = document.getElementById('cars-grid');
+  const storiesGrid = document.getElementById('stories-grid');
+  
+  if (domesticGrid) domesticGrid.innerHTML = '<p style="text-align:center;color:var(--text-mid);padding:2rem;">Loading tours...</p>';
+  if (internationalGrid) internationalGrid.innerHTML = '<p style="text-align:center;color:var(--text-mid);padding:2rem;">Loading tours...</p>';
+  if (carsGrid) carsGrid.innerHTML = '<p style="text-align:center;color:rgba(255,255,255,0.6);padding:2rem;">Loading vehicles...</p>';
+  if (storiesGrid) storiesGrid.innerHTML = '<p style="text-align:center;color:var(--text-mid);padding:2rem;">Loading stories...</p>';
+
+  // Fetch all data from Firebase
+  try {
+    [toursData, carsData, postsData, featuredData] = await Promise.all([
+      fetchToursFromFirebase(),
+      fetchCarsFromFirebase(),
+      fetchPostsFromFirebase(),
+      fetchFeaturedFromFirebase()
+    ]);
+  } catch (error) {
+    console.error('Error loading data:', error);
+  }
+
+  // Render everything
   renderDomesticTours();
   renderInternationalTours();
   renderCars('cars-grid');
   renderPosts('stories-grid', 6);
+  renderFeaturedSlider();
+  
   initTourTabs();
   fetchWeather();
   initModal();
   initContactForm();
   
   // Initialize sliders
-  initFeaturedSlider();
   initScrollSlider('domestic-tours-grid', 'domestic-prev', 'domestic-next');
   initScrollSlider('international-tours-grid', 'international-prev', 'international-next');
   initScrollSlider('cars-grid', 'cars-prev', 'cars-next');
 
   // Cars page full list
   const carsStack = document.getElementById('cars-stack');
-  if (carsStack) carsStack.innerHTML = carsData.map(renderCarFullCard).join('');
+  if (carsStack) {
+    carsStack.innerHTML = carsData.length > 0 ? carsData.map(renderCarFullCard).join('') : '<p style="text-align:center;color:var(--text-mid);padding:3rem;">No vehicles available yet.</p>';
+  }
 
   // Tours page full list
   const toursPageGrid = document.getElementById('tours-page-grid');
   if (toursPageGrid) {
-    toursPageGrid.innerHTML = toursData.map(renderTourCard).join('');
+    toursPageGrid.innerHTML = toursData.length > 0 ? toursData.map(renderTourCard).join('') : '<p style="text-align:center;color:var(--text-mid);">No tours available yet.</p>';
     initTourTabsPage();
   }
 
@@ -538,6 +572,12 @@ document.addEventListener('DOMContentLoaded', () => {
   renderPosts('posts-page-grid');
 
   setTimeout(initScrollAnimations, 100);
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+  initNavbar();
+  loadDataAndInit();
 });
 
 function initTourTabsPage() {
@@ -549,8 +589,12 @@ function initTourTabsPage() {
       const filter = btn.dataset.pageFilter;
       const grid = document.getElementById('tours-page-grid');
       const filtered = filter === 'all' ? toursData : toursData.filter(t => t.category === filter);
-      grid.innerHTML = filtered.map(renderTourCard).join('');
+      grid.innerHTML = filtered.length > 0 ? filtered.map(renderTourCard).join('') : '<p style="text-align:center;color:var(--text-mid);">No tours in this category yet.</p>';
       setTimeout(initScrollAnimations, 50);
     });
   });
 }
+
+// Make functions globally available
+window.openBookModal = openBookModal;
+window.closeModal = closeModal;
