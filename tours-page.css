@@ -453,10 +453,15 @@
 
 /* ── RESPONSIVE ──────────────────────────────────────────── */
 @media (max-width: 768px) {
+  .filter-section {
+    padding: 0 0 4rem;
+  }
+
   .filter-tabs-wrapper {
     border-radius: 14px;
     padding: 5px;
     gap: 2px;
+    margin: 0 2rem;
   }
 
   .filter-tab {
@@ -471,7 +476,63 @@
   .filter-tab__count { display: none; }
 
   #tours-filter-grid {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 1rem;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+  #tours-filter-grid::-webkit-scrollbar { display: none; }
+
+  .tour-card {
+    flex: 0 0 100%;
+    min-width: 100%;
+    scroll-snap-align: start;
+  }
+
+  .tour-card__img-wrap {
+    height: 280px;
+  }
+
+  .tour-card--upcoming .tour-card__img-wrap {
+    height: 260px;
+  }
+
+  .tour-card__body {
+    padding: 1.8rem 2rem 2rem;
+  }
+
+  .tour-card__title {
+    font-size: 1.3rem;
+  }
+
+  .tour-card__desc {
+    font-size: 1rem;
+  }
+
+  .tour-highlights {
+    gap: 0.5rem;
+  }
+
+  .tour-highlight {
+    font-size: 0.9rem;
+  }
+
+  .tour-price {
+    font-size: 1.5rem;
+  }
+
+  .btn-book {
+    padding: 1rem 1.2rem;
+    font-size: 1rem;
+  }
+
+  .btn-arrow {
+    font-size: 1.4rem;
   }
 
   .upcoming-header {

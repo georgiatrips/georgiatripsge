@@ -15,26 +15,14 @@ const TOUR_CATEGORIES = [
   {
     key: 'one-day',
     label: 'One-Day Tours',
-    icon: '☀️',
-    description: 'Perfect for tight schedules. Leave in the morning, back by evening — full experiences packed into a single day.',
   },
   {
     key: 'multi-day',
     label: 'Multi-Day Tours',
-    icon: '🏔️',
-    description: 'Immersive journeys spanning 4–10 days. Explore multiple regions with comfortable accommodations included.',
   },
   {
-    key: 'flexible',
-    label: 'Flexible Tours',
-    icon: '🎯',
-    description: 'Custom-built experiences. You choose the route, pace and focus. Ideal for private groups, families and schools.',
-  },
-  {
-    key: 'upcoming',
-    label: 'Upcoming Tours',
-    icon: '📅',
-    description: 'Scheduled departures with fixed dates. Join a small group — all logistics handled, just show up and enjoy.',
+    key: 'fixed',
+    label: 'Fixed Tours',
   },
 ];
 
@@ -161,17 +149,6 @@ function renderEmptyState(categoryLabel) {
     </div>`;
 }
 
-// ── CATEGORY DESCRIPTION BAR ─────────────────────────────────
-function renderCategoryBar(categoryKey) {
-  const cat = TOUR_CATEGORIES.find(c => c.key === categoryKey);
-  if (!cat) return '';
-  return `
-    <div class="category-bar">
-      <span class="category-bar__icon">${cat.icon}</span>
-      <p class="category-bar__text">${cat.description}</p>
-    </div>`;
-}
-
 // ── COUNT BADGE ───────────────────────────────────────────────
 function getTourCount(categoryKey) {
   return TOURS.filter(t => t.category === categoryKey).length;
@@ -197,9 +174,6 @@ function renderToursGrid(categoryKey) {
   const tours = getFilteredTours(categoryKey);
   const cat = TOUR_CATEGORIES.find(c => c.key === categoryKey);
   const label = cat ? cat.label : 'Tours';
-
-  // Update description bar
-  if (descBar) descBar.innerHTML = renderCategoryBar(categoryKey);
 
   // Update count
   if (countEl) {
@@ -249,7 +223,6 @@ function buildFilterTabs() {
         aria-pressed="${isActive}"
         aria-label="${cat.label} — ${count} tours"
       >
-        <span class="filter-tab__icon">${cat.icon}</span>
         <span class="filter-tab__label">${cat.label}</span>
         <span class="filter-tab__count">${count}</span>
       </button>`;

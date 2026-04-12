@@ -56,28 +56,28 @@ const carsData = [
     title: 'Toyota Land Cruiser 200',
     info: 'Perfect for mountain roads and off-road adventures. Powerful, spacious and reliable for any terrain Georgia offers.',
     img: 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=600&q=80',
-    seats: '7 Seats', ac: 'Full A/C', drive: '4x4 Drive'
+    seats: '7 Seats', ac: 'Full A/C', drive: '4x4 Drive', price: '$180/day'
   },
   {
     id: 2, type: 'Minivan',
     title: 'Mercedes Sprinter',
     info: 'Ideal for group travel. Comfortable seating with luggage space, air conditioning, and WiFi on board.',
     img: 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=600&q=80',
-    seats: '14 Seats', ac: 'Climate', drive: 'Auto'
+    seats: '14 Seats', ac: 'Climate', drive: 'Auto', price: '$220/day'
   },
   {
     id: 3, type: 'Sedan',
     title: 'Mercedes E-Class',
     info: 'Premium comfort for VIP transfers and city tours. Professional driver, bottled water, and leather interior.',
     img: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=600&q=80',
-    seats: '3 Seats', ac: 'Full A/C', drive: 'Auto'
+    seats: '3 Seats', ac: 'Full A/C', drive: 'Auto', price: '$140/day'
   },
   {
     id: 4, type: 'SUV',
     title: 'Mitsubishi Delica',
     info: 'A beloved 4WD van for adventurous groups heading to Svaneti, Tusheti or any remote mountain destination.',
     img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80',
-    seats: '8 Seats', ac: 'A/C', drive: '4WD'
+    seats: '8 Seats', ac: 'A/C', drive: '4WD', price: '$160/day'
   }
 ];
 
@@ -257,22 +257,34 @@ function renderCars(containerId = 'cars-grid') {
 // ===== CAR FULL CARDS (cars page) =====
 function renderCarFullCard(car) {
   return `
-    <div class="car-full-card">
-      <div class="car-full-card-img">
-        <img src="${car.img}" alt="${car.title}" loading="lazy">
+    <article class="tour-card tour-card--standard car-full-card" data-id="${car.id}">
+      <div class="tour-card__img-wrap">
+        <img src="${car.img}" alt="${car.title}" loading="lazy" class="tour-card__img">
+        <div class="tour-card__overlay"></div>
+        <span class="tour-badge tour-badge--duration">${car.type}</span>
       </div>
-      <div class="car-full-body">
-        <span class="car-type-badge">${car.type}</span>
-        <h3>${car.title}</h3>
-        <p>${car.info} Whether you need airport transfers, city tours, or multi-day mountain excursions, we ensure comfort and safety throughout.</p>
-        <div class="car-specs">
-          <div class="spec-item"><div class="spec-val">${car.seats.split(' ')[0]}</div><div class="spec-label">Seats</div></div>
-          <div class="spec-item"><div class="spec-val">${car.drive}</div><div class="spec-label">Drive</div></div>
-          <div class="spec-item"><div class="spec-val">${car.ac}</div><div class="spec-label">Climate</div></div>
+      <div class="tour-card__body">
+        <h3 class="tour-card__title">${car.title}</h3>
+        <p class="tour-card__desc">${car.info} Whether you need airport transfers, city tours, or multi-day mountain excursions, we ensure comfort and safety throughout.</p>
+        <ul class="tour-highlights">
+          <li class="tour-highlight"><span class="highlight-dot"></span>${car.seats}</li>
+          <li class="tour-highlight"><span class="highlight-dot"></span>${car.ac}</li>
+          <li class="tour-highlight"><span class="highlight-dot"></span>${car.drive}</li>
+        </ul>
+        <div class="tour-card__footer">
+          <div class="tour-card__meta">
+            <span class="tour-meta-item">✅ Driver included</span>
+          </div>
+          <div class="tour-card__price-block">
+            <span class="tour-price">${car.price}</span>
+            <span class="tour-price-label">per day</span>
+          </div>
         </div>
-        <button class="btn-primary" onclick="openBookModal('${car.title} Transfer','Contact Us')">Inquire Now</button>
+        <button class="btn-book" onclick="openBookModal('${car.title} Transfer','Contact Us')">
+          Book This Vehicle <span class="btn-arrow">→</span>
+        </button>
       </div>
-    </div>`;
+    </article>`;
 }
 
 // ===== POST CARDS =====
@@ -406,17 +418,110 @@ function initScrollAnimations() {
   });
 }
 
+// ===== FEATURED SLIDER =====
+function initFeaturedSlider() {
+  const slider = document.getElementById('featured-slider');
+  const prevBtn = document.getElementById('featured-prev');
+  const nextBtn = document.getElementById('featured-next');
+  const dotsContainer = document.getElementById('featured-dots');
+  
+  if (!slider || !prevBtn || !nextBtn) return;
+  
+  const cards = slider.querySelectorAll('.featured-card');
+  let currentIndex = 0;
+  
+  // Create dots
+  cards.forEach((_, i) => {
+    const dot = document.createElement('button');
+    dot.classList.add('slider-dot');
+    if (i === 0) dot.classList.add('active');
+    dot.addEventListener('click', () => goToSlide(i));
+    dotsContainer.appendChild(dot);
+  });
+  
+  function updateSlider() {
+    cards.forEach((card, i) => {
+      card.classList.toggle('active', i === currentIndex);
+    });
+    const dots = dotsContainer.querySelectorAll('.slider-dot');
+    dots.forEach((dot, i) => {
+      dot.classList.toggle('active', i === currentIndex);
+    });
+  }
+  
+  function goToSlide(index) {
+    currentIndex = index;
+    updateSlider();
+  }
+  
+  function nextSlide() {
+    currentIndex = (currentIndex + 1) % cards.length;
+    updateSlider();
+  }
+  
+  function prevSlide() {
+    currentIndex = (currentIndex - 1 + cards.length) % cards.length;
+    updateSlider();
+  }
+  
+  prevBtn.addEventListener('click', prevSlide);
+  nextBtn.addEventListener('click', nextSlide);
+  
+  // Initialize first slide
+  updateSlider();
+}
+
+// ===== SCROLL SLIDER =====
+function initScrollSlider(gridId, prevId, nextId) {
+  const grid = document.getElementById(gridId);
+  const prevBtn = document.getElementById(prevId);
+  const nextBtn = document.getElementById(nextId);
+  
+  if (!grid || !prevBtn || !nextBtn) return;
+  
+  const scrollAmount = 340;
+  
+  // Check if arrows are needed (more than 3 items or overflow)
+  const updateArrowsVisibility = () => {
+    const hasOverflow = grid.scrollWidth > grid.clientWidth;
+    const hasMoreThan3 = grid.children.length > 3;
+    const showArrows = hasOverflow || hasMoreThan3;
+    prevBtn.style.display = showArrows ? 'flex' : 'none';
+    nextBtn.style.display = showArrows ? 'flex' : 'none';
+  };
+  
+  prevBtn.addEventListener('click', () => {
+    grid.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+  });
+  
+  nextBtn.addEventListener('click', () => {
+    grid.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  });
+  
+  // Initial check
+  updateArrowsVisibility();
+  
+  // Update on window resize
+  window.addEventListener('resize', updateArrowsVisibility);
+}
+
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
   renderDomesticTours();
   renderInternationalTours();
   renderCars('cars-grid');
-  renderPosts('stories-grid', 3);
+  renderPosts('stories-grid', 6);
   initTourTabs();
   fetchWeather();
   initModal();
   initContactForm();
+  
+  // Initialize sliders
+  initFeaturedSlider();
+  initScrollSlider('domestic-tours-grid', 'domestic-prev', 'domestic-next');
+  initScrollSlider('international-tours-grid', 'international-prev', 'international-next');
+  initScrollSlider('cars-grid', 'cars-prev', 'cars-next');
 
   // Cars page full list
   const carsStack = document.getElementById('cars-stack');

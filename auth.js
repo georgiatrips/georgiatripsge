@@ -9,7 +9,12 @@ import {
   signInWithEmailAndPassword,
   updateProfile,
   onAuthStateChanged, 
-  signOut 
+  signOut,
+  sendSignInLinkToEmail,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
@@ -114,7 +119,7 @@ function setupNavbarClick() {
 // Listen for auth state changes on all pages
 onAuthStateChanged(auth, (user) => {
   updateNavbar(user);
-  
+
   // If on login page, update the UI
   if (window.location.pathname.includes('login.html')) {
     updateLoginPageUI(user);
@@ -241,9 +246,19 @@ async function signUpWithEmail(email, password, displayName) {
       displayName: displayName
     });
     
-    showSuccess('Account created! Redirecting...');
-    redirectAfterLogin();
-    return result.user;
+    // გაგზავნოს ვერიფიკაცია და მაშინვე გამოვიდეს სისტემიდან
+    await sendEmailVerification(result.user);
+    await signOut(auth); 
+
+    showSuccess('Account created! Please check your email and verify it before signing in.');
+    
+    // გადავიყვანოთ Sign In ტაბზე რეგისტრაციის შემდეგ
+    if (window.location.pathname.includes('login.html')) {
+      setTimeout(() => {
+        document.querySelector('.auth-tab[data-tab="signin"]').click();
+      }, 3000);
+    }
+    return null;
   } catch (error) {
     console.error('Email sign up error:', error);
     let errorText = 'Failed to create account. Please try again.';
@@ -261,10 +276,35 @@ async function signUpWithEmail(email, password, displayName) {
   }
 }
 
+// Send Password Reset Email
+async function resetPassword(email) {
+  if (!email || email.trim() === "") {
+    showError('Please enter your email in the login field first.');
+    return false;
+  }
+  try {
+    await sendPasswordResetEmail(auth, email);
+    showSuccess('Password reset link sent to your email!');
+    return true;
+  } catch (error) {
+    console.error('Reset password error:', error.code);
+    showError('Could not send reset link. Make sure the email is registered.');
+    return false;
+  }
+}
+
 // Email/Password Sign In
 async function signInWithEmail(email, password) {
   try {
     const result = await signInWithEmailAndPassword(auth, email, password);
+    
+    // შემოწმება: არის თუ არა იმეილი დადასტურებული
+    if (!result.user.emailVerified) {
+      showError('Please verify your email address before logging in. Check your inbox.');
+      await signOut(auth);
+      return null;
+    }
+
     showSuccess('Welcome back! Redirecting...');
     redirectAfterLogin();
     return result.user;
@@ -305,6 +345,7 @@ window.firebaseAuth = {
   signInWithFacebook,
   signUpWithEmail,
   signInWithEmail,
+  resetPassword,
   logOut,
   auth
 };
