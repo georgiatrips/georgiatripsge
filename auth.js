@@ -51,6 +51,17 @@ function updateNavbar(user) {
   
   if (!userBtn) return;
   
+  // არ შევცვალოთ navbar რეგისტრაციის დროს
+  if (isRegistrationInProgress) {
+    userBtn.textContent = 'Login';
+    userBtn.classList.remove('logged-in');
+    userBtn.disabled = false;
+    if (dropdownMenu) {
+      dropdownMenu.style.display = 'none';
+    }
+    return;
+  }
+  
   if (user) {
     isLoggedIn = true;
     const displayName = user.displayName || user.email.split('@')[0];
