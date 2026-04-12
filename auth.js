@@ -236,6 +236,12 @@ async function signInWithFacebook() {
   }
 }
 
+// Get the base URL for redirects
+function getBaseUrl() {
+  // Use current origin (works for both localhost and production)
+  return window.location.origin;
+}
+
 // Email/Password Sign Up
 async function signUpWithEmail(email, password, displayName) {
   try {
@@ -246,8 +252,14 @@ async function signUpWithEmail(email, password, displayName) {
       displayName: displayName
     });
     
+    // Action code settings for email verification
+    const actionCodeSettings = {
+      url: `${getBaseUrl()}/login.html`,
+      handleCodeInApp: false
+    };
+    
     // გაგზავნოს ვერიფიკაცია და მაშინვე გამოვიდეს სისტემიდან
-    await sendEmailVerification(result.user);
+    await sendEmailVerification(result.user, actionCodeSettings);
     await signOut(auth); 
 
     showSuccess('Account created! Please check your email and verify it before signing in.');
@@ -283,7 +295,13 @@ async function resetPassword(email) {
     return false;
   }
   try {
-    await sendPasswordResetEmail(auth, email);
+    // Action code settings for password reset
+    const actionCodeSettings = {
+      url: `${getBaseUrl()}/login.html`,
+      handleCodeInApp: false
+    };
+    
+    await sendPasswordResetEmail(auth, email, actionCodeSettings);
     showSuccess('Password reset link sent to your email!');
     return true;
   } catch (error) {
