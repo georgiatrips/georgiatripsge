@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel – Georgia Trips</title>
+<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+/* Admin Panel Styles */
+.admin-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  min-height: calc(100vh - 68px);
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.admin-header h1 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--dark-blue);
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 0.5rem;
+  background: var(--light-bg);
+  padding: 0.5rem;
+  border-radius: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-tab {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: transparent;
+  color: var(--text-mid);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all var(--transition);
+}
+
+.admin-tab:hover {
+  background: rgba(46,196,182,0.1);
+  color: var(--dark-blue);
+}
+
+.admin-tab.active {
+  background: var(--teal);
+  color: var(--white);
+}
+
+.admin-panel {
+  display: none;
+}
+
+.admin-panel.active {
+  display: block;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.panel-header h2 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--dark-blue);
+}
+
+.btn-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--teal);
+  color: var(--white);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 30px;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.btn-add:hover {
+  background: #22a99d;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(46,196,182,0.3);
+}
+
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.admin-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+  border: 1px solid rgba(11,60,93,0.06);
+  transition: all var(--transition);
+}
+
+.admin-card:hover {
+  box-shadow: var(--card-shadow-hover);
+}
+
+.admin-card-img {
+  position: relative;
+  height: 180px;
+  overflow: hidden;
+}
+
+.admin-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-card-badge {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+  background: var(--teal);
+  color: var(--white);
+}
+
+.admin-card-body {
+  padding: 1.25rem;
+}
+
+.admin-card-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--dark-blue);
+  margin-bottom: 0.5rem;
+}
+
+.admin-card-desc {
+  color: var(--text-mid);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.admin-card-meta {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+  color: var(--text-light);
+}
+
+.admin-card-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(11,60,93,0.07);
+}
+
+.btn-edit, .btn-delete {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: none;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.btn-edit {
+  background: rgba(46,196,182,0.1);
+  color: var(--teal);
+}
+
+.btn-edit:hover {
+  background: var(--teal);
+  color: var(--white);
+}
+
+.btn-delete {
+  background: rgba(220,53,69,0.1);
+  color: #dc3545;
+}
+
+.btn-delete:hover {
+  background: #dc3545;
+  color: var(--white);
+}
+
+/* Modal Styles */
+.admin-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(11,60,93,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  padding: 1rem;
+}
+
+.admin-modal.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-content {
+  background: var(--white);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(11,60,93,0.1);
+  position: sticky;
+  top: 0;
+  background: var(--white);
+  z-index: 10;
+}
+
+.modal-header h3 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--dark-blue);
+}
+
+.modal-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--light-bg);
+  color: var(--text-mid);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  transition: all var(--transition);
+}
+
+.modal-close:hover {
+  background: #dc3545;
+  color: var(--white);
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--dark-blue);
+  margin-bottom: 0.5rem;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid rgba(11,60,93,0.15);
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem;
+  color: var(--text-dark);
+  transition: all var(--transition);
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(46,196,182,0.15);
+}
+
+.form-group textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.image-upload {
+  border: 2px dashed rgba(11,60,93,0.2);
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+}
+
+.image-upload:hover {
+  border-color: var(--teal);
+  background: rgba(46,196,182,0.05);
+}
+
+.image-upload input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.image-upload-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.image-upload-text {
+  color: var(--text-mid);
+  font-size: 0.9rem;
+}
+
+.image-preview {
+  max-width: 100%;
+  max-height: 150px;
+  border-radius: 8px;
+  margin-top: 1rem;
+  display: none;
+}
+
+.image-preview.show {
+  display: block;
+}
+
+.modal-footer {
+  padding: 1.5rem;
+  border-top: 1px solid rgba(11,60,93,0.1);
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.btn-cancel {
+  padding: 0.75rem 1.5rem;
+  border-radius: 30px;
+  border: 1.5px solid rgba(11,60,93,0.2);
+  background: transparent;
+  color: var(--text-mid);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.btn-cancel:hover {
+  border-color: var(--dark-blue);
+  color: var(--dark-blue);
+}
+
+.btn-save {
+  padding: 0.75rem 2rem;
+  border-radius: 30px;
+  border: none;
+  background: var(--teal);
+  color: var(--white);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.btn-save:hover {
+  background: #22a99d;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(46,196,182,0.3);
+}
+
+.btn-save:disabled {
+  background: var(--text-light);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Loading & Messages */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255,255,255,0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 20000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.loading-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--light-bg);
+  border-top-color: var(--teal);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  margin-top: 1rem;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  color: var(--dark-blue);
+}
+
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  z-index: 25000;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.toast.success {
+  background: #28a745;
+  color: var(--white);
+}
+
+.toast.error {
+  background: #dc3545;
+  color: var(--white);
+}
+
+/* Access Denied */
+.access-denied {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 68px);
+  text-align: center;
+  padding: 2rem;
+}
+
+.access-denied-icon {
+  font-size: 5rem;
+  margin-bottom: 1.5rem;
+}
+
+.access-denied h1 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--dark-blue);
+  margin-bottom: 1rem;
+}
+
+.access-denied p {
+  color: var(--text-mid);
+  margin-bottom: 2rem;
+  max-width: 400px;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-mid);
+}
+
+.empty-state-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  color: var(--dark-blue);
+  margin-bottom: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-container {
+    padding: 1rem;
+  }
+  
+  .admin-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .admin-tabs {
+    width: 100%;
+  }
+  
+  .admin-tab {
+    flex: 1;
+    text-align: center;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.8rem;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .items-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="index.html" class="nav-logo">
+    <div class="logo-icon"><img src="logo.png" alt="Georgia Trips Logo" class="logo-img"></div>
+    Georgia<span>Trips</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <div class="nav-dropdown">
+      <button class="nav-dropdown-btn">Tours</button>
+      <div class="dropdown-menu">
+        <a href="domestic-tours.html">Domestic Tours</a>
+        <a href="international-tours.html">International Tours</a>
+      </div>
+    </div>
+    <a href="cars.html">Cars</a>
+    <a href="posts.html">Posts</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <div class="nav-user-dropdown" id="nav-user-dropdown">
+      <button class="nav-cta nav-user-btn" id="nav-user-btn">Login</button>
+      <div class="dropdown-menu user-dropdown-menu">
+        <a href="profile.html" class="user-profile-link">My Profile</a>
+        <a href="saved-tours.html" class="user-saved-tours">Saved Tours</a>
+        <a href="#" class="user-logout">Sign Out</a>
+      </div>
+    </div>
+  </div>
+  <button class="nav-toggle" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- Access Denied (shown when not admin) -->
+<div class="access-denied" id="access-denied" style="display: none;">
+  <div class="access-denied-icon">&#128274;</div>
+  <h1>Access Denied</h1>
+  <p>You don&apos;t have permission to access the admin panel. Please sign in with an administrator account.</p>
+  <a href="login.html" class="btn-primary">Sign In</a>
+</div>
+
+<!-- Loading State -->
+<div class="access-denied" id="loading-state">
+  <div class="loading-spinner"></div>
+  <p style="margin-top: 1rem;">Checking permissions...</p>
+</div>
+
+<!-- Admin Panel -->
+<div class="admin-container" id="admin-panel" style="display: none;">
+  <div class="admin-header">
+    <h1>Admin Panel</h1>
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-panel="tours">Tours</button>
+      <button class="admin-tab" data-panel="cars">Cars</button>
+      <button class="admin-tab" data-panel="posts">Posts</button>
+      <button class="admin-tab" data-panel="featured">Featured</button>
+    </div>
+  </div>
+
+  <!-- Tours Panel -->
+  <div class="admin-panel active" id="panel-tours">
+    <div class="panel-header">
+      <h2>Manage Tours</h2>
+      <button class="btn-add" onclick="openTourModal()">+ Add Tour</button>
+    </div>
+    <div class="items-grid" id="tours-list"></div>
+  </div>
+
+  <!-- Cars Panel -->
+  <div class="admin-panel" id="panel-cars">
+    <div class="panel-header">
+      <h2>Manage Cars</h2>
+      <button class="btn-add" onclick="openCarModal()">+ Add Car</button>
+    </div>
+    <div class="items-grid" id="cars-list"></div>
+  </div>
+
+  <!-- Posts Panel -->
+  <div class="admin-panel" id="panel-posts">
+    <div class="panel-header">
+      <h2>Manage Posts</h2>
+      <button class="btn-add" onclick="openPostModal()">+ Add Post</button>
+    </div>
+    <div class="items-grid" id="posts-list"></div>
+  </div>
+
+  <!-- Featured Panel -->
+  <div class="admin-panel" id="panel-featured">
+    <div class="panel-header">
+      <h2>Manage Featured Offers</h2>
+      <button class="btn-add" onclick="openFeaturedModal()">+ Add Featured</button>
+    </div>
+    <div class="items-grid" id="featured-list"></div>
+  </div>
+</div>
+
+<!-- Tour Modal -->
+<div class="admin-modal" id="tour-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="tour-modal-title">Add New Tour</h3>
+      <button class="modal-close" onclick="closeTourModal()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <form id="tour-form">
+        <input type="hidden" id="tour-id">
+        <div class="form-group">
+          <label>Title *</label>
+          <input type="text" id="tour-title" required placeholder="e.g. Kazbegi Mountain Adventure">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Category *</label>
+            <select id="tour-category" required>
+              <option value="">Select category</option>
+              <option value="one-day">One-Day Tour</option>
+              <option value="multi-day">Multi-Day Tour</option>
+              <option value="flexible">Flexible Tour</option>
+              <option value="upcoming">Upcoming Tour</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Price *</label>
+            <input type="text" id="tour-price" required placeholder="e.g. $79">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Duration</label>
+            <input type="text" id="tour-duration" placeholder="e.g. 1 Day">
+          </div>
+          <div class="form-group">
+            <label>Group Size</label>
+            <input type="text" id="tour-group" placeholder="e.g. Up to 10">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Difficulty</label>
+          <select id="tour-difficulty">
+            <option value="Easy">Easy</option>
+            <option value="Moderate">Moderate</option>
+            <option value="Challenging">Challenging</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Description *</label>
+          <textarea id="tour-desc" required placeholder="Describe the tour experience..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Highlights (comma separated)</label>
+          <input type="text" id="tour-highlights" placeholder="e.g. Gergeti Church, Mount Kazbek, Ananuri Fortress">
+        </div>
+        <div class="form-group" id="upcoming-fields" style="display: none;">
+          <label>Date Range (for upcoming tours)</label>
+          <input type="text" id="tour-daterange" placeholder="e.g. June 10 – 15, 2025">
+        </div>
+        <div class="form-group">
+          <label>Tour Image *</label>
+          <div class="image-upload">
+            <input type="file" id="tour-image" accept="image/*">
+            <div class="image-upload-icon">&#128247;</div>
+            <div class="image-upload-text">Click to upload image</div>
+          </div>
+          <img class="image-preview" id="tour-image-preview" alt="Preview">
+          <input type="hidden" id="tour-image-url">
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeTourModal()">Cancel</button>
+      <button class="btn-save" id="tour-save-btn" onclick="saveTour()">Save Tour</button>
+    </div>
+  </div>
+</div>
+
+<!-- Car Modal -->
+<div class="admin-modal" id="car-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="car-modal-title">Add New Car</h3>
+      <button class="modal-close" onclick="closeCarModal()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <form id="car-form">
+        <input type="hidden" id="car-id">
+        <div class="form-group">
+          <label>Title *</label>
+          <input type="text" id="car-title" required placeholder="e.g. Toyota Land Cruiser 200">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Type *</label>
+            <select id="car-type" required>
+              <option value="">Select type</option>
+              <option value="SUV">SUV</option>
+              <option value="Minivan">Minivan</option>
+              <option value="Sedan">Sedan</option>
+              <option value="Van">Van</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Price *</label>
+            <input type="text" id="car-price" required placeholder="e.g. $180/day">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Seats</label>
+            <input type="text" id="car-seats" placeholder="e.g. 7 Seats">
+          </div>
+          <div class="form-group">
+            <label>A/C</label>
+            <input type="text" id="car-ac" placeholder="e.g. Full A/C">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Drive Type</label>
+          <input type="text" id="car-drive" placeholder="e.g. 4x4 Drive">
+        </div>
+        <div class="form-group">
+          <label>Description *</label>
+          <textarea id="car-desc" required placeholder="Describe the vehicle..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Car Image *</label>
+          <div class="image-upload">
+            <input type="file" id="car-image" accept="image/*">
+            <div class="image-upload-icon">&#128663;</div>
+            <div class="image-upload-text">Click to upload image</div>
+          </div>
+          <img class="image-preview" id="car-image-preview" alt="Preview">
+          <input type="hidden" id="car-image-url">
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeCarModal()">Cancel</button>
+      <button class="btn-save" id="car-save-btn" onclick="saveCar()">Save Car</button>
+    </div>
+  </div>
+</div>
+
+<!-- Post Modal -->
+<div class="admin-modal" id="post-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="post-modal-title">Add New Post</h3>
+      <button class="modal-close" onclick="closePostModal()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <form id="post-form">
+        <input type="hidden" id="post-id">
+        <div class="form-group">
+          <label>Title *</label>
+          <input type="text" id="post-title" required placeholder="e.g. The Ultimate Guide to Georgian Food">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Category *</label>
+            <select id="post-category" required>
+              <option value="">Select category</option>
+              <option value="Culture">Culture</option>
+              <option value="Food">Food</option>
+              <option value="Adventure">Adventure</option>
+              <option value="Travel Tips">Travel Tips</option>
+              <option value="Wine">Wine</option>
+              <option value="School Tours">School Tours</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Read Time</label>
+            <input type="text" id="post-readtime" placeholder="e.g. 5 min read">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Content *</label>
+          <textarea id="post-content" required placeholder="Write your article content..." style="min-height: 150px;"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Post Image *</label>
+          <div class="image-upload">
+            <input type="file" id="post-image" accept="image/*">
+            <div class="image-upload-icon">&#128221;</div>
+            <div class="image-upload-text">Click to upload image</div>
+          </div>
+          <img class="image-preview" id="post-image-preview" alt="Preview">
+          <input type="hidden" id="post-image-url">
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closePostModal()">Cancel</button>
+      <button class="btn-save" id="post-save-btn" onclick="savePost()">Save Post</button>
+    </div>
+  </div>
+</div>
+
+<!-- Featured Modal -->
+<div class="admin-modal" id="featured-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="featured-modal-title">Add Featured Offer</h3>
+      <button class="modal-close" onclick="closeFeaturedModal()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <form id="featured-form">
+        <input type="hidden" id="featured-id">
+        <div class="form-group">
+          <label>Title *</label>
+          <input type="text" id="featured-title" required placeholder="e.g. School Excursions – Best Offer">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tag *</label>
+            <input type="text" id="featured-tag" required placeholder="e.g. Education & Groups">
+          </div>
+          <div class="form-group">
+            <label>Badge *</label>
+            <input type="text" id="featured-badge" required placeholder="e.g. Best Offer">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Description *</label>
+          <textarea id="featured-desc" required placeholder="Describe this special offer..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Meta Info (comma separated)</label>
+          <input type="text" id="featured-meta" placeholder="e.g. Flexible Dates, 10-50 Students, All Inclusive">
+        </div>
+        <div class="form-group">
+          <label>Order (lower = first)</label>
+          <input type="number" id="featured-order" value="0" min="0">
+        </div>
+        <div class="form-group">
+          <label>Featured Image *</label>
+          <div class="image-upload">
+            <input type="file" id="featured-image" accept="image/*">
+            <div class="image-upload-icon">&#11088;</div>
+            <div class="image-upload-text">Click to upload image</div>
+          </div>
+          <img class="image-preview" id="featured-image-preview" alt="Preview">
+          <input type="hidden" id="featured-image-url">
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeFeaturedModal()">Cancel</button>
+      <button class="btn-save" id="featured-save-btn" onclick="saveFeatured()">Save Featured</button>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loading-text">Loading...</div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script type="module" src="script.js"></script>
+<script type="module">
+import { 
+  auth, 
+  onAuthStateChanged, 
+  isAdmin,
+  uploadImage,
+  getTours, addTour, updateTour, deleteTour,
+  getCars, addCar, updateCar, deleteCar,
+  getPosts, addPost, updatePost, deletePost,
+  getFeaturedTours, addFeaturedTour, updateFeaturedTour, deleteFeaturedTour
+} from './firebase-config.js';
+
+// Store data locally
+let toursData = [];
+let carsData = [];
+let postsData = [];
+let featuredData = [];
+
+// Check authentication
+onAuthStateChanged(auth, async (user) => {
+  document.getElementById('loading-state').style.display = 'none';
+  
+  if (user && isAdmin(user.email)) {
+    document.getElementById('admin-panel').style.display = 'block';
+    document.getElementById('access-denied').style.display = 'none';
+    await loadAllData();
+  } else {
+    document.getElementById('admin-panel').style.display = 'none';
+    document.getElementById('access-denied').style.display = 'flex';
+  }
+});
+
+// Load all data
+async function loadAllData() {
+  showLoading('Loading data...');
+  try {
+    [toursData, carsData, postsData, featuredData] = await Promise.all([
+      getTours(),
+      getCars(),
+      getPosts(),
+      getFeaturedTours()
+    ]);
+    renderTours();
+    renderCars();
+    renderPosts();
+    renderFeatured();
+  } catch (error) {
+    console.error('Error loading data:', error);
+    showToast('Failed to load data', 'error');
+  }
+  hideLoading();
+}
+
+// Tab switching
+document.querySelectorAll('.admin-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+  });
+});
+
+// Show/hide upcoming fields based on category
+document.getElementById('tour-category').addEventListener('change', (e) => {
+  document.getElementById('upcoming-fields').style.display = 
+    e.target.value === 'upcoming' ? 'block' : 'none';
+});
+
+// ============ TOURS ============
+
+function renderTours() {
+  const container = document.getElementById('tours-list');
+  if (toursData.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state" style="grid-column: 1 / -1;">
+        <div class="empty-state-icon">&#127956;</div>
+        <h3>No Tours Yet</h3>
+        <p>Add your first tour to get started</p>
+      </div>`;
+    return;
+  }
+  
+  container.innerHTML = toursData.map(tour => `
+    <div class="admin-card" data-id="${tour.id}">
+      <div class="admin-card-img">
+        <img src="${tour.img}" alt="${tour.title}">
+        <span class="admin-card-badge">${tour.category}</span>
+      </div>
+      <div class="admin-card-body">
+        <h3 class="admin-card-title">${tour.title}</h3>
+        <p class="admin-card-desc">${tour.desc}</p>
+        <div class="admin-card-meta">
+          <span>${tour.price}</span>
+          <span>${tour.duration || ''}</span>
+        </div>
+        <div class="admin-card-actions">
+          <button class="btn-edit" onclick="editTour('${tour.id}')">Edit</button>
+          <button class="btn-delete" onclick="confirmDeleteTour('${tour.id}')">Delete</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.openTourModal = function(tourId = null) {
+  document.getElementById('tour-form').reset();
+  document.getElementById('tour-id').value = '';
+  document.getElementById('tour-image-url').value = '';
+  document.getElementById('tour-image-preview').classList.remove('show');
+  document.getElementById('tour-modal-title').textContent = 'Add New Tour';
+  document.getElementById('upcoming-fields').style.display = 'none';
+  document.getElementById('tour-modal').classList.add('open');
+};
+
+window.closeTourModal = function() {
+  document.getElementById('tour-modal').classList.remove('open');
+};
+
+window.editTour = function(id) {
+  const tour = toursData.find(t => t.id === id);
+  if (!tour) return;
+  
+  document.getElementById('tour-id').value = tour.id;
+  document.getElementById('tour-title').value = tour.title;
+  document.getElementById('tour-category').value = tour.category;
+  document.getElementById('tour-price').value = tour.price;
+  document.getElementById('tour-duration').value = tour.duration || '';
+  document.getElementById('tour-group').value = tour.groupSize || '';
+  document.getElementById('tour-difficulty').value = tour.difficulty || 'Easy';
+  document.getElementById('tour-desc').value = tour.desc;
+  document.getElementById('tour-highlights').value = (tour.highlights || []).join(', ');
+  document.getElementById('tour-daterange').value = tour.dateRange || '';
+  document.getElementById('tour-image-url').value = tour.img;
+  
+  const preview = document.getElementById('tour-image-preview');
+  preview.src = tour.img;
+  preview.classList.add('show');
+  
+  document.getElementById('upcoming-fields').style.display = 
+    tour.category === 'upcoming' ? 'block' : 'none';
+  
+  document.getElementById('tour-modal-title').textContent = 'Edit Tour';
+  document.getElementById('tour-modal').classList.add('open');
+};
+
+window.saveTour = async function() {
+  const id = document.getElementById('tour-id').value;
+  const imageFile = document.getElementById('tour-image').files[0];
+  let imageUrl = document.getElementById('tour-image-url').value;
+  
+  if (!imageUrl && !imageFile) {
+    showToast('Please upload an image', 'error');
+    return;
+  }
+  
+  showLoading('Saving tour...');
+  
+  try {
+    if (imageFile) {
+      imageUrl = await uploadImage(imageFile);
+    }
+    
+    const tourData = {
+      title: document.getElementById('tour-title').value,
+      category: document.getElementById('tour-category').value,
+      price: document.getElementById('tour-price').value,
+      duration: document.getElementById('tour-duration').value,
+      groupSize: document.getElementById('tour-group').value,
+      difficulty: document.getElementById('tour-difficulty').value,
+      desc: document.getElementById('tour-desc').value,
+      highlights: document.getElementById('tour-highlights').value.split(',').map(h => h.trim()).filter(h => h),
+      dateRange: document.getElementById('tour-daterange').value,
+      img: imageUrl
+    };
+    
+    if (id) {
+      await updateTour(id, tourData);
+      showToast('Tour updated successfully', 'success');
+    } else {
+      await addTour(tourData);
+      showToast('Tour added successfully', 'success');
+    }
+    
+    closeTourModal();
+    toursData = await getTours();
+    renderTours();
+  } catch (error) {
+    console.error('Error saving tour:', error);
+    showToast('Failed to save tour', 'error');
+  }
+  
+  hideLoading();
+};
+
+window.confirmDeleteTour = function(id) {
+  if (confirm('Are you sure you want to delete this tour?')) {
+    deleteTourItem(id);
+  }
+};
+
+async function deleteTourItem(id) {
+  showLoading('Deleting tour...');
+  try {
+    await deleteTour(id);
+    showToast('Tour deleted successfully', 'success');
+    toursData = await getTours();
+    renderTours();
+  } catch (error) {
+    console.error('Error deleting tour:', error);
+    showToast('Failed to delete tour', 'error');
+  }
+  hideLoading();
+}
+
+// ============ CARS ============
+
+function renderCars() {
+  const container = document.getElementById('cars-list');
+  if (carsData.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state" style="grid-column: 1 / -1;">
+        <div class="empty-state-icon">&#128663;</div>
+        <h3>No Cars Yet</h3>
+        <p>Add your first vehicle to get started</p>
+      </div>`;
+    return;
+  }
+  
+  container.innerHTML = carsData.map(car => `
+    <div class="admin-card" data-id="${car.id}">
+      <div class="admin-card-img">
+        <img src="${car.img}" alt="${car.title}">
+        <span class="admin-card-badge">${car.type}</span>
+      </div>
+      <div class="admin-card-body">
+        <h3 class="admin-card-title">${car.title}</h3>
+        <p class="admin-card-desc">${car.info || car.desc}</p>
+        <div class="admin-card-meta">
+          <span>${car.price}</span>
+          <span>${car.seats || ''}</span>
+        </div>
+        <div class="admin-card-actions">
+          <button class="btn-edit" onclick="editCar('${car.id}')">Edit</button>
+          <button class="btn-delete" onclick="confirmDeleteCar('${car.id}')">Delete</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.openCarModal = function(carId = null) {
+  document.getElementById('car-form').reset();
+  document.getElementById('car-id').value = '';
+  document.getElementById('car-image-url').value = '';
+  document.getElementById('car-image-preview').classList.remove('show');
+  document.getElementById('car-modal-title').textContent = 'Add New Car';
+  document.getElementById('car-modal').classList.add('open');
+};
+
+window.closeCarModal = function() {
+  document.getElementById('car-modal').classList.remove('open');
+};
+
+window.editCar = function(id) {
+  const car = carsData.find(c => c.id === id);
+  if (!car) return;
+  
+  document.getElementById('car-id').value = car.id;
+  document.getElementById('car-title').value = car.title;
+  document.getElementById('car-type').value = car.type;
+  document.getElementById('car-price').value = car.price;
+  document.getElementById('car-seats').value = car.seats || '';
+  document.getElementById('car-ac').value = car.ac || '';
+  document.getElementById('car-drive').value = car.drive || '';
+  document.getElementById('car-desc').value = car.info || car.desc || '';
+  document.getElementById('car-image-url').value = car.img;
+  
+  const preview = document.getElementById('car-image-preview');
+  preview.src = car.img;
+  preview.classList.add('show');
+  
+  document.getElementById('car-modal-title').textContent = 'Edit Car';
+  document.getElementById('car-modal').classList.add('open');
+};
+
+window.saveCar = async function() {
+  const id = document.getElementById('car-id').value;
+  const imageFile = document.getElementById('car-image').files[0];
+  let imageUrl = document.getElementById('car-image-url').value;
+  
+  if (!imageUrl && !imageFile) {
+    showToast('Please upload an image', 'error');
+    return;
+  }
+  
+  showLoading('Saving car...');
+  
+  try {
+    if (imageFile) {
+      imageUrl = await uploadImage(imageFile);
+    }
+    
+    const carData = {
+      title: document.getElementById('car-title').value,
+      type: document.getElementById('car-type').value,
+      price: document.getElementById('car-price').value,
+      seats: document.getElementById('car-seats').value,
+      ac: document.getElementById('car-ac').value,
+      drive: document.getElementById('car-drive').value,
+      info: document.getElementById('car-desc').value,
+      img: imageUrl
+    };
+    
+    if (id) {
+      await updateCar(id, carData);
+      showToast('Car updated successfully', 'success');
+    } else {
+      await addCar(carData);
+      showToast('Car added successfully', 'success');
+    }
+    
+    closeCarModal();
+    carsData = await getCars();
+    renderCars();
+  } catch (error) {
+    console.error('Error saving car:', error);
+    showToast('Failed to save car', 'error');
+  }
+  
+  hideLoading();
+};
+
+window.confirmDeleteCar = function(id) {
+  if (confirm('Are you sure you want to delete this car?')) {
+    deleteCarItem(id);
+  }
+};
+
+async function deleteCarItem(id) {
+  showLoading('Deleting car...');
+  try {
+    await deleteCar(id);
+    showToast('Car deleted successfully', 'success');
+    carsData = await getCars();
+    renderCars();
+  } catch (error) {
+    console.error('Error deleting car:', error);
+    showToast('Failed to delete car', 'error');
+  }
+  hideLoading();
+}
+
+// ============ POSTS ============
+
+function renderPosts() {
+  const container = document.getElementById('posts-list');
+  if (postsData.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state" style="grid-column: 1 / -1;">
+        <div class="empty-state-icon">&#128221;</div>
+        <h3>No Posts Yet</h3>
+        <p>Add your first blog post to get started</p>
+      </div>`;
+    return;
+  }
+  
+  container.innerHTML = postsData.map(post => `
+    <div class="admin-card" data-id="${post.id}">
+      <div class="admin-card-img">
+        <img src="${post.img}" alt="${post.title}">
+        <span class="admin-card-badge">${post.category}</span>
+      </div>
+      <div class="admin-card-body">
+        <h3 class="admin-card-title">${post.title}</h3>
+        <p class="admin-card-desc">${post.text || post.content}</p>
+        <div class="admin-card-meta">
+          <span>${post.readTime || ''}</span>
+        </div>
+        <div class="admin-card-actions">
+          <button class="btn-edit" onclick="editPost('${post.id}')">Edit</button>
+          <button class="btn-delete" onclick="confirmDeletePost('${post.id}')">Delete</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.openPostModal = function(postId = null) {
+  document.getElementById('post-form').reset();
+  document.getElementById('post-id').value = '';
+  document.getElementById('post-image-url').value = '';
+  document.getElementById('post-image-preview').classList.remove('show');
+  document.getElementById('post-modal-title').textContent = 'Add New Post';
+  document.getElementById('post-modal').classList.add('open');
+};
+
+window.closePostModal = function() {
+  document.getElementById('post-modal').classList.remove('open');
+};
+
+window.editPost = function(id) {
+  const post = postsData.find(p => p.id === id);
+  if (!post) return;
+  
+  document.getElementById('post-id').value = post.id;
+  document.getElementById('post-title').value = post.title;
+  document.getElementById('post-category').value = post.category;
+  document.getElementById('post-readtime').value = post.readTime || '';
+  document.getElementById('post-content').value = post.text || post.content || '';
+  document.getElementById('post-image-url').value = post.img;
+  
+  const preview = document.getElementById('post-image-preview');
+  preview.src = post.img;
+  preview.classList.add('show');
+  
+  document.getElementById('post-modal-title').textContent = 'Edit Post';
+  document.getElementById('post-modal').classList.add('open');
+};
+
+window.savePost = async function() {
+  const id = document.getElementById('post-id').value;
+  const imageFile = document.getElementById('post-image').files[0];
+  let imageUrl = document.getElementById('post-image-url').value;
+  
+  if (!imageUrl && !imageFile) {
+    showToast('Please upload an image', 'error');
+    return;
+  }
+  
+  showLoading('Saving post...');
+  
+  try {
+    if (imageFile) {
+      imageUrl = await uploadImage(imageFile);
+    }
+    
+    const postData = {
+      title: document.getElementById('post-title').value,
+      category: document.getElementById('post-category').value,
+      readTime: document.getElementById('post-readtime').value,
+      text: document.getElementById('post-content').value,
+      img: imageUrl,
+      date: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    };
+    
+    if (id) {
+      await updatePost(id, postData);
+      showToast('Post updated successfully', 'success');
+    } else {
+      await addPost(postData);
+      showToast('Post added successfully', 'success');
+    }
+    
+    closePostModal();
+    postsData = await getPosts();
+    renderPosts();
+  } catch (error) {
+    console.error('Error saving post:', error);
+    showToast('Failed to save post', 'error');
+  }
+  
+  hideLoading();
+};
+
+window.confirmDeletePost = function(id) {
+  if (confirm('Are you sure you want to delete this post?')) {
+    deletePostItem(id);
+  }
+};
+
+async function deletePostItem(id) {
+  showLoading('Deleting post...');
+  try {
+    await deletePost(id);
+    showToast('Post deleted successfully', 'success');
+    postsData = await getPosts();
+    renderPosts();
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    showToast('Failed to delete post', 'error');
+  }
+  hideLoading();
+}
+
+// ============ FEATURED ============
+
+function renderFeatured() {
+  const container = document.getElementById('featured-list');
+  if (featuredData.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state" style="grid-column: 1 / -1;">
+        <div class="empty-state-icon">&#11088;</div>
+        <h3>No Featured Offers Yet</h3>
+        <p>Add your first featured offer to get started</p>
+      </div>`;
+    return;
+  }
+  
+  container.innerHTML = featuredData.map(featured => `
+    <div class="admin-card" data-id="${featured.id}">
+      <div class="admin-card-img">
+        <img src="${featured.img}" alt="${featured.title}">
+        <span class="admin-card-badge">${featured.badge}</span>
+      </div>
+      <div class="admin-card-body">
+        <h3 class="admin-card-title">${featured.title}</h3>
+        <p class="admin-card-desc">${featured.desc}</p>
+        <div class="admin-card-meta">
+          <span>Order: ${featured.order || 0}</span>
+          <span>${featured.tag}</span>
+        </div>
+        <div class="admin-card-actions">
+          <button class="btn-edit" onclick="editFeatured('${featured.id}')">Edit</button>
+          <button class="btn-delete" onclick="confirmDeleteFeatured('${featured.id}')">Delete</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.openFeaturedModal = function(featuredId = null) {
+  document.getElementById('featured-form').reset();
+  document.getElementById('featured-id').value = '';
+  document.getElementById('featured-image-url').value = '';
+  document.getElementById('featured-image-preview').classList.remove('show');
+  document.getElementById('featured-modal-title').textContent = 'Add Featured Offer';
+  document.getElementById('featured-modal').classList.add('open');
+};
+
+window.closeFeaturedModal = function() {
+  document.getElementById('featured-modal').classList.remove('open');
+};
+
+window.editFeatured = function(id) {
+  const featured = featuredData.find(f => f.id === id);
+  if (!featured) return;
+  
+  document.getElementById('featured-id').value = featured.id;
+  document.getElementById('featured-title').value = featured.title;
+  document.getElementById('featured-tag').value = featured.tag;
+  document.getElementById('featured-badge').value = featured.badge;
+  document.getElementById('featured-desc').value = featured.desc;
+  document.getElementById('featured-meta').value = (featured.meta || []).join(', ');
+  document.getElementById('featured-order').value = featured.order || 0;
+  document.getElementById('featured-image-url').value = featured.img;
+  
+  const preview = document.getElementById('featured-image-preview');
+  preview.src = featured.img;
+  preview.classList.add('show');
+  
+  document.getElementById('featured-modal-title').textContent = 'Edit Featured Offer';
+  document.getElementById('featured-modal').classList.add('open');
+};
+
+window.saveFeatured = async function() {
+  const id = document.getElementById('featured-id').value;
+  const imageFile = document.getElementById('featured-image').files[0];
+  let imageUrl = document.getElementById('featured-image-url').value;
+  
+  if (!imageUrl && !imageFile) {
+    showToast('Please upload an image', 'error');
+    return;
+  }
+  
+  showLoading('Saving featured offer...');
+  
+  try {
+    if (imageFile) {
+      imageUrl = await uploadImage(imageFile);
+    }
+    
+    const featuredDataObj = {
+      title: document.getElementById('featured-title').value,
+      tag: document.getElementById('featured-tag').value,
+      badge: document.getElementById('featured-badge').value,
+      desc: document.getElementById('featured-desc').value,
+      meta: document.getElementById('featured-meta').value.split(',').map(m => m.trim()).filter(m => m),
+      order: parseInt(document.getElementById('featured-order').value) || 0,
+      img: imageUrl
+    };
+    
+    if (id) {
+      await updateFeaturedTour(id, featuredDataObj);
+      showToast('Featured offer updated successfully', 'success');
+    } else {
+      await addFeaturedTour(featuredDataObj);
+      showToast('Featured offer added successfully', 'success');
+    }
+    
+    closeFeaturedModal();
+    featuredData = await getFeaturedTours();
+    renderFeatured();
+  } catch (error) {
+    console.error('Error saving featured offer:', error);
+    showToast('Failed to save featured offer', 'error');
+  }
+  
+  hideLoading();
+};
+
+window.confirmDeleteFeatured = function(id) {
+  if (confirm('Are you sure you want to delete this featured offer?')) {
+    deleteFeaturedItem(id);
+  }
+};
+
+async function deleteFeaturedItem(id) {
+  showLoading('Deleting featured offer...');
+  try {
+    await deleteFeaturedTour(id);
+    showToast('Featured offer deleted successfully', 'success');
+    featuredData = await getFeaturedTours();
+    renderFeatured();
+  } catch (error) {
+    console.error('Error deleting featured offer:', error);
+    showToast('Failed to delete featured offer', 'error');
+  }
+  hideLoading();
+}
+
+// ============ UTILITIES ============
+
+function showLoading(text = 'Loading...') {
+  document.getElementById('loading-text').textContent = text;
+  document.getElementById('loading-overlay').classList.add('show');
+}
+
+function hideLoading() {
+  document.getElementById('loading-overlay').classList.remove('show');
+}
+
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.className = 'toast ' + type + ' show';
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 3000);
+}
+
+// Image preview handlers
+['tour', 'car', 'post', 'featured'].forEach(type => {
+  document.getElementById(`${type}-image`).addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const preview = document.getElementById(`${type}-image-preview`);
+        preview.src = e.target.result;
+        preview.classList.add('show');
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+});
+
+// Close modals on backdrop click
+['tour', 'car', 'post', 'featured'].forEach(type => {
+  document.getElementById(`${type}-modal`).addEventListener('click', function(e) {
+    if (e.target === this) {
+      window[`close${type.charAt(0).toUpperCase() + type.slice(1)}Modal`]();
+    }
+  });
+});
+</script>
+<script type="module" src="auth.js"></script>
+</body>
+</html>
