@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿// ===== DATA (loaded from Firebase) =====
+﻿﻿﻿﻿﻿// ===== DATA (loaded from Firebase) =====
 let toursData = [];
 let carsData = [];
 let postsData = [];
@@ -869,9 +869,91 @@ async function loadDataAndInit() {
   setTimeout(initScrollAnimations, 100);
 }
 
+// ===== LANGUAGE SWITCHER =====
+function initLanguageSwitcher() {
+  const langDropdown = document.querySelector('.nav-lang-dropdown');
+  if (!langDropdown) return;
+
+  const langBtn = langDropdown.querySelector('.nav-lang-btn');
+  const langMenu = langDropdown.querySelector('.dropdown-menu');
+  const langLinks = langDropdown.querySelectorAll('.dropdown-menu a');
+
+  // Load saved language
+  const savedLang = localStorage.getItem('selectedLanguage') || 'en';
+  updateLanguageButton(savedLang);
+
+  // Toggle dropdown on mobile
+  langBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (window.innerWidth <= 768) {
+      langDropdown.classList.toggle('open');
+    }
+  });
+
+  // Handle language selection
+  langLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const lang = link.dataset.lang;
+      
+      // Update active state
+      langLinks.forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+      
+      // Save selection
+      localStorage.setItem('selectedLanguage', lang);
+      
+      // Update button
+      updateLanguageButton(lang);
+      
+      // Close dropdown on mobile
+      langDropdown.classList.remove('open');
+    });
+  });
+
+  // Close on outside click
+  document.addEventListener('click', (e) => {
+    if (!langDropdown.contains(e.target)) {
+      langDropdown.classList.remove('open');
+    }
+  });
+
+  function updateLanguageButton(lang) {
+    const langData = {
+      en: { flag: '🇬🇧', code: 'EN' },
+      ka: { flag: '🇬🇪', code: 'KA' },
+      ru: { flag: '🇷🇺', code: 'RU' },
+      tr: { flag: '🇹🇷', code: 'TR' },
+      ar: { flag: '🇸🇦', code: 'AR' },
+      he: { flag: '🇮🇱', code: 'HE' },
+      de: { flag: '🇩🇪', code: 'DE' },
+      fr: { flag: '🇫🇷', code: 'FR' },
+      zh: { flag: '🇨🇳', code: 'ZH' }
+    };
+
+    const data = langData[lang] || langData.en;
+    const flagSpan = langBtn.querySelector('.lang-flag');
+    const codeSpan = langBtn.querySelector('.lang-code');
+    
+    if (flagSpan) flagSpan.textContent = data.flag;
+    if (codeSpan) codeSpan.textContent = data.code;
+
+    // Update active state in dropdown
+    langLinks.forEach(link => {
+      if (link.dataset.lang === lang) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+  }
+}
+
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
+  initLanguageSwitcher();
   // ავტორიზაციის სტატუსის მოსმენა
   onAuthStateChanged(auth, (user) => {
     // ყოველთვის გავუშვათ sync, რომ თუ გამოვიდა სისტემიდან, გულები გათეთრდეს
