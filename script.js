@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿// ===== DATA (loaded from Firebase) =====
+﻿﻿﻿﻿﻿﻿// ===== DATA (loaded from Firebase) =====
 let toursData = [];
 let carsData = [];
 let postsData = [];
@@ -6,7 +6,7 @@ let featuredData = [];
 let reviewsData = [];
 
 // Firebase Firestore imports
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
   getFirestore, 
   collection, 
@@ -31,8 +31,8 @@ const firebaseConfig = {
   measurementId: "G-KVGPVEVHQ0"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase (reuse existing default app if already initialized)
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 

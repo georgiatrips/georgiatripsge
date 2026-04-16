@@ -1,5 +1,5 @@
 // Firebase Auth Module - Handles authentication across all pages
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
   getAuth, 
   signInWithPopup, 
@@ -29,9 +29,10 @@ const firebaseConfig = {
   measurementId: "G-KVGPVEVHQ0"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+// Initialize Firebase (reuse existing default app if already initialized)
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+let analytics;
+try { analytics = getAnalytics(app); } catch (e) { /* Analytics may fail if already initialized */ }
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 const facebookProvider = new FacebookAuthProvider();
