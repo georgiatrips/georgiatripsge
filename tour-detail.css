@@ -193,27 +193,9 @@
 }
 
 .included-list li {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
+  padding: 0.5rem 0;
   font-size: 0.95rem;
   color: var(--text-mid);
-}
-
-.included-list li:before {
-  content: '✓';
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  min-width: 20px;
-  background: rgba(46,196,182,0.2);
-  border-radius: 50%;
-  color: var(--teal);
-  font-weight: 700;
-  font-size: 0.75rem;
 }
 
 /* Itinerary */
