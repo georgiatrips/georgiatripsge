@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿// ===== DATA (loaded from Firebase) =====
+﻿﻿﻿﻿// ===== DATA (loaded from Firebase) =====
 let toursData = [];
 let carsData = [];
 let postsData = [];
@@ -870,17 +870,165 @@ async function loadDataAndInit() {
 }
 
 // ===== LANGUAGE SWITCHER =====
+const LANG_META = {
+  en: { flag: '🇬🇧', code: 'EN' },
+  ka: { flag: '🇬🇪', code: 'KA' },
+  ru: { flag: '🇷🇺', code: 'RU' },
+  tr: { flag: '🇹🇷', code: 'TR' },
+  ar: { flag: '🇸🇦', code: 'AR' },
+  he: { flag: '🇮🇱', code: 'HE' },
+  de: { flag: '🇩🇪', code: 'DE' },
+  fr: { flag: '🇫🇷', code: 'FR' },
+  zh: { flag: '🇨🇳', code: 'ZH' }
+};
+
+const RTL_LANGS = ['ar', 'he'];
+
+const NAVBAR_TRANSLATIONS = {
+  en: {
+    home: 'Home', tours: 'Tours', domestic: 'Domestic Tours', international: 'International Tours',
+    cars: 'Cars', posts: 'Posts', about: 'About', contact: 'Contact',
+    login: 'Login', loading: 'Loading...', profile: 'My Profile', savedTours: 'Saved Tours',
+    signOut: 'Sign Out', selectLang: 'Select Language'
+  },
+  ka: {
+    home: 'მთავარი', tours: 'ტურები', domestic: 'ადგილობრივი ტურები', international: 'საერთაშორისო ტურები',
+    cars: 'ტრანსპორტი', posts: 'ბლოგი', about: 'ჩვენს შესახებ', contact: 'კონტაქტი',
+    login: 'შესვლა', loading: 'იტვირთება...', profile: 'ჩემი პროფილი', savedTours: 'შენახული ტურები',
+    signOut: 'გასვლა', selectLang: 'აირჩიე ენა'
+  },
+  ru: {
+    home: 'Главная', tours: 'Туры', domestic: 'Туры по Грузии', international: 'Международные туры',
+    cars: 'Транспорт', posts: 'Блог', about: 'О нас', contact: 'Контакты',
+    login: 'Войти', loading: 'Загрузка...', profile: 'Мой профиль', savedTours: 'Сохранённые туры',
+    signOut: 'Выйти', selectLang: 'Выбрать язык'
+  },
+  tr: {
+    home: 'Ana Sayfa', tours: 'Turlar', domestic: 'Yerel Turlar', international: 'Uluslararası Turlar',
+    cars: 'Araçlar', posts: 'Blog', about: 'Hakkımızda', contact: 'İletişim',
+    login: 'Giriş', loading: 'Yükleniyor...', profile: 'Profilim', savedTours: 'Kaydedilen Turlar',
+    signOut: 'Çıkış', selectLang: 'Dil Seç'
+  },
+  ar: {
+    home: 'الرئيسية', tours: 'الجولات', domestic: 'الجولات المحلية', international: 'الجولات الدولية',
+    cars: 'السيارات', posts: 'المدونة', about: 'من نحن', contact: 'اتصل بنا',
+    login: 'تسجيل الدخول', loading: 'جارٍ التحميل...', profile: 'ملفي الشخصي', savedTours: 'الجولات المحفوظة',
+    signOut: 'تسجيل الخروج', selectLang: 'اختر اللغة'
+  },
+  he: {
+    home: 'דף הבית', tours: 'טיולים', domestic: 'טיולים מקומיים', international: 'טיולים בינלאומיים',
+    cars: 'רכבים', posts: 'בלוג', about: 'אודות', contact: 'צור קשר',
+    login: 'התחברות', loading: 'טוען...', profile: 'הפרופיל שלי', savedTours: 'טיולים שמורים',
+    signOut: 'יציאה', selectLang: 'בחר שפה'
+  },
+  de: {
+    home: 'Startseite', tours: 'Touren', domestic: 'Inlandstouren', international: 'Internationale Touren',
+    cars: 'Fahrzeuge', posts: 'Blog', about: 'Über uns', contact: 'Kontakt',
+    login: 'Anmelden', loading: 'Laden...', profile: 'Mein Profil', savedTours: 'Gespeicherte Touren',
+    signOut: 'Abmelden', selectLang: 'Sprache wählen'
+  },
+  fr: {
+    home: 'Accueil', tours: 'Circuits', domestic: 'Circuits locaux', international: 'Circuits internationaux',
+    cars: 'Voitures', posts: 'Blog', about: 'À propos', contact: 'Contact',
+    login: 'Connexion', loading: 'Chargement...', profile: 'Mon profil', savedTours: 'Circuits sauvegardés',
+    signOut: 'Déconnexion', selectLang: 'Choisir la langue'
+  },
+  zh: {
+    home: '首页', tours: '旅游', domestic: '国内游', international: '国际游',
+    cars: '车辆', posts: '博客', about: '关于我们', contact: '联系我们',
+    login: '登录', loading: '加载中...', profile: '我的资料', savedTours: '收藏的旅游',
+    signOut: '退出', selectLang: '选择语言'
+  }
+};
+
+function getCurrentLanguage() {
+  return localStorage.getItem('selectedLanguage') || 'en';
+}
+
+function applyNavbarLanguage(lang) {
+  lang = lang || getCurrentLanguage();
+  const t = NAVBAR_TRANSLATIONS[lang] || NAVBAR_TRANSLATIONS.en;
+
+  // Update the language button badge (flag + code)
+  const langBtn = document.querySelector('.nav-lang-btn');
+  if (langBtn) {
+    const meta = LANG_META[lang] || LANG_META.en;
+    const flagSpan = langBtn.querySelector('.lang-flag');
+    const codeSpan = langBtn.querySelector('.lang-code');
+    if (flagSpan) flagSpan.textContent = meta.flag;
+    if (codeSpan) codeSpan.textContent = meta.code;
+    langBtn.setAttribute('aria-label', t.selectLang);
+  }
+
+  // Mark active item in the lang dropdown
+  document.querySelectorAll('.nav-lang-dropdown .dropdown-menu a[data-lang]').forEach(a => {
+    a.classList.toggle('active', a.dataset.lang === lang);
+  });
+
+  // Translate the main nav links by matching their href
+  const navLinks = document.querySelector('.nav-links');
+  if (navLinks) {
+    const linkMap = {
+      'index.html': t.home,
+      'cars.html': t.cars,
+      'posts.html': t.posts,
+      'about.html': t.about,
+      'contact.html': t.contact
+    };
+    navLinks.querySelectorAll(':scope > a').forEach(a => {
+      const href = a.getAttribute('href');
+      if (linkMap[href]) a.textContent = linkMap[href];
+    });
+  }
+
+  // Tours dropdown button ("Tours ▼")
+  const toursBtn = document.querySelector('.nav-dropdown > .nav-dropdown-btn');
+  if (toursBtn) toursBtn.textContent = `${t.tours} ▼`;
+
+  // Tours dropdown items
+  const domesticLink = document.querySelector('.nav-dropdown .dropdown-menu a[href="domestic-tours.html"]');
+  if (domesticLink) domesticLink.textContent = t.domestic;
+  const intLink = document.querySelector('.nav-dropdown .dropdown-menu a[href="international-tours.html"]');
+  if (intLink) intLink.textContent = t.international;
+
+  // User menu button — only translate the generic states, never overwrite a real user name
+  const userBtn = document.getElementById('nav-user-btn');
+  if (userBtn && !userBtn.classList.contains('logged-in')) {
+    const currentText = (userBtn.textContent || '').trim();
+    const loginVariants = Object.values(NAVBAR_TRANSLATIONS).map(x => x.login);
+    const loadingVariants = Object.values(NAVBAR_TRANSLATIONS).map(x => x.loading);
+    if (currentText === '' || loginVariants.includes(currentText)) {
+      userBtn.textContent = t.login;
+    } else if (loadingVariants.includes(currentText) || currentText === 'Loading...') {
+      userBtn.textContent = t.loading;
+    }
+  }
+
+  // User dropdown items
+  const profileLink = document.querySelector('.user-profile-link');
+  if (profileLink) profileLink.textContent = t.profile;
+  const savedLink = document.querySelector('.user-saved-tours');
+  if (savedLink) savedLink.textContent = t.savedTours;
+  const logoutLink = document.querySelector('.user-logout');
+  if (logoutLink) logoutLink.textContent = t.signOut;
+
+  // Apply direction (scoped to the navbar for now, as requested)
+  const nav = document.querySelector('.navbar');
+  if (nav) nav.setAttribute('dir', RTL_LANGS.includes(lang) ? 'rtl' : 'ltr');
+
+  // Also reflect on <html lang> for accessibility / search engines
+  document.documentElement.lang = lang;
+}
+
 function initLanguageSwitcher() {
   const langDropdown = document.querySelector('.nav-lang-dropdown');
   if (!langDropdown) return;
 
   const langBtn = langDropdown.querySelector('.nav-lang-btn');
-  const langMenu = langDropdown.querySelector('.dropdown-menu');
-  const langLinks = langDropdown.querySelectorAll('.dropdown-menu a');
+  const langLinks = langDropdown.querySelectorAll('.dropdown-menu a[data-lang]');
 
-  // Load saved language
-  const savedLang = localStorage.getItem('selectedLanguage') || 'en';
-  updateLanguageButton(savedLang);
+  // Apply currently saved language on load
+  applyNavbarLanguage(getCurrentLanguage());
 
   // Toggle dropdown on mobile
   langBtn.addEventListener('click', (e) => {
@@ -896,18 +1044,9 @@ function initLanguageSwitcher() {
     link.addEventListener('click', (e) => {
       e.preventDefault();
       const lang = link.dataset.lang;
-      
-      // Update active state
-      langLinks.forEach(l => l.classList.remove('active'));
-      link.classList.add('active');
-      
-      // Save selection
+      if (!lang) return;
       localStorage.setItem('selectedLanguage', lang);
-      
-      // Update button
-      updateLanguageButton(lang);
-      
-      // Close dropdown on mobile
+      applyNavbarLanguage(lang);
       langDropdown.classList.remove('open');
     });
   });
@@ -918,42 +1057,19 @@ function initLanguageSwitcher() {
       langDropdown.classList.remove('open');
     }
   });
-
-  function updateLanguageButton(lang) {
-    const langData = {
-      en: { flag: '🇬🇧', code: 'EN' },
-      ka: { flag: '🇬🇪', code: 'KA' },
-      ru: { flag: '🇷🇺', code: 'RU' },
-      tr: { flag: '🇹🇷', code: 'TR' },
-      ar: { flag: '🇸🇦', code: 'AR' },
-      he: { flag: '🇮🇱', code: 'HE' },
-      de: { flag: '🇩🇪', code: 'DE' },
-      fr: { flag: '🇫🇷', code: 'FR' },
-      zh: { flag: '🇨🇳', code: 'ZH' }
-    };
-
-    const data = langData[lang] || langData.en;
-    const flagSpan = langBtn.querySelector('.lang-flag');
-    const codeSpan = langBtn.querySelector('.lang-code');
-    
-    if (flagSpan) flagSpan.textContent = data.flag;
-    if (codeSpan) codeSpan.textContent = data.code;
-
-    // Update active state in dropdown
-    langLinks.forEach(link => {
-      if (link.dataset.lang === lang) {
-        link.classList.add('active');
-      } else {
-        link.classList.remove('active');
-      }
-    });
-  }
 }
+
+// Expose so auth.js (or any other script) can re-apply translations
+// after it mutates navbar text (e.g. resetting the Login button).
+window.applyNavbarLanguage = applyNavbarLanguage;
+window.getCurrentLanguage = getCurrentLanguage;
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
   initLanguageSwitcher();
+  // Apply saved language even on pages that don't have the switcher (e.g. login, admin)
+  applyNavbarLanguage(getCurrentLanguage());
   // ავტორიზაციის სტატუსის მოსმენა
   onAuthStateChanged(auth, (user) => {
     // ყოველთვის გავუშვათ sync, რომ თუ გამოვიდა სისტემიდან, გულები გათეთრდეს

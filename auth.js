@@ -79,6 +79,12 @@ function updateNavbar(user) {
       dropdownMenu.style.display = 'none';
     }
   }
+
+  // Re-apply navbar translations so the "Login" / dropdown labels stay
+  // in the user's selected language after this updates the navbar DOM.
+  if (typeof window.applyNavbarLanguage === 'function') {
+    window.applyNavbarLanguage();
+  }
 }
 
 // Handle navbar button click
