@@ -5,6 +5,10 @@
 //    "multi-day" → Multi-Day Tours
 //    "flexible"  → Flexible Tours
 //    "upcoming"  → Upcoming Tours (include dateRange + dateStart)
+//
+//  Each tour also has:
+//    `type`: "domestic" or "international"
+//    `isFeatured`: true/false (shows in "This Season's Best Deal")
 // ============================================================
 
 const TOURS = [
@@ -13,6 +17,8 @@ const TOURS = [
   {
     id: 'od-1',
     category: 'one-day',
+    type: 'domestic',
+    isFeatured: false,
     title: 'Mtskheta & Jvari Monastery',
     price: '$49',
     duration: '1 Day',
@@ -25,6 +31,8 @@ const TOURS = [
   {
     id: 'od-2',
     category: 'one-day',
+    type: 'domestic',
+    isFeatured: false,
     title: 'Kakheti Wine & Monastery Day',
     price: '$65',
     duration: '1 Day',
@@ -37,6 +45,8 @@ const TOURS = [
   {
     id: 'od-3',
     category: 'one-day',
+    type: 'domestic',
+    isFeatured: false,
     title: 'Kazbegi Mountain Adventure',
     price: '$79',
     duration: '1 Day',
@@ -49,6 +59,8 @@ const TOURS = [
   {
     id: 'od-4',
     category: 'one-day',
+    type: 'domestic',
+    isFeatured: false,
     title: 'Tbilisi Hidden Gems Walk',
     price: '$35',
     duration: '1 Day',
@@ -63,6 +75,8 @@ const TOURS = [
   {
     id: 'md-1',
     category: 'multi-day',
+    type: 'domestic',
+    isFeatured: false,
     title: 'Best of Georgia — 5 Days',
     price: '$420',
     duration: '5 Days',
@@ -75,6 +89,8 @@ const TOURS = [
   {
     id: 'md-2',
     category: 'multi-day',
+    type: 'domestic',
+    isFeatured: false,
     title: 'Mountains & Black Sea — 7 Days',
     price: '$680',
     duration: '7 Days',
@@ -87,6 +103,8 @@ const TOURS = [
   {
     id: 'md-3',
     category: 'multi-day',
+    type: 'domestic',
+    isFeatured: false,
     title: 'Hidden Georgia — 10 Days',
     price: '$990',
     duration: '10 Days',
@@ -99,6 +117,8 @@ const TOURS = [
   {
     id: 'md-4',
     category: 'multi-day',
+    type: 'domestic',
+    isFeatured: false,
     title: 'Wine & Culture — 4 Days',
     price: '$320',
     duration: '4 Days',
@@ -113,6 +133,8 @@ const TOURS = [
   {
     id: 'fl-1',
     category: 'flexible',
+    type: 'domestic',
+    isFeatured: false,
     title: 'Private Tbilisi at Your Pace',
     price: 'From $85',
     duration: 'Flexible',
@@ -125,6 +147,8 @@ const TOURS = [
   {
     id: 'fl-2',
     category: 'flexible',
+    type: 'domestic',
+    isFeatured: false,
     title: 'School Excursion Package',
     price: 'From $25/student',
     duration: '1–5 Days',
@@ -137,6 +161,8 @@ const TOURS = [
   {
     id: 'fl-3',
     category: 'flexible',
+    type: 'international',
+    isFeatured: false,
     title: 'Honeymoon & Romantic Getaway',
     price: 'From $199/couple',
     duration: 'Flexible',
@@ -149,6 +175,8 @@ const TOURS = [
   {
     id: 'fl-4',
     category: 'flexible',
+    type: 'international',
+    isFeatured: false,
     title: 'Photography Tour — Any Route',
     price: 'From $95',
     duration: 'Flexible',
@@ -163,6 +191,8 @@ const TOURS = [
   {
     id: 'up-1',
     category: 'upcoming',
+    type: 'domestic',
+    isFeatured: false,
     title: 'Svaneti Trekking Expedition',
     price: '$580',
     duration: '6 Days',
@@ -178,6 +208,8 @@ const TOURS = [
   {
     id: 'up-2',
     category: 'upcoming',
+    type: 'domestic',
+    isFeatured: false,
     title: 'Kakheti Harvest Festival Tour',
     price: '$290',
     duration: '3 Days',
@@ -193,6 +225,8 @@ const TOURS = [
   {
     id: 'up-3',
     category: 'upcoming',
+    type: 'domestic',
+    isFeatured: false,
     title: 'Kazbegi Midsummer Trek',
     price: '$195',
     duration: '2 Days',
@@ -208,6 +242,8 @@ const TOURS = [
   {
     id: 'up-4',
     category: 'upcoming',
+    type: 'international',
+    isFeatured: false,
     title: 'Tbilisi Open City Weekend',
     price: '$120',
     duration: '2 Days',
@@ -223,6 +259,8 @@ const TOURS = [
   {
     id: 'up-5',
     category: 'upcoming',
+    type: 'international',
+    isFeatured: false,
     title: 'Batumi Summer Escape',
     price: '$345',
     duration: '4 Days',

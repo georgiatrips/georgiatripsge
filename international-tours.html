@@ -20,7 +20,7 @@
   <div class="nav-links">
     <a href="index.html">Home</a>
     <div class="nav-dropdown">
-      <button class="nav-dropdown-btn active">Tours</button>
+      <button class="nav-dropdown-btn active">Tours ▼</button>
       <div class="dropdown-menu">
         <a href="domestic-tours.html">Domestic Tours</a>
         <a href="international-tours.html" class="active">International Tours</a>
@@ -39,7 +39,7 @@
       </div>
     </div>
   </div>
-  <button class="nav-toggle" aria-label="Toggle menu">
+  <button class="nav-toggle" aria-label="Menu">
     <span></span><span></span><span></span>
   </button>
 </nav>
@@ -52,7 +52,7 @@
   <div class="breadcrumb">
     <a href="index.html">Home</a>
     <span class="sep">&#8250;</span>
-    <a href="tours.html">Tours</a>
+    <a href="domestic-tours.html">Tours</a>
     <span class="sep">&#8250;</span>
     <span class="current">International Tours</span>
   </div>
@@ -144,7 +144,7 @@
       <h4>Quick Links</h4>
       <ul>
         <li><a href="index.html">Home</a></li>
-        <li><a href="tours.html">Tours</a></li>
+        <li><a href="domestic-tours.html">Tours</a></li>
         <li><a href="cars.html">Cars</a></li>
         <li><a href="posts.html">Posts</a></li>
         <li><a href="about.html">About</a></li>
@@ -189,6 +189,7 @@
   </div>
 </div>
 
+<script src="pricing.js"></script>
 <script type="module" src="script.js"></script>
 <script type="module" src="auth.js"></script>
 <script type="module">
@@ -224,12 +225,16 @@ function formatHighlights(highlights) {
 
 function renderTourCard(tour) {
   const diff = getDifficultyColor(tour.difficulty);
+  const description = tour.desc.length > 200 ? tour.desc.substring(0, 200) + '...' : tour.desc;
   return `
     <article class="tour-card tour-card--standard" data-id="${tour.id}">
       <div class="tour-card__img-wrap">
         <img src="${tour.img}" alt="${tour.title}" loading="lazy" class="tour-card__img">
         <div class="tour-card__overlay"></div>
         <div class="tour-card__top-badges">
+          <button class="save-tour-btn" data-save-id="${tour.id}" onclick="toggleSaveTour('${tour.id}', event)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.78-8.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+          </button>
           <span class="tour-badge tour-badge--duration">&#9201; ${tour.duration || '1 Day'}</span>
         </div>
         <span class="tour-badge tour-badge--difficulty" style="
@@ -239,20 +244,20 @@ function renderTourCard(tour) {
       </div>
       <div class="tour-card__body">
         <h3 class="tour-card__title">${tour.title}</h3>
-        <p class="tour-card__desc">${tour.desc}</p>
+        <p class="tour-card__desc">${description}</p>
         <ul class="tour-highlights">
           ${formatHighlights(tour.highlights)}
         </ul>
         <div class="tour-card__footer">
           <div class="tour-card__meta">
-            <span class="tour-meta-item">&#128101; ${tour.groupSize || 'Up to 10'}</span>
+            <span class="tour-meta-item">👥 Min People: ${tour.minPeople || 1}</span>
+            <span class="tour-meta-item">👥 Max People: ${tour.maxPeople || 10}</span>
           </div>
           <div class="tour-card__price-block">
-            <span class="tour-price">${tour.price}</span>
-            <span class="tour-price-label">per person</span>
+            ${window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(tour) : `<span class="tour-price">${tour.price || 'On Request'}</span> <span class="price-separator">/</span> <span class="tour-price-label">per person</span>`}
           </div>
         </div>
-        <button class="btn-book" onclick="openBookModal('${tour.title}', '${tour.price}')">
+        <button class="btn-book" onclick="goToTourDetail('${tour.id}')">
           Book This Tour <span class="btn-arrow">&#8594;</span>
         </button>
       </div>
@@ -269,7 +274,10 @@ function renderEmptyState(categoryLabel) {
 }
 
 function getFilteredTours(categoryKey) {
-  return allTours.filter(t => t.tourType === TOUR_TYPE && t.category === categoryKey);
+  return allTours.filter(t => 
+    (t.tourType === TOUR_TYPE || t.type === TOUR_TYPE) && 
+    t.category === categoryKey
+  );
 }
 
 function getTourCount(categoryKey) {
@@ -311,6 +319,7 @@ function renderToursGrid(categoryKey) {
       grid.classList.remove('grid--enter');
     }, 400 + cards.length * 60);
   }, 220);
+  if (window.syncSaveButtons) window.syncSaveButtons();
 }
 
 function buildFilterTabs() {

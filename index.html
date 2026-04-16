@@ -7,6 +7,36 @@
 <meta name="description" content="Discover Georgia with expert guided tours, comfortable transport and authentic travel experiences. Book your Georgian adventure today.">
 <link rel="stylesheet" href="style.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+/* Google Style Reviews */
+.reviews-slider-wrapper {
+  position: relative;
+  overflow: hidden;
+  margin-top: 2rem;
+}
+.reviews-slider {
+  display: flex;
+  gap: 2rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+}
+.google-review {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+  display: flex;
+  flex-direction: column;
+  min-width: 300px;
+  flex-shrink: 0;
+}
+.review-header { display: flex; align-items: center; margin-bottom: 0.75rem; }
+.reviewer-avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 12px; object-fit: cover; }
+.reviewer-info h4 { margin: 0; font-size: 14px; font-weight: 600; color: #3c4043; font-family: 'Montserrat', sans-serif; }
+.review-stars { color: #fbbc04; font-size: 14px; margin-top: 2px; letter-spacing: 1px; }
+.review-text { font-size: 14px; line-height: 1.5; color: #3c4043; font-family: 'Poppins', sans-serif; margin-bottom: 0.5rem; }
+.review-tour-name { font-size: 12px; color: var(--text-light); font-style: italic; margin-top: auto; }
+</style>
 </head>
 <body>
 
@@ -21,8 +51,8 @@
     <div class="nav-dropdown">
       <button class="nav-dropdown-btn">Tours ▼</button>
       <div class="dropdown-menu">
-        <a href="domestic-tours.html">🏔️ Domestic Tours</a>
-        <a href="international-tours.html">✈️ International Tours</a>
+        <a href="domestic-tours.html">Domestic Tours</a>
+        <a href="international-tours.html">International Tours</a>
       </div>
     </div>
     <a href="cars.html">Cars</a>
@@ -52,7 +82,7 @@
     <h1>Explore <em>Georgia</em><br>With Us</h1>
     <p>Ancient culture, breathtaking mountains, world-class wine and legendary hospitality — all in one extraordinary destination.</p>
     <div class="hero-btns">
-      <a href="tours.html" class="btn-primary">✦ Book Now</a>
+      <a href="domestic-tours.html" class="btn-primary">✦ Book Now</a>
       <a href="about.html" class="btn-outline">Learn More →</a>
     </div>
   </div>
@@ -66,7 +96,6 @@
 <section class="featured-section">
   <div class="container">
     <div class="section-header">
-      <span class="section-tag">Special Offer</span>
       <h2>This Season's Best Deal</h2>
       <div class="divider"></div>
     </div>
@@ -171,6 +200,33 @@
   </div>
 </section>
 
+<!-- REVIEWS SECTION -->
+<section class="reviews-section" style="padding: 5rem 2rem; background: var(--light-bg);">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">Testimonials</span>
+      <h2>Customer Stories</h2>
+      <p>Real feedback from travelers who explored Georgia with us.</p>
+      <div class="divider"></div>
+    </div>
+    <div style="text-align: center; margin: 2rem 0;">
+      <a href="https://www.google.com/maps/place/Georgia+Trips/@41.6494315,41.6436765,17z/data=!4m8!3m7!1s0x4067878936097805:0x694acc6ee2f95b30!8m2!3d41.6494315!4d41.6436765!9m1!1b1!16s%2Fg%2F11yzq4frf5?entry=ttu&g_ep=EgoyMDI2MDQxNC4wIKXMDSoASAFQAw%3D%3D" target="_blank" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px;">
+        Leave a Review on Google Maps 
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+          <polyline points="15,3 21,3 21,9"></polyline>
+          <line x1="10" y1="14" x2="21" y2="3"></line>
+        </svg>
+      </a>
+    </div>
+    <div class="reviews-slider-wrapper">
+      <div class="reviews-slider" id="reviews-slider">
+        <!-- Reviews will be loaded from Firebase -->
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- MAP SECTION -->
 <section class="map-section">
   <div class="map-container">
@@ -204,6 +260,7 @@
   </div>
 </section>
 
+
 <!-- FOOTER -->
 <footer class="footer">
   <div class="footer-grid">
@@ -225,7 +282,7 @@
       <h4>Quick Links</h4>
       <ul>
         <li><a href="index.html">Home</a></li>
-        <li><a href="tours.html">Tours</a></li>
+        <li><a href="domestic-tours.html">Tours</a></li>
         <li><a href="cars.html">Cars</a></li>
         <li><a href="posts.html">Posts</a></li>
         <li><a href="about.html">About</a></li>
@@ -236,7 +293,7 @@
       <ul>
         <li><a href="domestic-tours.html">One-Day Tours</a></li>
         <li><a href="international-tours.html">Multi-Day Tours</a></li>
-        <li><a href="tours.html">Fixed Tours</a></li>
+        <li><a href="domestic-tours.html">Fixed Tours</a></li>
       </ul>
     </div>
     <div class="footer-col">
@@ -281,6 +338,7 @@
   </div>
 </div>
 
+<script src="pricing.js"></script>
 <script type="module" src="script.js"></script>
 <script type="module" src="auth.js"></script>
 </body>

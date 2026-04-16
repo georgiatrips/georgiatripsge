@@ -326,7 +326,7 @@
 }
 
 .tour-price {
-  display: block;
+  display: inline-block;
   font-family: 'Montserrat', sans-serif;
   font-size: 1.25rem;
   font-weight: 900;
@@ -380,6 +380,41 @@
   transition: transform 0.2s ease;
 }
 .btn-book:hover .btn-arrow { transform: translateX(4px); }
+
+/* Details button - outline style */
+.btn-details {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  padding: 0.72rem 1rem;
+  border-radius: 10px;
+  border: 2px solid var(--dark-blue);
+  background: transparent;
+  color: var(--dark-blue);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 0.87rem;
+  cursor: pointer;
+  transition: background 0.22s ease, color 0.22s ease, transform 0.18s ease, box-shadow 0.22s ease;
+  letter-spacing: 0.2px;
+}
+
+.btn-details:hover {
+  background: var(--dark-blue);
+  color: var(--white);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(11, 60, 93, 0.28);
+}
+
+.btn-details .btn-arrow { transform: translateX(0); }
+.btn-details:hover .btn-arrow { transform: translateX(4px); }
+
+/* Make btn-book flex to fill remaining space */
+.btn-book {
+  flex: 1;
+}
 
 /* ── UPCOMING CARD SPECIFICS ─────────────────────────────── */
 .tour-card--upcoming .tour-card__img-wrap { height: 200px; }

@@ -153,6 +153,19 @@
   color: var(--white);
 }
 
+.admin-card-featured {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  background: #FFD700;
+  color: #333;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+}
+
 .admin-card-body {
   padding: 1.25rem;
 }
@@ -388,6 +401,46 @@
   display: none;
 }
 
+/* Toggle Switch Styles */
+.toggle-switch {
+  display: flex;
+  align-items: center;
+}
+
+.toggle-checkbox {
+  display: none;
+}
+
+.toggle-label {
+  position: relative;
+  width: 50px;
+  height: 28px;
+  background: #ccc;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  display: flex;
+  align-items: center;
+  padding: 0 3px;
+}
+
+.toggle-label .toggle-inner {
+  width: 24px;
+  height: 24px;
+  background: white;
+  border-radius: 12px;
+  transition: transform 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.toggle-checkbox:checked + .toggle-label {
+  background: var(--teal);
+}
+
+.toggle-checkbox:checked + .toggle-label .toggle-inner {
+  transform: translateX(20px);
+}
+
 .image-preview.show {
   display: block;
 }
@@ -610,7 +663,7 @@
   <div class="nav-links">
     <a href="index.html">Home</a>
     <div class="nav-dropdown">
-      <button class="nav-dropdown-btn">Tours</button>
+      <button class="nav-dropdown-btn">Tours ▼</button>
       <div class="dropdown-menu">
         <a href="domestic-tours.html">Domestic Tours</a>
         <a href="international-tours.html">International Tours</a>
@@ -643,6 +696,7 @@
       <button class="admin-tab" data-panel="cars">Cars</button>
       <button class="admin-tab" data-panel="posts">Posts</button>
       <button class="admin-tab" data-panel="featured">Featured</button>
+      <button class="admin-tab" data-panel="reviews">Reviews</button>
     </div>
   </div>
 
@@ -652,6 +706,14 @@
       <h2>Manage Tours</h2>
       <button class="btn-add" onclick="openTourModal()">+ Add Tour</button>
     </div>
+    
+    <!-- Tour Type Tabs -->
+    <div class="admin-tabs" style="margin-bottom: 1.5rem;">
+      <button class="admin-tab tour-type-tab active" data-type="all">All Tours</button>
+      <button class="admin-tab tour-type-tab" data-type="domestic">Domestic Tours</button>
+      <button class="admin-tab tour-type-tab" data-type="international">International Tours</button>
+    </div>
+    
     <div class="items-grid" id="tours-list"></div>
   </div>
 
@@ -676,10 +738,21 @@
   <!-- Featured Panel -->
   <div class="admin-panel" id="panel-featured">
     <div class="panel-header">
-      <h2>Manage Featured Offers</h2>
-      <button class="btn-add" onclick="openFeaturedModal()">+ Add Featured</button>
+      <h2>Manage Best Offers</h2>
+      <button class="btn-add" onclick="openFeaturedModal()">+ Add Best Offer</button>
     </div>
     <div class="items-grid" id="featured-list"></div>
+  </div>
+
+  <!-- Reviews Panel -->
+  <div class="admin-panel" id="panel-reviews">
+    <div class="panel-header">
+      <h2>Manage Reviews</h2>
+      <button class="btn-add" onclick="openReviewModal()">+ Add Review</button>
+    </div>
+    <div class="items-grid" id="reviews-list"></div>
+  </div>
+
   </div>
 </div>
 
@@ -718,12 +791,23 @@
         </div>
         <div class="form-group">
           <label>Price *</label>
-          <input type="text" id="tour-price" required placeholder="e.g. $79">
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="text" id="tour-price" required placeholder="e.g. $79" style="flex: 1;">
+            <label style="display: flex; align-items: center; gap: 5px; white-space: nowrap; margin-bottom: 0; cursor: pointer;">
+              <input type="checkbox" id="tour-on-request" onchange="document.getElementById('tour-price').disabled = this.checked; document.getElementById('tour-price').required = !this.checked"> 
+              On Request
+            </label>
+          </div>
         </div>
         <div class="form-group">
-          <label style="display: flex; align-items: center; gap: 10px;">
-            <input type="checkbox" id="tour-featured" style="width: auto; margin: 0;">
-            <span>Featured (This Season's Best Deal)</span>
+          <label style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0;">
+            <span>Best Offer (This Season's Best Deal)</span>
+            <div class="toggle-switch">
+              <input type="checkbox" id="tour-featured" class="toggle-checkbox">
+              <label for="tour-featured" class="toggle-label">
+                <span class="toggle-inner"></span>
+              </label>
+            </div>
           </label>
         </div>
         <div class="form-row">
@@ -731,22 +815,43 @@
             <label>Duration</label>
             <input type="text" id="tour-duration" placeholder="e.g. 1 Day">
           </div>
+        </div>
+        <div class="form-row">
           <div class="form-group">
-            <label>Group Size</label>
-            <input type="text" id="tour-group" placeholder="e.g. Up to 10">
+            <label>Min People *</label>
+            <input type="number" id="tour-min-people" required min="1" placeholder="e.g. 1">
+          </div>
+          <div class="form-group">
+            <label>Max People *</label>
+            <input type="number" id="tour-max-people" required min="1" placeholder="e.g. 10">
           </div>
         </div>
         <div class="form-group">
-          <label>Difficulty</label>
-          <select id="tour-difficulty">
-            <option value="Easy">Easy</option>
-            <option value="Moderate">Moderate</option>
-            <option value="Challenging">Challenging</option>
-          </select>
+          <label>Recommended Seasons</label>
+          <div class="season-checkboxes" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; background: var(--light-bg); padding: 0.75rem; border-radius: 8px; border: 1.5px solid rgba(11,60,93,0.15);">
+            <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem; cursor: pointer;"><input type="checkbox" name="tour-season" value="Spring" style="width: auto;"> Spring</label>
+            <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem; cursor: pointer;"><input type="checkbox" name="tour-season" value="Summer" style="width: auto;"> Summer</label>
+            <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem; cursor: pointer;"><input type="checkbox" name="tour-season" value="Autumn" style="width: auto;"> Autumn</label>
+            <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem; cursor: pointer;"><input type="checkbox" name="tour-season" value="Winter" style="width: auto;"> Winter</label>
+            <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem; cursor: pointer; border-left: 1px solid #ccc; padding-left: 10px;"><input type="checkbox" name="tour-season" value="All Year" style="width: auto;"> All Year</label>
+          </div>
         </div>
         <div class="form-group">
           <label>Description *</label>
           <textarea id="tour-desc" required placeholder="Describe the tour experience..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>What's Included (Select all that apply)</label>
+          <div class="included-checkboxes" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; background: var(--light-bg); padding: 1rem; border-radius: 8px; border: 1.5px solid rgba(11,60,93,0.15);">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="guide" style="width: auto;"> Local Guide</label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="tickets" style="width: auto;"> Entrance Fees</label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="pickup" style="width: auto;"> Hotel Pickup</label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="food" style="width: auto;"> Meals & Food</label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="hotel" style="width: auto;"> Accommodation</label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="water" style="width: auto;"> Water & Snacks</label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="insurance" style="width: auto;"> Travel Insurance</label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="emergency" style="width: auto;"> 24/7 Support</label>
+          </div>
         </div>
         <div class="form-group">
           <label>Highlights (comma separated)</label>
@@ -799,7 +904,13 @@
           </div>
           <div class="form-group">
             <label>Price *</label>
-            <input type="text" id="car-price" required placeholder="e.g. $180/day">
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <input type="text" id="car-price" required placeholder="e.g. $180/day" style="flex: 1;">
+              <label style="display: flex; align-items: center; gap: 5px; white-space: nowrap; margin-bottom: 0; cursor: pointer;">
+                <input type="checkbox" id="car-on-request" onchange="document.getElementById('car-price').disabled = this.checked; document.getElementById('car-price').required = !this.checked"> 
+                On Request
+              </label>
+            </div>
           </div>
         </div>
         <div class="form-row">
@@ -898,7 +1009,7 @@
 <div class="admin-modal" id="featured-modal">
   <div class="modal-content">
     <div class="modal-header">
-      <h3 id="featured-modal-title">Add Featured Offer</h3>
+      <h3 id="featured-modal-title">Add Best Offer</h3>
       <button class="modal-close" onclick="closeFeaturedModal()">&#10005;</button>
     </div>
     <div class="modal-body">
@@ -915,12 +1026,21 @@
           </div>
           <div class="form-group">
             <label>Badge *</label>
-            <input type="text" id="featured-badge" required placeholder="e.g. Best Offer">
+            <input type="text" id="featured-badge" required value="Best Offer">
           </div>
         </div>
         <div class="form-group">
           <label>Description *</label>
           <textarea id="featured-desc" required placeholder="Describe this special offer..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Price (Optional)</label>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="text" id="featured-price" placeholder="e.g. $150" style="flex: 1;">
+            <label style="display: flex; align-items: center; gap: 5px; white-space: nowrap; margin-bottom: 0; cursor: pointer;">
+              <input type="checkbox" id="featured-on-request" onchange="document.getElementById('featured-price').disabled = this.checked"> On Request
+            </label>
+          </div>
         </div>
         <div class="form-group">
           <label>Meta Info (comma separated)</label>
@@ -949,6 +1069,38 @@
   </div>
 </div>
 
+<!-- Review Modal -->
+<div class="admin-modal" id="review-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="review-modal-title">Add New Review</h3>
+      <button class="modal-close" onclick="closeReviewModal()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <form id="review-form">
+        <input type="hidden" id="review-id">
+        <div class="form-group">
+          <label>Reviewer Name *</label>
+          <input type="text" id="review-name" required placeholder="e.g. John Doe">
+        </div>
+        <div class="form-group">
+          <label>Rating (1-5) *</label>
+          <input type="number" id="review-rating" required min="1" max="5" value="5">
+        </div>
+        <div class="form-group">
+          <label>Review Text *</label>
+          <textarea id="review-text" required placeholder="What the customer said..."></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeReviewModal()">Cancel</button>
+      <button class="btn-save" id="review-save-btn" onclick="saveReview()">Save Review</button>
+    </div>
+  </div>
+</div>
+
+
 <!-- Loading Overlay -->
 <div class="loading-overlay" id="loading-overlay">
   <div class="loading-spinner"></div>
@@ -958,6 +1110,7 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<script src="pricing.js"></script>
 <script type="module" src="script.js"></script>
 <script type="module">
 import { 
@@ -965,29 +1118,50 @@ import {
   getTours, addTour, updateTour, deleteTour,
   getCars, addCar, updateCar, deleteCar,
   getPosts, addPost, updatePost, deletePost,
-  getFeaturedTours, addFeaturedTour, updateFeaturedTour, deleteFeaturedTour
+  getFeaturedTours, addFeaturedTour, updateFeaturedTour, deleteFeaturedTour,
+  getReviews, addReview, updateReview, deleteReview
 } from './firebase-config.js';
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { isAdmin } from './firebase-config.js';
+
+// Initialize auth
+const auth = getAuth();
+
+// Check authentication
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    // Not logged in, redirect to login
+    window.location.href = 'login.html';
+    return;
+  }
+  
+  // User is logged in, load data
+  loadAllData();
+});
 
 // Store data locally
 let toursData = [];
 let carsData = [];
 let postsData = [];
 let featuredData = [];
+let reviewsData = [];
 
 // Load all data on page load
 async function loadAllData() {
   showLoading('Loading data...');
   try {
-    [toursData, carsData, postsData, featuredData] = await Promise.all([
+    [toursData, carsData, postsData, featuredData, reviewsData] = await Promise.all([
       getTours(),
       getCars(),
       getPosts(),
-      getFeaturedTours()
+      getFeaturedTours(),
+      getReviews()
     ]);
     renderTours();
     renderCars();
     renderPosts();
     renderFeatured();
+    renderReviews();
   } catch (error) {
     console.error('Error loading data:', error);
     showToast('Failed to load data', 'error');
@@ -995,16 +1169,23 @@ async function loadAllData() {
   hideLoading();
 }
 
-// Initialize on page load
-loadAllData();
-
-// Tab switching
-document.querySelectorAll('.admin-tab').forEach(tab => {
+// Tab switching for panels
+document.querySelectorAll('.admin-tab:not(.tour-type-tab)').forEach(tab => {
   tab.addEventListener('click', () => {
-    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.admin-tab:not(.tour-type-tab)').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
     tab.classList.add('active');
     document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+  });
+});
+
+// Tab switching for tour types
+document.querySelectorAll('.tour-type-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tour-type-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTourTypeFilter = tab.dataset.type;
+    renderTours();
   });
 });
 
@@ -1012,9 +1193,19 @@ document.querySelectorAll('.admin-tab').forEach(tab => {
 
 // ============ TOURS ============
 
+// Track current tour type filter
+let currentTourTypeFilter = 'all';
+
 function renderTours() {
   const container = document.getElementById('tours-list');
-  if (toursData.length === 0) {
+  
+  // Filter tours by type
+  let filteredTours = toursData;
+  if (currentTourTypeFilter !== 'all') {
+    filteredTours = toursData.filter(tour => (tour.type || tour.tourType) === currentTourTypeFilter);
+  }
+  
+  if (filteredTours.length === 0) {
     container.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1;">
         <div class="empty-state-icon">&#127956;</div>
@@ -1024,19 +1215,20 @@ function renderTours() {
     return;
   }
   
-  container.innerHTML = toursData.map(tour => `
+  container.innerHTML = filteredTours.map(tour => `
     <div class="admin-card" data-id="${tour.id}">
       <div class="admin-card-img">
         <img src="${tour.img}" alt="${tour.title}">
-        <span class="admin-card-badge">${tour.tourType || 'domestic'}</span>
+        <span class="admin-card-badge">${tour.type || tour.tourType || 'domestic'}</span>
+        ${tour.isFeatured ? '<span class="admin-card-featured">★ Best Offer</span>' : ''}
       </div>
       <div class="admin-card-body">
         <h3 class="admin-card-title">${tour.title}</h3>
         <p class="admin-card-desc">${tour.desc}</p>
         <div class="admin-card-meta">
           <span>${tour.category}</span>
-          <span>${tour.price}</span>
-          <span>${tour.duration || ''}</span>
+          <span>${tour.priceOnRequest ? 'On Request' : tour.price}</span>
+          <span>${Array.isArray(tour.season) ? tour.season.join(', ') : (tour.season || 'All Year')}</span>
         </div>
         <div class="admin-card-actions">
           <button class="btn-edit" onclick="editTour('${tour.id}')">Edit</button>
@@ -1051,6 +1243,11 @@ window.openTourModal = function(tourId = null) {
   document.getElementById('tour-form').reset();
   document.getElementById('tour-id').value = '';
   document.getElementById('tour-image-url').value = '';
+  document.getElementById('tour-min-people').value = '';
+  document.getElementById('tour-max-people').value = '';
+  document.getElementById('tour-on-request').checked = false;
+  document.getElementById('tour-price').disabled = false;
+  document.getElementById('tour-price').required = true;
   document.getElementById('tour-image-preview').classList.remove('show');
   document.getElementById('tour-modal-title').textContent = 'Add New Tour';
   document.getElementById('tour-modal').classList.add('open');
@@ -1066,12 +1263,23 @@ window.editTour = function(id) {
   
   document.getElementById('tour-id').value = tour.id;
   document.getElementById('tour-title').value = tour.title;
-  document.getElementById('tour-type').value = tour.tourType || 'domestic';
+  document.getElementById('tour-type').value = tour.type || tour.tourType || 'domestic';
   document.getElementById('tour-category').value = tour.category;
   document.getElementById('tour-price').value = tour.price;
+  document.getElementById('tour-on-request').checked = tour.priceOnRequest || false;
+  document.getElementById('tour-price').disabled = tour.priceOnRequest || false;
+  document.getElementById('tour-price').required = !tour.priceOnRequest;
+  document.getElementById('tour-featured').checked = tour.isFeatured || false;
   document.getElementById('tour-duration').value = tour.duration || '';
-  document.getElementById('tour-group').value = tour.groupSize || '';
-  document.getElementById('tour-difficulty').value = tour.difficulty || 'Easy';
+  document.getElementById('tour-min-people').value = tour.minPeople || '';
+  document.getElementById('tour-max-people').value = tour.maxPeople || '';
+  
+  const selectedSeasons = Array.isArray(tour.season) ? tour.season : [];
+  document.querySelectorAll('input[name="tour-season"]').forEach(cb => { cb.checked = selectedSeasons.includes(cb.value); });
+  
+  const included = tour.included || {};
+  document.querySelectorAll('input[name="inc-item"]').forEach(cb => { cb.checked = !!included[cb.value]; });
+
   document.getElementById('tour-desc').value = tour.desc;
   document.getElementById('tour-highlights').value = (tour.highlights || []).join(', ');
   document.getElementById('tour-image-url').value = tour.img;
@@ -1101,14 +1309,23 @@ window.saveTour = async function() {
       imageUrl = await uploadImage(imageFile);
     }
     
+    const included = {};
+    document.querySelectorAll('input[name="inc-item"]').forEach(cb => {
+      included[cb.value] = cb.checked;
+    });
+
     const tourData = {
       title: document.getElementById('tour-title').value,
+      type: document.getElementById('tour-type').value,
       tourType: document.getElementById('tour-type').value,
       category: document.getElementById('tour-category').value,
       price: document.getElementById('tour-price').value,
+      priceOnRequest: document.getElementById('tour-on-request').checked,
+      isFeatured: document.getElementById('tour-featured').checked,
       duration: document.getElementById('tour-duration').value,
-      groupSize: document.getElementById('tour-group').value,
-      difficulty: document.getElementById('tour-difficulty').value,
+      maxPeople: document.getElementById('tour-max-people').value,
+      included: included,
+      season: Array.from(document.querySelectorAll('input[name="tour-season"]:checked')).map(cb => cb.value),
       desc: document.getElementById('tour-desc').value,
       highlights: document.getElementById('tour-highlights').value.split(',').map(h => h.trim()).filter(h => h),
       img: imageUrl
@@ -1177,7 +1394,7 @@ function renderCars() {
         <h3 class="admin-card-title">${car.title}</h3>
         <p class="admin-card-desc">${car.info || car.desc}</p>
         <div class="admin-card-meta">
-          <span>${car.price}</span>
+          <span>${car.priceOnRequest ? 'On Request' : car.price}</span>
           <span>${car.seats || ''}</span>
         </div>
         <div class="admin-card-actions">
@@ -1193,6 +1410,8 @@ window.openCarModal = function(carId = null) {
   document.getElementById('car-form').reset();
   document.getElementById('car-id').value = '';
   document.getElementById('car-image-url').value = '';
+  document.getElementById('car-on-request').checked = false;
+  document.getElementById('car-price').disabled = false;
   document.getElementById('car-image-preview').classList.remove('show');
   document.getElementById('car-modal-title').textContent = 'Add New Car';
   document.getElementById('car-modal').classList.add('open');
@@ -1210,6 +1429,8 @@ window.editCar = function(id) {
   document.getElementById('car-title').value = car.title;
   document.getElementById('car-type').value = car.type;
   document.getElementById('car-price').value = car.price;
+  document.getElementById('car-on-request').checked = car.priceOnRequest || false;
+  document.getElementById('car-price').disabled = car.priceOnRequest || false;
   document.getElementById('car-seats').value = car.seats || '';
   document.getElementById('car-ac').value = car.ac || '';
   document.getElementById('car-drive').value = car.drive || '';
@@ -1245,6 +1466,7 @@ window.saveCar = async function() {
       title: document.getElementById('car-title').value,
       type: document.getElementById('car-type').value,
       price: document.getElementById('car-price').value,
+      priceOnRequest: document.getElementById('car-on-request').checked,
       seats: document.getElementById('car-seats').value,
       ac: document.getElementById('car-ac').value,
       drive: document.getElementById('car-drive').value,
@@ -1448,6 +1670,7 @@ function renderFeatured() {
         <p class="admin-card-desc">${featured.desc}</p>
         <div class="admin-card-meta">
           <span>Order: ${featured.order || 0}</span>
+          <span>${featured.priceOnRequest ? 'On Request' : (featured.price || '')}</span>
           <span>${featured.tag}</span>
         </div>
         <div class="admin-card-actions">
@@ -1462,6 +1685,9 @@ function renderFeatured() {
 window.openFeaturedModal = function(featuredId = null) {
   document.getElementById('featured-form').reset();
   document.getElementById('featured-id').value = '';
+  document.getElementById('featured-badge').value = 'Best Offer';
+  document.getElementById('featured-on-request').checked = false;
+  document.getElementById('featured-price').disabled = false;
   document.getElementById('featured-image-url').value = '';
   document.getElementById('featured-image-preview').classList.remove('show');
   document.getElementById('featured-modal-title').textContent = 'Add Featured Offer';
@@ -1481,6 +1707,9 @@ window.editFeatured = function(id) {
   document.getElementById('featured-tag').value = featured.tag;
   document.getElementById('featured-badge').value = featured.badge;
   document.getElementById('featured-desc').value = featured.desc;
+  document.getElementById('featured-price').value = featured.price || '';
+  document.getElementById('featured-on-request').checked = featured.priceOnRequest || false;
+  document.getElementById('featured-price').disabled = featured.priceOnRequest || false;
   document.getElementById('featured-meta').value = (featured.meta || []).join(', ');
   document.getElementById('featured-order').value = featured.order || 0;
   document.getElementById('featured-image-url').value = featured.img;
@@ -1515,6 +1744,8 @@ window.saveFeatured = async function() {
       tag: document.getElementById('featured-tag').value,
       badge: document.getElementById('featured-badge').value,
       desc: document.getElementById('featured-desc').value,
+      price: document.getElementById('featured-price').value,
+      priceOnRequest: document.getElementById('featured-on-request').checked,
       meta: document.getElementById('featured-meta').value.split(',').map(m => m.trim()).filter(m => m),
       order: parseInt(document.getElementById('featured-order').value) || 0,
       img: imageUrl
@@ -1559,6 +1790,104 @@ async function deleteFeaturedItem(id) {
   hideLoading();
 }
 
+// ============ REVIEWS ============
+
+function renderReviews() {
+  const container = document.getElementById('reviews-list');
+  if (reviewsData.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state" style="grid-column: 1 / -1;">
+        <div class="empty-state-icon">&#11088;</div>
+        <h3>No Reviews Yet</h3>
+        <p>Add your first customer review to get started</p>
+      </div>`;
+    return;
+  }
+  
+  container.innerHTML = reviewsData.map(rev => `
+    <div class="admin-card" data-id="${rev.id}">
+      <div class="admin-card-body">
+        <div style="display:flex; gap:15px; align-items:center; margin-bottom:1rem;">
+          <div>
+            <h3 class="admin-card-title" style="margin:0;">${rev.name}</h3>
+            <div style="color:#FFD700;">${'★'.repeat(rev.rating)}${'☆'.repeat(5-rev.rating)}</div>
+          </div>
+        </div>
+        <p class="admin-card-desc">${rev.text}</p>
+        <div class="admin-card-actions">
+          <button class="btn-edit" onclick="editReview('${rev.id}')">Edit</button>
+          <button class="btn-delete" onclick="confirmDeleteReview('${rev.id}')">Delete</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.openReviewModal = function() {
+  document.getElementById('review-form').reset();
+  document.getElementById('review-id').value = '';
+  document.getElementById('review-modal-title').textContent = 'Add New Review';
+  document.getElementById('review-modal').classList.add('open');
+};
+
+window.closeReviewModal = function() {
+  document.getElementById('review-modal').classList.remove('open');
+};
+
+window.editReview = function(id) {
+  const rev = reviewsData.find(r => r.id === id);
+  if (!rev) return;
+  
+  document.getElementById('review-id').value = rev.id;
+  document.getElementById('review-name').value = rev.name;
+  document.getElementById('review-rating').value = rev.rating;
+  document.getElementById('review-text').value = rev.text;
+  
+  document.getElementById('review-modal-title').textContent = 'Edit Review';
+  document.getElementById('review-modal').classList.add('open');
+};
+
+window.saveReview = async function() {
+  const id = document.getElementById('review-id').value;
+  
+  showLoading('Saving review...');
+  try {
+    const data = {
+      name: document.getElementById('review-name').value,
+      rating: parseInt(document.getElementById('review-rating').value),
+      text: document.getElementById('review-text').value
+    };
+    
+    if (id) await updateReview(id, data);
+    else await addReview(data);
+    
+    showToast('Review saved!', 'success');
+    closeReviewModal();
+    reviewsData = await getReviews();
+    renderReviews();
+  } catch (e) {
+    showToast('Error saving review', 'error');
+  }
+  hideLoading();
+};
+
+window.confirmDeleteReview = function(id) {
+  if (confirm('Delete this review?')) {
+    deleteReviewItem(id);
+  }
+};
+
+async function deleteReviewItem(id) {
+  showLoading('Deleting...');
+  try {
+    await deleteReview(id);
+    showToast('Deleted!', 'success');
+    reviewsData = await getReviews();
+    renderReviews();
+  } catch (e) { showToast('Error', 'error'); }
+  hideLoading();
+}
+
 // ============ UTILITIES ============
 
 function showLoading(text = 'Loading...') {
@@ -1596,7 +1925,7 @@ function showToast(message, type = 'success') {
 });
 
 // Close modals on backdrop click
-['tour', 'car', 'post', 'featured'].forEach(type => {
+['tour', 'car', 'post', 'featured', 'review'].forEach(type => {
   document.getElementById(`${type}-modal`).addEventListener('click', function(e) {
     if (e.target === this) {
       window[`close${type.charAt(0).toUpperCase() + type.slice(1)}Modal`]();

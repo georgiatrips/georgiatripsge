@@ -1,18 +1,24 @@
-// ===== DATA (loaded from Firebase) =====
+﻿﻿﻿﻿﻿﻿﻿// ===== DATA (loaded from Firebase) =====
 let toursData = [];
 let carsData = [];
 let postsData = [];
 let featuredData = [];
+let reviewsData = [];
 
 // Firebase Firestore imports
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
   getFirestore, 
   collection, 
-  getDocs, 
+  getDocs,
+  doc,
+  setDoc,
+  deleteDoc,
+  getDoc,
   query, 
   orderBy 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -28,6 +34,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 // ===== FETCH DATA FROM FIREBASE =====
 async function fetchToursFromFirebase() {
@@ -78,6 +85,183 @@ async function fetchFeaturedFromFirebase() {
   }
 }
 
+async function fetchReviewsFromFirebase() {
+  try {
+    const reviewsRef = collection(db, 'reviews');
+    const q = query(reviewsRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error fetching reviews:', error);
+    return [];
+  }
+}
+
+// ===== GET FEATURED TOURS FROM TOURS DATA =====
+function getFeaturedToursFromData(tours) {
+  // Filter tours that have isFeatured = true
+  const featured = tours.filter(tour => tour.isFeatured === true);
+  
+  // Transform tour data to featured card format
+  return featured.map(tour => ({
+    id: tour.id,
+    title: tour.title,
+    img: tour.img,
+    desc: tour.desc,
+    minPeople: tour.minPeople,
+    maxPeople: tour.maxPeople,
+    highlights: tour.highlights,
+    tag: tour.category === 'one-day' ? 'One-Day Adventure' : 
+         tour.category === 'multi-day' ? 'Multi-Day Experience' : 
+         tour.category === 'upcoming' ? 'Upcoming Event' : 'Flexible Tour',
+    badge: tour.type === 'domestic' ? 'Domestic' : 'International',
+    meta: [
+      tour.price,
+      tour.duration || 'Flexible',
+      Array.isArray(tour.season) ? tour.season.join(', ') : (tour.season || 'All Year')
+    ]
+  }));
+}
+
+function truncateText(text, maxLength = 150) {
+  if (!text) return '';
+  return text.length > maxLength ? text.substring(0, maxLength).trimEnd() + '...' : text;
+}
+
+function renderHighlightsList(highlights, limit = 3, extraClass = '') {
+  if (!Array.isArray(highlights) || highlights.length === 0) return '';
+
+  const items = highlights
+    .slice(0, limit)
+    .map(h => `<li class="tour-highlight ${extraClass}"><span class="highlight-dot"></span>${h}</li>`)
+    .join('');
+
+  const more = highlights.length > limit
+    ? `<li class="tour-highlight ${extraClass} tour-highlight--more">...</li>`
+    : '';
+
+  return items + more;
+}
+
+function renderFeaturedMeta(featured) {
+  const meta = Array.isArray(featured.meta) ? featured.meta : [];
+  const metaItems = [
+    { icon: '💳', label: 'Price', value: window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(featured, { includeLabel: false }) : (meta[0] || 'On Request') },
+    { icon: '⏱', label: 'Duration', value: meta[1] || 'Flexible' },
+    { icon: '☀', label: 'Season', value: meta[2] || 'All Year' },
+    { icon: '👥', label: 'Min', value: `${featured.minPeople || 1}` },
+    { icon: '👥', label: 'Max', value: `${featured.maxPeople || 10}` }
+  ];
+
+  return metaItems.map(item => `
+    <span class="featured-meta-item">
+      <span class="icon">${item.icon}</span>
+      <span class="featured-meta-text"><span class="featured-meta-label">${item.label}</span> ${item.value}</span>
+    </span>
+  `).join('');
+}
+
+function saveSelectedTour(tour) {
+  if (!tour) return;
+  sessionStorage.setItem('selectedTourId', tour.id || '');
+  sessionStorage.setItem('selectedTourData', JSON.stringify(tour));
+}
+
+function getSafeAttr(value) {
+  return String(value || '').replace(/'/g, '&#39;');
+}
+
+function goToTourDetail(tourId) {
+  const tour = toursData.find(item => item.id === tourId);
+  if (tour) {
+    saveSelectedTour(tour);
+  } else {
+    sessionStorage.setItem('selectedTourId', tourId);
+  }
+  window.location.href = 'tour-detail.html';
+}
+
+/**
+ * აჩვენებს შეტყობინებას ეკრანზე
+ * @param {string} message - ტექსტი
+ * @param {'success' | 'error' | 'info'} type - ტიპი
+ */
+function showToast(message, type = 'success') {
+  let toast = document.getElementById('global-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'global-toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.className = `toast ${type} show`;
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+/**
+ * ამოწმებს ბაზაში შენახულ ტურებს და "აწითლებს" შესაბამის გულებს
+ */
+async function syncSaveButtons() {
+  if (!auth.currentUser) {
+    document.querySelectorAll('.save-tour-btn').forEach(btn => btn.classList.remove('active'));
+    return;
+  }
+  try {
+    const savedSnap = await getDocs(collection(db, 'users', auth.currentUser.uid, 'savedTours'));
+    const savedIds = savedSnap.docs.map(doc => doc.id);
+    document.querySelectorAll('.save-tour-btn').forEach(btn => {
+      if (savedIds.includes(btn.dataset.saveId)) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  } catch (e) {
+    console.error("Sync error:", e);
+  }
+}
+
+/**
+ * ტურის შენახვა ან წაშლა ბაზიდან
+ * @param {string} tourId - ტურის ID
+ * @param {Event} event - კლიკის ივენთი
+ */
+async function toggleSaveTour(tourId, event) {
+  if (event) event.stopPropagation();
+  
+  if (!auth.currentUser) {
+    showToast("Please login to save tours!", "error");
+    return;
+  }
+
+  const userId = auth.currentUser.uid;
+  const saveRef = doc(db, 'users', userId, 'savedTours', tourId);
+  
+  try {
+    const docSnap = await getDoc(saveRef);
+    if (docSnap.exists()) {
+      await deleteDoc(saveRef);
+      showToast('Tour removed from saved', 'info');
+      document.querySelectorAll(`[data-save-id="${tourId}"]`).forEach(btn => btn.classList.remove('active'));
+    } else {
+      await setDoc(saveRef, { savedAt: new Date().toISOString() });
+      showToast('Tour saved successfully!', 'success');
+      document.querySelectorAll(`[data-save-id="${tourId}"]`).forEach(btn => btn.classList.add('active'));
+    }
+  } catch (error) {
+    console.error("Error toggling save:", error);
+    showToast("Permission denied or database error", "error");
+  }
+}
+
+// ფუნქციების გლობალურად გატანა
+window.toggleSaveTour = toggleSaveTour;
+window.syncSaveButtons = syncSaveButtons;
+window.showToast = showToast;
+window.goToTourDetail = goToTourDetail;
+
+// renderTourCard ფუნქციის ქვემოთ განსაზღვრა (Hoisting-ისთვის)
+
 // ===== NAVBAR =====
 function initNavbar() {
   const navbar = document.querySelector('.navbar');
@@ -95,34 +279,44 @@ function initNavbar() {
     });
   }
 
-  // Dropdown menu functionality
-  const dropdowns = document.querySelectorAll('.nav-dropdown');
-  dropdowns.forEach(dropdown => {
-    const btn = dropdown.querySelector('.nav-dropdown-btn, .nav-user-btn');
-    const menu = dropdown.querySelector('.dropdown-menu');
-    
-    if (btn) {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        menu.style.opacity = menu.style.opacity === '1' ? '0' : '1';
-        menu.style.visibility = menu.style.visibility === 'visible' ? 'hidden' : 'visible';
+  // კონსოლიდირებული Dropdown ლოგიკა (Event Delegation)
+  // ეს აგვარებს პრობლემას, როცა ვალუტის ან სხვა მონაცემის შეცვლისას ღილაკები "ჭედავს"
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.nav-dropdown-btn, .nav-user-btn, .nav-cta');
+    const dropdown = e.target.closest('.nav-dropdown, .nav-user-dropdown, .nav-currency-dropdown');
+    const isLink = e.target.tagName === 'A';
+
+    // ყველა სხვა ღია მენიუს დახურვა
+    if (!dropdown || btn) {
+      document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+        if (!dropdown || menu !== dropdown.querySelector('.dropdown-menu')) {
+          menu.classList.remove('show');
+        }
       });
     }
-    
-    // Close dropdown when clicking a link
-    const dLinks = dropdown.querySelectorAll('.dropdown-menu a');
-    dLinks.forEach(link => {
-      link.addEventListener('click', () => {
-        menu.style.opacity = '0';
-        menu.style.visibility = 'hidden';
-      });
-    });
+
+    // მიმდინარე მენიუს გადართვა (Toggle)
+    if (btn && dropdown) {
+      const menu = dropdown.querySelector('.dropdown-menu');
+      // თუ მომხმარებელი არაა შესული, Login ღილაკზე არ ვხსნით მენიუს (auth.js გადაიყვანს login გვერდზე)
+      if (btn.id === 'nav-user-btn' && !btn.classList.contains('logged-in')) return;
+      
+      e.preventDefault();
+      if (menu) menu.classList.toggle('show');
+    }
+
+    // მენიუს დახურვა შიგნით არსებულ ლინკზე დაჭერისას
+    if (isLink && dropdown) {
+      const menu = dropdown.querySelector('.dropdown-menu');
+      if (menu) menu.classList.remove('show');
+    }
   });
 
   // Set active link
   const path = window.location.pathname.split('/').pop() || 'index.html';
   document.querySelectorAll('.nav-links a').forEach(a => {
-    if (a.getAttribute('href') === path) a.classList.add('active');
+    const href = a.getAttribute('href');
+    if (href === path) a.classList.add('active');
   });
 }
 
@@ -141,43 +335,54 @@ function renderTourCard(tour) {
     badgeClass = 'badge-full';
     badgeText = 'Upcoming';
   }
+  // დაცვა თუ desc არ არსებობს
+  const description = (tour.desc || '').length > 200 ? tour.desc.substring(0, 200) + '...' : (tour.desc || '');
   
   return `
     <div class="tour-card" data-category="${tour.category}">
       <div class="tour-card-img">
         <img src="${tour.img}" alt="${tour.title}" loading="lazy">
         <span class="tour-card-badge ${badgeClass}">${badgeText}</span>
+        <button class="save-tour-btn" data-save-id="${getSafeAttr(tour.id)}" onclick="toggleSaveTour('${getSafeAttr(tour.id)}', event)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+        </button>
       </div>
       <div class="tour-card-body">
         <h3 class="tour-card-title">${tour.title}</h3>
-        <p class="tour-card-desc">${tour.desc}</p>
+        <p class="tour-card-desc">${description}</p>
         <div class="tour-card-footer">
-          <div class="tour-price">${tour.price}<span>/person</span></div>
-          <button class="btn-sm" onclick="openBookModal('${tour.title}','${tour.price}')">Book Now</button>
+          <div class="tour-price-container">${window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(tour) : `${tour.price} <span class="separator">/</span> <span>person</span>`}</div>
+          <button class="btn-sm" onclick="goToTourDetail('${getSafeAttr(tour.id)}')">Book Now</button>
         </div>
       </div>
     </div>`;
 }
+
+// renderTourCard-ის მიბმა window-ზე
+window.renderTourCard = renderTourCard;
 
 function renderTours(filter = 'all') {
   const grid = document.getElementById('tours-grid');
   if (!grid) return;
   const filtered = filter === 'all' ? toursData : toursData.filter(t => t.category === filter);
   grid.innerHTML = filtered.length > 0 ? filtered.map(renderTourCard).join('') : '<p style="text-align:center;color:var(--text-mid);grid-column:1/-1;">No tours available yet.</p>';
+  syncSaveButtons();
 }
 
 function renderDomesticTours() {
   const grid = document.getElementById('domestic-tours-grid');
   if (!grid) return;
-  const domesticTours = toursData.filter(tour => tour.category === 'one-day' || tour.category === 'oneday');
+  const domesticTours = toursData.filter(tour => (tour.type || tour.tourType) === 'domestic' || tour.category === 'one-day' || tour.category === 'oneday');
   grid.innerHTML = domesticTours.length > 0 ? domesticTours.map(renderTourCard).join('') : '<p style="text-align:center;color:var(--text-mid);">No domestic tours available yet. Check back soon!</p>';
+  syncSaveButtons();
 }
 
 function renderInternationalTours() {
   const grid = document.getElementById('international-tours-grid');
   if (!grid) return;
-  const internationalTours = toursData.filter(tour => tour.category === 'multi-day' || tour.category === 'full');
+  const internationalTours = toursData.filter(tour => (tour.type || tour.tourType) === 'international' || tour.category === 'multi-day' || tour.category === 'full');
   grid.innerHTML = internationalTours.length > 0 ? internationalTours.map(renderTourCard).join('') : '<p style="text-align:center;color:var(--text-mid);">No international tours available yet. Check back soon!</p>';
+  syncSaveButtons();
 }
 
 function initTourTabs() {
@@ -239,11 +444,10 @@ function renderCarFullCard(car) {
             <span class="tour-meta-item">Driver included</span>
           </div>
           <div class="tour-card__price-block">
-            <span class="tour-price">${car.price}</span>
-            <span class="tour-price-label">per day</span>
+            ${window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(car, { defaultLabel: 'per day' }) : `<span class="tour-price">${car.price || 'On Request'}</span><span class="tour-price-label">per day</span>`}
           </div>
         </div>
-        <button class="btn-book" onclick="openBookModal('${car.title} Transfer','Contact Us')">
+        <button class="btn-book" onclick="openBookModal('${car.title} Transfer','On Request')">
           Book This Vehicle <span class="btn-arrow">-></span>
         </button>
       </div>
@@ -277,35 +481,103 @@ function renderPosts(containerId = 'posts-grid', count = null) {
   grid.innerHTML = data.length > 0 ? data.map(renderPostCard).join('') : '<p style="text-align:center;color:var(--text-mid);grid-column:1/-1;">No posts available yet.</p>';
 }
 
+// ===== REVIEW CARDS (Google Style) =====
+function renderReviewCard(rev) {
+  const stars = '★'.repeat(rev.rating) + '☆'.repeat(5 - rev.rating);
+  
+  return `
+    <div class="google-review">
+      <div class="review-header">
+        <div class="reviewer-info">
+          <h4>${rev.name}</h4>
+          <div class="review-stars">${stars}</div>
+        </div>
+      </div>
+      <p class="review-text">${rev.text}</p>
+    </div>`;
+}
+
+function renderReviews() {
+  const container = document.getElementById('reviews-slider');
+  if (!container) return;
+  container.innerHTML = reviewsData.length > 0 
+    ? reviewsData.map(renderReviewCard).join('') 
+    : '<p style="text-align:center;color:var(--text-mid);padding:2rem;width:100%;">No reviews yet. Be the first to share your experience!</p>';
+}
+
 // ===== FEATURED SLIDER =====
 function renderFeaturedSlider() {
   const slider = document.getElementById('featured-slider');
   if (!slider) return;
-  
+
   if (featuredData.length === 0) {
     slider.innerHTML = '<p style="text-align:center;color:var(--text-mid);padding:3rem;">No featured offers available yet.</p>';
     return;
   }
-  
-  slider.innerHTML = featuredData.map((featured, index) => `
+
+  slider.innerHTML = featuredData.map((featured, index) => {
+    const highlightsHtml = renderHighlightsList(featured.highlights || [], 3, 'tour-highlight--featured');
+    const description = truncateText(featured.desc, 150);
+
+    return `
     <div class="featured-card" data-featured="${index}" ${index === 0 ? 'style="display:grid;"' : ''}>
+      <div class="featured-ribbon">⭐ Best Deal</div>
       <div class="featured-img">
         <img src="${featured.img}" alt="${featured.title}" loading="lazy">
         <span class="featured-badge">${featured.badge}</span>
+        <div class="featured-overlay">
+          <div class="featured-quick-info">
+            <div class="quick-stat">
+              <span class="quick-icon">⏱</span>
+              <span class="quick-text">${featured.duration || '1 Day'}</span>
+            </div>
+            <div class="quick-stat">
+              <span class="quick-icon">👥</span>
+              <span class="quick-text">${featured.minPeople || '3'}-${featured.maxPeople || '7'}</span>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="featured-body">
-        <div class="tag">${featured.tag}</div>
-        <h3>${featured.title}</h3>
-        <p>${featured.desc}</p>
-        <div class="featured-meta">
-          ${(featured.meta || []).map(m => `<span><span class="icon"></span>${m}</span>`).join('')}
+        <div class="featured-header">
+          <div class="tag">${featured.tag}</div>
+          <div class="featured-price">
+            <span class="price-label">From</span>
+            <span class="price-value">${featured.price || 'On Request'}</span>
+          </div>
         </div>
-        <a href="tours.html" class="btn-primary">Learn More -></a>
+
+        <h3 class="featured-title">${featured.title}</h3>
+
+        <p class="featured-description">${description}</p>
+
+        <div class="featured-features">
+          <div class="features-title">✨ Highlights</div>
+          <div class="features-grid">
+            ${highlightsHtml}
+          </div>
+        </div>
+
+        <div class="featured-actions">
+          <div class="action-badges">
+            <span class="action-badge">
+              <span class="badge-icon">☀</span>
+              <span class="badge-text">${featured.season || 'All Year'}</span>
+            </span>
+            <span class="action-badge">
+              <span class="badge-icon">📍</span>
+              <span class="badge-text">Guided Tour</span>
+            </span>
+          </div>
+          <a href="tour-detail.html" class="btn-primary featured-cta" onclick="goToTourDetail('${getSafeAttr(featured.id)}'); return false;">
+            <span>Explore Now</span>
+            <span class="cta-arrow">→</span>
+          </a>
+        </div>
       </div>
-    </div>
-  `).join('');
-  
-  // Reinitialize slider after rendering
+    </div>`;
+  }).join('');
+
   initFeaturedSlider();
 }
 
@@ -348,16 +620,31 @@ async function fetchWeather() {
 }
 
 function getWeatherIcon(code) {
-  const icons = { 0:'Sun', 1:'Sun/Cloud', 2:'Clouds', 3:'Clouds', 45:'Fog', 48:'Fog', 51:'Rain', 53:'Rain', 55:'Rain', 61:'Rain', 63:'Rain', 65:'Rain', 71:'Snow', 73:'Snow', 75:'Snow', 80:'Rain', 81:'Rain', 82:'Storm', 95:'Storm', 96:'Storm', 99:'Storm' };
-  return icons[code] || 'Weather';
+  const icons = { 
+    0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️', 
+    45: '🌫️', 48: '🌫️', 
+    51: '🌦️', 53: '🌦️', 55: '🌦️', 
+    61: '🌧️', 63: '🌧️', 65: '🌧️', 
+    71: '❄️', 73: '❄️', 75: '❄️', 
+    80: '🌦️', 81: '🌦️', 82: '🌧️', 
+    95: '⛈️', 96: '⛈️', 99: '⛈️' 
+  };
+  return icons[code] || '🌡️';
 }
 
 // ===== MODAL =====
-function openBookModal(tourName, price) {
+function openBookModal(tourName, price, tourId) {
+  // If tourId provided, save and navigate to detail page
+  if (tourId) {
+    goToTourDetail(tourId);
+    return;
+  }
+  
+  // Otherwise show modal on current page
   const modal = document.getElementById('book-modal');
   if (!modal) return;
   document.getElementById('modal-tour-name').textContent = tourName;
-  document.getElementById('modal-tour-price').textContent = price === 'Contact Us' ? 'Contact Us for Pricing' : `From ${price} per person`;
+  document.getElementById('modal-tour-price').textContent = price === 'Contact Us' || price === 'On Request' ? 'Price On Request' : `From ${price} per person`;
   modal.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -487,7 +774,7 @@ function initScrollSlider(gridId, prevId, nextId) {
   
   if (!grid || !prevBtn || !nextBtn) return;
   
-  const scrollAmount = 340;
+  const scrollAmount = grid.clientWidth;
   
   // Check if arrows are needed (more than 3 items or overflow)
   const updateArrowsVisibility = () => {
@@ -528,14 +815,20 @@ async function loadDataAndInit() {
 
   // Fetch all data from Firebase
   try {
-    [toursData, carsData, postsData, featuredData] = await Promise.all([
+    [toursData, carsData, postsData, featuredData, reviewsData] = await Promise.all([
       fetchToursFromFirebase(),
       fetchCarsFromFirebase(),
       fetchPostsFromFirebase(),
-      fetchFeaturedFromFirebase()
+      fetchFeaturedFromFirebase(),
+      fetchReviewsFromFirebase()
     ]);
   } catch (error) {
     console.error('Error loading data:', error);
+  }
+
+  // If no featured data from Firebase, use tours data with isFeatured flag
+  if (featuredData.length === 0 && toursData.length > 0) {
+    featuredData = getFeaturedToursFromData(toursData);
   }
 
   // Render everything
@@ -543,13 +836,15 @@ async function loadDataAndInit() {
   renderInternationalTours();
   renderCars('cars-grid');
   renderPosts('stories-grid', 6);
+  renderReviews();
   renderFeaturedSlider();
   
   initTourTabs();
+  syncSaveButtons();
   fetchWeather();
   initModal();
   initContactForm();
-  
+
   // Initialize sliders
   initScrollSlider('domestic-tours-grid', 'domestic-prev', 'domestic-next');
   initScrollSlider('international-tours-grid', 'international-prev', 'international-next');
@@ -577,6 +872,11 @@ async function loadDataAndInit() {
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
+  // ავტორიზაციის სტატუსის მოსმენა
+  onAuthStateChanged(auth, (user) => {
+    // ყოველთვის გავუშვათ sync, რომ თუ გამოვიდა სისტემიდან, გულები გათეთრდეს
+    syncSaveButtons();
+  });
   loadDataAndInit();
 });
 
@@ -590,6 +890,7 @@ function initTourTabsPage() {
       const grid = document.getElementById('tours-page-grid');
       const filtered = filter === 'all' ? toursData : toursData.filter(t => t.category === filter);
       grid.innerHTML = filtered.length > 0 ? filtered.map(renderTourCard).join('') : '<p style="text-align:center;color:var(--text-mid);">No tours in this category yet.</p>';
+      syncSaveButtons();
       setTimeout(initScrollAnimations, 50);
     });
   });

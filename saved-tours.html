@@ -261,7 +261,7 @@
         </div>
         <h2>No Saved Tours Yet</h2>
         <p>Start exploring and save your favorite tours for later!</p>
-        <a href="tours.html" class="browse-btn">Browse Tours</a>
+        <a href="domestic-tours.html" class="browse-btn">Browse Tours</a>
       </div>
       
       <!-- Tours Grid (hidden for now - would be populated from database) -->
@@ -324,7 +324,8 @@
 <script type="module" src="script.js"></script>
 <script type="module" src="auth.js"></script>
 <script type="module">
-  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
   
   function waitForAuth() {
     return new Promise((resolve) => {
@@ -339,19 +340,48 @@
     });
   }
   
+  async function fetchSavedTours(userId) {
+    const db = getFirestore();
+    const savedGrid = document.getElementById('saved-grid');
+    const emptyState = document.getElementById('empty-state');
+    savedGrid.innerHTML = '<p style="grid-column:1/-1;text-align:center;">Loading your saved tours...</p>';
+    
+    try {
+      const savedSnap = await getDocs(collection(db, 'users', userId, 'savedTours'));
+      const savedIds = savedSnap.docs.map(doc => doc.id);
+      
+      if (savedIds.length === 0) {
+        emptyState.style.display = 'block';
+        savedGrid.style.display = 'none';
+        return;
+      }
+
+      // წამოვიღოთ ტურების დეტალები
+      const tourPromises = savedIds.map(id => getDoc(doc(db, 'tours', id)));
+      const tourSnaps = await Promise.all(tourPromises);
+      const tours = tourSnaps.filter(s => s.exists()).map(s => ({ id: s.id, ...s.data() }));
+
+      emptyState.style.display = 'none';
+      savedGrid.style.display = 'grid';
+      savedGrid.innerHTML = tours.map(t => window.renderTourCard(t)).join('');
+      if (window.syncSaveButtons) window.syncSaveButtons();
+
+    } catch (error) {
+      console.error("Error loading saved tours:", error);
+      savedGrid.innerHTML = '<p style="color:red;grid-column:1/-1;text-align:center;">Error loading tours.</p>';
+    }
+  }
+
   async function initSavedTours() {
     const auth = await waitForAuth();
     
     onAuthStateChanged(auth.auth, (user) => {
       const notLoggedIn = document.getElementById('not-logged-in');
       const savedContent = document.getElementById('saved-content');
-      
       if (user) {
         notLoggedIn.style.display = 'none';
         savedContent.style.display = 'block';
-        
-        // TODO: Load saved tours from database
-        // For now, show empty state
+        fetchSavedTours(user.uid);
       } else {
         notLoggedIn.style.display = 'block';
         savedContent.style.display = 'none';

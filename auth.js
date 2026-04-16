@@ -97,21 +97,8 @@ function setupNavbarClick() {
       e.preventDefault();
       window.location.href = 'login.html';
     } else {
-      // Logged in - toggle dropdown
+      // Dropdown-ის მართვა ახლა ხდება script.js-დან Event Delegation-ით
       e.preventDefault();
-      if (dropdownMenu) {
-        const isVisible = dropdownMenu.style.opacity === '1';
-        dropdownMenu.style.opacity = isVisible ? '0' : '1';
-        dropdownMenu.style.visibility = isVisible ? 'hidden' : 'visible';
-      }
-    }
-  });
-  
-  // Close dropdown when clicking outside
-  document.addEventListener('click', (e) => {
-    if (dropdownMenu && !e.target.closest('.nav-user-dropdown')) {
-      dropdownMenu.style.opacity = '0';
-      dropdownMenu.style.visibility = 'hidden';
     }
   });
 }

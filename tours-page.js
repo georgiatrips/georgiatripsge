@@ -53,38 +53,43 @@ function formatHighlights(highlights) {
 
 /** Renders a standard tour card (one-day, multi-day, flexible) */
 function renderStandardCard(tour) {
-  const diff = getDifficultyColor(tour.difficulty);
+  const description = tour.desc.length > 200 ? tour.desc.substring(0, 200) + '...' : tour.desc;
   return `
     <article class="tour-card tour-card--standard" data-id="${tour.id}" data-category="${tour.category}">
       <div class="tour-card__img-wrap">
         <img src="${tour.img}" alt="${tour.title}" loading="lazy" class="tour-card__img">
         <div class="tour-card__overlay"></div>
         <div class="tour-card__top-badges">
+          <button class="save-tour-btn" data-save-id="${tour.id}" onclick="toggleSaveTour('${tour.id}', event)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+          </button>
           <span class="tour-badge tour-badge--duration">⏱ ${tour.duration}</span>
+          <span class="tour-badge tour-badge--duration" style="background:var(--teal);">🌤 ${Array.isArray(tour.season) ? tour.season.join(', ') : (tour.season || 'All Year')}</span>
         </div>
-        <span class="tour-badge tour-badge--difficulty" style="
-          background:${diff.bg}; color:${diff.color}; border:1px solid ${diff.border};
-          position:absolute; bottom:0.85rem; left:0.85rem;
-        ">${tour.difficulty}</span>
       </div>
       <div class="tour-card__body">
         <h3 class="tour-card__title">${tour.title}</h3>
-        <p class="tour-card__desc">${tour.desc}</p>
+        <p class="tour-card__desc">${description}</p>
         <ul class="tour-highlights">
           ${formatHighlights(tour.highlights)}
         </ul>
         <div class="tour-card__footer">
           <div class="tour-card__meta">
-            <span class="tour-meta-item">👥 ${tour.groupSize}</span>
+            <span class="tour-meta-item">👥 Min People: ${tour.minPeople || 1}</span>
+            <span class="tour-meta-item">👥 Max People: ${tour.maxPeople || 10}</span>
           </div>
           <div class="tour-card__price-block">
-            <span class="tour-price">${tour.price}</span>
-            <span class="tour-price-label">per person</span>
+            <span class="tour-price">${tour.price}</span> <span class="price-separator">/</span> <span class="tour-price-label">per person</span>
           </div>
         </div>
-        <button class="btn-book" onclick="openBookModal('${tour.title}', '${tour.price}')">
-          Book This Tour <span class="btn-arrow">→</span>
-        </button>
+        <div style="display: flex; gap: 0.75rem;">
+          <button class="btn-details" onclick="goToTourDetail('${tour.id}')">
+            Learn More <span class="btn-arrow">→</span>
+          </button>
+          <button class="btn-book" onclick="openBookModal('${tour.title}', '${tour.price}', '${tour.id}')">
+            Book <span class="btn-arrow">→</span>
+          </button>
+        </div>
       </div>
     </article>`;
 }
@@ -94,12 +99,16 @@ function renderUpcomingCard(tour) {
   const diff = getDifficultyColor(tour.difficulty);
   const spots = getSpotsLabel(tour.spotsLeft);
   const spotsClass = spots.urgent ? 'spots-label spots-label--urgent' : 'spots-label';
+  const description = tour.desc.length > 200 ? tour.desc.substring(0, 200) + '...' : tour.desc;
   return `
     <article class="tour-card tour-card--upcoming" data-id="${tour.id}" data-category="${tour.category}">
       <div class="tour-card__img-wrap">
         <img src="${tour.img}" alt="${tour.title}" loading="lazy" class="tour-card__img">
         <div class="tour-card__overlay"></div>
         <div class="tour-card__top-badges">
+          <button class="save-tour-btn" data-save-id="${tour.id}" onclick="toggleSaveTour('${tour.id}', event)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+          </button>
           <span class="tour-badge tour-badge--date">📅 ${tour.dateRange}</span>
         </div>
         <span class="tour-badge tour-badge--difficulty" style="
@@ -112,23 +121,28 @@ function renderUpcomingCard(tour) {
           <h3 class="tour-card__title">${tour.title}</h3>
           <span class="${spotsClass}">${spots.text}</span>
         </div>
-        <p class="tour-card__desc">${tour.desc}</p>
+        <p class="tour-card__desc">${description}</p>
         <ul class="tour-highlights">
           ${formatHighlights(tour.highlights)}
         </ul>
         <div class="tour-card__footer">
           <div class="tour-card__meta">
             <span class="tour-meta-item">⏱ ${tour.duration}</span>
-            <span class="tour-meta-item">👥 ${tour.groupSize}</span>
+            <span class="tour-meta-item">👥 Min People: ${tour.minPeople || 1}</span>
+            <span class="tour-meta-item">👥 Max People: ${tour.maxPeople || 10}</span>
           </div>
           <div class="tour-card__price-block">
-            <span class="tour-price">${tour.price}</span>
-            <span class="tour-price-label">per person</span>
+            <span class="tour-price">${tour.price}</span> <span class="price-separator">/</span> <span class="tour-price-label">per person</span>
           </div>
         </div>
-        <button class="btn-book btn-book--upcoming" onclick="openBookModal('${tour.title}', '${tour.price}')">
-          Reserve a Spot <span class="btn-arrow">→</span>
-        </button>
+        <div style="display: flex; gap: 0.75rem;">
+          <button class="btn-details" onclick="goToTourDetail('${tour.id}')">
+            Learn More <span class="btn-arrow">→</span>
+          </button>
+          <button class="btn-book btn-book--upcoming" onclick="openBookModal('${tour.title}', '${tour.price}', '${tour.id}')">
+            Reserve <span class="btn-arrow">→</span>
+          </button>
+        </div>
       </div>
     </article>`;
 }
@@ -205,6 +219,7 @@ function renderToursGrid(categoryKey) {
       ToursPageState.isAnimating = false;
     }, 400 + cards.length * 60);
 
+    if (window.syncSaveButtons) window.syncSaveButtons();
   }, 220);
 }
 
@@ -292,6 +307,9 @@ function createTourCard(tour) {
   card.innerHTML = `
     <div class="tour-card-img">
       <img src="${tour.img}" alt="${tour.title}" loading="lazy">
+      <button class="save-tour-btn" data-save-id="${tour.id}" onclick="toggleSaveTour('${tour.id}', event)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+      </button>
       <span class="tour-card-badge ${badgeClass}">${badgeText}</span>
     </div>
     <div class="tour-card-body">
@@ -313,7 +331,14 @@ function createTourCard(tour) {
   return card;
 }
 
-// Run when DOM is ready
+// ── NAVIGATION FUNCTIONS ────────────────────────────────────
+function goToTourDetail(tourId) {
+  // Save the tour ID in sessionStorage for the detail page
+  sessionStorage.setItem('selectedTourId', tourId);
+  window.location.href = 'tour-detail.html';
+}
+
+// ── RUN WHEN DOM IS READY ────────────────────────────────────
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initToursPage);
 } else {

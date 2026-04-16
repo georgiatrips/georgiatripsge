@@ -287,5 +287,60 @@ export async function deleteFeaturedTour(id) {
   }
 }
 
+// ============ REVIEWS CRUD ============
+
+// Get all reviews
+export async function getReviews() {
+  try {
+    const reviewsRef = collection(db, 'reviews');
+    const q = query(reviewsRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error getting reviews:', error);
+    return [];
+  }
+}
+
+// Add a review
+export async function addReview(reviewData) {
+  try {
+    const reviewsRef = collection(db, 'reviews');
+    const docRef = await addDoc(reviewsRef, {
+      ...reviewData,
+      createdAt: serverTimestamp()
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding review:', error);
+    throw error;
+  }
+}
+
+// Update a review
+export async function updateReview(id, reviewData) {
+  try {
+    const reviewRef = doc(db, 'reviews', id);
+    await updateDoc(reviewRef, {
+      ...reviewData,
+      updatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error('Error updating review:', error);
+    throw error;
+  }
+}
+
+// Delete a review
+export async function deleteReview(id) {
+  try {
+    const reviewRef = doc(db, 'reviews', id);
+    await deleteDoc(reviewRef);
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    throw error;
+  }
+}
+
 // Export auth and db for use in other modules
 export { db, auth, onAuthStateChanged };
