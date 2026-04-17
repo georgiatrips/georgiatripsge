@@ -16,8 +16,10 @@
   // In-memory cache (per session). Keyed by `src|tgt|text`.
   const cache = new Map();
 
-  // Basic concurrency limiter so we don't hammer the API.
-  const MAX_CONCURRENT = 4;
+  // Basic concurrency limiter so we don't hammer the API. Raised from 4 → 10
+  // because MyMemory comfortably handles parallel requests from one IP and the
+  // language-switch overlay is blocking until this finishes.
+  const MAX_CONCURRENT = 10;
   let active = 0;
   const queue = [];
 
