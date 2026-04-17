@@ -43,6 +43,27 @@ function LA(val) {
   return [];
 }
 function T(key, tokens) { return (window.t ? window.t(key, tokens) : key); }
+// Translate a plain English "1 Day" / "5 Days" / "All Year" / "Flexible"
+// literal into the current UI language. Pass-through for already-localized text.
+function translateCommonValue(str) {
+  if (!str || typeof str !== 'string') return str;
+  const tt = window.t;
+  if (!tt) return str;
+  const s = str.trim();
+  const map = { 'All Year': 'all_year', 'Flexible': 'flexible', '1 Day': 'one_day', 'One Day': 'one_day', 'On Request': 'on_request' };
+  if (map[s]) return tt(map[s]);
+  const mDays = s.match(/^(\d+)\s*[Dd]ays?$/);
+  if (mDays) return tt('n_days', { n: mDays[1] });
+  const mRange = s.match(/^(\d+)\s*[–-]\s*(\d+)\s*[Dd]ays?$/);
+  if (mRange) return tt('n_days', { n: `${mRange[1]}–${mRange[2]}` });
+  return s;
+}
+function Lt(val, fallbackKey) {
+  const localized = L(val, '');
+  if (localized) return translateCommonValue(localized);
+  if (fallbackKey && window.t) return window.t(fallbackKey);
+  return localized;
+}
 
 function getSpotsLabel(spotsLeft) {
   if (spotsLeft <= 3) return { text: `⚡ Only ${spotsLeft} spots left`, urgent: true };
@@ -61,7 +82,7 @@ function formatHighlights(highlights) {
 /** Renders a standard tour card (one-day, multi-day, flexible) */
 function renderStandardCard(tour) {
   const title = L(tour.title);
-  const duration = L(tour.duration);
+  const duration = Lt(tour.duration);
   const descFull = L(tour.desc);
   const description = descFull.length > 200 ? descFull.substring(0, 200) + '...' : descFull;
   const safeTitle = String(title).replace(/'/g, "&#39;");
@@ -75,7 +96,7 @@ function renderStandardCard(tour) {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
           </button>
           <span class="tour-badge tour-badge--duration">⏱ ${duration}</span>
-          <span class="tour-badge tour-badge--duration" style="background:var(--teal);">🌤 ${Array.isArray(tour.season) ? tour.season.join(', ') : (tour.season || T('all_year'))}</span>
+          <span class="tour-badge tour-badge--duration" style="background:var(--teal);">🌤 ${Array.isArray(tour.season) ? tour.season.map(translateCommonValue).join(', ') : (tour.season ? translateCommonValue(L(tour.season)) : T('all_year'))}</span>
         </div>
       </div>
       <div class="tour-card__body">
@@ -110,7 +131,7 @@ function renderUpcomingCard(tour) {
   const spots = getSpotsLabel(tour.spotsLeft);
   const spotsClass = spots.urgent ? 'spots-label spots-label--urgent' : 'spots-label';
   const title = L(tour.title);
-  const duration = L(tour.duration);
+  const duration = Lt(tour.duration);
   const descFull = L(tour.desc);
   const description = descFull.length > 200 ? descFull.substring(0, 200) + '...' : descFull;
   const safeTitle = String(title).replace(/'/g, "&#39;");
@@ -309,7 +330,7 @@ function initToursPage() {
 // ── GENERIC TOUR CARD CREATOR (for domestic/international pages) ──
 function createTourCard(tour) {
   const title = L(tour.title);
-  const duration = L(tour.duration);
+  const duration = Lt(tour.duration);
   const desc = L(tour.desc);
   const safeTitle = String(title).replace(/'/g, "&#39;");
   const badgeClass = tour.category === 'oneday' ? 'badge-oneday' : 'badge-full';

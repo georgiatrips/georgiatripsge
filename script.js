@@ -114,6 +114,39 @@ function LA(val) {
   if (typeof val === 'object') return Array.isArray(val.ka) ? val.ka : (Array.isArray(val.en) ? val.en : []);
   return [];
 }
+// Translate a common English duration / season string via window.t() when the
+// value is stored as a plain English literal in Firestore (e.g. "1 Day",
+// "5 Days", "All Year", "Flexible"). Leaves Georgian/other-language strings
+// untouched so a tour authored in Georgian still renders correctly.
+function translateCommonValue(str) {
+  if (!str || typeof str !== 'string') return str;
+  const t = window.t;
+  if (!t) return str;
+  const s = str.trim();
+  // Simple fixed values
+  const map = {
+    'All Year': 'all_year',
+    'Flexible': 'flexible',
+    '1 Day': 'one_day',
+    'One Day': 'one_day',
+    'On Request': 'on_request'
+  };
+  if (map[s]) return t(map[s]);
+  // "N Days" / "N Day" pattern
+  const mDays = s.match(/^(\d+)\s*[Dd]ays?$/);
+  if (mDays) return t('n_days', { n: mDays[1] });
+  // Ranged "N–M Days" / "N-M Days"
+  const mRange = s.match(/^(\d+)\s*[–-]\s*(\d+)\s*[Dd]ays?$/);
+  if (mRange) return t('n_days', { n: `${mRange[1]}–${mRange[2]}` });
+  return s;
+}
+// Localize (multilingual obj) + common-value translate (plain English).
+function Lt(val, fallbackKey) {
+  const localized = L(val, '');
+  if (localized) return translateCommonValue(localized);
+  if (fallbackKey && window.t) return window.t(fallbackKey);
+  return localized;
+}
 
 // ===== GET FEATURED TOURS FROM TOURS DATA =====
 function getFeaturedToursFromData(tours) {
@@ -142,8 +175,9 @@ function getFeaturedToursFromData(tours) {
     price: tour.price,
     meta: [
       tour.price,
-      tour.duration || tFn('flexible'),
-      Array.isArray(tour.season) ? tour.season.join(', ') : (tour.season || tFn('all_year'))
+      Lt(tour.duration, 'flexible'),
+      Array.isArray(tour.season) ? tour.season.map(translateCommonValue).join(', ')
+        : (tour.season ? translateCommonValue(L(tour.season)) : tFn('all_year'))
     ]
   }));
 }
@@ -312,7 +346,7 @@ function initNavbar() {
     const dropdown = e.target.closest('.nav-dropdown, .nav-user-dropdown, .nav-currency-dropdown');
     const isLink = e.target.tagName === 'A';
 
-    // ყველა სხვა ღია მენიუს დახურვა
+    // ყველა სხვა ღი�� მენიუს დახურვა
     if (!dropdown || btn) {
       document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
         if (!dropdown || menu !== dropdown.querySelector('.dropdown-menu')) {
@@ -575,9 +609,16 @@ function renderFeaturedSlider() {
     const badgeText = typeKey === 'domestic' ? tFn('badge_domestic')
                     : typeKey === 'international' ? tFn('badge_international')
                     : (featured.badge || '');
-    const seasonText = Array.isArray(featured.season) ? featured.season.join(', ')
-                    : (featured.season || tFn('all_year'));
-    const duration = featured.duration || tFn('one_day');
+    // Season may be: multilingual object, array, or plain English string like "All Year".
+    let seasonText;
+    if (Array.isArray(featured.season)) {
+      seasonText = featured.season.map(translateCommonValue).join(', ');
+    } else if (featured.season && typeof featured.season === 'object') {
+      seasonText = translateCommonValue(L(featured.season)) || tFn('all_year');
+    } else {
+      seasonText = featured.season ? translateCommonValue(featured.season) : tFn('all_year');
+    }
+    const duration = Lt(featured.duration, 'one_day');
 
     return `
     <div class="featured-card" data-featured="${index}" ${index === 0 ? 'style="display:grid;"' : ''}>

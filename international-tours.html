@@ -250,10 +250,30 @@ function formatHighlights(highlights) {
 function T(key, tokens) {
   return (window.t ? window.t(key, tokens) : key);
 }
+// Translate common English "1 Day" / "5 Days" / "All Year" / "Flexible" etc.
+function translateCommonValue(str) {
+  if (!str || typeof str !== 'string') return str;
+  const tt = window.t;
+  if (!tt) return str;
+  const s = str.trim();
+  const map = { 'All Year': 'all_year', 'Flexible': 'flexible', '1 Day': 'one_day', 'One Day': 'one_day', 'On Request': 'on_request' };
+  if (map[s]) return tt(map[s]);
+  const mDays = s.match(/^(\d+)\s*[Dd]ays?$/);
+  if (mDays) return tt('n_days', { n: mDays[1] });
+  const mRange = s.match(/^(\d+)\s*[–-]\s*(\d+)\s*[Dd]ays?$/);
+  if (mRange) return tt('n_days', { n: `${mRange[1]}–${mRange[2]}` });
+  return s;
+}
+function Lt(val, fallbackKey) {
+  const localized = L(val, '');
+  if (localized) return translateCommonValue(localized);
+  if (fallbackKey && window.t) return window.t(fallbackKey);
+  return localized;
+}
 
 function renderTourCard(tour) {
   const title = L(tour.title);
-  const duration = L(tour.duration) || T('one_day');
+  const duration = Lt(tour.duration, 'one_day');
   const descFull = L(tour.desc);
   const description = descFull.length > 200 ? descFull.substring(0, 200) + '...' : descFull;
   const onRequestLabel = T('on_request');
