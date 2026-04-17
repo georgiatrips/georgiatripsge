@@ -47,8 +47,22 @@
 
   /**
    * Localize an array value (e.g. highlights). Always returns array of strings.
+   * Supports three shapes:
+   *   1. ["a", "b"]                              -> plain georgian array (legacy)
+   *   2. [{ka:"a",en:"b"}, {ka:"c",en:"d"}]      -> per-item language objects
+   *   3. {ka:["a","b"], en:["c","d"], ...}       -> per-language arrays (admin-translate)
    */
   function localizeArray(value, lang) {
+    if (value == null) return [];
+    // shape 3: per-language arrays
+    if (!Array.isArray(value) && typeof value === 'object') {
+      const L = lang || currentLang();
+      if (Array.isArray(value[L])) return value[L].map((x) => String(x == null ? '' : x));
+      for (const f of FALLBACK_ORDER) {
+        if (Array.isArray(value[f])) return value[f].map((x) => String(x == null ? '' : x));
+      }
+      return [];
+    }
     if (!Array.isArray(value)) return [];
     return value.map((item) => {
       if (item && typeof item === 'object' && !Array.isArray(item)) {

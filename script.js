@@ -1,4 +1,4 @@
-﻿﻿// ===== DATA (loaded from Firebase) =====
+﻿// ===== DATA (loaded from Firebase) =====
 let toursData = [];
 let carsData = [];
 let postsData = [];
@@ -97,12 +97,30 @@ async function fetchReviewsFromFirebase() {
   }
 }
 
+// ===== i18n HELPERS =====
+// Localize a multi-lingual value ({ ka, en, ru, ... }) or pass through plain string.
+function L(val, fallback = '') {
+  if (window.localize) return window.localize(val, fallback);
+  if (val == null) return fallback;
+  if (typeof val === 'string') return val;
+  if (typeof val === 'object') return val.ka || val.en || fallback;
+  return String(val);
+}
+// Localize an array field that might be { ka:[], en:[], ... } or a plain array.
+function LA(val) {
+  if (window.localizeArray) return window.localizeArray(val);
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'object') return Array.isArray(val.ka) ? val.ka : (Array.isArray(val.en) ? val.en : []);
+  return [];
+}
+
 // ===== GET FEATURED TOURS FROM TOURS DATA =====
 function getFeaturedToursFromData(tours) {
   // Filter tours that have isFeatured = true
   const featured = tours.filter(tour => tour.isFeatured === true);
-  
-  // Transform tour data to featured card format
+
+  // Transform tour data to featured card format (keep multilingual fields as-is)
   return featured.map(tour => ({
     id: tour.id,
     title: tour.title,
@@ -111,8 +129,8 @@ function getFeaturedToursFromData(tours) {
     minPeople: tour.minPeople,
     maxPeople: tour.maxPeople,
     highlights: tour.highlights,
-    tag: tour.category === 'one-day' ? 'One-Day Adventure' : 
-         tour.category === 'multi-day' ? 'Multi-Day Experience' : 
+    tag: tour.category === 'one-day' ? 'One-Day Adventure' :
+         tour.category === 'multi-day' ? 'Multi-Day Experience' :
          tour.category === 'upcoming' ? 'Upcoming Event' : 'Flexible Tour',
     badge: tour.type === 'domestic' ? 'Domestic' : 'International',
     meta: [
@@ -144,7 +162,7 @@ function renderHighlightsList(highlights, limit = 3, extraClass = '') {
 }
 
 function renderFeaturedMeta(featured) {
-  const meta = Array.isArray(featured.meta) ? featured.meta : [];
+  const meta = LA(featured.meta);
   const metaItems = [
     { icon: '💳', label: 'Price', value: window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(featured, { includeLabel: false }) : (meta[0] || 'On Request') },
     { icon: '⏱', label: 'Duration', value: meta[1] || 'Flexible' },
@@ -335,20 +353,22 @@ function renderTourCard(tour) {
     badgeClass = 'badge-full';
     badgeText = 'Upcoming';
   }
-  // დაცვა თუ desc არ არსებობს
-  const description = (tour.desc || '').length > 200 ? tour.desc.substring(0, 200) + '...' : (tour.desc || '');
-  
+  // Localize fields
+  const title = L(tour.title);
+  const desc = L(tour.desc);
+  const description = desc.length > 200 ? desc.substring(0, 200) + '...' : desc;
+
   return `
     <div class="tour-card" data-category="${tour.category}">
       <div class="tour-card-img">
-        <img src="${tour.img}" alt="${tour.title}" loading="lazy">
+        <img src="${tour.img}" alt="${title}" loading="lazy">
         <span class="tour-card-badge ${badgeClass}">${badgeText}</span>
         <button class="save-tour-btn" data-save-id="${getSafeAttr(tour.id)}" onclick="toggleSaveTour('${getSafeAttr(tour.id)}', event)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
         </button>
       </div>
       <div class="tour-card-body">
-        <h3 class="tour-card-title">${tour.title}</h3>
+        <h3 class="tour-card-title">${title}</h3>
         <p class="tour-card-desc">${description}</p>
         <div class="tour-card-footer">
           <div class="tour-price-container">${window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(tour) : `${tour.price} <span class="separator">/</span> <span>person</span>`}</div>
@@ -398,15 +418,17 @@ function initTourTabs() {
 
 // ===== CAR CARDS =====
 function renderCarCard(car) {
+  const title = L(car.title);
+  const info = L(car.info || car.desc);
   return `
     <div class="car-card">
       <div class="car-card-img">
-        <img src="${car.img}" alt="${car.title}" loading="lazy">
+        <img src="${car.img}" alt="${title}" loading="lazy">
       </div>
       <div class="car-card-body">
         <span class="car-type-badge">${car.type}</span>
-        <h3 class="car-card-title">${car.title}</h3>
-        <p class="car-card-info">${car.info || car.desc || ''}</p>
+        <h3 class="car-card-title">${title}</h3>
+        <p class="car-card-info">${info}</p>
         <div class="car-features">
           <span class="car-feature">${car.seats || ''}</span>
           <span class="car-feature">${car.fuel || ''}</span>
@@ -425,16 +447,18 @@ function renderCars(containerId = 'cars-grid') {
 
 // ===== CAR FULL CARDS (cars page) =====
 function renderCarFullCard(car) {
+  const title = L(car.title);
+  const info = L(car.info || car.desc);
   return `
     <article class="tour-card tour-card--standard car-full-card" data-id="${car.id}">
       <div class="tour-card__img-wrap">
-        <img src="${car.img}" alt="${car.title}" loading="lazy" class="tour-card__img">
+        <img src="${car.img}" alt="${title}" loading="lazy" class="tour-card__img">
         <div class="tour-card__overlay"></div>
         <span class="tour-badge tour-badge--duration">${car.type}</span>
       </div>
       <div class="tour-card__body">
-        <h3 class="tour-card__title">${car.title}</h3>
-        <p class="tour-card__desc">${car.info || car.desc || ''} Whether you need airport transfers, city tours, or multi-day mountain excursions, we ensure comfort and safety throughout.</p>
+        <h3 class="tour-card__title">${title}</h3>
+        <p class="tour-card__desc">${info} Whether you need airport transfers, city tours, or multi-day mountain excursions, we ensure comfort and safety throughout.</p>
         <ul class="tour-highlights">
           <li class="tour-highlight"><span class="highlight-dot"></span>${car.seats || 'Comfortable seating'}</li>
           <li class="tour-highlight"><span class="highlight-dot"></span>Fuel: ${car.fuel || 'Any'}</li>
@@ -448,7 +472,7 @@ function renderCarFullCard(car) {
             ${window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(car, { defaultLabel: 'per day' }) : `<span class="tour-price">${car.price || 'On Request'}</span><span class="tour-price-label">per day</span>`}
           </div>
         </div>
-        <button class="btn-book" onclick="openBookModal('${car.title} Transfer','On Request')">
+        <button class="btn-book" onclick="openBookModal('${getSafeAttr(title)} Transfer','On Request')">
           Book This Vehicle <span class="btn-arrow">-></span>
         </button>
       </div>
@@ -457,19 +481,22 @@ function renderCarFullCard(car) {
 
 // ===== POST CARDS =====
 function renderPostCard(post) {
+  const title = L(post.title);
+  const text = L(post.text || post.content);
+  const readTime = L(post.readTime);
   return `
     <div class="post-card">
       <div class="post-card-img">
-        <img src="${post.img}" alt="${post.title}" loading="lazy">
+        <img src="${post.img}" alt="${title}" loading="lazy">
         <span class="post-category">${post.category}</span>
       </div>
       <div class="post-card-body">
         <div class="post-meta">
           <span>${post.date || ''}</span>
-          <span>${post.readTime || ''}</span>
+          <span>${readTime}</span>
         </div>
-        <h3 class="post-card-title">${post.title}</h3>
-        <p class="post-card-text">${post.text || post.content || ''}</p>
+        <h3 class="post-card-title">${title}</h3>
+        <p class="post-card-text">${text}</p>
         <span class="post-read-more">Read More -></span>
       </div>
     </div>`;
@@ -517,14 +544,16 @@ function renderFeaturedSlider() {
   }
 
   slider.innerHTML = featuredData.map((featured, index) => {
-    const highlightsHtml = renderHighlightsList(featured.highlights || [], 3, 'tour-highlight--featured');
-    const description = truncateText(featured.desc, 150);
+    const title = L(featured.title);
+    const tag = L(featured.tag);
+    const highlightsHtml = renderHighlightsList(LA(featured.highlights), 3, 'tour-highlight--featured');
+    const description = truncateText(L(featured.desc), 150);
 
     return `
     <div class="featured-card" data-featured="${index}" ${index === 0 ? 'style="display:grid;"' : ''}>
       <div class="featured-ribbon">⭐ Best Deal</div>
       <div class="featured-img">
-        <img src="${featured.img}" alt="${featured.title}" loading="lazy">
+        <img src="${featured.img}" alt="${title}" loading="lazy">
         <span class="featured-badge">${featured.badge}</span>
         <div class="featured-overlay">
           <div class="featured-quick-info">
@@ -541,14 +570,14 @@ function renderFeaturedSlider() {
       </div>
       <div class="featured-body">
         <div class="featured-header">
-          <div class="tag">${featured.tag}</div>
+          <div class="tag">${tag}</div>
           <div class="featured-price">
             <span class="price-label">From</span>
             <span class="price-value">${featured.price || 'On Request'}</span>
           </div>
         </div>
 
-        <h3 class="featured-title">${featured.title}</h3>
+        <h3 class="featured-title">${title}</h3>
 
         <p class="featured-description">${description}</p>
 
@@ -900,3 +929,43 @@ function initTourTabsPage() {
 // Make functions globally available
 window.openBookModal = openBookModal;
 window.closeModal = closeModal;
+
+// ===== Re-render all dynamic data (called by lang.js when language changes) =====
+window.reRenderAllData = function reRenderAllData() {
+  // Skip if data not loaded yet
+  if (!toursData || toursData.length === 0 && !carsData.length && !postsData.length) return;
+
+  try { renderDomesticTours(); } catch {}
+  try { renderInternationalTours(); } catch {}
+  try { renderCars('cars-grid'); } catch {}
+  try { renderPosts('stories-grid', 6); } catch {}
+  try { renderFeaturedSlider(); } catch {}
+
+  // Cars page full list
+  const carsStack = document.getElementById('cars-stack');
+  if (carsStack && carsData.length > 0) {
+    carsStack.innerHTML = carsData.map(renderCarFullCard).join('');
+  }
+
+  // Tours page full list
+  const toursPageGrid = document.getElementById('tours-page-grid');
+  if (toursPageGrid && toursData.length > 0) {
+    const activeBtn = document.querySelector('.tab-btn[data-page-filter].active');
+    const filter = activeBtn ? activeBtn.dataset.pageFilter : 'all';
+    const filtered = filter === 'all' ? toursData : toursData.filter(t => t.category === filter);
+    toursPageGrid.innerHTML = filtered.map(renderTourCard).join('');
+  }
+
+  // Posts page
+  try { renderPosts('posts-page-grid'); } catch {}
+
+  // Tours tab grid on home
+  const toursGrid = document.getElementById('tours-grid');
+  if (toursGrid && toursData.length > 0) {
+    const activeBtn = document.querySelector('.tab-btn:not([data-page-filter]).active');
+    const filter = activeBtn ? activeBtn.dataset.filter : 'all';
+    renderTours(filter);
+  }
+
+  syncSaveButtons();
+};
