@@ -27,16 +27,6 @@ const TOUR_CATEGORIES = [
 ];
 
 // ── HELPERS ─────────────────────────────────────────────────
-function getDifficultyColor(difficulty) {
-  const map = {
-    'Easy': { bg: 'rgba(46,196,182,0.12)', color: '#0e9488', border: 'rgba(46,196,182,0.3)' },
-    'Moderate': { bg: 'rgba(244,180,0,0.12)', color: '#b38000', border: 'rgba(244,180,0,0.3)' },
-    'Challenging': { bg: 'rgba(220,60,60,0.1)', color: '#c03030', border: 'rgba(220,60,60,0.25)' },
-    'Easy–Moderate': { bg: 'rgba(46,196,182,0.12)', color: '#0e9488', border: 'rgba(46,196,182,0.3)' },
-  };
-  return map[difficulty] || map['Easy'];
-}
-
 function getSpotsLabel(spotsLeft) {
   if (spotsLeft <= 3) return { text: `⚡ Only ${spotsLeft} spots left`, urgent: true };
   if (spotsLeft <= 6) return { text: `${spotsLeft} spots left`, urgent: false };
@@ -96,7 +86,6 @@ function renderStandardCard(tour) {
 
 /** Renders an upcoming tour card (includes date badge + spots counter) */
 function renderUpcomingCard(tour) {
-  const diff = getDifficultyColor(tour.difficulty);
   const spots = getSpotsLabel(tour.spotsLeft);
   const spotsClass = spots.urgent ? 'spots-label spots-label--urgent' : 'spots-label';
   const description = tour.desc.length > 200 ? tour.desc.substring(0, 200) + '...' : tour.desc;
@@ -111,10 +100,6 @@ function renderUpcomingCard(tour) {
           </button>
           <span class="tour-badge tour-badge--date">📅 ${tour.dateRange}</span>
         </div>
-        <span class="tour-badge tour-badge--difficulty" style="
-          background:${diff.bg}; color:${diff.color}; border:1px solid ${diff.border};
-          position:absolute; bottom:0.85rem; left:0.85rem;
-        ">${tour.difficulty}</span>
       </div>
       <div class="tour-card__body">
         <div class="upcoming-header">

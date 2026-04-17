@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿// ===== DATA (loaded from Firebase) =====
+﻿﻿// ===== DATA (loaded from Firebase) =====
 let toursData = [];
 let carsData = [];
 let postsData = [];
@@ -409,8 +409,9 @@ function renderCarCard(car) {
         <p class="car-card-info">${car.info || car.desc || ''}</p>
         <div class="car-features">
           <span class="car-feature">${car.seats || ''}</span>
-          <span class="car-feature">${car.ac || ''}</span>
-          <span class="car-feature">${car.drive || ''}</span>
+          <span class="car-feature">${car.fuel || ''}</span>
+          <span class="car-feature">${car.transmission || ''}</span>
+          <span class="car-feature">${car.color || ''}</span>
         </div>
       </div>
     </div>`;
@@ -436,8 +437,8 @@ function renderCarFullCard(car) {
         <p class="tour-card__desc">${car.info || car.desc || ''} Whether you need airport transfers, city tours, or multi-day mountain excursions, we ensure comfort and safety throughout.</p>
         <ul class="tour-highlights">
           <li class="tour-highlight"><span class="highlight-dot"></span>${car.seats || 'Comfortable seating'}</li>
-          <li class="tour-highlight"><span class="highlight-dot"></span>${car.ac || 'Air Conditioning'}</li>
-          <li class="tour-highlight"><span class="highlight-dot"></span>${car.drive || 'Professional Driver'}</li>
+          <li class="tour-highlight"><span class="highlight-dot"></span>Fuel: ${car.fuel || 'Any'}</li>
+          <li class="tour-highlight"><span class="highlight-dot"></span>Transmission: ${car.transmission || 'Any'}</li>
         </ul>
         <div class="tour-card__footer">
           <div class="tour-card__meta">

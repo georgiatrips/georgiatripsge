@@ -38,7 +38,7 @@ function loadTourDetail() {
   
   if (!currentTour) {
     console.error('Tour with ID ' + tourId + ' not found');
-    document.body.innerHTML = '<div style="text-align:center;padding:4rem;"><h2>Tour not found</h2><a href="tours.html">Back to Tours</a></div>';
+    document.body.innerHTML = '<div style="text-align:center;padding:4rem;"><h2>Tour not found</h2><a href="domestic-tours.html">Back to Tours</a></div>';
     return;
   }
 

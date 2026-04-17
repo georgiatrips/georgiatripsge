@@ -742,6 +742,23 @@
     <a href="posts.html">Posts</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
+    <div class="nav-dropdown nav-lang-dropdown" id="nav-lang-dropdown">
+      <button class="nav-dropdown-btn nav-lang-btn" id="nav-lang-btn" aria-label="Select language" aria-haspopup="true">
+        <span class="lang-flag" id="nav-lang-flag"><img src="https://flagcdn.com/w20/ge.png" alt="ქართული"></span>
+        <span class="lang-code" id="nav-lang-code">KA</span>
+        <span class="lang-caret">▼</span>
+      </button>
+      <div class="dropdown-menu lang-dropdown-menu">
+        <a href="#" data-lang="ka"><span class="lang-flag">🇬🇪</span><span class="lang-name">ქართული</span></a>
+        <a href="#" data-lang="en"><span class="lang-flag">🇬🇧</span><span class="lang-name">English</span></a>
+        <a href="#" data-lang="ru"><span class="lang-flag">🇷🇺</span><span class="lang-name">Русский</span></a>
+        <a href="#" data-lang="tr"><span class="lang-flag">🇹🇷</span><span class="lang-name">Türkçe</span></a>
+        <a href="#" data-lang="ar"><span class="lang-flag">🇸🇦</span><span class="lang-name">العربية</span></a>
+        <a href="#" data-lang="he"><span class="lang-flag">🇮🇱</span><span class="lang-name">עברית</span></a>
+        <a href="#" data-lang="fa"><span class="lang-flag">🇮🇷</span><span class="lang-name">فارسی</span></a>
+        <a href="#" data-lang="uk"><span class="lang-flag">🇺🇦</span><span class="lang-name">Українська</span></a>
+      </div>
+    </div>
     <div class="nav-user-dropdown" id="nav-user-dropdown">
       <button class="nav-cta nav-user-btn" id="nav-user-btn">Login</button>
       <div class="dropdown-menu user-dropdown-menu">
@@ -974,6 +991,7 @@
               <option value="Minivan">Minivan</option>
               <option value="Sedan">Sedan</option>
               <option value="Van">Van</option>
+              <option value="Jeep">Jeep</option>
             </select>
           </div>
           <div class="form-group">
@@ -993,13 +1011,19 @@
             <input type="text" id="car-seats" placeholder="e.g. 7 Seats">
           </div>
           <div class="form-group">
-            <label>A/C</label>
-            <input type="text" id="car-ac" placeholder="e.g. Full A/C">
+            <label>Fuel Type (საწვავის ტიპი)</label>
+            <input type="text" id="car-fuel" placeholder="e.g. Diesel">
           </div>
         </div>
-        <div class="form-group">
-          <label>Drive Type</label>
-          <input type="text" id="car-drive" placeholder="e.g. 4x4 Drive">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Transmission (ტრანსმისია)</label>
+            <input type="text" id="car-transmission" placeholder="e.g. Automatic">
+          </div>
+          <div class="form-group">
+            <label>Color (ფერი)</label>
+            <input type="text" id="car-color" placeholder="e.g. White">
+          </div>
         </div>
         <div class="form-group">
           <label>Description *</label>
@@ -1572,8 +1596,9 @@ window.editCar = function(id) {
   document.getElementById('car-on-request').checked = car.priceOnRequest || false;
   document.getElementById('car-price').disabled = car.priceOnRequest || false;
   document.getElementById('car-seats').value = car.seats || '';
-  document.getElementById('car-ac').value = car.ac || '';
-  document.getElementById('car-drive').value = car.drive || '';
+  document.getElementById('car-fuel').value = car.fuel || '';
+  document.getElementById('car-transmission').value = car.transmission || '';
+  document.getElementById('car-color').value = car.color || '';
   document.getElementById('car-desc').value = car.info || car.desc || '';
   document.getElementById('car-image-url').value = car.img;
   
@@ -1608,8 +1633,9 @@ window.saveCar = async function() {
       price: document.getElementById('car-price').value,
       priceOnRequest: document.getElementById('car-on-request').checked,
       seats: document.getElementById('car-seats').value,
-      ac: document.getElementById('car-ac').value,
-      drive: document.getElementById('car-drive').value,
+      fuel: document.getElementById('car-fuel').value,
+      transmission: document.getElementById('car-transmission').value,
+      color: document.getElementById('car-color').value,
       info: document.getElementById('car-desc').value,
       img: imageUrl
     };
@@ -2074,5 +2100,6 @@ function showToast(message, type = 'success') {
 });
 </script>
 <script type="module" src="auth.js"></script>
+<script src="lang.js"></script>
 </body>
 </html>

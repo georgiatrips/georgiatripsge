@@ -30,6 +30,23 @@
     <a href="posts.html">Posts</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
+    <div class="nav-dropdown nav-lang-dropdown" id="nav-lang-dropdown">
+      <button class="nav-dropdown-btn nav-lang-btn" id="nav-lang-btn" aria-label="Select language" aria-haspopup="true">
+        <span class="lang-flag" id="nav-lang-flag"><img src="https://flagcdn.com/w20/ge.png" alt="ქართული"></span>
+        <span class="lang-code" id="nav-lang-code">KA</span>
+        <span class="lang-caret">▼</span>
+      </button>
+      <div class="dropdown-menu lang-dropdown-menu">
+        <a href="#" data-lang="ka"><span class="lang-flag">🇬🇪</span><span class="lang-name">ქართული</span></a>
+        <a href="#" data-lang="en"><span class="lang-flag">🇬🇧</span><span class="lang-name">English</span></a>
+        <a href="#" data-lang="ru"><span class="lang-flag">🇷🇺</span><span class="lang-name">Русский</span></a>
+        <a href="#" data-lang="tr"><span class="lang-flag">🇹🇷</span><span class="lang-name">Türkçe</span></a>
+        <a href="#" data-lang="ar"><span class="lang-flag">🇸🇦</span><span class="lang-name">العربية</span></a>
+        <a href="#" data-lang="he"><span class="lang-flag">🇮🇱</span><span class="lang-name">עברית</span></a>
+        <a href="#" data-lang="fa"><span class="lang-flag">🇮🇷</span><span class="lang-name">فارسی</span></a>
+        <a href="#" data-lang="uk"><span class="lang-flag">🇺🇦</span><span class="lang-name">Українська</span></a>
+      </div>
+    </div>
     <div class="nav-user-dropdown" id="nav-user-dropdown">
       <button class="nav-cta nav-user-btn" id="nav-user-btn">Login</button>
       <div class="dropdown-menu user-dropdown-menu">
@@ -209,22 +226,12 @@ let allTours = [];
 let activeCategory = 'one-day';
 
 // Helper functions
-function getDifficultyColor(difficulty) {
-  const map = {
-    'Easy': { bg: 'rgba(46,196,182,0.12)', color: '#0e9488', border: 'rgba(46,196,182,0.3)' },
-    'Moderate': { bg: 'rgba(244,180,0,0.12)', color: '#b38000', border: 'rgba(244,180,0,0.3)' },
-    'Challenging': { bg: 'rgba(220,60,60,0.1)', color: '#c03030', border: 'rgba(220,60,60,0.25)' }
-  };
-  return map[difficulty] || map['Easy'];
-}
-
 function formatHighlights(highlights) {
   if (!highlights || !highlights.length) return '';
   return highlights.map(h => `<li class="tour-highlight"><span class="highlight-dot"></span>${h}</li>`).join('');
 }
 
 function renderTourCard(tour) {
-  const diff = getDifficultyColor(tour.difficulty);
   const description = tour.desc.length > 200 ? tour.desc.substring(0, 200) + '...' : tour.desc;
   return `
     <article class="tour-card tour-card--standard" data-id="${tour.id}">
@@ -237,10 +244,6 @@ function renderTourCard(tour) {
           </button>
           <span class="tour-badge tour-badge--duration">&#9201; ${tour.duration || '1 Day'}</span>
         </div>
-        <span class="tour-badge tour-badge--difficulty" style="
-          background:${diff.bg}; color:${diff.color}; border:1px solid ${diff.border};
-          position:absolute; bottom:0.85rem; left:0.85rem;
-        ">${tour.difficulty || 'Easy'}</span>
       </div>
       <div class="tour-card__body">
         <h3 class="tour-card__title">${tour.title}</h3>
@@ -407,5 +410,6 @@ async function init() {
 init();
 </script>
 
+<script src="lang.js"></script>
 </body>
 </html>

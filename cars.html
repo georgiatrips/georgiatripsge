@@ -29,6 +29,23 @@
     <a href="posts.html">Posts</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
+    <div class="nav-dropdown nav-lang-dropdown" id="nav-lang-dropdown">
+      <button class="nav-dropdown-btn nav-lang-btn" id="nav-lang-btn" aria-label="Select language" aria-haspopup="true">
+        <span class="lang-flag" id="nav-lang-flag"><img src="https://flagcdn.com/w20/ge.png" alt="ქართული"></span>
+        <span class="lang-code" id="nav-lang-code">KA</span>
+        <span class="lang-caret">▼</span>
+      </button>
+      <div class="dropdown-menu lang-dropdown-menu">
+        <a href="#" data-lang="ka"><span class="lang-flag">🇬🇪</span><span class="lang-name">ქართული</span></a>
+        <a href="#" data-lang="en"><span class="lang-flag">🇬🇧</span><span class="lang-name">English</span></a>
+        <a href="#" data-lang="ru"><span class="lang-flag">🇷🇺</span><span class="lang-name">Русский</span></a>
+        <a href="#" data-lang="tr"><span class="lang-flag">🇹🇷</span><span class="lang-name">Türkçe</span></a>
+        <a href="#" data-lang="ar"><span class="lang-flag">🇸🇦</span><span class="lang-name">العربية</span></a>
+        <a href="#" data-lang="he"><span class="lang-flag">🇮🇱</span><span class="lang-name">עברית</span></a>
+        <a href="#" data-lang="fa"><span class="lang-flag">🇮🇷</span><span class="lang-name">فارسی</span></a>
+        <a href="#" data-lang="uk"><span class="lang-flag">🇺🇦</span><span class="lang-name">Українська</span></a>
+      </div>
+    </div>
     <div class="nav-user-dropdown" id="nav-user-dropdown">
       <button class="nav-cta nav-user-btn" id="nav-user-btn">Login</button>
       <div class="dropdown-menu user-dropdown-menu">
@@ -130,7 +147,7 @@
       <ul>
         <li><a href="domestic-tours.html">One-Day Tours</a></li>
         <li><a href="international-tours.html">Multi-Day Tours</a></li>
-        <li><a href="tours.html">Fixed Tours</a></li>
+        <li><a href="domestic-tours.html">Fixed Tours</a></li>
       </ul>
     </div>
     <div class="footer-col">
@@ -165,5 +182,6 @@
 <script src="pricing.js"></script>
 <script type="module" src="script.js"></script>
 <script type="module" src="auth.js"></script>
+<script src="lang.js"></script>
 </body>
 </html>
