@@ -27,6 +27,22 @@ const TOUR_CATEGORIES = [
 ];
 
 // ── HELPERS ─────────────────────────────────────────────────
+// i18n: localize a multi-lingual value (object) or pass through a plain string.
+function L(val, fallback = '') {
+  if (window.localize) return window.localize(val, fallback);
+  if (val == null) return fallback;
+  if (typeof val === 'string') return val;
+  if (typeof val === 'object') return val.ka || val.en || fallback;
+  return String(val);
+}
+function LA(val) {
+  if (window.localizeArray) return window.localizeArray(val);
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'object') return Array.isArray(val.ka) ? val.ka : (Array.isArray(val.en) ? val.en : []);
+  return [];
+}
+
 function getSpotsLabel(spotsLeft) {
   if (spotsLeft <= 3) return { text: `⚡ Only ${spotsLeft} spots left`, urgent: true };
   if (spotsLeft <= 6) return { text: `${spotsLeft} spots left`, urgent: false };
@@ -34,7 +50,7 @@ function getSpotsLabel(spotsLeft) {
 }
 
 function formatHighlights(highlights) {
-  return highlights
+  return LA(highlights)
     .map(h => `<li class="tour-highlight"><span class="highlight-dot"></span>${h}</li>`)
     .join('');
 }
@@ -43,22 +59,26 @@ function formatHighlights(highlights) {
 
 /** Renders a standard tour card (one-day, multi-day, flexible) */
 function renderStandardCard(tour) {
-  const description = tour.desc.length > 200 ? tour.desc.substring(0, 200) + '...' : tour.desc;
+  const title = L(tour.title);
+  const duration = L(tour.duration);
+  const descFull = L(tour.desc);
+  const description = descFull.length > 200 ? descFull.substring(0, 200) + '...' : descFull;
+  const safeTitle = String(title).replace(/'/g, "&#39;");
   return `
     <article class="tour-card tour-card--standard" data-id="${tour.id}" data-category="${tour.category}">
       <div class="tour-card__img-wrap">
-        <img src="${tour.img}" alt="${tour.title}" loading="lazy" class="tour-card__img">
+        <img src="${tour.img}" alt="${title}" loading="lazy" class="tour-card__img">
         <div class="tour-card__overlay"></div>
         <div class="tour-card__top-badges">
           <button class="save-tour-btn" data-save-id="${tour.id}" onclick="toggleSaveTour('${tour.id}', event)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
           </button>
-          <span class="tour-badge tour-badge--duration">⏱ ${tour.duration}</span>
+          <span class="tour-badge tour-badge--duration">⏱ ${duration}</span>
           <span class="tour-badge tour-badge--duration" style="background:var(--teal);">🌤 ${Array.isArray(tour.season) ? tour.season.join(', ') : (tour.season || 'All Year')}</span>
         </div>
       </div>
       <div class="tour-card__body">
-        <h3 class="tour-card__title">${tour.title}</h3>
+        <h3 class="tour-card__title">${title}</h3>
         <p class="tour-card__desc">${description}</p>
         <ul class="tour-highlights">
           ${formatHighlights(tour.highlights)}
@@ -76,7 +96,7 @@ function renderStandardCard(tour) {
           <button class="btn-details" onclick="goToTourDetail('${tour.id}')">
             Learn More <span class="btn-arrow">→</span>
           </button>
-          <button class="btn-book" onclick="openBookModal('${tour.title}', '${tour.price}', '${tour.id}')">
+          <button class="btn-book" onclick="openBookModal('${safeTitle}', '${tour.price}', '${tour.id}')">
             Book <span class="btn-arrow">→</span>
           </button>
         </div>
@@ -88,11 +108,15 @@ function renderStandardCard(tour) {
 function renderUpcomingCard(tour) {
   const spots = getSpotsLabel(tour.spotsLeft);
   const spotsClass = spots.urgent ? 'spots-label spots-label--urgent' : 'spots-label';
-  const description = tour.desc.length > 200 ? tour.desc.substring(0, 200) + '...' : tour.desc;
+  const title = L(tour.title);
+  const duration = L(tour.duration);
+  const descFull = L(tour.desc);
+  const description = descFull.length > 200 ? descFull.substring(0, 200) + '...' : descFull;
+  const safeTitle = String(title).replace(/'/g, "&#39;");
   return `
     <article class="tour-card tour-card--upcoming" data-id="${tour.id}" data-category="${tour.category}">
       <div class="tour-card__img-wrap">
-        <img src="${tour.img}" alt="${tour.title}" loading="lazy" class="tour-card__img">
+        <img src="${tour.img}" alt="${title}" loading="lazy" class="tour-card__img">
         <div class="tour-card__overlay"></div>
         <div class="tour-card__top-badges">
           <button class="save-tour-btn" data-save-id="${tour.id}" onclick="toggleSaveTour('${tour.id}', event)">
@@ -103,7 +127,7 @@ function renderUpcomingCard(tour) {
       </div>
       <div class="tour-card__body">
         <div class="upcoming-header">
-          <h3 class="tour-card__title">${tour.title}</h3>
+          <h3 class="tour-card__title">${title}</h3>
           <span class="${spotsClass}">${spots.text}</span>
         </div>
         <p class="tour-card__desc">${description}</p>
@@ -112,7 +136,7 @@ function renderUpcomingCard(tour) {
         </ul>
         <div class="tour-card__footer">
           <div class="tour-card__meta">
-            <span class="tour-meta-item">⏱ ${tour.duration}</span>
+            <span class="tour-meta-item">⏱ ${duration}</span>
             <span class="tour-meta-item">👥 Min People: ${tour.minPeople || 1}</span>
             <span class="tour-meta-item">👥 Max People: ${tour.maxPeople || 10}</span>
           </div>
@@ -124,7 +148,7 @@ function renderUpcomingCard(tour) {
           <button class="btn-details" onclick="goToTourDetail('${tour.id}')">
             Learn More <span class="btn-arrow">→</span>
           </button>
-          <button class="btn-book btn-book--upcoming" onclick="openBookModal('${tour.title}', '${tour.price}', '${tour.id}')">
+          <button class="btn-book btn-book--upcoming" onclick="openBookModal('${safeTitle}', '${tour.price}', '${tour.id}')">
             Reserve <span class="btn-arrow">→</span>
           </button>
         </div>
@@ -283,32 +307,36 @@ function initToursPage() {
 
 // ── GENERIC TOUR CARD CREATOR (for domestic/international pages) ──
 function createTourCard(tour) {
+  const title = L(tour.title);
+  const duration = L(tour.duration);
+  const desc = L(tour.desc);
+  const safeTitle = String(title).replace(/'/g, "&#39;");
   const badgeClass = tour.category === 'oneday' ? 'badge-oneday' : 'badge-full';
-  const badgeText = tour.category === 'oneday' ? '1 DAY' : tour.duration;
-  
+  const badgeText = tour.category === 'oneday' ? '1 DAY' : duration;
+
   const card = document.createElement('article');
   card.className = 'tour-card';
   card.role = 'listitem';
   card.innerHTML = `
     <div class="tour-card-img">
-      <img src="${tour.img}" alt="${tour.title}" loading="lazy">
+      <img src="${tour.img}" alt="${title}" loading="lazy">
       <button class="save-tour-btn" data-save-id="${tour.id}" onclick="toggleSaveTour('${tour.id}', event)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
       </button>
       <span class="tour-card-badge ${badgeClass}">${badgeText}</span>
     </div>
     <div class="tour-card-body">
-      <h3 class="tour-card-title">${tour.title}</h3>
-      <p class="tour-card-desc">${tour.desc}</p>
+      <h3 class="tour-card-title">${title}</h3>
+      <p class="tour-card-desc">${desc}</p>
       <div class="tour-card-footer">
-        <span class="tour-meta">⏱ ${tour.duration}</span>
+        <span class="tour-meta">⏱ ${duration}</span>
         <span class="tour-meta">👥 ${tour.group}</span>
         <div class="tour-price-box">
           <span class="tour-price">${tour.price}</span>
           <${tour.perPerson ? 'span' : ''} class="tour-per-person">${tour.perPerson ? '/person' : ''}</${tour.perPerson ? 'span' : ''}>
         </div>
       </div>
-      <button class="btn-book" onclick="alert('Tour: ${tour.title} at ${tour.price}')">
+      <button class="btn-book" onclick="alert('Tour: ${safeTitle} at ${tour.price}')">
         Book Tour <span style="margin-left:0.3rem;">→</span>
       </button>
     </div>
@@ -329,3 +357,8 @@ if (document.readyState === 'loading') {
 } else {
   initToursPage();
 }
+
+// Re-render when language changes (fired by lang.js)
+window.addEventListener('languageChanged', function () {
+  try { renderToursGrid(ToursPageState.activeCategory); } catch {}
+});

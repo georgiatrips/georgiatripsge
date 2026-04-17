@@ -47,29 +47,48 @@ function loadTourDetail() {
 }
 
 // ── POPULATE PAGE ────────────────────────────────────────────
+// i18n helpers
+function _L(val, fallback = '') {
+  if (window.localize) return window.localize(val, fallback);
+  if (val == null) return fallback;
+  if (typeof val === 'string') return val;
+  if (typeof val === 'object') return val.ka || val.en || fallback;
+  return String(val);
+}
+function _LA(val) {
+  if (window.localizeArray) return window.localizeArray(val);
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'object') return Array.isArray(val.ka) ? val.ka : (Array.isArray(val.en) ? val.en : []);
+  return [];
+}
+
 function populateTourDetail() {
   const tour = currentTour;
+  const title = _L(tour.title);
+  const duration = _L(tour.duration);
+  const desc = _L(tour.desc);
 
   // Update page title
-  document.title = tour.title + ' – Georgia Trips';
+  document.title = title + ' – Georgia Trips';
 
   // Hero section
   document.getElementById('detail-hero-img').src = tour.img;
-  document.getElementById('detail-title').textContent = tour.title;
+  document.getElementById('detail-title').textContent = title;
 
   // Quick info cards
-  if (document.getElementById('detail-duration')) document.getElementById('detail-duration').textContent = tour.duration || 'Flexible';
+  if (document.getElementById('detail-duration')) document.getElementById('detail-duration').textContent = duration || 'Flexible';
   if (document.getElementById('detail-season')) document.getElementById('detail-season').textContent = Array.isArray(tour.season) ? tour.season.join(', ') : (tour.season || 'All Year');
   if (document.getElementById('detail-category')) document.getElementById('detail-category').textContent = (tour.category || 'general').toUpperCase().replace('-', ' ');
   if (document.getElementById('detail-min-people')) document.getElementById('detail-min-people').textContent = tour.minPeople || '1';
   if (document.getElementById('detail-max-people')) document.getElementById('detail-max-people').textContent = tour.maxPeople || '10';
 
   // Description
-  document.getElementById('detail-description').textContent = tour.desc || 'No description available.';
+  document.getElementById('detail-description').textContent = desc || 'No description available.';
 
   // Highlights
   const highlightsList = document.getElementById('detail-highlights');
-  highlightsList.innerHTML = (tour.highlights || [])
+  highlightsList.innerHTML = _LA(tour.highlights)
     .map(h => `<li class="highlight-item"><span class="highlight-dot"></span>${h}</li>`)
     .join('');
 
@@ -119,7 +138,7 @@ function populateTourDetail() {
 
   // Modal tour name
   const modalPriceDisplay = tour.priceOnRequest ? 'Price On Request' : `${tour.price} per person`;
-  document.getElementById('modal-tour-name').textContent = `${tour.title} - ${modalPriceDisplay}`;
+  document.getElementById('modal-tour-name').textContent = `${title} - ${modalPriceDisplay}`;
 
   // Itinerary (if multi-day)
   if (tour.category === 'multi-day' || tour.category === 'upcoming') {
@@ -142,12 +161,13 @@ function showItinerary() {
   const days = currentTour.duration ? parseInt(currentTour.duration) : 3;
   let html = '';
   
+  const tourTitle = _L(currentTour.title);
   for (let i = 1; i <= days; i++) {
     html += `
       <div class="itinerary-day">
         <h4 class="itinerary-day__title">Day ${i}</h4>
         <p class="itinerary-day__content">
-          Activities and highlights for Day ${i} of your ${currentTour.title} tour.
+          Activities and highlights for Day ${i} of your ${tourTitle} tour.
           <br><br>
           <strong>Includes:</strong> Guided tours, local meals, transportation between locations.
         </p>
@@ -201,14 +221,14 @@ function submitBooking(event) {
     people: document.getElementById('book-people').value,
     date: document.getElementById('book-date').value,
     notes: document.getElementById('book-notes').value,
-    tourName: currentTour.title,
+    tourName: _L(currentTour.title),
     tourPrice: currentTour.price,
   };
 
   console.log('Booking submitted:', data);
-  
+
   // Show success message
-  alert(`Thank you for booking "${currentTour.title}"!\n\nWe've received your request and will confirm within 24 hours.\n\nCheck your email for details.`);
+  alert(`Thank you for booking "${_L(currentTour.title)}"!\n\nWe've received your request and will confirm within 24 hours.\n\nCheck your email for details.`);
   
   // Close modal and reset form
   closeBookingModal();
@@ -217,3 +237,11 @@ function submitBooking(event) {
 
 // ── INIT ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', loadTourDetail);
+
+// Re-populate when user switches language
+window.addEventListener('languageChanged', function () {
+  if (currentTour) populateTourDetail();
+});
+window.reRenderAllData = function () {
+  if (currentTour) populateTourDetail();
+};

@@ -42,21 +42,44 @@
     });
   }
 
+  // RTL languages
+  const RTL_LANGS = ['ar', 'he', 'fa'];
+
+  function applyDocAttrs(lang) {
+    document.documentElement.setAttribute('data-lang', lang);
+    document.documentElement.setAttribute('lang', lang);
+    document.documentElement.setAttribute('dir', RTL_LANGS.includes(lang) ? 'rtl' : 'ltr');
+  }
+
+  function triggerReRender(lang) {
+    // Expose current language globally for localize() helpers
+    window.GT_CURRENT_LANG = lang;
+
+    // Re-render dynamic Firebase data (tours, cars, posts, featured, detail pages)
+    if (typeof window.reRenderAllData === 'function') {
+      try { window.reRenderAllData(); } catch (e) { console.error('[lang] reRenderAllData error:', e); }
+    }
+
+    // Dispatch both old + new events for any listeners
+    document.dispatchEvent(new CustomEvent('lang:change', { detail: { lang } }));
+    window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang } }));
+  }
+
   function setLang(lang) {
     if (!LANGUAGES[lang]) return;
     storeLang(lang);
     updateButton(lang);
     markActive(lang);
-    document.documentElement.setAttribute('data-lang', lang);
-    // Fire a custom event so other scripts can react later (actual translation)
-    document.dispatchEvent(new CustomEvent('lang:change', { detail: { lang } }));
+    applyDocAttrs(lang);
+    triggerReRender(lang);
   }
 
   function init() {
     const current = getStoredLang();
+    window.GT_CURRENT_LANG = current;
     updateButton(current);
     markActive(current);
-    document.documentElement.setAttribute('data-lang', current);
+    applyDocAttrs(current);
 
     document.querySelectorAll('.lang-dropdown-menu a[data-lang]').forEach(a => {
       a.addEventListener('click', (e) => {
