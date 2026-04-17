@@ -2,15 +2,23 @@
    UI AUTO-TRANSLATOR (static HTML chrome)
    -----------------------------------------------------------
    Walks the DOM, captures every English text node + a small
-   set of translatable attributes, and – whenever the selected
-   site language changes – rewrites them via MyMemory (see
-   translate.js). Results are cached in localStorage so that
-   subsequent page loads render instantly in the chosen lang.
+   set of translatable attributes, and whenever the selected
+   site language changes, rewrites them.
 
-   Dynamic Firebase content (tour cards, cars, posts, etc.)
-   is ALREADY translated via `window.localize()` per language
-   object, so those containers must be marked with
-   `data-no-translate` to opt out of this runtime translator.
+   Speed strategy:
+     1. Check `window.GTUIStrings.lookupPhrase()` – instant,
+        covers every nav / hero / section phrase on the site.
+     2. Fall back to the persistent localStorage cache.
+     3. Only call the MyMemory API for leftover strings.
+
+   Skip strategy (things we NEVER translate):
+     * `GeorgiaTrips` brand text inside `.nav-logo`
+     * language switcher button + dropdown (`.nav-lang-dropdown`)
+     * currency switcher (`.nav-currency-dropdown`,
+       `[data-currency-button]`)
+     * any user-marked `[data-no-translate]` container
+       (dynamic Firestore content renders its own localized
+       copy through `window.localize()`).
    ========================================================= */
 (function () {
   // Source language of the static HTML (all hand-written chrome is English).
@@ -24,8 +32,27 @@
     'SCRIPT', 'STYLE', 'NOSCRIPT', 'CODE', 'PRE', 'TEXTAREA'
   ]);
 
+  // Any element matching this selector (or a descendant of one) is opted out
+  // of runtime translation. Brand names, language and currency switchers live
+  // here.
+  const SKIP_SELECTOR = [
+    '[data-no-translate]',
+    '.nav-logo',                // header + footer brand
+    '.nav-lang-dropdown',       // full language switcher (button + menu)
+    '.nav-currency-dropdown',   // full currency switcher (button + menu)
+    '[data-currency-button]',   // paranoia guard for currency button
+    '.lang-flag',
+    '.lang-code',
+    '.lang-caret',
+    '.lang-name'                // native language names inside the menu
+  ].join(',');
+
+  // Regex of brand tokens that must never be translated, even if they slip
+  // through one of the skip selectors (e.g. appear in a freeform sentence).
+  const BRAND_REGEX = /\b(Georgia\s*Trips|GeorgiaTrips|georgiatrips)\b/i;
+
   // ---------- persistent cache ----------
-  const CACHE_KEY = 'gt_ui_translations_v1';
+  const CACHE_KEY = 'gt_ui_translations_v2';
   let cache = {};
   try {
     cache = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}') || {};
@@ -51,12 +78,19 @@
     return attr || SRC;
   }
 
-  // A string is worth translating if it has at least one letter and is >1 char.
+  // A string is worth translating if it has at least one letter, is >1 char,
+  // and is not a brand-only phrase.
   function isTranslatable(text) {
     if (text == null) return false;
     const t = String(text).trim();
     if (t.length < 2) return false;
     if (!/[\p{L}]/u.test(t)) return false;
+
+    // Protect brand-only strings ("GeorgiaTrips", "Georgia Trips").
+    const stripped = t.replace(BRAND_REGEX, '').trim();
+    if (!stripped || stripped.length < 2 || !/[\p{L}]/u.test(stripped)) {
+      return false;
+    }
     return true;
   }
 
@@ -70,12 +104,15 @@
     return lead + translated + trail;
   }
 
+  // Phrase-dictionary lookup (instant, no network).
+  function dictLookup(trimmed, lang) {
+    if (window.GTUIStrings && typeof window.GTUIStrings.lookupPhrase === 'function') {
+      return window.GTUIStrings.lookupPhrase(trimmed, lang);
+    }
+    return null;
+  }
+
   // ---------- node discovery ----------
-  /**
-   * Walk the DOM and return every TEXT node we should translate.
-   * As a side effect, remembers each node's original English text on
-   * the node itself (expando) the first time we encounter it.
-   */
   function collectTextNodes(root) {
     const out = [];
     if (!root) return out;
@@ -84,11 +121,9 @@
         const parent = n.parentElement;
         if (!parent) return NodeFilter.FILTER_REJECT;
         if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
-        if (parent.closest && parent.closest('[data-no-translate]')) {
+        if (parent.closest && parent.closest(SKIP_SELECTOR)) {
           return NodeFilter.FILTER_REJECT;
         }
-        // Use the already-cached original when available so we don't
-        // reject nodes that were just translated into e.g. Russian.
         const check = n.__i18nOrig != null ? n.__i18nOrig : n.nodeValue;
         if (!isTranslatable(check)) return NodeFilter.FILTER_REJECT;
         return NodeFilter.FILTER_ACCEPT;
@@ -102,17 +137,13 @@
     return out;
   }
 
-  /**
-   * Walk the DOM and return every { element, attr } pair whose attribute
-   * value we should translate. Also remembers the original values.
-   */
   function collectAttrSpecs(root) {
     const out = [];
     if (!root) return out;
     const all = root.querySelectorAll('*');
     all.forEach((el) => {
       if (SKIP_TAGS.has(el.tagName)) return;
-      if (el.closest('[data-no-translate]')) return;
+      if (el.closest(SKIP_SELECTOR)) return;
       for (let i = 0; i < ATTRS.length; i++) {
         const attr = ATTRS[i];
         if (!el.hasAttribute(attr)) continue;
@@ -137,7 +168,7 @@
     const textNodes = collectTextNodes(document.body);
     const attrSpecs = collectAttrSpecs(document.body);
 
-    // 1) Restoring to source — just dump originals back and exit.
+    // 1) Restoring to source — dump originals back and exit.
     if (lang === SRC) {
       textNodes.forEach((n) => {
         if (n.__i18nOrig != null) n.nodeValue = n.__i18nOrig;
@@ -149,16 +180,27 @@
       return;
     }
 
-    // 2) Render cached translations immediately and collect what's missing.
+    // 2) Render translations from dictionary / cache immediately.
+    //    Anything still missing goes to the API fallback.
     const missing = new Set();
+
+    function resolve(trimmed) {
+      // dict first
+      const fromDict = dictLookup(trimmed, lang);
+      if (fromDict) return fromDict;
+      // then persistent cache
+      const key = cacheKey(lang, trimmed);
+      if (cache[key] != null) return cache[key];
+      return null;
+    }
 
     textNodes.forEach((n) => {
       const orig = n.__i18nOrig;
       if (orig == null) return;
       const trimmed = orig.trim();
-      const key = cacheKey(lang, trimmed);
-      if (cache[key] != null) {
-        n.nodeValue = preserveWhitespace(orig, cache[key]);
+      const hit = resolve(trimmed);
+      if (hit != null) {
+        n.nodeValue = preserveWhitespace(orig, hit);
       } else {
         missing.add(trimmed);
       }
@@ -168,9 +210,9 @@
       const orig = el.__i18nOrigAttrs[attr];
       if (orig == null) return;
       const trimmed = String(orig).trim();
-      const key = cacheKey(lang, trimmed);
-      if (cache[key] != null) {
-        el.setAttribute(attr, cache[key]);
+      const hit = resolve(trimmed);
+      if (hit != null) {
+        el.setAttribute(attr, hit);
       } else {
         missing.add(trimmed);
       }
@@ -178,7 +220,7 @@
 
     if (!missing.size || !window.GTTranslate) return;
 
-    // 3) Fetch missing translations in parallel (translate.js throttles to 4).
+    // 3) Fetch missing translations in parallel (translate.js throttles).
     const jobs = Array.from(missing).map(async (src) => {
       const key = cacheKey(lang, src);
       try {
@@ -199,14 +241,16 @@
     textNodes.forEach((n) => {
       const orig = n.__i18nOrig;
       if (orig == null) return;
-      const key = cacheKey(lang, orig.trim());
-      if (cache[key] != null) n.nodeValue = preserveWhitespace(orig, cache[key]);
+      const trimmed = orig.trim();
+      const hit = resolve(trimmed);
+      if (hit != null) n.nodeValue = preserveWhitespace(orig, hit);
     });
     attrSpecs.forEach(({ el, attr }) => {
       const orig = el.__i18nOrigAttrs[attr];
       if (orig == null) return;
-      const key = cacheKey(lang, String(orig).trim());
-      if (cache[key] != null) el.setAttribute(attr, cache[key]);
+      const trimmed = String(orig).trim();
+      const hit = resolve(trimmed);
+      if (hit != null) el.setAttribute(attr, hit);
     });
   }
 
