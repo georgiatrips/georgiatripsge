@@ -1,4 +1,4 @@
-﻿// ===== DATA (loaded from Firebase) =====
+// ===== DATA (loaded from Firebase) =====
 let toursData = [];
 let carsData = [];
 let postsData = [];
@@ -371,8 +371,8 @@ function renderTourCard(tour) {
         <h3 class="tour-card-title">${title}</h3>
         <p class="tour-card-desc">${description}</p>
         <div class="tour-card-footer">
-          <div class="tour-price-container">${window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(tour) : `${tour.price} <span class="separator">/</span> <span>person</span>`}</div>
-          <button class="btn-sm" onclick="goToTourDetail('${getSafeAttr(tour.id)}')">Book Now</button>
+          <div class="tour-price-container">${window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(tour) : `${tour.price} <span class="separator">/</span> <span>${(window.t?window.t('per_person'):'per person')}</span>`}</div>
+          <button class="btn-sm" onclick="goToTourDetail('${getSafeAttr(tour.id)}')">${(window.t?window.t('book_now'):'Book Now')}</button>
         </div>
       </div>
     </div>`;
@@ -469,11 +469,11 @@ function renderCarFullCard(car) {
             <span class="tour-meta-item">Driver included</span>
           </div>
           <div class="tour-card__price-block">
-            ${window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(car, { defaultLabel: 'per day' }) : `<span class="tour-price">${car.price || 'On Request'}</span><span class="tour-price-label">per day</span>`}
+            ${window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(car, { defaultLabel: (window.t?window.t('per_day'):'per day') }) : `<span class="tour-price">${car.price || (window.t?window.t('on_request'):'On Request')}</span><span class="tour-price-label">${(window.t?window.t('per_day'):'per day')}</span>`}
           </div>
         </div>
         <button class="btn-book" onclick="openBookModal('${getSafeAttr(title)} Transfer','On Request')">
-          Book This Vehicle <span class="btn-arrow">-></span>
+          ${(window.t?window.t('book_car'):'Book This Vehicle')} <span class="btn-arrow">-></span>
         </button>
       </div>
     </article>`;
@@ -497,7 +497,7 @@ function renderPostCard(post) {
         </div>
         <h3 class="post-card-title">${title}</h3>
         <p class="post-card-text">${text}</p>
-        <span class="post-read-more">Read More -></span>
+        <span class="post-read-more">${(window.t?window.t('read_more'):'Read More')} -></span>
       </div>
     </div>`;
 }
@@ -572,8 +572,8 @@ function renderFeaturedSlider() {
         <div class="featured-header">
           <div class="tag">${tag}</div>
           <div class="featured-price">
-            <span class="price-label">From</span>
-            <span class="price-value">${featured.price || 'On Request'}</span>
+            <span class="price-label">${(window.t?window.t('from_price'):'From')}</span>
+            <span class="price-value">${featured.price || (window.t?window.t('on_request'):'On Request')}</span>
           </div>
         </div>
 
@@ -674,7 +674,10 @@ function openBookModal(tourName, price, tourId) {
   const modal = document.getElementById('book-modal');
   if (!modal) return;
   document.getElementById('modal-tour-name').textContent = tourName;
-  document.getElementById('modal-tour-price').textContent = price === 'Contact Us' || price === 'On Request' ? 'Price On Request' : `From ${price} per person`;
+  const tFn = window.t || ((k) => k);
+  document.getElementById('modal-tour-price').textContent = price === 'Contact Us' || price === 'On Request'
+    ? tFn('price_on_request')
+    : `${tFn('from_price')} ${price} ${tFn('per_person')}`;
   modal.classList.add('open');
   document.body.style.overflow = 'hidden';
 }

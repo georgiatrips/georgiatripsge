@@ -129,15 +129,21 @@ function populateTourDetail() {
       priceContainer.innerHTML = window.PriceDisplay.renderPriceMarkup(tour, { priceClass: 'booking-price', labelClass: 'booking-per-person' });
     }
   } else {
-    priceEl.textContent = tour.priceOnRequest ? 'On Request' : tour.price;
-    if (priceLabelEl) priceLabelEl.style.display = tour.priceOnRequest ? 'none' : 'inline';
+    priceEl.textContent = tour.priceOnRequest ? (window.t ? window.t('on_request') : 'On Request') : tour.price;
+    if (priceLabelEl) {
+      priceLabelEl.style.display = tour.priceOnRequest ? 'none' : 'inline';
+      if (!tour.priceOnRequest) priceLabelEl.textContent = (window.t ? window.t('per_person') : 'per person');
+    }
   }
 
   const typeText = (tour.type || tour.tourType) === 'domestic' ? '🏔️ Domestic Tour' : '✈️ International Tour';
   document.getElementById('detail-type-badge').textContent = typeText;
 
   // Modal tour name
-  const modalPriceDisplay = tour.priceOnRequest ? 'Price On Request' : `${tour.price} per person`;
+  const tFn = window.t || ((k) => k);
+  const modalPriceDisplay = tour.priceOnRequest
+    ? tFn('price_on_request')
+    : `${tour.price} ${tFn('per_person')}`;
   document.getElementById('modal-tour-name').textContent = `${title} - ${modalPriceDisplay}`;
 
   // Itinerary (if multi-day)
@@ -178,7 +184,7 @@ function showItinerary() {
   itineraryContent.innerHTML = html;
 }
 
-// ── BOOKING MODAL ────────────────────────────────────────────
+// ── BOOKING MODAL ──────────────────────────────────���─────────
 function openBookingForm() {
   const modal = document.getElementById('book-modal');
   if (modal) {

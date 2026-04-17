@@ -249,11 +249,16 @@ function formatHighlights(highlights) {
   return arr.map(h => `<li class="tour-highlight"><span class="highlight-dot"></span>${h}</li>`).join('');
 }
 
+function T(key, tokens) {
+  return (window.t ? window.t(key, tokens) : key);
+}
+
 function renderTourCard(tour) {
   const title = L(tour.title);
-  const duration = L(tour.duration) || '1 Day';
+  const duration = L(tour.duration) || T('one_day');
   const descFull = L(tour.desc);
   const description = descFull.length > 200 ? descFull.substring(0, 200) + '...' : descFull;
+  const onRequestLabel = T('on_request');
   return `
     <article class="tour-card tour-card--standard" data-id="${tour.id}">
       <div class="tour-card__img-wrap">
@@ -274,15 +279,15 @@ function renderTourCard(tour) {
         </ul>
         <div class="tour-card__footer">
           <div class="tour-card__meta">
-            <span class="tour-meta-item">👥 Min People: ${tour.minPeople || 1}</span>
-            <span class="tour-meta-item">👥 Max People: ${tour.maxPeople || 10}</span>
+            <span class="tour-meta-item">👥 ${T('min_people')}: ${tour.minPeople || 1}</span>
+            <span class="tour-meta-item">👥 ${T('max_people')}: ${tour.maxPeople || 10}</span>
           </div>
           <div class="tour-card__price-block">
-            ${window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(tour) : `<span class="tour-price">${tour.price || 'On Request'}</span> <span class="price-separator">/</span> <span class="tour-price-label">per person</span>`}
+            ${window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(tour) : `<span class="tour-price">${tour.price || onRequestLabel}</span> <span class="price-separator">/</span> <span class="tour-price-label">${T('per_person')}</span>`}
           </div>
         </div>
         <button class="btn-book" onclick="goToTourDetail('${tour.id}')">
-          Book This Tour <span class="btn-arrow">&#8594;</span>
+          ${T('book_this_tour')} <span class="btn-arrow">&#8594;</span>
         </button>
       </div>
     </article>`;
@@ -441,6 +446,7 @@ window.addEventListener('languageChanged', () => {
 init();
 </script>
 
+<script src="ui-strings.js"></script>
 <script src="translate.js"></script>
 <script src="lang.js"></script>
 <script src="ui-translate.js"></script>

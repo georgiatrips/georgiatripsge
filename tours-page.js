@@ -42,6 +42,7 @@ function LA(val) {
   if (typeof val === 'object') return Array.isArray(val.ka) ? val.ka : (Array.isArray(val.en) ? val.en : []);
   return [];
 }
+function T(key, tokens) { return (window.t ? window.t(key, tokens) : key); }
 
 function getSpotsLabel(spotsLeft) {
   if (spotsLeft <= 3) return { text: `⚡ Only ${spotsLeft} spots left`, urgent: true };
@@ -85,19 +86,19 @@ function renderStandardCard(tour) {
         </ul>
         <div class="tour-card__footer">
           <div class="tour-card__meta">
-            <span class="tour-meta-item">👥 Min People: ${tour.minPeople || 1}</span>
-            <span class="tour-meta-item">👥 Max People: ${tour.maxPeople || 10}</span>
+            <span class="tour-meta-item">👥 ${T('min_people')}: ${tour.minPeople || 1}</span>
+            <span class="tour-meta-item">👥 ${T('max_people')}: ${tour.maxPeople || 10}</span>
           </div>
           <div class="tour-card__price-block">
-            <span class="tour-price">${tour.price}</span> <span class="price-separator">/</span> <span class="tour-price-label">per person</span>
+            <span class="tour-price">${tour.price}</span> <span class="price-separator">/</span> <span class="tour-price-label">${T('per_person')}</span>
           </div>
         </div>
         <div style="display: flex; gap: 0.75rem;">
           <button class="btn-details" onclick="goToTourDetail('${tour.id}')">
-            Learn More <span class="btn-arrow">→</span>
+            ${T('read_more')} <span class="btn-arrow">→</span>
           </button>
           <button class="btn-book" onclick="openBookModal('${safeTitle}', '${tour.price}', '${tour.id}')">
-            Book <span class="btn-arrow">→</span>
+            ${T('book_now')} <span class="btn-arrow">→</span>
           </button>
         </div>
       </div>
@@ -137,19 +138,19 @@ function renderUpcomingCard(tour) {
         <div class="tour-card__footer">
           <div class="tour-card__meta">
             <span class="tour-meta-item">⏱ ${duration}</span>
-            <span class="tour-meta-item">👥 Min People: ${tour.minPeople || 1}</span>
-            <span class="tour-meta-item">👥 Max People: ${tour.maxPeople || 10}</span>
+            <span class="tour-meta-item">👥 ${T('min_people')}: ${tour.minPeople || 1}</span>
+            <span class="tour-meta-item">👥 ${T('max_people')}: ${tour.maxPeople || 10}</span>
           </div>
           <div class="tour-card__price-block">
-            <span class="tour-price">${tour.price}</span> <span class="price-separator">/</span> <span class="tour-price-label">per person</span>
+            <span class="tour-price">${tour.price}</span> <span class="price-separator">/</span> <span class="tour-price-label">${T('per_person')}</span>
           </div>
         </div>
         <div style="display: flex; gap: 0.75rem;">
           <button class="btn-details" onclick="goToTourDetail('${tour.id}')">
-            Learn More <span class="btn-arrow">→</span>
+            ${T('read_more')} <span class="btn-arrow">→</span>
           </button>
           <button class="btn-book btn-book--upcoming" onclick="openBookModal('${safeTitle}', '${tour.price}', '${tour.id}')">
-            Reserve <span class="btn-arrow">→</span>
+            ${T('book_now')} <span class="btn-arrow">→</span>
           </button>
         </div>
       </div>
