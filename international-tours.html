@@ -98,7 +98,7 @@
     </div>
 
     <!-- Tour grid -->
-    <div id="tours-filter-grid" role="list" aria-live="polite" aria-label="Tour results">
+    <div id="tours-filter-grid" data-no-translate role="list" aria-live="polite" aria-label="Tour results">
       <div class="tours-empty">
         <div class="tours-empty__icon">Loading...</div>
       </div>
@@ -226,28 +226,48 @@ const TOUR_CATEGORIES = [
 let allTours = [];
 let activeCategory = 'one-day';
 
+// i18n helpers (support multilingual Firestore values)
+function L(val, fallback = '') {
+  if (window.localize) return window.localize(val, fallback);
+  if (val == null) return fallback;
+  if (typeof val === 'string') return val;
+  if (typeof val === 'object') return val.ka || val.en || fallback;
+  return String(val);
+}
+function LA(val) {
+  if (window.localizeArray) return window.localizeArray(val);
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'object') return Array.isArray(val.ka) ? val.ka : (Array.isArray(val.en) ? val.en : []);
+  return [];
+}
+
 // Helper functions
 function formatHighlights(highlights) {
-  if (!highlights || !highlights.length) return '';
-  return highlights.map(h => `<li class="tour-highlight"><span class="highlight-dot"></span>${h}</li>`).join('');
+  const arr = LA(highlights);
+  if (!arr.length) return '';
+  return arr.map(h => `<li class="tour-highlight"><span class="highlight-dot"></span>${h}</li>`).join('');
 }
 
 function renderTourCard(tour) {
-  const description = tour.desc.length > 200 ? tour.desc.substring(0, 200) + '...' : tour.desc;
+  const title = L(tour.title);
+  const duration = L(tour.duration) || '1 Day';
+  const descFull = L(tour.desc);
+  const description = descFull.length > 200 ? descFull.substring(0, 200) + '...' : descFull;
   return `
     <article class="tour-card tour-card--standard" data-id="${tour.id}">
       <div class="tour-card__img-wrap">
-        <img src="${tour.img}" alt="${tour.title}" loading="lazy" class="tour-card__img">
+        <img src="${tour.img}" alt="${title}" loading="lazy" class="tour-card__img">
         <div class="tour-card__overlay"></div>
         <div class="tour-card__top-badges">
           <button class="save-tour-btn" data-save-id="${tour.id}" onclick="toggleSaveTour('${tour.id}', event)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.78-8.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
           </button>
-          <span class="tour-badge tour-badge--duration">&#9201; ${tour.duration || '1 Day'}</span>
+          <span class="tour-badge tour-badge--duration">&#9201; ${duration}</span>
         </div>
       </div>
       <div class="tour-card__body">
-        <h3 class="tour-card__title">${tour.title}</h3>
+        <h3 class="tour-card__title">${title}</h3>
         <p class="tour-card__desc">${description}</p>
         <ul class="tour-highlights">
           ${formatHighlights(tour.highlights)}
@@ -408,9 +428,21 @@ async function init() {
   }
 }
 
+// Re-render filter tabs + grid when the user changes language so
+// the multilingual fields from Firestore are picked in the new lang.
+window.addEventListener('languageChanged', () => {
+  if (allTours && allTours.length) {
+    buildFilterTabs();
+    renderToursGrid(activeCategory);
+    requestAnimationFrame(() => moveActiveIndicator(activeCategory));
+  }
+});
+
 init();
 </script>
 
+<script src="translate.js"></script>
 <script src="lang.js"></script>
+<script src="ui-translate.js"></script>
 </body>
 </html>

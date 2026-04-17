@@ -120,7 +120,7 @@
       <button class="slider-arrow slider-arrow-left" id="featured-prev" aria-label="Previous">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
       </button>
-      <div class="featured-slider" id="featured-slider">
+      <div class="featured-slider" id="featured-slider" data-no-translate>
         <!-- Featured tours will be loaded from Firebase -->
         <p style="text-align:center;color:var(--text-mid);padding:3rem;">Loading featured offers...</p>
       </div>
@@ -145,7 +145,7 @@
       <button class="slider-arrow slider-arrow-left" id="domestic-prev" aria-label="Previous">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
       </button>
-      <div class="domestic-tours-grid" id="domestic-tours-grid"></div>
+      <div class="domestic-tours-grid" id="domestic-tours-grid" data-no-translate></div>
       <button class="slider-arrow slider-arrow-right" id="domestic-next" aria-label="Next">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
       </button>
@@ -169,7 +169,7 @@
       <button class="slider-arrow slider-arrow-left" id="international-prev" aria-label="Previous">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
       </button>
-      <div class="international-tours-grid" id="international-tours-grid"></div>
+      <div class="international-tours-grid" id="international-tours-grid" data-no-translate></div>
       <button class="slider-arrow slider-arrow-right" id="international-next" aria-label="Next">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
       </button>
@@ -193,7 +193,7 @@
       <button class="slider-arrow slider-arrow-left slider-arrow-dark" id="cars-prev" aria-label="Previous">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
       </button>
-      <div class="cars-grid" id="cars-grid"></div>
+      <div class="cars-grid" id="cars-grid" data-no-translate></div>
       <button class="slider-arrow slider-arrow-right slider-arrow-dark" id="cars-next" aria-label="Next">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
       </button>
@@ -210,7 +210,7 @@
       <p>Travel guides, local tips and authentic stories from the heart of the Caucasus.</p>
       <div class="divider"></div>
     </div>
-    <div class="posts-grid" id="stories-grid"></div>
+    <div class="posts-grid" id="stories-grid" data-no-translate></div>
     <div style="text-align:center;margin-top:2.5rem;">
       <a href="posts.html" class="btn-outline" style="display:inline-flex;color:var(--dark-blue);border-color:var(--dark-blue);">View All Stories →</a>
     </div>
@@ -237,7 +237,7 @@
       </a>
     </div>
     <div class="reviews-slider-wrapper">
-      <div class="reviews-slider" id="reviews-slider">
+      <div class="reviews-slider" id="reviews-slider" data-no-translate>
         <!-- Reviews will be loaded from Firebase -->
       </div>
     </div>
@@ -271,7 +271,7 @@
       <h2 style="color:var(--white);">Georgia Weather</h2>
       <div class="divider" style="background:var(--yellow);"></div>
     </div>
-    <div class="weather-widget" id="weather-widget">
+    <div class="weather-widget" id="weather-widget" data-no-translate>
       <p class="weather-loading">⏳ Fetching live weather…</p>
     </div>
   </div>
@@ -359,6 +359,8 @@
 <script src="i18n-data.js"></script>
 <script type="module" src="script.js"></script>
 <script type="module" src="auth.js"></script>
+<script src="translate.js"></script>
 <script src="lang.js"></script>
+<script src="ui-translate.js"></script>
 </body>
 </html>
