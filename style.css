@@ -1430,3 +1430,93 @@ section { padding: 5rem 2rem; }
 .review-stars { color: var(--yellow); margin-bottom: 0.5rem; font-size: 0.85rem; }
 .review-text { font-size: 0.88rem; color: var(--text-mid); line-height: 1.6; font-style: normal; }
 .review-date { font-size: 0.75rem; color: var(--text-light); margin-top: 0.75rem; display: block; }
+
+/* ===== GLOBAL LOADERS (translation + card loading) ===== */
+@keyframes gtSpin { to { transform: rotate(360deg); } }
+@keyframes gtFadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes gtFadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-8px); } }
+
+/* floating language-change pill */
+.gt-lang-overlay {
+  position: fixed;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1.3rem;
+  background: var(--white);
+  color: var(--dark-blue);
+  font-family: 'Poppins', 'Montserrat', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  border-radius: 999px;
+  box-shadow: 0 10px 30px rgba(11,60,93,0.18), 0 0 0 1px rgba(11,60,93,0.06);
+  pointer-events: none;
+  animation: gtFadeIn 0.2s ease-out;
+}
+.gt-lang-overlay.is-visible { display: inline-flex; }
+.gt-lang-overlay.is-hiding { animation: gtFadeOut 0.25s ease-in forwards; }
+.gt-lang-overlay__spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(46,196,182,0.25);
+  border-top-color: var(--teal);
+  animation: gtSpin 0.8s linear infinite;
+}
+
+/* inline card-grid loader (used while Firestore + first render happens) */
+.gt-card-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  padding: 3rem 1.5rem;
+  width: 100%;
+  min-height: 180px;
+  grid-column: 1 / -1;
+  color: var(--text-mid);
+  font-family: 'Poppins', 'Montserrat', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.gt-card-loader--dark { color: rgba(255,255,255,0.75); }
+.gt-card-loader__spinner {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 3px solid rgba(46,196,182,0.2);
+  border-top-color: var(--teal);
+  animation: gtSpin 0.9s linear infinite;
+}
+.gt-card-loader--dark .gt-card-loader__spinner {
+  border: 3px solid rgba(255,255,255,0.2);
+  border-top-color: var(--teal);
+}
+.gt-card-loader__dots {
+  display: inline-block;
+  min-width: 1.2em;
+  text-align: left;
+}
+.gt-card-loader__dots::after {
+  content: '';
+  animation: gtDots 1.2s steps(4, end) infinite;
+}
+@keyframes gtDots {
+  0%   { content: ''; }
+  25%  { content: '.'; }
+  50%  { content: '..'; }
+  75%  { content: '...'; }
+  100% { content: ''; }
+}
+
+/* dim cards briefly while re-rendering after a language switch */
+.gt-rerendering [data-no-translate] {
+  transition: opacity 0.2s ease;
+  opacity: 0.55;
+}

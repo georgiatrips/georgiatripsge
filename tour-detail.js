@@ -77,8 +77,8 @@ function populateTourDetail() {
   document.getElementById('detail-title').textContent = title;
 
   // Quick info cards
-  if (document.getElementById('detail-duration')) document.getElementById('detail-duration').textContent = duration || 'Flexible';
-  if (document.getElementById('detail-season')) document.getElementById('detail-season').textContent = Array.isArray(tour.season) ? tour.season.join(', ') : (tour.season || 'All Year');
+  if (document.getElementById('detail-duration')) document.getElementById('detail-duration').textContent = duration || (window.t ? window.t('flexible') : 'Flexible');
+  if (document.getElementById('detail-season')) document.getElementById('detail-season').textContent = Array.isArray(tour.season) ? tour.season.join(', ') : (tour.season || (window.t ? window.t('all_year') : 'All Year'));
   if (document.getElementById('detail-category')) document.getElementById('detail-category').textContent = (tour.category || 'general').toUpperCase().replace('-', ' ');
   if (document.getElementById('detail-min-people')) document.getElementById('detail-min-people').textContent = tour.minPeople || '1';
   if (document.getElementById('detail-max-people')) document.getElementById('detail-max-people').textContent = tour.maxPeople || '10';

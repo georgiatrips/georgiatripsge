@@ -75,7 +75,7 @@ function renderStandardCard(tour) {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
           </button>
           <span class="tour-badge tour-badge--duration">⏱ ${duration}</span>
-          <span class="tour-badge tour-badge--duration" style="background:var(--teal);">🌤 ${Array.isArray(tour.season) ? tour.season.join(', ') : (tour.season || 'All Year')}</span>
+          <span class="tour-badge tour-badge--duration" style="background:var(--teal);">🌤 ${Array.isArray(tour.season) ? tour.season.join(', ') : (tour.season || T('all_year'))}</span>
         </div>
       </div>
       <div class="tour-card__body">

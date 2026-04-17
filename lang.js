@@ -51,9 +51,49 @@
     document.documentElement.setAttribute('dir', RTL_LANGS.includes(lang) ? 'rtl' : 'ltr');
   }
 
+  // ---------- Loading overlay ----------
+  let overlayEl = null;
+  let hideTimer = null;
+  function ensureOverlay() {
+    if (overlayEl) return overlayEl;
+    overlayEl = document.createElement('div');
+    overlayEl.className = 'gt-lang-overlay';
+    overlayEl.setAttribute('role', 'status');
+    overlayEl.setAttribute('aria-live', 'polite');
+    overlayEl.setAttribute('data-no-translate', '');
+    overlayEl.innerHTML = '<span class="gt-lang-overlay__spinner" aria-hidden="true"></span><span class="gt-lang-overlay__text">…</span>';
+    document.body.appendChild(overlayEl);
+    return overlayEl;
+  }
+  function loaderLabel() {
+    try { if (window.t) return window.t('loading'); } catch (e) { /* ignore */ }
+    return 'Loading…';
+  }
+  function showOverlay() {
+    const el = ensureOverlay();
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+    el.classList.remove('is-hiding');
+    el.classList.add('is-visible');
+    const textEl = el.querySelector('.gt-lang-overlay__text');
+    if (textEl) textEl.textContent = loaderLabel();
+  }
+  function hideOverlay() {
+    if (!overlayEl) return;
+    overlayEl.classList.add('is-hiding');
+    if (hideTimer) clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => {
+      if (overlayEl) {
+        overlayEl.classList.remove('is-visible', 'is-hiding');
+      }
+      hideTimer = null;
+    }, 260);
+  }
+
   function triggerReRender(lang) {
     // Expose current language globally for localize() helpers
     window.GT_CURRENT_LANG = lang;
+
+    document.documentElement.classList.add('gt-rerendering');
 
     // Re-render dynamic Firebase data (tours, cars, posts, featured, detail pages)
     if (typeof window.reRenderAllData === 'function') {
@@ -65,13 +105,33 @@
     window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang } }));
   }
 
-  function setLang(lang) {
+  async function setLang(lang) {
     if (!LANGUAGES[lang]) return;
     storeLang(lang);
     updateButton(lang);
     markActive(lang);
     applyDocAttrs(lang);
+
+    // Show the spinner pill immediately so the user sees feedback while the
+    // DOM re-translator walks every node + the API fills in missing strings.
+    showOverlay();
+
     triggerReRender(lang);
+
+    // Wait for the static-HTML translator to finish (it may hit the API for
+    // leftover phrases). Then hide the spinner and drop the dim-out class.
+    try {
+      if (window.GTUITranslate && typeof window.GTUITranslate.apply === 'function') {
+        await window.GTUITranslate.apply(lang);
+      }
+    } catch (e) { /* ignore */ }
+
+    // Keep the loader on-screen at least a tick so very fast paths still flash
+    // the spinner visibly, rather than appearing and disappearing instantly.
+    await new Promise((r) => setTimeout(r, 200));
+
+    document.documentElement.classList.remove('gt-rerendering');
+    hideOverlay();
   }
 
   function init() {
