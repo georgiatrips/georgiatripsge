@@ -690,6 +690,126 @@
 }
 
 /* Responsive */
+/* Translation Editor */
+.translations-section {
+  background: rgba(46,196,182,0.06);
+  border: 1px solid rgba(46,196,182,0.25);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 1.5rem;
+}
+.translations-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+.translations-header label {
+  margin: 0;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--dark-blue);
+}
+.btn-translate {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.55rem 1rem;
+  border: none;
+  border-radius: 20px;
+  background: var(--teal);
+  color: var(--white);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.btn-translate:hover:not(:disabled) {
+  background: #22a99d;
+  transform: translateY(-1px);
+}
+.btn-translate:disabled {
+  background: var(--text-light);
+  cursor: not-allowed;
+}
+.lang-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  background: var(--white);
+  border: 1px solid rgba(11,60,93,0.1);
+  border-radius: 8px;
+  padding: 0.3rem;
+  margin-bottom: 0.75rem;
+}
+.lang-tab {
+  padding: 0.45rem 0.9rem;
+  border: none;
+  background: transparent;
+  color: var(--text-mid);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.lang-tab:hover {
+  background: rgba(46,196,182,0.12);
+  color: var(--dark-blue);
+}
+.lang-tab.active {
+  background: var(--teal);
+  color: var(--white);
+}
+.lang-panels {
+  background: var(--white);
+  border-radius: 8px;
+  padding: 0.75rem;
+  border: 1px solid rgba(11,60,93,0.08);
+}
+.lang-field {
+  margin-bottom: 0.75rem;
+}
+.lang-field:last-child { margin-bottom: 0; }
+.lang-field label {
+  display: block;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 0.78rem;
+  color: var(--text-mid);
+  margin-bottom: 0.35rem;
+}
+.lang-field input,
+.lang-field textarea {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid rgba(11,60,93,0.15);
+  border-radius: 6px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  color: var(--text-dark);
+}
+.lang-field input:focus,
+.lang-field textarea:focus {
+  outline: none;
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(46,196,182,0.15);
+}
+.lang-field textarea { resize: vertical; min-height: 70px; }
+.translation-status {
+  display: block;
+  margin-top: 0.6rem;
+  font-size: 0.78rem;
+  color: var(--text-light);
+  line-height: 1.4;
+}
+
 @media (max-width: 768px) {
   .admin-container {
     padding: 1rem;
@@ -959,6 +1079,17 @@
           <img class="image-preview" id="tour-image-preview" alt="Preview">
           <input type="hidden" id="tour-image-url">
         </div>
+
+        <!-- Translations -->
+        <div class="translations-section">
+          <div class="translations-header">
+            <label>Translations (Title / Description / Duration / Highlights)</label>
+            <button type="button" class="btn-translate" id="tour-translate-btn" onclick="AdminI18n.generate('tour')">Auto-translate from Georgian</button>
+          </div>
+          <div class="lang-tabs" id="tour-lang-tabs"></div>
+          <div class="lang-panels" id="tour-lang-panels"></div>
+          <small class="translation-status" id="tour-translate-status">Fill the Georgian fields above, then click "Auto-translate" to generate translations for all languages.</small>
+        </div>
       </form>
     </div>
     <div class="modal-footer">
@@ -1039,6 +1170,17 @@
           <img class="image-preview" id="car-image-preview" alt="Preview">
           <input type="hidden" id="car-image-url">
         </div>
+
+        <!-- Translations -->
+        <div class="translations-section">
+          <div class="translations-header">
+            <label>Translations (Title / Description)</label>
+            <button type="button" class="btn-translate" id="car-translate-btn" onclick="AdminI18n.generate('car')">Auto-translate from Georgian</button>
+          </div>
+          <div class="lang-tabs" id="car-lang-tabs"></div>
+          <div class="lang-panels" id="car-lang-panels"></div>
+          <small class="translation-status" id="car-translate-status">Fill the Georgian fields above, then click "Auto-translate".</small>
+        </div>
       </form>
     </div>
     <div class="modal-footer">
@@ -1093,6 +1235,17 @@
           </div>
           <img class="image-preview" id="post-image-preview" alt="Preview">
           <input type="hidden" id="post-image-url">
+        </div>
+
+        <!-- Translations -->
+        <div class="translations-section">
+          <div class="translations-header">
+            <label>Translations (Title / Content / Read Time)</label>
+            <button type="button" class="btn-translate" id="post-translate-btn" onclick="AdminI18n.generate('post')">Auto-translate from Georgian</button>
+          </div>
+          <div class="lang-tabs" id="post-lang-tabs"></div>
+          <div class="lang-panels" id="post-lang-panels"></div>
+          <small class="translation-status" id="post-translate-status">Fill the Georgian fields above, then click "Auto-translate".</small>
         </div>
       </form>
     </div>
@@ -1158,6 +1311,17 @@
           <img class="image-preview" id="featured-image-preview" alt="Preview">
           <input type="hidden" id="featured-image-url">
         </div>
+
+        <!-- Translations -->
+        <div class="translations-section">
+          <div class="translations-header">
+            <label>Translations (Title / Description / Tag / Meta)</label>
+            <button type="button" class="btn-translate" id="featured-translate-btn" onclick="AdminI18n.generate('featured')">Auto-translate from Georgian</button>
+          </div>
+          <div class="lang-tabs" id="featured-lang-tabs"></div>
+          <div class="lang-panels" id="featured-lang-panels"></div>
+          <small class="translation-status" id="featured-translate-status">Fill the Georgian fields above, then click "Auto-translate".</small>
+        </div>
       </form>
     </div>
     <div class="modal-footer">
@@ -1209,6 +1373,9 @@
 <div class="toast" id="toast"></div>
 
 <script src="pricing.js"></script>
+<script src="translate.js"></script>
+<script src="i18n-data.js"></script>
+<script src="admin-translate.js"></script>
 <script type="module" src="script.js"></script>
 <script type="module">
 import { 
@@ -1368,16 +1535,17 @@ function renderTours() {
     return;
   }
   
+  const gt = (v) => window.AdminI18n ? window.AdminI18n.extractGeorgian(v) : (typeof v === 'string' ? v : (v && v.ka) || '');
   container.innerHTML = filteredTours.map(tour => `
     <div class="admin-card" data-id="${tour.id}">
       <div class="admin-card-img">
-        <img src="${tour.img}" alt="${tour.title}">
+        <img src="${tour.img}" alt="${escapeHTML(gt(tour.title))}">
         <span class="admin-card-badge">${tour.type || tour.tourType || 'domestic'}</span>
         ${tour.isFeatured ? '<span class="admin-card-featured">★ Best Offer</span>' : ''}
       </div>
       <div class="admin-card-body">
-        <h3 class="admin-card-title">${tour.title}</h3>
-        <p class="admin-card-desc">${tour.desc}</p>
+        <h3 class="admin-card-title">${escapeHTML(gt(tour.title))}</h3>
+        <p class="admin-card-desc">${escapeHTML(gt(tour.desc))}</p>
         <div class="admin-card-meta">
           <span>${tour.category}</span>
           <span>${tour.priceOnRequest ? 'On Request' : tour.price}</span>
@@ -1404,9 +1572,11 @@ window.openTourModal = function(tourId = null) {
   document.getElementById('tour-image-preview').classList.remove('show');
   document.getElementById('tour-modal-title').textContent = 'Add New Tour';
   tourHighlights = [];
+  window.tourHighlights = tourHighlights;
   renderHighlightsList();
   const hlInput = document.getElementById('tour-highlight-input');
   if (hlInput) hlInput.value = '';
+  if (window.AdminI18n) window.AdminI18n.reset('tour');
   document.getElementById('tour-modal').classList.add('open');
 };
 
@@ -1417,9 +1587,12 @@ window.closeTourModal = function() {
 window.editTour = function(id) {
   const tour = toursData.find(t => t.id === id);
   if (!tour) return;
-  
+
+  const I18n = window.AdminI18n;
+  const gt = I18n ? I18n.extractGeorgian : (v) => (typeof v === 'string' ? v : (v && v.ka) || '');
+
   document.getElementById('tour-id').value = tour.id;
-  document.getElementById('tour-title').value = tour.title;
+  document.getElementById('tour-title').value = gt(tour.title);
   document.getElementById('tour-type').value = tour.type || tour.tourType || 'domestic';
   document.getElementById('tour-category').value = tour.category;
   document.getElementById('tour-price').value = tour.price;
@@ -1427,27 +1600,33 @@ window.editTour = function(id) {
   document.getElementById('tour-price').disabled = tour.priceOnRequest || false;
   document.getElementById('tour-price').required = !tour.priceOnRequest;
   document.getElementById('tour-featured').checked = tour.isFeatured || false;
-  document.getElementById('tour-duration').value = tour.duration || '';
+  document.getElementById('tour-duration').value = gt(tour.duration);
   document.getElementById('tour-min-people').value = tour.minPeople || '';
   document.getElementById('tour-max-people').value = tour.maxPeople || '';
-  
+
   const selectedSeasons = Array.isArray(tour.season) ? tour.season : [];
   document.querySelectorAll('input[name="tour-season"]').forEach(cb => { cb.checked = selectedSeasons.includes(cb.value); });
-  
+
   const included = tour.included || {};
   document.querySelectorAll('input[name="inc-item"]').forEach(cb => { cb.checked = !!included[cb.value]; });
 
-  document.getElementById('tour-desc').value = tour.desc;
-  tourHighlights = Array.isArray(tour.highlights) ? [...tour.highlights] : [];
+  document.getElementById('tour-desc').value = gt(tour.desc);
+  // Highlights can be: array of strings (legacy) or {ka:[], en:[], ...}
+  const kaHighlights = I18n ? I18n.extractGeorgian(tour.highlights, true)
+                            : (Array.isArray(tour.highlights) ? tour.highlights : (tour.highlights && tour.highlights.ka) || []);
+  tourHighlights = Array.isArray(kaHighlights) ? [...kaHighlights] : [];
+  window.tourHighlights = tourHighlights;
   renderHighlightsList();
   const hlInput = document.getElementById('tour-highlight-input');
   if (hlInput) hlInput.value = '';
   document.getElementById('tour-image-url').value = tour.img;
-  
+
   const preview = document.getElementById('tour-image-preview');
   preview.src = tour.img;
   preview.classList.add('show');
-  
+
+  if (I18n) I18n.loadItem('tour', tour);
+
   document.getElementById('tour-modal-title').textContent = 'Edit Tour';
   document.getElementById('tour-modal').classList.add('open');
 };
@@ -1474,26 +1653,30 @@ window.saveTour = async function() {
       included[cb.value] = cb.checked;
     });
 
+    const I18n = window.AdminI18n;
+    const pack = I18n ? I18n.pack : (_e, _k, v) => v;
+
+    // Assemble final Georgian highlights (including any pending text in the input)
+    const kaHighlights = [...tourHighlights];
+    const pendingHighlight = (document.getElementById('tour-highlight-input')?.value || '').trim();
+    if (pendingHighlight) kaHighlights.push(pendingHighlight);
+
     const tourData = {
-      title: document.getElementById('tour-title').value,
+      title: pack('tour', 'title', document.getElementById('tour-title').value),
       type: document.getElementById('tour-type').value,
       tourType: document.getElementById('tour-type').value,
       category: document.getElementById('tour-category').value,
       price: document.getElementById('tour-price').value,
       priceOnRequest: document.getElementById('tour-on-request').checked,
       isFeatured: document.getElementById('tour-featured').checked,
-      duration: document.getElementById('tour-duration').value,
+      duration: pack('tour', 'duration', document.getElementById('tour-duration').value),
       maxPeople: document.getElementById('tour-max-people').value,
       included: included,
       season: Array.from(document.querySelectorAll('input[name="tour-season"]:checked')).map(cb => cb.value),
-      desc: document.getElementById('tour-desc').value,
-      highlights: [...tourHighlights],
+      desc: pack('tour', 'desc', document.getElementById('tour-desc').value),
+      highlights: pack('tour', 'highlights', kaHighlights),
       img: imageUrl
     };
-
-    // If there is still text in the highlight input, include it as a final highlight
-    const pendingHighlight = (document.getElementById('tour-highlight-input')?.value || '').trim();
-    if (pendingHighlight) tourData.highlights.push(pendingHighlight);
     
     if (id) {
       await updateTour(id, tourData);
@@ -1548,15 +1731,16 @@ function renderCars() {
     return;
   }
   
+  const gtc = (v) => window.AdminI18n ? window.AdminI18n.extractGeorgian(v) : (typeof v === 'string' ? v : (v && v.ka) || '');
   container.innerHTML = carsData.map(car => `
     <div class="admin-card" data-id="${car.id}">
       <div class="admin-card-img">
-        <img src="${car.img}" alt="${car.title}">
+        <img src="${car.img}" alt="${escapeHTML(gtc(car.title))}">
         <span class="admin-card-badge">${car.type}</span>
       </div>
       <div class="admin-card-body">
-        <h3 class="admin-card-title">${car.title}</h3>
-        <p class="admin-card-desc">${car.info || car.desc}</p>
+        <h3 class="admin-card-title">${escapeHTML(gtc(car.title))}</h3>
+        <p class="admin-card-desc">${escapeHTML(gtc(car.info || car.desc))}</p>
         <div class="admin-card-meta">
           <span>${car.priceOnRequest ? 'On Request' : car.price}</span>
           <span>${car.seats || ''}</span>
@@ -1578,6 +1762,7 @@ window.openCarModal = function(carId = null) {
   document.getElementById('car-price').disabled = false;
   document.getElementById('car-image-preview').classList.remove('show');
   document.getElementById('car-modal-title').textContent = 'Add New Car';
+  if (window.AdminI18n) window.AdminI18n.reset('car');
   document.getElementById('car-modal').classList.add('open');
 };
 
@@ -1588,9 +1773,12 @@ window.closeCarModal = function() {
 window.editCar = function(id) {
   const car = carsData.find(c => c.id === id);
   if (!car) return;
-  
+
+  const I18n = window.AdminI18n;
+  const gt = I18n ? I18n.extractGeorgian : (v) => (typeof v === 'string' ? v : (v && v.ka) || '');
+
   document.getElementById('car-id').value = car.id;
-  document.getElementById('car-title').value = car.title;
+  document.getElementById('car-title').value = gt(car.title);
   document.getElementById('car-type').value = car.type;
   document.getElementById('car-price').value = car.price;
   document.getElementById('car-on-request').checked = car.priceOnRequest || false;
@@ -1599,8 +1787,10 @@ window.editCar = function(id) {
   document.getElementById('car-fuel').value = car.fuel || '';
   document.getElementById('car-transmission').value = car.transmission || '';
   document.getElementById('car-color').value = car.color || '';
-  document.getElementById('car-desc').value = car.info || car.desc || '';
+  document.getElementById('car-desc').value = gt(car.info || car.desc);
   document.getElementById('car-image-url').value = car.img;
+
+  if (I18n) I18n.loadItem('car', { title: car.title, info: car.info != null ? car.info : car.desc });
   
   const preview = document.getElementById('car-image-preview');
   preview.src = car.img;
@@ -1627,8 +1817,9 @@ window.saveCar = async function() {
       imageUrl = await uploadImage(imageFile);
     }
     
+    const pack = window.AdminI18n ? window.AdminI18n.pack : (_e, _k, v) => v;
     const carData = {
-      title: document.getElementById('car-title').value,
+      title: pack('car', 'title', document.getElementById('car-title').value),
       type: document.getElementById('car-type').value,
       price: document.getElementById('car-price').value,
       priceOnRequest: document.getElementById('car-on-request').checked,
@@ -1636,7 +1827,7 @@ window.saveCar = async function() {
       fuel: document.getElementById('car-fuel').value,
       transmission: document.getElementById('car-transmission').value,
       color: document.getElementById('car-color').value,
-      info: document.getElementById('car-desc').value,
+      info: pack('car', 'info', document.getElementById('car-desc').value),
       img: imageUrl
     };
     
@@ -1693,17 +1884,18 @@ function renderPosts() {
     return;
   }
   
+  const gtp = (v) => window.AdminI18n ? window.AdminI18n.extractGeorgian(v) : (typeof v === 'string' ? v : (v && v.ka) || '');
   container.innerHTML = postsData.map(post => `
     <div class="admin-card" data-id="${post.id}">
       <div class="admin-card-img">
-        <img src="${post.img}" alt="${post.title}">
+        <img src="${post.img}" alt="${escapeHTML(gtp(post.title))}">
         <span class="admin-card-badge">${post.category}</span>
       </div>
       <div class="admin-card-body">
-        <h3 class="admin-card-title">${post.title}</h3>
-        <p class="admin-card-desc">${post.text || post.content}</p>
+        <h3 class="admin-card-title">${escapeHTML(gtp(post.title))}</h3>
+        <p class="admin-card-desc">${escapeHTML(gtp(post.text || post.content))}</p>
         <div class="admin-card-meta">
-          <span>${post.readTime || ''}</span>
+          <span>${escapeHTML(gtp(post.readTime))}</span>
         </div>
         <div class="admin-card-actions">
           <button class="btn-edit" onclick="editPost('${post.id}')">Edit</button>
@@ -1720,6 +1912,7 @@ window.openPostModal = function(postId = null) {
   document.getElementById('post-image-url').value = '';
   document.getElementById('post-image-preview').classList.remove('show');
   document.getElementById('post-modal-title').textContent = 'Add New Post';
+  if (window.AdminI18n) window.AdminI18n.reset('post');
   document.getElementById('post-modal').classList.add('open');
 };
 
@@ -1730,13 +1923,18 @@ window.closePostModal = function() {
 window.editPost = function(id) {
   const post = postsData.find(p => p.id === id);
   if (!post) return;
-  
+
+  const I18n = window.AdminI18n;
+  const gt = I18n ? I18n.extractGeorgian : (v) => (typeof v === 'string' ? v : (v && v.ka) || '');
+
   document.getElementById('post-id').value = post.id;
-  document.getElementById('post-title').value = post.title;
+  document.getElementById('post-title').value = gt(post.title);
   document.getElementById('post-category').value = post.category;
-  document.getElementById('post-readtime').value = post.readTime || '';
-  document.getElementById('post-content').value = post.text || post.content || '';
+  document.getElementById('post-readtime').value = gt(post.readTime);
+  document.getElementById('post-content').value = gt(post.text || post.content);
   document.getElementById('post-image-url').value = post.img;
+
+  if (I18n) I18n.loadItem('post', { title: post.title, text: post.text != null ? post.text : post.content, readTime: post.readTime });
   
   const preview = document.getElementById('post-image-preview');
   preview.src = post.img;
@@ -1763,11 +1961,12 @@ window.savePost = async function() {
       imageUrl = await uploadImage(imageFile);
     }
     
+    const pack = window.AdminI18n ? window.AdminI18n.pack : (_e, _k, v) => v;
     const postData = {
-      title: document.getElementById('post-title').value,
+      title: pack('post', 'title', document.getElementById('post-title').value),
       category: document.getElementById('post-category').value,
-      readTime: document.getElementById('post-readtime').value,
-      text: document.getElementById('post-content').value,
+      readTime: pack('post', 'readTime', document.getElementById('post-readtime').value),
+      text: pack('post', 'text', document.getElementById('post-content').value),
       img: imageUrl,
       date: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
     };
@@ -1825,19 +2024,20 @@ function renderFeatured() {
     return;
   }
   
+  const gtf = (v) => window.AdminI18n ? window.AdminI18n.extractGeorgian(v) : (typeof v === 'string' ? v : (v && v.ka) || '');
   container.innerHTML = featuredData.map(featured => `
     <div class="admin-card" data-id="${featured.id}">
       <div class="admin-card-img">
-        <img src="${featured.img}" alt="${featured.title}">
+        <img src="${featured.img}" alt="${escapeHTML(gtf(featured.title))}">
         <span class="admin-card-badge">${featured.badge}</span>
       </div>
       <div class="admin-card-body">
-        <h3 class="admin-card-title">${featured.title}</h3>
-        <p class="admin-card-desc">${featured.desc}</p>
+        <h3 class="admin-card-title">${escapeHTML(gtf(featured.title))}</h3>
+        <p class="admin-card-desc">${escapeHTML(gtf(featured.desc))}</p>
         <div class="admin-card-meta">
           <span>Order: ${featured.order || 0}</span>
           <span>${featured.priceOnRequest ? 'On Request' : (featured.price || '')}</span>
-          <span>${featured.tag}</span>
+          <span>${escapeHTML(gtf(featured.tag))}</span>
         </div>
         <div class="admin-card-actions">
           <button class="btn-edit" onclick="editFeatured('${featured.id}')">Edit</button>
@@ -1857,6 +2057,7 @@ window.openFeaturedModal = function(featuredId = null) {
   document.getElementById('featured-image-url').value = '';
   document.getElementById('featured-image-preview').classList.remove('show');
   document.getElementById('featured-modal-title').textContent = 'Add Featured Offer';
+  if (window.AdminI18n) window.AdminI18n.reset('featured');
   document.getElementById('featured-modal').classList.add('open');
 };
 
@@ -1867,18 +2068,26 @@ window.closeFeaturedModal = function() {
 window.editFeatured = function(id) {
   const featured = featuredData.find(f => f.id === id);
   if (!featured) return;
-  
+
+  const I18n = window.AdminI18n;
+  const gt = I18n ? I18n.extractGeorgian : (v) => (typeof v === 'string' ? v : (v && v.ka) || '');
+
   document.getElementById('featured-id').value = featured.id;
-  document.getElementById('featured-title').value = featured.title;
-  document.getElementById('featured-tag').value = featured.tag;
+  document.getElementById('featured-title').value = gt(featured.title);
+  document.getElementById('featured-tag').value = gt(featured.tag);
   document.getElementById('featured-badge').value = featured.badge;
-  document.getElementById('featured-desc').value = featured.desc;
+  document.getElementById('featured-desc').value = gt(featured.desc);
   document.getElementById('featured-price').value = featured.price || '';
   document.getElementById('featured-on-request').checked = featured.priceOnRequest || false;
   document.getElementById('featured-price').disabled = featured.priceOnRequest || false;
-  document.getElementById('featured-meta').value = (featured.meta || []).join(', ');
+  // Meta: either a plain array (legacy) or {ka:[], en:[], ...}
+  const kaMeta = I18n ? I18n.extractGeorgian(featured.meta, true)
+                      : (Array.isArray(featured.meta) ? featured.meta : (featured.meta && featured.meta.ka) || []);
+  document.getElementById('featured-meta').value = (kaMeta || []).join(', ');
   document.getElementById('featured-order').value = featured.order || 0;
   document.getElementById('featured-image-url').value = featured.img;
+
+  if (I18n) I18n.loadItem('featured', featured);
   
   const preview = document.getElementById('featured-image-preview');
   preview.src = featured.img;
@@ -1905,14 +2114,16 @@ window.saveFeatured = async function() {
       imageUrl = await uploadImage(imageFile);
     }
     
+    const pack = window.AdminI18n ? window.AdminI18n.pack : (_e, _k, v) => v;
+    const kaMeta = document.getElementById('featured-meta').value.split(',').map(m => m.trim()).filter(m => m);
     const featuredDataObj = {
-      title: document.getElementById('featured-title').value,
-      tag: document.getElementById('featured-tag').value,
+      title: pack('featured', 'title', document.getElementById('featured-title').value),
+      tag: pack('featured', 'tag', document.getElementById('featured-tag').value),
       badge: document.getElementById('featured-badge').value,
-      desc: document.getElementById('featured-desc').value,
+      desc: pack('featured', 'desc', document.getElementById('featured-desc').value),
       price: document.getElementById('featured-price').value,
       priceOnRequest: document.getElementById('featured-on-request').checked,
-      meta: document.getElementById('featured-meta').value.split(',').map(m => m.trim()).filter(m => m),
+      meta: pack('featured', 'meta', kaMeta),
       order: parseInt(document.getElementById('featured-order').value) || 0,
       img: imageUrl
     };
