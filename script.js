@@ -249,7 +249,9 @@ function goToTourDetail(tourId) {
   } else {
     sessionStorage.setItem('selectedTourId', tourId);
   }
-  window.location.href = 'tour-detail.html';
+  // Each tour gets its own unique URL (?id=...) so it's shareable and
+  // survives language reloads without getting mixed up with other tours.
+  window.location.href = `tour-detail.html?id=${encodeURIComponent(tourId)}`;
 }
 
 function goToCarDetail(carId) {
@@ -336,12 +338,32 @@ async function toggleSaveTour(tourId, event) {
   }
 }
 
+/**
+ * ტურის გაზიარება
+ * @param {string} id - ტურის ID
+ * @param {string} title - ტურის სათაური
+ * @param {Event} event - კლიკის ივენთი
+ */
+function shareTour(id, title, event) {
+  if (event) event.stopPropagation();
+  const url = `${window.location.origin}/tour-detail.html?id=${encodeURIComponent(id)}`;
+  
+  if (navigator.share) {
+    navigator.share({ title: title, url: url }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(url).then(() => {
+      showToast("Link copied! Share it on WhatsApp, Telegram or Facebook.", "info");
+    });
+  }
+}
+
 // ფუნქციების გლობალურად გატანა
 window.toggleSaveTour = toggleSaveTour;
 window.syncSaveButtons = syncSaveButtons;
 window.showToast = showToast;
 window.goToTourDetail = goToTourDetail;
 window.goToCarDetail = goToCarDetail;
+window.shareTour = shareTour;
 
 // renderTourCard ფუნქციის ქვემოთ განსაზღვრა (Hoisting-ისთვის)
 
@@ -431,6 +453,9 @@ function renderTourCard(tour) {
         <span class="tour-card-badge ${badgeClass}">${badgeText}</span>
         <button class="save-tour-btn" data-save-id="${getSafeAttr(tour.id)}" onclick="toggleSaveTour('${getSafeAttr(tour.id)}', event)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+        </button>
+        <button class="share-tour-btn" onclick="shareTour('${getSafeAttr(tour.id)}', '${title.replace(/'/g, "\\'")}', event)" style="position:absolute; top:12px; right:54px; width:32px; height:32px; border-radius:50%; border:none; background:rgba(255,255,255,0.9); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--dark-blue); z-index:5;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px;"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
         </button>
       </div>
       <div class="tour-card-body">
@@ -698,7 +723,7 @@ function renderFeaturedSlider() {
               <span class="badge-text">${tFn('guided_tour')}</span>
             </span>
           </div>
-          <a href="tour-detail.html" class="btn-primary featured-cta" onclick="goToTourDetail('${getSafeAttr(featured.id)}'); return false;">
+          <a href="tour-detail.html?id=${encodeURIComponent(featured.id || '')}" class="btn-primary featured-cta" onclick="goToTourDetail('${getSafeAttr(featured.id)}'); return false;">
             <span>${tFn('explore_now')}</span>
             <span class="cta-arrow">→</span>
           </a>
@@ -728,7 +753,7 @@ function renderMapOverlay() {
     <h3>${tFn('featured_destinations') || 'Featured Destinations'}</h3>
     ${domesticFeatured.map(featured => {
       const title = L(featured.title);
-      return `<div class="map-location"><div class="map-dot"></div><a href="tour-detail.html" class="map-link" onclick="goToTourDetail('${getSafeAttr(featured.id)}'); return false;">${title}</a></div>`;
+      return `<div class="map-location"><div class="map-dot"></div><a href="tour-detail.html?id=${encodeURIComponent(featured.id || '')}" class="map-link" onclick="goToTourDetail('${getSafeAttr(featured.id)}'); return false;">${title}</a></div>`;
     }).join('')}
   `;
 }

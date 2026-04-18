@@ -379,7 +379,9 @@ function goToTourDetail(tourId) {
     const tour = source.find(t => t && t.id === tourId);
     if (tour) sessionStorage.setItem('selectedTourData', JSON.stringify(tour));
   } catch (e) { /* non-fatal */ }
-  window.location.href = 'tour-detail.html';
+  // Each tour gets its own unique URL (?id=...) so it's shareable and
+  // survives language reloads without getting mixed up with other tours.
+  window.location.href = `tour-detail.html?id=${encodeURIComponent(tourId)}`;
 }
 
 // ── RUN WHEN DOM IS READY ────────────────────────────────────

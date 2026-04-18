@@ -287,6 +287,26 @@
   border-radius: 10px;
 }
 
+.btn-share {
+  width: 100%;
+  padding: 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--dark-blue);
+  border: 2px solid rgba(11, 60, 93, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: -0.5rem;
+}
+.btn-share svg { width: 18px; height: 18px; }
+.btn-share:hover { border-color: var(--teal); color: var(--teal); background: rgba(46, 196, 182, 0.05); }
+
 .booking-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(46,196,182,0.25);

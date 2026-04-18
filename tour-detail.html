@@ -8,6 +8,13 @@
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="tour-detail.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preload" href="lang-boot.js" as="script">
+<link rel="preload" href="ui-strings.js" as="script">
+<script src="lang-boot.js"></script>
+<script src="ui-strings.js" defer></script>
+<script src="translate.js" defer></script>
+<script src="lang.js" defer></script>
+<script src="ui-translate.js" defer></script>
 </head>
 <body>
 
@@ -124,12 +131,6 @@
           <ul class="included-list" data-no-translate></ul>
         </section>
 
-        <!-- Itinerary for multi-day -->
-        <section class="detail-section" id="itinerary-section" style="display:none;">
-          <h2>Detailed Itinerary</h2>
-          <div id="itinerary-content" data-no-translate></div>
-        </section>
-
       </div>
 
       <!-- Right Column - Booking Box -->
@@ -148,10 +149,15 @@
             Book This Tour <span>→</span>
           </button>
 
+          <button id="detail-share-btn" class="btn-share" onclick="shareCurrentTour(event)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+            Share This Tour
+          </button>
+
           <div class="booking-features">
             <div class="booking-feature">
               <span class="feature-icon">✓</span>
-              <span>Free cancellation up to 7 days</span>
+              <span>Online booking</span>
             </div>
             <div class="booking-feature">
               <span class="feature-icon">✓</span>
@@ -277,6 +283,7 @@
 <script src="i18n-data.js"></script>
 <script src="tours-data.js"></script>
 <script src="tour-detail.js"></script>
+<script type="module" src="script.js"></script>
 <script type="module" src="auth.js"></script>
 
 
