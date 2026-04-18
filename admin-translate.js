@@ -17,7 +17,6 @@
     { code: 'tr', name: 'Türkçe' },
     { code: 'ar', name: 'العربية',       rtl: true },
     { code: 'he', name: 'עברית',         rtl: true },
-    { code: 'fa', name: 'فارسی',         rtl: true },
     { code: 'uk', name: 'Українська' },
   ];
 
