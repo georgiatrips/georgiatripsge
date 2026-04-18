@@ -1,8 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="bg-background">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Speed up Firebase / fonts / flag CDN handshakes. -->
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://flagcdn.com">
+<link rel="dns-prefetch" href="https://api.mymemory.translated.net">
+<link rel="preload" href="lang-boot.js" as="script">
+<link rel="preload" href="ui-strings.js" as="script">
+<link rel="modulepreload" href="script.js">
 <script src="lang-boot.js"></script>
 <script src="ui-strings.js" defer></script>
 <script src="translate.js" defer></script>
@@ -12,7 +22,6 @@
 <meta name="description" content="Explore one-day tours, multi-day packages, and fixed tours across Georgia.">
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="tours-page.css">
-<link rel="preconnect" href="https://fonts.googleapis.com">
 </head>
 <body>
 

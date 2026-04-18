@@ -368,8 +368,17 @@ function createTourCard(tour) {
 
 // ── NAVIGATION FUNCTIONS ────────────────────────────────────
 function goToTourDetail(tourId) {
-  // Save the tour ID in sessionStorage for the detail page
+  // Save both the ID AND the full tour object so the detail page can
+  // render instantly without waiting on a second Firebase fetch.
   sessionStorage.setItem('selectedTourId', tourId);
+  try {
+    // Prefer live Firebase data (window.toursData set by script.js),
+    // fall back to static TOURS from tours-data.js.
+    const live = (typeof window !== 'undefined' && Array.isArray(window.toursData)) ? window.toursData : null;
+    const source = live && live.length ? live : (typeof TOURS !== 'undefined' ? TOURS : []);
+    const tour = source.find(t => t && t.id === tourId);
+    if (tour) sessionStorage.setItem('selectedTourData', JSON.stringify(tour));
+  } catch (e) { /* non-fatal */ }
   window.location.href = 'tour-detail.html';
 }
 
