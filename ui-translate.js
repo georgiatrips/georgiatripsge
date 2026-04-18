@@ -282,9 +282,16 @@
     });
   }
 
-  function init() {
+  async function init() {
     initObserver();
-    apply(currentLang());
+    try {
+      await apply(currentLang());
+    } finally {
+      // Lift the anti-FOUC boot overlay once the first pass is done.
+      if (window.GTLangBoot && typeof window.GTLangBoot.done === 'function') {
+        window.GTLangBoot.done();
+      }
+    }
   }
 
   // Public API (optional)
