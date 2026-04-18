@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="lang-boot.js"></script>
 <title>Admin Panel – Georgia Trips</title>
 <link rel="stylesheet" href="style.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -869,14 +870,13 @@
         <span class="lang-caret">▼</span>
       </button>
       <div class="dropdown-menu lang-dropdown-menu">
-        <a href="#" data-lang="ka"><span class="lang-flag">🇬🇪</span><span class="lang-name">ქართული</span></a>
-        <a href="#" data-lang="en"><span class="lang-flag">🇬🇧</span><span class="lang-name">English</span></a>
-        <a href="#" data-lang="ru"><span class="lang-flag">🇷🇺</span><span class="lang-name">Русский</span></a>
-        <a href="#" data-lang="tr"><span class="lang-flag">🇹🇷</span><span class="lang-name">Türkçe</span></a>
-        <a href="#" data-lang="ar"><span class="lang-flag">🇸🇦</span><span class="lang-name">العربية</span></a>
-        <a href="#" data-lang="he"><span class="lang-flag">🇮🇱</span><span class="lang-name">עברית</span></a>
-        <a href="#" data-lang="fa"><span class="lang-flag">🇮🇷</span><span class="lang-name">فارسی</span></a>
-        <a href="#" data-lang="uk"><span class="lang-flag">🇺🇦</span><span class="lang-name">Українська</span></a>
+        <a href="#" data-lang="ka"><span class="lang-flag"><img src="https://flagcdn.com/w20/ge.png" alt="GE"></span><span class="lang-name">ქართული</span></a>
+        <a href="#" data-lang="en"><span class="lang-flag"><img src="https://flagcdn.com/w20/gb.png" alt="EN"></span><span class="lang-name">English</span></a>
+        <a href="#" data-lang="ru"><span class="lang-flag"><img src="https://flagcdn.com/w20/ru.png" alt="RU"></span><span class="lang-name">Русский</span></a>
+        <a href="#" data-lang="tr"><span class="lang-flag"><img src="https://flagcdn.com/w20/tr.png" alt="TR"></span><span class="lang-name">Türkçe</span></a>
+        <a href="#" data-lang="ar"><span class="lang-flag"><img src="https://flagcdn.com/w20/sa.png" alt="AR"></span><span class="lang-name">العربية</span></a>
+        <a href="#" data-lang="he"><span class="lang-flag"><img src="https://flagcdn.com/w20/il.png" alt="HE"></span><span class="lang-name">עברית</span></a>
+        <a href="#" data-lang="uk"><span class="lang-flag"><img src="https://flagcdn.com/w20/ua.png" alt="UK"></span><span class="lang-name">Українська</span></a>
       </div>
     </div>
     <div class="nav-user-dropdown" id="nav-user-dropdown">
@@ -1084,7 +1084,17 @@
         <div class="translations-section">
           <div class="translations-header">
             <label>Translations (Title / Description / Duration / Highlights)</label>
-            <button type="button" class="btn-translate" id="tour-translate-btn" onclick="AdminI18n.generate('tour')">Auto-translate from Georgian</button>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn-translate tour-translate-btn tour-engine-btn" data-engine="mymemory" onclick="AdminI18n.generate('tour', 'mymemory')">MyMemory</button>
+              <button type="button" class="btn-translate tour-translate-btn tour-engine-btn" data-engine="google" onclick="AdminI18n.generate('tour', 'google')">Google Translate</button>
+            </div>
+          </div>
+          <div class="quota-tracker">
+            <div class="quota-bar-bg"><div class="quota-bar-fill" id="tour-quota-fill"></div></div>
+            <div class="quota-info">
+              <span id="tour-quota-text">Daily Limit: Calculating...</span>
+              <span id="tour-quota-percent">100%</span>
+            </div>
           </div>
           <div class="lang-tabs" id="tour-lang-tabs"></div>
           <div class="lang-panels" id="tour-lang-panels"></div>
@@ -1175,7 +1185,14 @@
         <div class="translations-section">
           <div class="translations-header">
             <label>Translations (Title / Description)</label>
-            <button type="button" class="btn-translate" id="car-translate-btn" onclick="AdminI18n.generate('car')">Auto-translate from Georgian</button>
+            <button type="button" class="btn-translate" id="car-translate-btn" onclick="console.log('Attempting to translate car...'); if (window.AdminI18n) AdminI18n.generate('car'); else console.error('AdminI18n is not defined. Check admin-translate.js for errors.');">Auto-translate from Georgian</button>
+          </div>
+          <div class="quota-tracker">
+            <div class="quota-bar-bg"><div class="quota-bar-fill" id="car-quota-fill"></div></div>
+            <div class="quota-info">
+              <span id="car-quota-text">Daily Limit</span>
+              <span id="car-quota-percent">100%</span>
+            </div>
           </div>
           <div class="lang-tabs" id="car-lang-tabs"></div>
           <div class="lang-panels" id="car-lang-panels"></div>
@@ -1217,10 +1234,6 @@
               <option value="School Tours">School Tours</option>
             </select>
           </div>
-          <div class="form-group">
-            <label>Read Time</label>
-            <input type="text" id="post-readtime" placeholder="e.g. 5 min read">
-          </div>
         </div>
         <div class="form-group">
           <label>Content *</label>
@@ -1240,8 +1253,15 @@
         <!-- Translations -->
         <div class="translations-section">
           <div class="translations-header">
-            <label>Translations (Title / Content / Read Time)</label>
-            <button type="button" class="btn-translate" id="post-translate-btn" onclick="AdminI18n.generate('post')">Auto-translate from Georgian</button>
+            <label>Translations (Title / Content)</label>
+            <button type="button" class="btn-translate" id="post-translate-btn" onclick="console.log('Attempting to translate post...'); if (window.AdminI18n) AdminI18n.generate('post'); else console.error('AdminI18n is not defined. Check admin-translate.js for errors.');">Auto-translate from Georgian</button>
+          </div>
+          <div class="quota-tracker">
+            <div class="quota-bar-bg"><div class="quota-bar-fill" id="post-quota-fill"></div></div>
+            <div class="quota-info">
+              <span id="post-quota-text">Daily Limit</span>
+              <span id="post-quota-percent">100%</span>
+            </div>
           </div>
           <div class="lang-tabs" id="post-lang-tabs"></div>
           <div class="lang-panels" id="post-lang-panels"></div>
@@ -1316,7 +1336,14 @@
         <div class="translations-section">
           <div class="translations-header">
             <label>Translations (Title / Description / Tag / Meta)</label>
-            <button type="button" class="btn-translate" id="featured-translate-btn" onclick="AdminI18n.generate('featured')">Auto-translate from Georgian</button>
+            <button type="button" class="btn-translate" id="featured-translate-btn" onclick="console.log('Attempting to translate featured...'); if (window.AdminI18n) AdminI18n.generate('featured'); else console.error('AdminI18n is not defined. Check admin-translate.js for errors.');">Auto-translate from Georgian</button>
+          </div>
+          <div class="quota-tracker">
+            <div class="quota-bar-bg"><div class="quota-bar-fill" id="featured-quota-fill"></div></div>
+            <div class="quota-info">
+              <span id="featured-quota-text">Daily Limit</span>
+              <span id="featured-quota-percent">100%</span>
+            </div>
           </div>
           <div class="lang-tabs" id="featured-lang-tabs"></div>
           <div class="lang-panels" id="featured-lang-panels"></div>
@@ -1549,6 +1576,7 @@ function renderTours() {
         <div class="admin-card-meta">
           <span>${tour.category}</span>
           <span>${tour.priceOnRequest ? 'On Request' : tour.price}</span>
+          <span>${tour.minPeople || '1'}-${tour.maxPeople || '10'} people</span>
           <span>${Array.isArray(tour.season) ? tour.season.join(', ') : (tour.season || 'All Year')}</span>
         </div>
         <div class="admin-card-actions">
@@ -1670,6 +1698,7 @@ window.saveTour = async function() {
       priceOnRequest: document.getElementById('tour-on-request').checked,
       isFeatured: document.getElementById('tour-featured').checked,
       duration: pack('tour', 'duration', document.getElementById('tour-duration').value),
+      minPeople: document.getElementById('tour-min-people').value,
       maxPeople: document.getElementById('tour-max-people').value,
       included: included,
       season: Array.from(document.querySelectorAll('input[name="tour-season"]:checked')).map(cb => cb.value),
@@ -1894,9 +1923,6 @@ function renderPosts() {
       <div class="admin-card-body">
         <h3 class="admin-card-title">${escapeHTML(gtp(post.title))}</h3>
         <p class="admin-card-desc">${escapeHTML(gtp(post.text || post.content))}</p>
-        <div class="admin-card-meta">
-          <span>${escapeHTML(gtp(post.readTime))}</span>
-        </div>
         <div class="admin-card-actions">
           <button class="btn-edit" onclick="editPost('${post.id}')">Edit</button>
           <button class="btn-delete" onclick="confirmDeletePost('${post.id}')">Delete</button>
@@ -1930,11 +1956,10 @@ window.editPost = function(id) {
   document.getElementById('post-id').value = post.id;
   document.getElementById('post-title').value = gt(post.title);
   document.getElementById('post-category').value = post.category;
-  document.getElementById('post-readtime').value = gt(post.readTime);
   document.getElementById('post-content').value = gt(post.text || post.content);
   document.getElementById('post-image-url').value = post.img;
 
-  if (I18n) I18n.loadItem('post', { title: post.title, text: post.text != null ? post.text : post.content, readTime: post.readTime });
+  if (I18n) I18n.loadItem('post', { title: post.title, text: post.text != null ? post.text : post.content });
   
   const preview = document.getElementById('post-image-preview');
   preview.src = post.img;
@@ -1965,7 +1990,6 @@ window.savePost = async function() {
     const postData = {
       title: pack('post', 'title', document.getElementById('post-title').value),
       category: document.getElementById('post-category').value,
-      readTime: pack('post', 'readTime', document.getElementById('post-readtime').value),
       text: pack('post', 'text', document.getElementById('post-content').value),
       img: imageUrl,
       date: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
@@ -2301,6 +2325,12 @@ function showToast(message, type = 'success') {
   });
 });
 
+// Diagnostic: Check if AdminI18n is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof window.AdminI18n === 'undefined') {
+    console.error('AdminI18n object is not defined. Automatic translation will not work. Please check admin-translate.js for errors.');
+  }
+});
 // Close modals on backdrop click
 ['tour', 'car', 'post', 'featured', 'review'].forEach(type => {
   document.getElementById(`${type}-modal`).addEventListener('click', function(e) {

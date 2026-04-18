@@ -129,7 +129,18 @@ function translateCommonValue(str) {
     'Flexible': 'flexible',
     '1 Day': 'one_day',
     'One Day': 'one_day',
-    'On Request': 'on_request'
+    'On Request': 'on_request',
+    'Sedan': 'type_sedan',
+    'SUV': 'type_suv',
+    'Minivan': 'type_minivan',
+    'Van': 'type_van',
+    'Jeep': 'type_jeep',
+    'Culture': 'cat_culture',
+    'Food': 'cat_food',
+    'Adventure': 'cat_adventure',
+    'Travel Tips': 'cat_travel_tips',
+    'Wine': 'cat_wine',
+    'School Tours': 'cat_school_tours'
   };
   if (map[s]) return t(map[s]);
   // "N Days" / "N Day" pattern
@@ -241,6 +252,17 @@ function goToTourDetail(tourId) {
   window.location.href = 'tour-detail.html';
 }
 
+function goToCarDetail(carId) {
+  const car = carsData.find(item => item.id === carId);
+  if (car) {
+    sessionStorage.setItem('selectedCarId', car.id);
+    sessionStorage.setItem('selectedCarData', JSON.stringify(car));
+  } else {
+    sessionStorage.setItem('selectedCarId', carId);
+  }
+  window.location.href = 'car-detail.html';
+}
+
 /**
  * აჩვენებს შეტყობინებას ეკრანზე
  * @param {string} message - ტექსტი
@@ -319,6 +341,7 @@ window.toggleSaveTour = toggleSaveTour;
 window.syncSaveButtons = syncSaveButtons;
 window.showToast = showToast;
 window.goToTourDetail = goToTourDetail;
+window.goToCarDetail = goToCarDetail;
 
 // renderTourCard ფუნქციის ქვემოთ განსაზღვრა (Hoisting-ისთვის)
 
@@ -346,7 +369,7 @@ function initNavbar() {
     const dropdown = e.target.closest('.nav-dropdown, .nav-user-dropdown, .nav-currency-dropdown');
     const isLink = e.target.tagName === 'A';
 
-    // ყველა სხვა ღი�� მენიუს დახურვა
+    // ყველა სხვა ღია მენიუს დახურვა
     if (!dropdown || btn) {
       document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
         if (!dropdown || menu !== dropdown.querySelector('.dropdown-menu')) {
@@ -382,18 +405,19 @@ function initNavbar() {
 
 // ===== TOUR CARDS =====
 function renderTourCard(tour) {
+  const t = (k) => (window.t ? window.t(k) : k);
   let badgeClass = 'badge-oneday';
-  let badgeText = 'One Day';
+  let badgeText = t('badge_one_day');
   
   if (tour.category === 'multi-day' || tour.category === 'full') {
     badgeClass = 'badge-full';
-    badgeText = 'Multi Day';
+    badgeText = t('badge_multi_day');
   } else if (tour.category === 'flexible') {
     badgeClass = 'badge-full';
-    badgeText = 'Flexible';
+    badgeText = t('badge_flexible');
   } else if (tour.category === 'upcoming') {
     badgeClass = 'badge-full';
-    badgeText = 'Upcoming';
+    badgeText = t('badge_upcoming');
   }
   // Localize fields
   const title = L(tour.title);
@@ -465,20 +489,24 @@ function initTourTabs() {
 function renderCarCard(car) {
   const title = L(car.title);
   const info = L(car.info || car.desc);
+  const t = (k) => (window.t ? window.t(k) : k);
+
   return `
     <div class="car-card">
       <div class="car-card-img">
         <img src="${car.img}" alt="${title}" loading="lazy">
+        <span class="car-type-badge" style="position:absolute; top:12px; left:12px; margin:0;">${translateCommonValue(car.type)}</span>
       </div>
       <div class="car-card-body">
-        <span class="car-type-badge">${car.type}</span>
         <h3 class="car-card-title">${title}</h3>
-        <p class="car-card-info">${info}</p>
-        <div class="car-features">
-          <span class="car-feature">${car.seats || ''}</span>
-          <span class="car-feature">${car.fuel || ''}</span>
-          <span class="car-feature">${car.transmission || ''}</span>
-          <span class="car-feature">${car.color || ''}</span>
+        <p class="car-card-info">${truncateText(info, 110)}</p>
+        <div class="car-card-footer">
+          <div class="car-price">
+            ${window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(car, { includeLabel: false }) : (car.price || t('on_request'))}
+          </div>
+          <button class="btn-sm" onclick="goToCarDetail('${getSafeAttr(car.id)}')">
+            ${t('view_details')}
+          </button>
         </div>
       </div>
     </div>`;
@@ -500,7 +528,7 @@ function renderCarFullCard(car) {
       <div class="tour-card__img-wrap">
         <img src="${car.img}" alt="${title}" loading="lazy" class="tour-card__img">
         <div class="tour-card__overlay"></div>
-        <span class="tour-badge tour-badge--duration">${car.type}</span>
+        <span class="tour-badge tour-badge--duration">${translateCommonValue(car.type)}</span>
       </div>
       <div class="tour-card__body">
         <h3 class="tour-card__title">${title}</h3>
@@ -528,18 +556,18 @@ function renderCarFullCard(car) {
 // ===== POST CARDS =====
 function renderPostCard(post) {
   const title = L(post.title);
-  const text = L(post.text || post.content);
-  const readTime = L(post.readTime);
+  const text = truncateText(L(post.text || post.content), 120);
+  const category = translateCommonValue(post.category);
+
   return `
     <div class="post-card">
       <div class="post-card-img">
         <img src="${post.img}" alt="${title}" loading="lazy">
-        <span class="post-category">${post.category}</span>
+        <span class="post-category">${category}</span>
       </div>
       <div class="post-card-body">
         <div class="post-meta">
           <span>${post.date || ''}</span>
-          <span>${readTime}</span>
         </div>
         <h3 class="post-card-title">${title}</h3>
         <p class="post-card-text">${text}</p>
@@ -680,6 +708,29 @@ function renderFeaturedSlider() {
   }).join('');
 
   initFeaturedSlider();
+}
+
+function renderMapOverlay() {
+  const overlay = document.getElementById('map-overlay-info');
+  if (!overlay) return;
+
+  const tFn = (k) => (window.t ? window.t(k) : k);
+
+  // Filter featured domestic tours
+  const domesticFeatured = toursData.filter(t => (t.type || t.tourType) === 'domestic' && t.isFeatured === true);
+
+  if (domesticFeatured.length === 0) {
+    overlay.innerHTML = `<h3>${tFn('our_destinations') || 'Our Destinations'}</h3><p>No featured domestic tours available.</p>`;
+    return;
+  }
+
+  overlay.innerHTML = `
+    <h3>${tFn('featured_destinations') || 'Featured Destinations'}</h3>
+    ${domesticFeatured.map(featured => {
+      const title = L(featured.title);
+      return `<div class="map-location"><div class="map-dot"></div><a href="tour-detail.html" class="map-link" onclick="goToTourDetail('${getSafeAttr(featured.id)}'); return false;">${title}</a></div>`;
+    }).join('')}
+  `;
 }
 
 // ===== WEATHER =====
@@ -944,6 +995,7 @@ async function loadDataAndInit() {
   renderPosts('stories-grid', 6);
   renderReviews();
   renderFeaturedSlider();
+  renderMapOverlay();
   
   initTourTabs();
   syncSaveButtons();
@@ -1018,6 +1070,7 @@ window.reRenderAllData = function reRenderAllData() {
   try { renderCars('cars-grid'); } catch {}
   try { renderPosts('stories-grid', 6); } catch {}
   try { renderFeaturedSlider(); } catch {}
+  try { renderMapOverlay(); } catch {}
 
   // Cars page full list
   const carsStack = document.getElementById('cars-stack');

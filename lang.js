@@ -10,7 +10,6 @@
     tr: { icon: 'tr.png', code: 'TR', name: 'Türkçe' },
     ar: { icon: 'sa.png', code: 'AR', name: 'العربية' },
     he: { icon: 'il.png', code: 'HE', name: 'עברית' },
-    fa: { icon: 'ir.png', code: 'FA', name: 'فارسی' },
     uk: { icon: 'ua.png', code: 'UK', name: 'Українська' }
   };
   const STORAGE_KEY = 'gt_lang';
@@ -43,7 +42,7 @@
   }
 
   // RTL languages
-  const RTL_LANGS = ['ar', 'he', 'fa'];
+  const RTL_LANGS = ['ar', 'he'];
 
   function applyDocAttrs(lang) {
     document.documentElement.setAttribute('data-lang', lang);
@@ -61,7 +60,6 @@
     tr: { text: 'Çevriliyor...',        sub: 'Lütfen bekleyin, site dilinize yükleniyor.' },
     ar: { text: 'جاري الترجمة...',      sub: 'يرجى الانتظار، يتم تحميل الموقع بلغتك.' },
     he: { text: 'מתרגם...',             sub: 'אנא המתן, האתר נטען בשפה שלך.' },
-    fa: { text: 'در حال ترجمه...',      sub: 'لطفاً صبر کنید، سایت در حال بارگذاری به زبان شما است.' },
     uk: { text: 'Переклад...',          sub: 'Будь ласка, зачекайте, сайт завантажується вашою мовою.' }
   };
 

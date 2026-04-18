@@ -6,7 +6,7 @@
    ========================================================= */
 (function () {
   const DEFAULT_LANG = 'ka';
-  const FALLBACK_ORDER = ['ka', 'en', 'ru', 'tr', 'uk', 'ar', 'he', 'fa'];
+  const FALLBACK_ORDER = ['ka', 'en', 'ru', 'tr', 'uk', 'ar', 'he'];
 
   function currentLang() {
     try {

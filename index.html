@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="lang-boot.js"></script>
+<script src="ui-strings.js" defer></script>
+<script src="translate.js" defer></script>
+<script src="lang.js" defer></script>
+<script src="ui-translate.js" defer></script>
 <title>Georgia Trips – Explore Georgia With Us</title>
 <meta name="description" content="Discover Georgia with expert guided tours, comfortable transport and authentic travel experiences. Book your Georgian adventure today.">
 <link rel="stylesheet" href="style.css">
@@ -72,7 +77,6 @@
         <a href="#" data-lang="tr"><span class="lang-flag"><img src="https://flagcdn.com/w20/tr.png" alt="TR"></span><span class="lang-name">Türkçe</span></a>
         <a href="#" data-lang="ar"><span class="lang-flag"><img src="https://flagcdn.com/w20/sa.png" alt="AR"></span><span class="lang-name">العربية</span></a>
         <a href="#" data-lang="he"><span class="lang-flag"><img src="https://flagcdn.com/w20/il.png" alt="HE"></span><span class="lang-name">עברית</span></a>
-        <a href="#" data-lang="fa"><span class="lang-flag"><img src="https://flagcdn.com/w20/ir.png" alt="FA"></span><span class="lang-name">فარსი</span></a>
         <a href="#" data-lang="uk"><span class="lang-flag"><img src="https://flagcdn.com/w20/ua.png" alt="UK"></span><span class="lang-name">Українська</span></a>
       </div>
     </div>
@@ -213,7 +217,7 @@
     <div class="section-header">
       <span class="section-tag">Blog</span>
       <h2>Stories</h2>
-      <p>Travel guides, local tips and authentic stories from the heart of the Caucasus.</p>
+      <p>Travel guides, local tips and authentic stories.</p>
       <div class="divider"></div>
     </div>
     <div class="posts-grid" id="stories-grid" data-no-translate>
@@ -255,13 +259,8 @@
 <!-- MAP SECTION -->
 <section class="map-section">
   <div class="map-container">
-    <div class="map-overlay-info">
-      <h3>Our Destinations</h3>
-      <div class="map-location"><div class="map-dot"></div><span>Tbilisi – Capital City</span></div>
-      <div class="map-location"><div class="map-dot"></div><span>Kazbegi – Caucasus Mountains</span></div>
-      <div class="map-location"><div class="map-dot"></div><span>Kakheti – Wine Region</span></div>
-      <div class="map-location"><div class="map-dot"></div><span>Batumi – Black Sea Coast</span></div>
-      <div class="map-location"><div class="map-dot"></div><span>Svaneti – Ancient Highlands</span></div>
+    <div class="map-overlay-info" id="map-overlay-info">
+      <!-- Featured domestic tours will be loaded here -->
     </div>
     <iframe class="map-frame"
       src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1452498.4059474706!2d41.6!3d42.3!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x40440cd7c2f304f3%3A0x9f3f7fa31b6e2e4a!2sGeorgia!5e0!3m2!1sen!2sge!4v1"
@@ -367,9 +366,5 @@
 <script src="i18n-data.js"></script>
 <script type="module" src="script.js"></script>
 <script type="module" src="auth.js"></script>
-<script src="ui-strings.js"></script>
-<script src="translate.js"></script>
-<script src="lang.js"></script>
-<script src="ui-translate.js"></script>
 </body>
 </html>

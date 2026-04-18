@@ -91,7 +91,7 @@
     }
 
     const rawPrice = String(item.price || (Array.isArray(item.meta) ? item.meta[0] : '') || '').trim();
-    if (!rawPrice || /contact/i.test(rawPrice)) return null;
+    if (!rawPrice || /contact|request/i.test(rawPrice)) return null;
 
     return {
       amount: parseAmount(rawPrice),
@@ -150,13 +150,13 @@
   }
 
   function formatStoredPrice(amount, currency, prefix = '') {
-    if (!Number.isFinite(amount)) return tr('on_request', null, 'On Request');
+    if (!Number.isFinite(amount)) return tr('on_request', null, 'Negotiable');
     return `${prefix}${formatAmount(amount, currency)}`;
   }
 
   function formatConvertedPrice(item) {
     const meta = getPriceMeta(item);
-    const onRequest = tr('on_request', null, 'On Request');
+    const onRequest = tr('on_request', null, 'Negotiable');
     if (!meta || meta.amount === null) return String(item?.price || onRequest);
     const converted = convertAmount(meta.amount, meta.currency, state.selectedCurrency);
     return `${meta.prefix || ''}${formatAmount(converted, state.selectedCurrency)}`;
@@ -169,13 +169,18 @@
     const includeLabel = options.includeLabel !== false;
     const meta = getPriceMeta(item);
     const label = getPriceLabel(item, fallbackLabel);
-    const onRequestLabel = tr('on_request', null, 'On Request');
+    const onRequestLabel = tr('on_request', null, 'Negotiable');
+    const pricePrefix = tr('label_price', null, 'Price');
 
     if (!meta || meta.amount === null || item.priceOnRequest) {
       const safeText = item.priceOnRequest ? onRequestLabel : escapeHtml(String(item?.price || onRequestLabel));
+      const isNegotiable = safeText === onRequestLabel || /შეთანხმებით|Negotiable|Договорная/i.test(safeText);
+      
+      const statusHtml = isNegotiable ? `<span class="price-prefix-label">${pricePrefix}</span> <span class="${priceClass} price-negotiable">${safeText}</span>` : `<span class="${priceClass}">${safeText}</span>`;
+
       return includeLabel
-        ? `<span class="${priceClass}">${safeText}</span> <span class="price-separator">/</span> <span class="${labelClass}">${escapeHtml(label)}</span>`
-        : `<span class="${priceClass}">${safeText}</span>`;
+        ? `${statusHtml} <span class="price-separator">/</span> <span class="${labelClass}">${escapeHtml(label)}</span>`
+        : statusHtml;
     }
 
     const amountText = escapeHtml(formatConvertedPrice(item));
