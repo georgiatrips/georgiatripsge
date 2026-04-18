@@ -45,7 +45,7 @@ async function fetchToursFromFirebase() {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
     console.error('Error fetching tours:', error);
-    return [];
+    throw error; // შეცდომის შემთხვევაში ვაგდებთ Error-ს, რომ ქეში არ გადაეწეროს
   }
 }
 
@@ -57,7 +57,7 @@ async function fetchCarsFromFirebase() {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
     console.error('Error fetching cars:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -69,7 +69,7 @@ async function fetchPostsFromFirebase() {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
     console.error('Error fetching posts:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -81,7 +81,7 @@ async function fetchFeaturedFromFirebase() {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
     console.error('Error fetching featured tours:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -93,7 +93,7 @@ async function fetchReviewsFromFirebase() {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
     console.error('Error fetching reviews:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -460,7 +460,7 @@ function renderDomesticTours() {
   const grid = document.getElementById('domestic-tours-grid');
   if (!grid) return;
   const tFn = (k) => (window.t ? window.t(k) : k);
-  const domesticTours = toursData.filter(tour => (tour.type || tour.tourType) === 'domestic' || tour.category === 'one-day' || tour.category === 'oneday');
+  const domesticTours = toursData.filter(tour => (tour.type || tour.tourType) === 'domestic');
   grid.innerHTML = domesticTours.length > 0 ? domesticTours.map(renderTourCard).join('') : `<p style="text-align:center;color:var(--text-mid);">${tFn('empty_domestic')}</p>`;
   syncSaveButtons();
 }
@@ -469,7 +469,7 @@ function renderInternationalTours() {
   const grid = document.getElementById('international-tours-grid');
   if (!grid) return;
   const tFn = (k) => (window.t ? window.t(k) : k);
-  const internationalTours = toursData.filter(tour => (tour.type || tour.tourType) === 'international' || tour.category === 'multi-day' || tour.category === 'full');
+  const internationalTours = toursData.filter(tour => (tour.type || tour.tourType) === 'international');
   grid.innerHTML = internationalTours.length > 0 ? internationalTours.map(renderTourCard).join('') : `<p style="text-align:center;color:var(--text-mid);">${tFn('empty_international')}</p>`;
   syncSaveButtons();
 }
@@ -929,7 +929,17 @@ function initScrollSlider(gridId, prevId, nextId) {
   
   if (!grid || !prevBtn || !nextBtn) return;
   
-  const scrollAmount = grid.clientWidth;
+  // გამოვთვალოთ ზუსტი მანძილი (ერთი ბარათის სიგანე + gap)
+  // ეს აგვარებს მობილურზე ბარათების გადახტომის პრობლემას
+  const getScrollStep = () => {
+    const item = grid.firstElementChild;
+    if (item && item.classList.contains('gt-card-loader')) return grid.clientWidth;
+    if (item) {
+      const gap = parseInt(window.getComputedStyle(grid).gap) || 0;
+      return item.offsetWidth + gap;
+    }
+    return grid.clientWidth;
+  };
   
   // Check if arrows are needed (more than 3 items or overflow)
   const updateArrowsVisibility = () => {
@@ -941,11 +951,11 @@ function initScrollSlider(gridId, prevId, nextId) {
   };
   
   prevBtn.addEventListener('click', () => {
-    grid.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    grid.scrollBy({ left: -getScrollStep(), behavior: 'smooth' });
   });
   
   nextBtn.addEventListener('click', () => {
-    grid.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    grid.scrollBy({ left: getScrollStep(), behavior: 'smooth' });
   });
   
   // Initial check
@@ -1028,6 +1038,76 @@ function renderAllContent() {
   syncSaveButtons();
 }
 
+// ===== INDEX-PAGE CONTENT WATCHDOG =====
+// Cold-load safety net: if cards haven't rendered on the homepage within
+// ~1 s, keep retrying the Firebase fetch until at least one grid is
+// populated with real cards. Stops immediately once cards appear.
+let _idxWatchdog = null;
+let _idxWatchdogBusy = false;
+let _idxWatchdogAttempts = 0;
+const IDX_WATCHDOG_MAX_ATTEMPTS = 30; // ~30 s hard cap
+const IDX_WATCHDOG_INTERVAL_MS = 1000;
+
+function stopIndexWatchdog() {
+  if (_idxWatchdog) { clearTimeout(_idxWatchdog); _idxWatchdog = null; }
+}
+
+function indexContentVisible() {
+  const ids = ['domestic-tours-grid', 'international-tours-grid', 'cars-grid', 'stories-grid'];
+  // Require at least one grid that exists on this page to have real cards.
+  let foundAny = false;
+  for (const id of ids) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    foundAny = true;
+    if (el.querySelector('.tour-card, .car-card, .post-card, .story-card, .featured-card')) return true;
+  }
+  // If none of the grids exist on this page, don't block.
+  return !foundAny;
+}
+
+function scheduleIndexWatchdog() {
+  stopIndexWatchdog();
+  _idxWatchdog = setTimeout(tickIndexWatchdog, IDX_WATCHDOG_INTERVAL_MS);
+}
+
+async function fetchWithTimeout(promise, timeoutMs = 1500) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Fetch timeout')), timeoutMs))
+  ]);
+}
+
+async function tickIndexWatchdog() {
+  if (indexContentVisible()) { stopIndexWatchdog(); return; }
+  if (_idxWatchdogBusy) { scheduleIndexWatchdog(); return; }
+  if (_idxWatchdogAttempts >= IDX_WATCHDOG_MAX_ATTEMPTS) { stopIndexWatchdog(); return; }
+  _idxWatchdogAttempts++;
+  _idxWatchdogBusy = true;
+  try {
+    const [freshTours, freshCars, freshPosts, freshFeatured, freshReviews] = await Promise.all([
+      fetchWithTimeout(fetchToursFromFirebase()).catch(() => []),
+      fetchWithTimeout(fetchCarsFromFirebase()).catch(() => []),
+      fetchWithTimeout(fetchPostsFromFirebase()).catch(() => []),
+      fetchWithTimeout(fetchFeaturedFromFirebase()).catch(() => []),
+      fetchWithTimeout(fetchReviewsFromFirebase()).catch(() => [])
+    ]);
+
+    if ((freshTours && freshTours.length) || (freshCars && freshCars.length) || (freshPosts && freshPosts.length)) {
+      toursData    = freshTours;
+      carsData     = freshCars;
+      postsData    = freshPosts;
+      featuredData = freshFeatured;
+      reviewsData  = freshReviews;
+      writeDataCache({ tours: toursData, cars: carsData, posts: postsData, featured: featuredData, reviews: reviewsData });
+      renderAllContent();
+    }
+  } catch (e) { /* retry on next tick */ }
+  _idxWatchdogBusy = false;
+  if (indexContentVisible()) stopIndexWatchdog();
+  else scheduleIndexWatchdog();
+}
+
 // ===== LOAD ALL DATA AND INIT =====
 async function loadDataAndInit() {
   // One-time init (runs regardless of whether we have cache)
@@ -1067,21 +1147,28 @@ async function loadDataAndInit() {
     if (storiesGrid && !storiesGrid.querySelector('.gt-card-loader')) storiesGrid.innerHTML = spinnerLight;
   }
 
-  // ---------- 2. Background fresh fetch ----------
+  // ---------- 2. Kick off the watchdog ----------
+  // Runs in parallel with the fresh fetch below. If the fresh fetch succeeds
+  // first, indexContentVisible() will return true and the watchdog self-stops.
+  scheduleIndexWatchdog();
+
+  // ---------- 3. Background fresh fetch ----------
   try {
-    const [freshTours, freshCars, freshPosts, freshFeatured, freshReviews] = await Promise.all([
-      fetchToursFromFirebase(),
-      fetchCarsFromFirebase(),
-      fetchPostsFromFirebase(),
-      fetchFeaturedFromFirebase(),
-      fetchReviewsFromFirebase()
+    // Use Promise.allSettled so one slow or failing request doesn't block the entire data load
+    const results = await Promise.allSettled([
+      fetchToursFromFirebase().catch(() => toursData),
+      fetchCarsFromFirebase().catch(() => carsData),
+      fetchPostsFromFirebase().catch(() => postsData),
+      fetchFeaturedFromFirebase().catch(() => featuredData),
+      fetchReviewsFromFirebase().catch(() => reviewsData)
     ]);
 
-    toursData    = freshTours;
-    carsData     = freshCars;
-    postsData    = freshPosts;
-    featuredData = freshFeatured;
-    reviewsData  = freshReviews;
+    // Map settled results back to data variables
+    toursData    = results[0].status === 'fulfilled' ? results[0].value : toursData;
+    carsData     = results[1].status === 'fulfilled' ? results[1].value : carsData;
+    postsData    = results[2].status === 'fulfilled' ? results[2].value : postsData;
+    featuredData = results[3].status === 'fulfilled' ? results[3].value : featuredData;
+    reviewsData  = results[4].status === 'fulfilled' ? results[4].value : reviewsData;
 
     // Persist the fresh snapshot for the NEXT page load.
     writeDataCache({
@@ -1094,8 +1181,10 @@ async function loadDataAndInit() {
 
     renderAllContent();
     if (!renderedFromCache) setTimeout(initScrollAnimations, 100);
+    if (indexContentVisible()) stopIndexWatchdog();
   } catch (error) {
     console.error('Error loading data:', error);
+    // Don't show an error UI — the watchdog will keep retrying.
   }
 }
 

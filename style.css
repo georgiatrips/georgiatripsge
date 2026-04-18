@@ -1481,17 +1481,20 @@ section { padding: 5rem 2rem; }
   .post-card-text { font-size: 0.85rem; margin-bottom: 0.85rem; }
   .domestic-tours-grid,
   .international-tours-grid,
-  .cars-grid { gap: 1rem; padding: 0.5rem 0; }
+  .cars-grid { display: flex !important; gap: 1rem; padding: 0.5rem 0; overflow-x: auto !important; scroll-snap-type: x mandatory !important; }
   .domestic-tours-grid .tour-card,
   .international-tours-grid .tour-card {
-    flex: 0 0 calc(100vw - 3rem);
-    max-width: 320px;
+    flex: 0 0 calc(100vw - 3rem) !important;
+    max-width: 320px !important;
+    scroll-snap-align: start !important;
     min-height: auto;
   }
   .cars-grid .car-card {
-    flex: 0 0 calc(100vw - 3rem);
-    max-width: 300px;
+    flex: 0 0 calc(100vw - 3rem) !important;
+    max-width: 300px !important;
+    scroll-snap-align: start !important;
   }
+  .tours-slider-wrapper .slider-arrow, .cars-slider-wrapper .slider-arrow { display: flex !important; }
   .tour-card-img { height: 180px; }
   .car-card-img { height: 170px; }
   .tour-card-body { padding: 1rem 1.1rem 1.1rem; }

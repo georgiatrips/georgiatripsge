@@ -125,6 +125,38 @@
     window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang } }));
   }
 
+  // ---------- Scroll restoration across language reloads ----------
+  const SCROLL_KEY = 'gt_lang_scroll';
+  function saveScrollPosition() {
+    try {
+      sessionStorage.setItem(SCROLL_KEY, JSON.stringify({
+        y: window.scrollY || window.pageYOffset || 0,
+        path: location.pathname + location.search + location.hash,
+        t: Date.now()
+      }));
+    } catch (e) { /* ignore */ }
+  }
+  function restoreScrollPosition() {
+    try {
+      const raw = sessionStorage.getItem(SCROLL_KEY);
+      if (!raw) return;
+      sessionStorage.removeItem(SCROLL_KEY);
+      const data = JSON.parse(raw);
+      if (!data || typeof data.y !== 'number') return;
+      // Only restore if we landed on the same page AND the save is fresh.
+      const samePath = data.path === (location.pathname + location.search + location.hash);
+      if (!samePath) return;
+      if (Date.now() - (data.t || 0) > 30_000) return;
+      // Disable browser's automatic scroll restoration so we own the position.
+      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+      // Run twice: once immediately, once after layout settles.
+      const go = () => window.scrollTo({ top: data.y, left: 0, behavior: 'auto' });
+      go();
+      requestAnimationFrame(go);
+      setTimeout(go, 120);
+    } catch (e) { /* ignore */ }
+  }
+
   async function setLang(lang) {
     if (!LANGUAGES[lang]) return;
     const current = getStoredLang();
@@ -133,36 +165,23 @@
       return;
     }
 
-    // 1. Show the full-page blocking overlay BEFORE we touch the DOM so the
-    //    user never sees partially-translated content.
+    // 1. Show the full-page blocking overlay so the user sees feedback
+    //    immediately. Overlay text is already in the target language.
     showOverlay(lang);
 
-    // Give the overlay one frame to actually paint before we start the heavy
-    // re-render work on the main thread.
-    await new Promise((r) => requestAnimationFrame(() => r()));
-
+    // 2. Persist the new language + current scroll position, then hard
+    //    reload the page. This is by far the most reliable way to render
+    //    the whole site in the new language — no risk of the translator
+    //    hanging on a slow MyMemory API call leaving the overlay stuck.
     storeLang(lang);
-    updateButton(lang);
-    markActive(lang);
     applyDocAttrs(lang);
+    saveScrollPosition();
 
-    // 2. Re-render Firestore-backed content + dispatch lang:change events.
-    triggerReRender(lang);
-
-    // 3. Wait for the static-HTML translator to finish (it may hit the API
-    //    for leftover phrases). Runs in parallel with the Firestore render.
-    try {
-      if (window.GTUITranslate && typeof window.GTUITranslate.apply === 'function') {
-        await window.GTUITranslate.apply(lang);
-      }
-    } catch (e) { /* ignore */ }
-
-    // 4. Give the browser one more frame to paint the fully-translated DOM
-    //    before we lift the overlay. No artificial delay.
+    // Give the overlay one paint frame so it's visible before navigation.
     await new Promise((r) => requestAnimationFrame(() => r()));
-
-    document.documentElement.classList.remove('gt-rerendering');
-    hideOverlay();
+    // Tiny delay so the overlay is on screen for at least ~50ms — otherwise
+    // some browsers abort the render when navigation starts.
+    setTimeout(() => { location.reload(); }, 50);
   }
 
   function init() {
@@ -171,6 +190,10 @@
     updateButton(current);
     markActive(current);
     applyDocAttrs(current);
+
+    // If we just reloaded due to a language change, jump back to where
+    // the user was before. Runs as early as possible.
+    restoreScrollPosition();
 
     document.querySelectorAll('.lang-dropdown-menu a[data-lang]').forEach(a => {
       a.addEventListener('click', (e) => {

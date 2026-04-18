@@ -21,6 +21,77 @@
 <title>International Tours – Georgia Trips</title>
 <meta name="description" content="Explore international tours from Georgia - multi-country adventures and cross-border experiences.">
 <link rel="stylesheet" href="style.css">
+<style>
+  /* მობილურის ოპტიმიზაცია */
+  @media (max-width: 768px) {
+    .filter-section { padding: 2rem 1rem; }
+    
+    /* ფილტრის ღილაკები სკროლვადი რომ იყოს */
+    .filter-tabs-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 10px;
+      margin-bottom: 1rem;
+    }
+    #tours-filter-tabs {
+      display: inline-flex !important;
+      width: max-content !important;
+      padding: 0 5px;
+    }
+    .filter-tab {
+      white-space: nowrap;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+    }
+
+    /* ტურების Grid მობილურზე */
+    #tours-filter-grid {
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr) !important; /* 2-2 წყვილებად */
+      gap: 10px !important;
+      flex-direction: unset !important;
+      overflow-x: visible !important;
+      scroll-snap-type: none !important;
+      padding: 0 !important;
+    }
+    
+    .tour-card--standard {
+      max-width: 100%;
+    }
+
+    /* ბარათის შიგთავსის მორგება 2-სვეტიანი განლაგებისთვის */
+    .tour-card__img-wrap { height: 130px !important; }
+    .tour-card__body { padding: 10px !important; }
+    .tour-card__title { 
+      font-size: 0.85rem !important; 
+      margin-bottom: 0.4rem !important; 
+      height: 2.4rem !important; 
+      overflow: hidden; 
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .tour-card__desc { display: none !important; }
+    .tour-highlights { 
+      display: flex !important; 
+      flex-direction: column !important; 
+      min-height: auto !important; 
+      gap: 4px !important;
+      margin-bottom: 8px !important;
+    }
+    .tour-highlight { font-size: 0.72rem !important; }
+    .tour-highlight:nth-child(n+4) { display: none !important; }
+    .tour-card__footer { 
+      flex-direction: column !important; 
+      align-items: flex-start !important; 
+      padding-top: 8px !important;
+      gap: 4px !important;
+    }
+    .tour-card__meta { display: none !important; }
+    .tour-price { font-size: 1.05rem !important; }
+    .btn-book { padding: 0.5rem !important; font-size: 0.8rem !important; }
+  }
+</style>
 <link rel="stylesheet" href="tours-page.css">
 </head>
 <body>
@@ -114,6 +185,9 @@
     <div id="tours-filter-grid" data-no-translate role="list" aria-live="polite" aria-label="Tour results">
       <div class="gt-card-loader"><span class="gt-card-loader__spinner" aria-hidden="true"></span><span>Loading<span class="gt-card-loader__dots" aria-hidden="true"></span></span></div>
     </div>
+
+    <!-- Pagination Container -->
+    <div id="pagination-container" class="pagination"></div>
 
   </div>
 </section>
@@ -222,20 +296,27 @@
 <script type="module" src="script.js"></script>
 <script type="module" src="auth.js"></script>
 <script type="module">
-import { getTours } from './firebase-config.js';
+// NOTE: We intentionally use a DYNAMIC import for firebase-config.js below
+// instead of a static top-level import. A top-level import would delay the
+// entire module (and our cache-hydration paint) until the full Firebase SDK
+// downloads from gstatic.com. With a dynamic import the cache paint runs
+// immediately and Firebase is only loaded for the background refresh.
 
 // Tour type filter
 const TOUR_TYPE = 'international';
 
 // Categories
 const TOUR_CATEGORIES = [
-  { key: 'one-day', label: 'One-Day Tours' },
-  { key: 'multi-day', label: 'Multi-Day Tours' },
-  { key: 'fixed', label: 'Fixed Tours' }
+  { key: 'all',       label: 'All',             labelKey: 'all'           },
+  { key: 'one-day',   label: 'One-Day Tours',   labelKey: 'cat_one_day'   },
+  { key: 'multi-day', label: 'Multi-Day Tours', labelKey: 'cat_multi_day' },
+  { key: 'fixed',     label: 'Fixed Tours',     labelKey: 'cat_fixed'     }
 ];
 
 let allTours = [];
-let activeCategory = 'one-day';
+let activeCategory = 'all';
+let currentPage = 1;
+const ITEMS_PER_PAGE = 10;
 
 // i18n helpers (support multilingual Firestore values)
 function L(val, fallback = '') {
@@ -324,19 +405,25 @@ function renderTourCard(tour) {
     </article>`;
 }
 
-function renderEmptyState(categoryLabel) {
+function renderEmptyState(categoryKey) {
+  // Resolve the translated category label (falls back to generic "tours").
+  const cat = TOUR_CATEGORIES.find(c => c.key === categoryKey);
+  const catLabel = cat ? T(cat.labelKey) : T('cat_tours_generic');
+  const title = T('empty_title');
+  const subtitle = T('empty_subtitle', { category: catLabel });
+  const cta = T('empty_cta');
   return `
     <div class="tours-empty">
       <div class="tours-empty__icon">&#128506;</div>
-      <h3>No tours found</h3>
-      <p>No ${categoryLabel} are available right now.<br>Check back soon or <a href="contact.html">contact us</a> for a custom trip.</p>
+      <h3>${title}</h3>
+      <p>${subtitle}<br>${cta}</p>
     </div>`;
 }
 
 function getFilteredTours(categoryKey) {
   return allTours.filter(t => 
-    (t.tourType === TOUR_TYPE || t.type === TOUR_TYPE) && 
-    t.category === categoryKey
+    (t.tourType === TOUR_TYPE || t.type === TOUR_TYPE) &&
+    (categoryKey === 'all' || t.category === categoryKey)
   );
 }
 
@@ -344,42 +431,69 @@ function getTourCount(categoryKey) {
   return getFilteredTours(categoryKey).length;
 }
 
-function renderToursGrid(categoryKey) {
+function renderPagination(totalItems) {
+  const container = document.getElementById('pagination-container');
+  if (!container) return;
+  
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+  if (totalPages <= 1) {
+    container.innerHTML = '';
+    return;
+  }
+
+  let html = '';
+  for (let i = 1; i <= totalPages; i++) {
+    html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+  }
+  container.innerHTML = html;
+}
+
+window.goToPage = function(page) {
+  currentPage = page;
+  renderToursGrid(activeCategory);
+  document.querySelector('.filter-section').scrollIntoView({ behavior: 'smooth' });
+};
+
+function renderToursGrid(categoryKey, opts = {}) {
   const grid = document.getElementById('tours-filter-grid');
   const countEl = document.getElementById('tours-result-count');
   if (!grid) return;
 
-  const tours = getFilteredTours(categoryKey);
-  const cat = TOUR_CATEGORIES.find(c => c.key === categoryKey);
-  const label = cat ? cat.label : 'Tours';
+  const filteredTours = getFilteredTours(categoryKey);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedTours = filteredTours.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   if (countEl) {
-    countEl.textContent = tours.length === 1
-      ? `1 tour found`
-      : `${tours.length} tours found`;
+    countEl.textContent = filteredTours.length === 1
+      ? T('tour_count_one')
+      : T('tour_count_many', { n: filteredTours.length });
   }
 
-  grid.classList.add('grid--exit');
+  renderPagination(filteredTours.length);
 
-  setTimeout(() => {
-    if (tours.length === 0) {
-      grid.innerHTML = renderEmptyState(label);
+  const paint = () => {
+    if (filteredTours.length === 0) {
+      grid.innerHTML = renderEmptyState(categoryKey);
+      document.getElementById('pagination-container').innerHTML = '';
     } else {
-      grid.innerHTML = tours.map(renderTourCard).join('');
+      grid.innerHTML = paginatedTours.map(renderTourCard).join('');
     }
     grid.classList.remove('grid--exit');
-    grid.classList.add('grid--enter');
+    if (!opts.skipAnim) {
+      grid.classList.add('grid--enter');
+      const cards = grid.querySelectorAll('.tour-card');
+      cards.forEach((card, i) => { card.style.animationDelay = `${i * 40}ms`; });
+      setTimeout(() => grid.classList.remove('grid--enter'), 260 + cards.length * 40);
+    }
+    if (window.syncSaveButtons) window.syncSaveButtons();
+  };
 
-    const cards = grid.querySelectorAll('.tour-card');
-    cards.forEach((card, i) => {
-      card.style.animationDelay = `${i * 60}ms`;
-    });
-
-    setTimeout(() => {
-      grid.classList.remove('grid--enter');
-    }, 400 + cards.length * 60);
-  }, 220);
-  if (window.syncSaveButtons) window.syncSaveButtons();
+  if (opts.skipAnim) {
+    paint();
+  } else {
+    grid.classList.add('grid--exit');
+    setTimeout(paint, 160);
+  }
 }
 
 function buildFilterTabs() {
@@ -395,7 +509,7 @@ function buildFilterTabs() {
         data-category="${cat.key}"
         aria-pressed="${isActive}"
       >
-        <span class="filter-tab__label">${cat.label}</span>
+          <span class="filter-tab__label">${T(cat.labelKey)}</span>
         <span class="filter-tab__count">${count}</span>
       </button>`;
   }).join('');
@@ -408,6 +522,7 @@ function buildFilterTabs() {
 function handleTabClick(categoryKey) {
   if (categoryKey === activeCategory) return;
   activeCategory = categoryKey;
+  currentPage = 1; // კატეგორიის შეცვლისას პირველ გვერდზე დაბრუნება
 
   document.querySelectorAll('.filter-tab').forEach(btn => {
     const isActive = btn.dataset.category === categoryKey;
@@ -442,25 +557,147 @@ window.closeModal = function() {
   document.getElementById('book-modal').classList.remove('open');
 };
 
-// Initialize
-async function init() {
+// ── CACHE HELPERS (shared with index.html via gt_data_cache_v1) ──
+const DATA_CACHE_KEY = 'gt_data_cache_v1';
+const DATA_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
+
+function readToursFromCache() {
   try {
-    allTours = await getTours();
+    const raw = localStorage.getItem(DATA_CACHE_KEY);
+    if (!raw) return null;
+    const cache = JSON.parse(raw);
+    if (!cache || !Array.isArray(cache.tours) || cache.tours.length === 0) return null;
+    if (cache.timestamp && Date.now() - cache.timestamp > DATA_CACHE_MAX_AGE) return null;
+    return cache.tours;
+  } catch (e) { return null; }
+}
+
+function writeToursToCache(tours) {
+  try {
+    const raw = localStorage.getItem(DATA_CACHE_KEY);
+    const cache = raw ? JSON.parse(raw) : {};
+    cache.tours = tours;
+    cache.timestamp = Date.now();
+    localStorage.setItem(DATA_CACHE_KEY, JSON.stringify(cache));
+  } catch (e) { /* quota — ignore */ }
+}
+
+// ── CONTENT WATCHDOG ────────────────────────────────────────
+// If the initial fetch is slow or fails, this keeps retrying every 1s
+// until the grid actually shows content (real cards OR a legitimate
+// "no tours" empty state). As soon as something is on screen, it stops.
+let _contentWatchdog = null;
+let _watchdogBusy = false;
+let _watchdogAttempts = 0;
+const WATCHDOG_MAX_ATTEMPTS = 30;   // ~30 s absolute cap so we don't loop forever
+const WATCHDOG_INTERVAL_MS = 1000;
+
+function stopContentWatchdog() {
+  if (_contentWatchdog) { clearTimeout(_contentWatchdog); _contentWatchdog = null; }
+}
+
+function isContentVisible() {
+  const grid = document.getElementById('tours-filter-grid');
+  if (!grid) return false;
+  return !!(grid.querySelector('.tour-card') || grid.querySelector('.tours-empty'));
+}
+
+function scheduleContentWatchdog() {
+  stopContentWatchdog();
+  _contentWatchdog = setTimeout(tickContentWatchdog, WATCHDOG_INTERVAL_MS);
+}
+
+async function tickContentWatchdog() {
+  if (isContentVisible()) { stopContentWatchdog(); return; }
+  if (_watchdogBusy) { scheduleContentWatchdog(); return; }
+  if (_watchdogAttempts >= WATCHDOG_MAX_ATTEMPTS) { stopContentWatchdog(); return; }
+  _watchdogAttempts++;
+  _watchdogBusy = true;
+  try {
+    const config = await import('./firebase-config.js');
+    const fresh = await Promise.race([
+      config.getTours(),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Watchdog timeout')), 1500)
+      )
+    ]);
+
+    if (Array.isArray(fresh) && fresh.length > 0) {
+      allTours = fresh;
+      writeToursToCache(fresh);
+      buildFilterTabs();
+      renderToursGrid(activeCategory, { skipAnim: true });
+      requestAnimationFrame(() => moveActiveIndicator(activeCategory));
+      if (window.syncSaveButtons) window.syncSaveButtons();
+    }
+  } catch (e) { /* will retry on next tick */ }
+  _watchdogBusy = false;
+  if (!isContentVisible()) scheduleContentWatchdog();
+  else stopContentWatchdog();
+}
+
+// Initialize — cache-first, then background refresh (matches index.html strategy).
+async function init() {
+  let renderedFromCache = false;
+
+  // Translate the initial "Loading tours..." placeholder immediately.
+  const countEl = document.getElementById('tours-result-count');
+  if (countEl) countEl.textContent = T('loading') + '…';
+
+  // 1. Instant paint from localStorage cache.
+  const cached = readToursFromCache();
+  if (cached) {
+    allTours = cached;
     buildFilterTabs();
-    renderToursGrid(activeCategory);
+    renderToursGrid(activeCategory, { skipAnim: true });
     requestAnimationFrame(() => moveActiveIndicator(activeCategory));
-    
-    window.addEventListener('resize', () => {
-      moveActiveIndicator(activeCategory);
-    });
+    if (window.syncSaveButtons) window.syncSaveButtons();
+    renderedFromCache = true;
+  }
+
+  window.addEventListener('resize', () => moveActiveIndicator(activeCategory));
+
+  // 2. Kick off the watchdog: if content isn't on screen within 1 s,
+  //    it will retry fetching until it is.
+  scheduleContentWatchdog();
+
+  // Safety Restart: თუ 1.5 წამში სპინერი არ გაქრა, გვერდი დარესტარტდეს
+  setTimeout(() => {
+    if (document.querySelector('.gt-card-loader')) {
+      console.warn('Loading taking too long, restarting page...');
+      window.location.reload();
+    }
+  }, 1500);
+
+  // 3. Background fresh fetch — dynamically import Firebase so the cache
+  //    paint above is never blocked by the SDK download.
+  try {
+    const fetchWithTimeout = async (timeoutMs = 1500) => {
+      const config = await import('./firebase-config.js');
+      return Promise.race([
+        config.getTours(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Fetch timeout')), timeoutMs)
+        )
+      ]);
+    };
+
+    const fresh = await fetchWithTimeout(1500);
+
+    if (Array.isArray(fresh)) {
+      allTours = fresh;
+      writeToursToCache(fresh);
+      buildFilterTabs();
+      renderToursGrid(activeCategory, { skipAnim: renderedFromCache });
+      if (window.syncSaveButtons) window.syncSaveButtons();
+      requestAnimationFrame(() => moveActiveIndicator(activeCategory));
+    } else if (!renderedFromCache) {
+      document.getElementById('tours-filter-grid').innerHTML = renderEmptyState(activeCategory);
+    }
+    if (isContentVisible()) stopContentWatchdog();
   } catch (error) {
     console.error('Error loading tours:', error);
-    document.getElementById('tours-filter-grid').innerHTML = `
-      <div class="tours-empty">
-        <div class="tours-empty__icon">&#9888;</div>
-        <h3>Error loading tours</h3>
-        <p>Please try again later.</p>
-      </div>`;
+    // Don't show the error card yet — let the watchdog keep retrying.
   }
 }
 
@@ -469,7 +706,7 @@ async function init() {
 window.addEventListener('languageChanged', () => {
   if (allTours && allTours.length) {
     buildFilterTabs();
-    renderToursGrid(activeCategory);
+    renderToursGrid(activeCategory, { skipAnim: true });
     requestAnimationFrame(() => moveActiveIndicator(activeCategory));
   }
 });

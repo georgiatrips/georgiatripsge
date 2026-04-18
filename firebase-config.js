@@ -11,7 +11,8 @@ import {
   getDoc,
   query, 
   orderBy,
-  serverTimestamp 
+  serverTimestamp,
+  enableIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
@@ -30,6 +31,15 @@ const firebaseConfig = {
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+
+// Enable Offline Persistence for better performance and to fix "Could not reach backend" issues
+enableIndexedDbPersistence(db).catch((err) => {
+  if (err.code === 'failed-precondition') {
+    console.warn('Firestore persistence failed: Multiple tabs open.');
+  } else if (err.code === 'unimplemented') {
+    console.warn('Firestore persistence failed: Browser not supported.');
+  }
+});
 
 // ImgBB API Key
 const IMGBB_API_KEY = 'a5e4f8277be98927eb525c65da0615bf';
