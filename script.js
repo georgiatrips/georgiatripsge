@@ -1028,6 +1028,68 @@ function renderAllContent() {
   syncSaveButtons();
 }
 
+// ===== INDEX-PAGE CONTENT WATCHDOG =====
+// Cold-load safety net: if cards haven't rendered on the homepage within
+// ~1 s, keep retrying the Firebase fetch until at least one grid is
+// populated with real cards. Stops immediately once cards appear.
+let _idxWatchdog = null;
+let _idxWatchdogBusy = false;
+let _idxWatchdogAttempts = 0;
+const IDX_WATCHDOG_MAX_ATTEMPTS = 30; // ~30 s hard cap
+const IDX_WATCHDOG_INTERVAL_MS = 1000;
+
+function stopIndexWatchdog() {
+  if (_idxWatchdog) { clearTimeout(_idxWatchdog); _idxWatchdog = null; }
+}
+
+function indexContentVisible() {
+  const ids = ['domestic-tours-grid', 'international-tours-grid', 'cars-grid', 'stories-grid'];
+  // Require at least one grid that exists on this page to have real cards.
+  let foundAny = false;
+  for (const id of ids) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    foundAny = true;
+    if (el.querySelector('.tour-card, .car-card, .post-card, .story-card, .featured-card')) return true;
+  }
+  // If none of the grids exist on this page, don't block.
+  return !foundAny;
+}
+
+function scheduleIndexWatchdog() {
+  stopIndexWatchdog();
+  _idxWatchdog = setTimeout(tickIndexWatchdog, IDX_WATCHDOG_INTERVAL_MS);
+}
+
+async function tickIndexWatchdog() {
+  if (indexContentVisible()) { stopIndexWatchdog(); return; }
+  if (_idxWatchdogBusy) { scheduleIndexWatchdog(); return; }
+  if (_idxWatchdogAttempts >= IDX_WATCHDOG_MAX_ATTEMPTS) { stopIndexWatchdog(); return; }
+  _idxWatchdogAttempts++;
+  _idxWatchdogBusy = true;
+  try {
+    const [freshTours, freshCars, freshPosts, freshFeatured, freshReviews] = await Promise.all([
+      fetchToursFromFirebase().catch(() => []),
+      fetchCarsFromFirebase().catch(() => []),
+      fetchPostsFromFirebase().catch(() => []),
+      fetchFeaturedFromFirebase().catch(() => []),
+      fetchReviewsFromFirebase().catch(() => [])
+    ]);
+    if ((freshTours && freshTours.length) || (freshCars && freshCars.length) || (freshPosts && freshPosts.length)) {
+      toursData    = freshTours;
+      carsData     = freshCars;
+      postsData    = freshPosts;
+      featuredData = freshFeatured;
+      reviewsData  = freshReviews;
+      writeDataCache({ tours: toursData, cars: carsData, posts: postsData, featured: featuredData, reviews: reviewsData });
+      renderAllContent();
+    }
+  } catch (e) { /* retry on next tick */ }
+  _idxWatchdogBusy = false;
+  if (indexContentVisible()) stopIndexWatchdog();
+  else scheduleIndexWatchdog();
+}
+
 // ===== LOAD ALL DATA AND INIT =====
 async function loadDataAndInit() {
   // One-time init (runs regardless of whether we have cache)
@@ -1067,7 +1129,12 @@ async function loadDataAndInit() {
     if (storiesGrid && !storiesGrid.querySelector('.gt-card-loader')) storiesGrid.innerHTML = spinnerLight;
   }
 
-  // ---------- 2. Background fresh fetch ----------
+  // ---------- 2. Kick off the watchdog ----------
+  // Runs in parallel with the fresh fetch below. If the fresh fetch succeeds
+  // first, indexContentVisible() will return true and the watchdog self-stops.
+  scheduleIndexWatchdog();
+
+  // ---------- 3. Background fresh fetch ----------
   try {
     const [freshTours, freshCars, freshPosts, freshFeatured, freshReviews] = await Promise.all([
       fetchToursFromFirebase(),
@@ -1094,8 +1161,10 @@ async function loadDataAndInit() {
 
     renderAllContent();
     if (!renderedFromCache) setTimeout(initScrollAnimations, 100);
+    if (indexContentVisible()) stopIndexWatchdog();
   } catch (error) {
     console.error('Error loading data:', error);
+    // Don't show an error UI — the watchdog will keep retrying.
   }
 }
 

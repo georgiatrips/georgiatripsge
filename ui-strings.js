@@ -319,6 +319,88 @@
       ar: 'ليس لديك أي جولات محفوظة بعد.',
       he: 'עדיין אין לכם סיורים שמורים.',
       uk: 'У вас поки немає збережених турів.'
+    },
+    /* ---- Tours filter page: empty state + counters + categories ---- */
+    empty_title: {
+      ka: 'ტურები ვერ მოიძებნა',
+      en: 'No tours found',
+      ru: 'Туры не найдены',
+      tr: 'Tur bulunamadı',
+      ar: 'لم يتم العثور على جولات',
+      he: 'לא נמצאו סיורים',
+      uk: 'Тури не знайдено'
+    },
+    empty_subtitle: {
+      ka: 'ამჟამად {category} არ არის ხელმისაწვდომი.',
+      en: 'No {category} are available right now.',
+      ru: 'Сейчас {category} недоступны.',
+      tr: 'Şu anda {category} mevcut değil.',
+      ar: 'لا تتوفر {category} في الوقت الحالي.',
+      he: 'כרגע אין {category} זמינים.',
+      uk: 'Наразі {category} недоступні.'
+    },
+    empty_cta: {
+      ka: 'მოგვიანებით შემოიარეთ ან <a href="contact.html">დაგვიკავშირდით</a> ინდივიდუალური მოგზაურობისთვის.',
+      en: 'Check back soon or <a href="contact.html">contact us</a> for a custom trip.',
+      ru: 'Загляните позже или <a href="contact.html">свяжитесь с нами</a> для индивидуальной поездки.',
+      tr: 'Kısa süre içinde tekrar bakın veya özel bir tur için <a href="contact.html">bize ulaşın</a>.',
+      ar: 'تحقق مرة أخرى قريبًا أو <a href="contact.html">تواصل معنا</a> لرحلة مخصصة.',
+      he: 'חזרו בקרוב או <a href="contact.html">צרו איתנו קשר</a> לטיול בהתאמה אישית.',
+      uk: 'Зазирніть згодом або <a href="contact.html">зв\'яжіться з нами</a> для індивідуальної подорожі.'
+    },
+    cat_one_day: {
+      ka: 'ერთდღიანი ტურები',
+      en: 'One-Day Tours',
+      ru: 'Однодневные туры',
+      tr: 'Günübirlik Turlar',
+      ar: 'جولات يومية',
+      he: 'סיורים בני יום',
+      uk: 'Одноденні тури'
+    },
+    cat_multi_day: {
+      ka: 'მრავალდღიანი ტურები',
+      en: 'Multi-Day Tours',
+      ru: 'Многодневные туры',
+      tr: 'Çok Günlü Turlar',
+      ar: 'جولات متعددة الأيام',
+      he: 'סיורים רב-יומיים',
+      uk: 'Багатоденні тури'
+    },
+    cat_fixed: {
+      ka: 'ფიქსირებული ტურები',
+      en: 'Fixed Tours',
+      ru: 'Фиксированные туры',
+      tr: 'Sabit Turlar',
+      ar: 'جولات ثابتة',
+      he: 'סיורים קבועים',
+      uk: 'Фіксовані тури'
+    },
+    cat_tours_generic: {
+      ka: 'ტურები',
+      en: 'tours',
+      ru: 'туры',
+      tr: 'turlar',
+      ar: 'جولات',
+      he: 'סיורים',
+      uk: 'тури'
+    },
+    tour_count_one: {
+      ka: '1 ტური მოიძებნა',
+      en: '1 tour found',
+      ru: 'Найден 1 тур',
+      tr: '1 tur bulundu',
+      ar: 'تم العثور على جولة واحدة',
+      he: 'נמצא סיור אחד',
+      uk: 'Знайдено 1 тур'
+    },
+    tour_count_many: {
+      ka: '{n} ტური მოიძებნა',
+      en: '{n} tours found',
+      ru: 'Найдено туров: {n}',
+      tr: '{n} tur bulundu',
+      ar: 'تم العثور على {n} جولة',
+      he: 'נמצאו {n} סיורים',
+      uk: 'Знайдено турів: {n}'
     }
   };
 
@@ -432,7 +514,7 @@
     'Close': { ka: 'დახურვა', ru: 'Закрыть', tr: 'Kapat', ar: 'إغلاق', he: 'סגור', uk: 'Закрити' },
 
     /* --- Map locations (structured as name – description) --- */
-    'Tbilisi – Capital City': { ka: 'თბილისი – დედაქალაქი', ru: 'Тбилиси – Столица', tr: 'Tiflis – Başkent', ar: 'تبليسي – العاصمة', he: 'טביליסי – עיר הבירה', uk: 'Тбілісі – столиця' },
+    'Tbilisi – Capital City': { ka: 'თბილისი – დედა��ალაქი', ru: 'Тбилиси – Столица', tr: 'Tiflis – Başkent', ar: 'تبليسي – العاصمة', he: 'טביליסי – עיר הבירה', uk: 'Тбілісі – столиця' },
     'Kazbegi – Caucasus Mountains': { ka: 'ყაზბეგი – კავკასიონის მთები', ru: 'Казбеги – Кавказские горы', tr: 'Kazbegi – Kafkas Dağları', ar: 'كازبيغي – جبال القوقاز', he: 'קזבגי – הרי הקווקז', uk: 'Казбегі – Кавказькі гори' },
     'Kakheti – Wine Region': { ka: 'კახეთი – ღვინის რეგიონი', ru: 'Кахетия – Винный регион', tr: 'Kaheti – Şarap Bölgesi', ar: 'كاخيتي – منطقة النبيذ', he: 'קחתי – אזור היין', uk: 'Кахетія – винний регіон' },
     'Batumi – Black Sea Coast': { ka: 'ბათუმი – შავი ზღვის სანაპირო', ru: 'Батуми – Побережье Чёрного моря', tr: 'Batum – Karadeniz Kıyısı', ar: 'باتومي – ساحل البحر الأسود', he: 'בטומי – חוף הים השחור', uk: 'Батумі – узбережжя Чорного моря' },

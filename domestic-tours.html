@@ -233,9 +233,9 @@ const TOUR_TYPE = 'domestic';
 
 // Categories
 const TOUR_CATEGORIES = [
-  { key: 'one-day', label: 'One-Day Tours' },
-  { key: 'multi-day', label: 'Multi-Day Tours' },
-  { key: 'fixed', label: 'Fixed Tours' }
+  { key: 'one-day',   label: 'One-Day Tours',   labelKey: 'cat_one_day'   },
+  { key: 'multi-day', label: 'Multi-Day Tours', labelKey: 'cat_multi_day' },
+  { key: 'fixed',     label: 'Fixed Tours',     labelKey: 'cat_fixed'     }
 ];
 
 let allTours = [];
@@ -328,12 +328,18 @@ function renderTourCard(tour) {
     </article>`;
 }
 
-function renderEmptyState(categoryLabel) {
+function renderEmptyState(categoryKey) {
+  // Resolve the translated category label (falls back to generic "tours").
+  const cat = TOUR_CATEGORIES.find(c => c.key === categoryKey);
+  const catLabel = cat ? T(cat.labelKey) : T('cat_tours_generic');
+  const title = T('empty_title');
+  const subtitle = T('empty_subtitle', { category: catLabel });
+  const cta = T('empty_cta');
   return `
     <div class="tours-empty">
       <div class="tours-empty__icon">&#128506;</div>
-      <h3>No tours found</h3>
-      <p>No ${categoryLabel} are available right now.<br>Check back soon or <a href="contact.html">contact us</a> for a custom trip.</p>
+      <h3>${title}</h3>
+      <p>${subtitle}<br>${cta}</p>
     </div>`;
 }
 
@@ -354,18 +360,16 @@ function renderToursGrid(categoryKey, opts = {}) {
   if (!grid) return;
 
   const tours = getFilteredTours(categoryKey);
-  const cat = TOUR_CATEGORIES.find(c => c.key === categoryKey);
-  const label = cat ? cat.label : 'Tours';
 
   if (countEl) {
     countEl.textContent = tours.length === 1
-      ? `1 tour found`
-      : `${tours.length} tours found`;
+      ? T('tour_count_one')
+      : T('tour_count_many', { n: tours.length });
   }
 
   const paint = () => {
     if (tours.length === 0) {
-      grid.innerHTML = renderEmptyState(label);
+      grid.innerHTML = renderEmptyState(categoryKey);
     } else {
       grid.innerHTML = tours.map(renderTourCard).join('');
     }
@@ -401,7 +405,7 @@ function buildFilterTabs() {
         data-category="${cat.key}"
         aria-pressed="${isActive}"
       >
-        <span class="filter-tab__label">${cat.label}</span>
+          <span class="filter-tab__label">${T(cat.labelKey)}</span>
         <span class="filter-tab__count">${count}</span>
       </button>`;
   }).join('');
@@ -473,9 +477,62 @@ function writeToursToCache(tours) {
   } catch (e) { /* quota — ignore */ }
 }
 
+// ── CONTENT WATCHDOG ────────────────────────────────────────
+// If the initial fetch is slow or fails, this keeps retrying every 1s
+// until the grid actually shows content (real cards OR a legitimate
+// "no tours" empty state). As soon as something is on screen, it stops.
+let _contentWatchdog = null;
+let _watchdogBusy = false;
+let _watchdogAttempts = 0;
+const WATCHDOG_MAX_ATTEMPTS = 30;   // ~30 s absolute cap so we don't loop forever
+const WATCHDOG_INTERVAL_MS = 1000;
+
+function stopContentWatchdog() {
+  if (_contentWatchdog) { clearTimeout(_contentWatchdog); _contentWatchdog = null; }
+}
+
+function isContentVisible() {
+  const grid = document.getElementById('tours-filter-grid');
+  if (!grid) return false;
+  // A real card OR the translated empty-state both count as "loaded".
+  return !!(grid.querySelector('.tour-card') || grid.querySelector('.tours-empty'));
+}
+
+function scheduleContentWatchdog() {
+  stopContentWatchdog();
+  _contentWatchdog = setTimeout(tickContentWatchdog, WATCHDOG_INTERVAL_MS);
+}
+
+async function tickContentWatchdog() {
+  if (isContentVisible()) { stopContentWatchdog(); return; }
+  if (_watchdogBusy) { scheduleContentWatchdog(); return; }
+  if (_watchdogAttempts >= WATCHDOG_MAX_ATTEMPTS) { stopContentWatchdog(); return; }
+  _watchdogAttempts++;
+  _watchdogBusy = true;
+  try {
+    const { getTours } = await import('./firebase-config.js');
+    const fresh = await getTours();
+    if (Array.isArray(fresh) && fresh.length > 0) {
+      allTours = fresh;
+      writeToursToCache(fresh);
+      buildFilterTabs();
+      renderToursGrid(activeCategory, { skipAnim: true });
+      requestAnimationFrame(() => moveActiveIndicator(activeCategory));
+      if (window.syncSaveButtons) window.syncSaveButtons();
+    }
+  } catch (e) { /* will retry on next tick */ }
+  _watchdogBusy = false;
+  if (!isContentVisible()) scheduleContentWatchdog();
+  else stopContentWatchdog();
+}
+
 // Initialize — cache-first, then background refresh (matches index.html strategy).
 async function init() {
   let renderedFromCache = false;
+
+  // Translate the initial "Loading tours..." placeholder immediately.
+  const countEl = document.getElementById('tours-result-count');
+  if (countEl) countEl.textContent = T('loading') + '…';
 
   // 1. Instant paint from localStorage cache.
   const cached = readToursFromCache();
@@ -490,7 +547,11 @@ async function init() {
 
   window.addEventListener('resize', () => moveActiveIndicator(activeCategory));
 
-  // 2. Background fresh fetch — dynamically import Firebase so the cache
+  // 2. Kick off the watchdog: if content isn't on screen within 1 s,
+  //    it will retry fetching until it is.
+  scheduleContentWatchdog();
+
+  // 3. Background fresh fetch — dynamically import Firebase so the cache
   //    paint above is never blocked by the SDK download.
   try {
     const { getTours } = await import('./firebase-config.js');
@@ -503,18 +564,12 @@ async function init() {
       if (window.syncSaveButtons) window.syncSaveButtons();
       requestAnimationFrame(() => moveActiveIndicator(activeCategory));
     } else if (!renderedFromCache) {
-      document.getElementById('tours-filter-grid').innerHTML = renderEmptyState('tours');
+      document.getElementById('tours-filter-grid').innerHTML = renderEmptyState(activeCategory);
     }
+    if (isContentVisible()) stopContentWatchdog();
   } catch (error) {
     console.error('Error loading tours:', error);
-    if (!renderedFromCache) {
-      document.getElementById('tours-filter-grid').innerHTML = `
-        <div class="tours-empty">
-          <div class="tours-empty__icon">&#9888;</div>
-          <h3>Error loading tours</h3>
-          <p>Please try again later.</p>
-        </div>`;
-    }
+    // Don't show the error card yet — let the watchdog keep retrying.
   }
 }
 
