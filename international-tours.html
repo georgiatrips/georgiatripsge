@@ -222,7 +222,11 @@
 <script type="module" src="script.js"></script>
 <script type="module" src="auth.js"></script>
 <script type="module">
-import { getTours } from './firebase-config.js';
+// NOTE: We intentionally use a DYNAMIC import for firebase-config.js below
+// instead of a static top-level import. A top-level import would delay the
+// entire module (and our cache-hydration paint) until the full Firebase SDK
+// downloads from gstatic.com. With a dynamic import the cache paint runs
+// immediately and Firebase is only loaded for the background refresh.
 
 // Tour type filter
 const TOUR_TYPE = 'international';
@@ -485,8 +489,10 @@ async function init() {
 
   window.addEventListener('resize', () => moveActiveIndicator(activeCategory));
 
-  // 2. Background fresh fetch — update cache and re-render silently.
+  // 2. Background fresh fetch — dynamically import Firebase so the cache
+  //    paint above is never blocked by the SDK download.
   try {
+    const { getTours } = await import('./firebase-config.js');
     const fresh = await getTours();
     if (Array.isArray(fresh) && fresh.length > 0) {
       allTours = fresh;
