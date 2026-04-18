@@ -26,6 +26,45 @@
   html.setAttribute('dir', RTL[lang] ? 'rtl' : 'ltr');
   window.GT_BOOT_LANG = lang;
 
+  /* --- Scroll restoration after a language-switch reload ---
+     lang.js saved the scroll offset to sessionStorage before reloading.
+     We disable the browser's built-in restoration now and will jump to
+     the saved offset as soon as the page reaches the original height. */
+  try {
+    var SCROLL_KEY = 'gt_lang_scroll';
+    var rawScroll = sessionStorage.getItem(SCROLL_KEY);
+    if (rawScroll) {
+      var data = JSON.parse(rawScroll);
+      var samePath = data && data.path === (location.pathname + location.search + location.hash);
+      var fresh = data && (Date.now() - (data.t || 0) < 30000);
+      if (data && samePath && fresh && typeof data.y === 'number') {
+        if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+        window.__GT_PENDING_SCROLL_Y = data.y;
+        sessionStorage.removeItem(SCROLL_KEY);
+        var applyScroll = function () {
+          var target = window.__GT_PENDING_SCROLL_Y;
+          if (typeof target !== 'number') return;
+          window.scrollTo(0, target);
+        };
+        // Keep trying until layout is tall enough (cards render async).
+        var attempts = 0;
+        var tryRestore = function () {
+          attempts++;
+          applyScroll();
+          var max = (document.documentElement.scrollHeight || 0) - window.innerHeight;
+          if (Math.abs((window.scrollY || 0) - window.__GT_PENDING_SCROLL_Y) < 2 || attempts > 40) {
+            return; // success or give up after ~4s
+          }
+          setTimeout(tryRestore, 100);
+        };
+        document.addEventListener('DOMContentLoaded', tryRestore, { once: true });
+        window.addEventListener('load', tryRestore, { once: true });
+      } else {
+        sessionStorage.removeItem(SCROLL_KEY);
+      }
+    }
+  } catch (e) { /* ignore */ }
+
   // English users see no FOUC because the HTML is already English.
   if (lang === SRC_LANG) {
     window.GTLangBoot = { done: function () {} };
