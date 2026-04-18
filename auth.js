@@ -244,7 +244,7 @@ async function signUpWithEmail(email, password, displayName) {
       displayName: displayName
     });
     
-    // გაგზავნოს ვერიფიკაცია და მაშინვე გამ���ვიდეს სისტემიდან
+    // გაგზავნოს ვერიფიკაცია და მაშინვე გამოვიდეს სისტემიდან
     await sendEmailVerification(result.user);
     await signOut(auth); 
 

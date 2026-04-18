@@ -346,7 +346,7 @@ function initNavbar() {
     const dropdown = e.target.closest('.nav-dropdown, .nav-user-dropdown, .nav-currency-dropdown');
     const isLink = e.target.tagName === 'A';
 
-    // ყველა სხვა ღი�� მენიუს დახურვა
+    // ყველა სხვა ღია მენიუს დახურვა
     if (!dropdown || btn) {
       document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
         if (!dropdown || menu !== dropdown.querySelector('.dropdown-menu')) {

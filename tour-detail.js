@@ -210,7 +210,7 @@ function showItinerary() {
   itineraryContent.innerHTML = html;
 }
 
-// ── BOOKING MODAL ──────────────────────────────────���─────────
+// ── BOOKING MODAL ───────────────────────────────────────────
 function openBookingForm() {
   const modal = document.getElementById('book-modal');
   if (modal) {
