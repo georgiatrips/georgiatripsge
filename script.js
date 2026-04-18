@@ -249,7 +249,9 @@ function goToTourDetail(tourId) {
   } else {
     sessionStorage.setItem('selectedTourId', tourId);
   }
-  window.location.href = 'tour-detail.html';
+  // Each tour gets its own unique URL (?id=...) so it's shareable and
+  // survives language reloads without getting mixed up with other tours.
+  window.location.href = `tour-detail.html?id=${encodeURIComponent(tourId)}`;
 }
 
 function goToCarDetail(carId) {
@@ -698,7 +700,7 @@ function renderFeaturedSlider() {
               <span class="badge-text">${tFn('guided_tour')}</span>
             </span>
           </div>
-          <a href="tour-detail.html" class="btn-primary featured-cta" onclick="goToTourDetail('${getSafeAttr(featured.id)}'); return false;">
+          <a href="tour-detail.html?id=${encodeURIComponent(featured.id || '')}" class="btn-primary featured-cta" onclick="goToTourDetail('${getSafeAttr(featured.id)}'); return false;">
             <span>${tFn('explore_now')}</span>
             <span class="cta-arrow">→</span>
           </a>
@@ -728,7 +730,7 @@ function renderMapOverlay() {
     <h3>${tFn('featured_destinations') || 'Featured Destinations'}</h3>
     ${domesticFeatured.map(featured => {
       const title = L(featured.title);
-      return `<div class="map-location"><div class="map-dot"></div><a href="tour-detail.html" class="map-link" onclick="goToTourDetail('${getSafeAttr(featured.id)}'); return false;">${title}</a></div>`;
+      return `<div class="map-location"><div class="map-dot"></div><a href="tour-detail.html?id=${encodeURIComponent(featured.id || '')}" class="map-link" onclick="goToTourDetail('${getSafeAttr(featured.id)}'); return false;">${title}</a></div>`;
     }).join('')}
   `;
 }

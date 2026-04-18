@@ -15,12 +15,16 @@ let _tourDetailRetryTimer = null;
 let _tourDetailFirebaseStarted = false;
 
 function _tryGetTourFromAnySource(tourId) {
-  // 1. sessionStorage full object (fastest — set on card click)
+  // 1. sessionStorage full object (fastest — set on card click).
+  //    IMPORTANT: only accept it if its id matches the requested tourId,
+  //    otherwise we risk showing the previously opened tour.
   try {
     const storedTour = sessionStorage.getItem('selectedTourData');
     if (storedTour) {
       const parsed = JSON.parse(storedTour);
-      if (parsed && (!tourId || parsed.id === tourId)) return parsed;
+      if (parsed && tourId && parsed.id === tourId) return parsed;
+      // Fallback: no tourId at all (legacy links) — still return cached.
+      if (parsed && !tourId) return parsed;
     }
   } catch (e) {}
 
@@ -96,8 +100,34 @@ function _showTourDetailLoader() {
   }
 }
 
+// Read tour id from URL (?id=xxx or ?tour=xxx). This makes every tour have
+// its own unique, shareable link and keeps the correct tour loaded after a
+// language switch (which triggers location.reload()) — no more stale
+// sessionStorage mixups between tours.
+function _getTourIdFromURL() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('id') || params.get('tour') || null;
+  } catch (e) { return null; }
+}
+
 function loadTourDetail() {
-  const tourId = sessionStorage.getItem('selectedTourId');
+  // Prefer URL id over sessionStorage so each tour link is unique & stable.
+  const urlId = _getTourIdFromURL();
+  const storedId = sessionStorage.getItem('selectedTourId');
+  const tourId = urlId || storedId;
+
+  // If URL id differs from stored id, the user navigated to a new tour —
+  // wipe the cached object so we don't show the previous tour while the
+  // correct one loads.
+  if (urlId && storedId && urlId !== storedId) {
+    try {
+      sessionStorage.removeItem('selectedTourData');
+      sessionStorage.setItem('selectedTourId', urlId);
+    } catch (e) {}
+  } else if (urlId && !storedId) {
+    try { sessionStorage.setItem('selectedTourId', urlId); } catch (e) {}
+  }
 
   // 1. Try every fast source first.
   const hit = _tryGetTourFromAnySource(tourId);
@@ -387,7 +417,7 @@ function submitBooking(event) {
   form.reset();
 }
 
-// ── INIT ──────────────────────────────────────────────────────
+// ── INIT ──────────────────────────────────────���───────────────
 document.addEventListener('DOMContentLoaded', loadTourDetail);
 
 // Re-populate when user switches language
