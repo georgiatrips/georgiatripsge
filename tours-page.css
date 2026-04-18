@@ -272,18 +272,30 @@
   list-style: none;
   margin: 0 0 1.1rem;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem 0.8rem;
 }
 
 .tour-highlight {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 7px;
   font-size: 0.8rem;
   color: var(--text-mid);
   font-weight: 500;
+  min-width: 0;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.tour-highlight .highlight-dot {
+  margin-top: 6px;
+}
+
+/* Limit highlights to max 2 across / 4 rows (8 items total) */
+.tour-highlight:nth-child(n+9) {
+  display: none;
 }
 
 .highlight-dot {

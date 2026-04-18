@@ -1,8 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="bg-background">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Preconnect to third-party origins so Firebase, fonts and flag images
+     start their TCP+TLS handshakes in parallel with HTML parsing. -->
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://flagcdn.com">
+<link rel="dns-prefetch" href="https://api.mymemory.translated.net">
+<!-- Preload critical scripts so they start downloading immediately. -->
+<link rel="preload" href="lang-boot.js" as="script">
+<link rel="preload" href="ui-strings.js" as="script">
+<link rel="modulepreload" href="script.js">
 <script src="lang-boot.js"></script>
 <script src="ui-strings.js" defer></script>
 <script src="translate.js" defer></script>
@@ -11,7 +23,6 @@
 <title>Georgia Trips – Explore Georgia With Us</title>
 <meta name="description" content="Discover Georgia with expert guided tours, comfortable transport and authentic travel experiences. Book your Georgian adventure today.">
 <link rel="stylesheet" href="style.css">
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <style>
 /* Google Style Reviews */
 .reviews-slider-wrapper {

@@ -5,45 +5,141 @@
 
 let currentTour = null;
 
-// ── LOAD TOUR DATA ───────────────────────────────────────────
+// ── INSTANT / RESILIENT LOAD ─────────────────────────────────
+// Strategy: try every fast in-memory source first (sessionStorage,
+// localStorage cache, static TOURS). If none of them have the
+// requested tour yet, start a Firebase fetch AND schedule a retry
+// every 1s. Keep retrying forever until the tour renders.
+const TOUR_DETAIL_RETRY_MS = 1000;
+let _tourDetailRetryTimer = null;
+let _tourDetailFirebaseStarted = false;
+
+function _tryGetTourFromAnySource(tourId) {
+  // 1. sessionStorage full object (fastest — set on card click)
+  try {
+    const storedTour = sessionStorage.getItem('selectedTourData');
+    if (storedTour) {
+      const parsed = JSON.parse(storedTour);
+      if (parsed && (!tourId || parsed.id === tourId)) return parsed;
+    }
+  } catch (e) {}
+
+  // 2. localStorage cache written by index page (gt_data_cache_v1)
+  try {
+    const raw = localStorage.getItem('gt_data_cache_v1');
+    if (raw) {
+      const cache = JSON.parse(raw);
+      if (cache && Array.isArray(cache.tours)) {
+        const hit = tourId
+          ? cache.tours.find(t => t && t.id === tourId)
+          : cache.tours[0];
+        if (hit) return hit;
+      }
+    }
+  } catch (e) {}
+
+  // 3. In-page arrays (when script.js is loaded on the same page)
+  const dataList = (typeof toursData !== 'undefined' && Array.isArray(toursData))
+    ? toursData
+    : (typeof TOURS !== 'undefined' ? TOURS : []);
+  if (tourId && dataList.length) {
+    const hit = dataList.find(t => t && t.id === tourId);
+    if (hit) return hit;
+  }
+
+  return null;
+}
+
+// Lazy Firebase fetch — only pulled in if no cached source had the tour.
+async function _firebaseFetchTourById(tourId) {
+  if (!tourId) return null;
+  try {
+    const [{ initializeApp, getApps, getApp }, { getFirestore, doc, getDoc, collection, getDocs }, cfgMod] = await Promise.all([
+      import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'),
+      import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js'),
+      import('./firebase-config.js').catch(() => null)
+    ]);
+    const firebaseConfig = cfgMod && (cfgMod.firebaseConfig || cfgMod.default);
+    if (!firebaseConfig) return null;
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Try single-doc fetch first (fast path).
+    try {
+      const snap = await getDoc(doc(db, 'tours', tourId));
+      if (snap.exists()) return { id: snap.id, ...snap.data() };
+    } catch (e) {}
+
+    // Fallback: full collection scan (covers legacy IDs).
+    const snapshot = await getDocs(collection(db, 'tours'));
+    const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Write-through to cache so future visits are instant.
+    try {
+      const raw = localStorage.getItem('gt_data_cache_v1');
+      const cache = raw ? JSON.parse(raw) : {};
+      cache.tours = list;
+      cache.timestamp = Date.now();
+      localStorage.setItem('gt_data_cache_v1', JSON.stringify(cache));
+    } catch (e) {}
+    return list.find(t => t.id === tourId) || null;
+  } catch (err) {
+    console.error('[tour-detail] Firebase lookup failed:', err);
+    return null;
+  }
+}
+
+function _showTourDetailLoader() {
+  const titleEl = document.getElementById('detail-title');
+  if (titleEl && !titleEl.textContent.trim()) {
+    const loadingLabel = (window.t && window.t('loading')) || 'Loading';
+    titleEl.innerHTML = `<span class="gt-inline-loader" style="display:inline-flex;align-items:center;gap:0.6rem;font-size:1rem;color:var(--text-mid);"><span class="gt-card-loader__spinner" aria-hidden="true"></span>${loadingLabel}…</span>`;
+  }
+}
+
 function loadTourDetail() {
   const tourId = sessionStorage.getItem('selectedTourId');
-  const storedTour = sessionStorage.getItem('selectedTourData');
-  let parsedTour = null;
 
-  if (storedTour) {
-    try {
-      parsedTour = JSON.parse(storedTour);
-    } catch (error) {
-      console.error('Failed to parse selected tour data:', error);
-    }
-  }
-  
-  if (parsedTour) {
-    currentTour = parsedTour;
-    populateTourDetail();
+  // 1. Try every fast source first.
+  const hit = _tryGetTourFromAnySource(tourId);
+  if (hit) {
+    currentTour = hit;
+    try { populateTourDetail(); } catch (e) { console.error(e); }
+    // Clear retry loop — we're done.
+    if (_tourDetailRetryTimer) { clearTimeout(_tourDetailRetryTimer); _tourDetailRetryTimer = null; }
     return;
   }
 
-  // ვამოწმებთ ორივე შესაძლო წყაროს (ლოკალურს და სტატიკურს)
-  const dataList = (typeof toursData !== 'undefined') ? toursData : (typeof TOURS !== 'undefined' ? TOURS : []);
+  // 2. Nothing yet — show a lightweight loader so the page isn't blank.
+  _showTourDetailLoader();
 
-  if (!tourId || dataList.length === 0) {
-    console.error('Tour ID not found or data not available');
-    return;
+  // 3. Kick off Firebase fetch (single-flight). If the fetch fails or
+  //    returns null we clear the flag so the next 1s retry can try again.
+  if (tourId && !_tourDetailFirebaseStarted) {
+    _tourDetailFirebaseStarted = true;
+    _firebaseFetchTourById(tourId)
+      .then(tour => {
+        if (tour) {
+          try {
+            sessionStorage.setItem('selectedTourId', tour.id);
+            sessionStorage.setItem('selectedTourData', JSON.stringify(tour));
+          } catch (e) {}
+        } else {
+          _tourDetailFirebaseStarted = false; // allow retry on next tick
+        }
+        loadTourDetail(); // immediate attempt, don't wait 1s
+      })
+      .catch(() => {
+        _tourDetailFirebaseStarted = false;
+      });
   }
 
-  // Find the tour by ID
-  currentTour = dataList.find(tour => tour.id === tourId);
-  
-  if (!currentTour) {
-    console.error('Tour with ID ' + tourId + ' not found');
-    document.body.innerHTML = '<div style="text-align:center;padding:4rem;"><h2>Tour not found</h2><a href="domestic-tours.html">Back to Tours</a></div>';
-    return;
-  }
-
-  // Populate the page
-  populateTourDetail();
+  // 4. Schedule the hard 1-second retry. If populateTourDetail still
+  //    hasn't fired by then, this will restart the whole lookup.
+  if (_tourDetailRetryTimer) clearTimeout(_tourDetailRetryTimer);
+  _tourDetailRetryTimer = setTimeout(() => {
+    _tourDetailRetryTimer = null;
+    if (!currentTour) loadTourDetail();
+  }, TOUR_DETAIL_RETRY_MS);
 }
 
 // ── POPULATE PAGE ────────────────────────────────────────────

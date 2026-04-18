@@ -955,77 +955,148 @@ function initScrollSlider(gridId, prevId, nextId) {
   window.addEventListener('resize', updateArrowsVisibility);
 }
 
+// ===== DATA CACHE (localStorage) =====
+// Cache-first strategy: on every page load, we immediately render any
+// previously-seen cards from localStorage (0-ms paint) while we fetch
+// fresh data from Firebase in the background. Once fresh data arrives
+// we overwrite the cache and re-render only the content grids — init
+// (navbar, modals, weather, etc.) runs exactly once.
+const DATA_CACHE_KEY = 'gt_data_cache_v1';
+const DATA_CACHE_MAX_AGE = 24 * 60 * 60 * 1000; // 24h — stale data is still useful for instant paint
+
+function readDataCache() {
+  try {
+    const raw = localStorage.getItem(DATA_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return null;
+    if (parsed.timestamp && Date.now() - parsed.timestamp > DATA_CACHE_MAX_AGE) return null;
+    return parsed;
+  } catch (e) { return null; }
+}
+
+function writeDataCache(payload) {
+  try {
+    localStorage.setItem(DATA_CACHE_KEY, JSON.stringify({
+      timestamp: Date.now(),
+      tours: payload.tours || [],
+      cars: payload.cars || [],
+      posts: payload.posts || [],
+      featured: payload.featured || [],
+      reviews: payload.reviews || []
+    }));
+  } catch (e) { /* quota — ignore */ }
+}
+
+// Renders every content grid using the current in-memory data arrays.
+// Called once on cache hydrate (instant) and once on fresh fetch.
+function renderAllContent() {
+  // If no featured data, derive from tours flagged isFeatured.
+  if ((!featuredData || featuredData.length === 0) && toursData && toursData.length > 0) {
+    featuredData = getFeaturedToursFromData(toursData);
+  }
+
+  try { renderDomesticTours(); } catch (e) {}
+  try { renderInternationalTours(); } catch (e) {}
+  try { renderCars('cars-grid'); } catch (e) {}
+  try { renderPosts('stories-grid', 6); } catch (e) {}
+  try { renderReviews(); } catch (e) {}
+  try { renderFeaturedSlider(); } catch (e) {}
+  try { renderMapOverlay(); } catch (e) {}
+
+  const tEmpty = (k) => (window.t ? window.t(k) : k);
+
+  // Cars page full list
+  const carsStack = document.getElementById('cars-stack');
+  if (carsStack) {
+    carsStack.innerHTML = carsData.length > 0
+      ? carsData.map(renderCarFullCard).join('')
+      : `<p style="text-align:center;color:var(--text-mid);padding:3rem;">${tEmpty('empty_cars')}</p>`;
+  }
+
+  // Tours page full list
+  const toursPageGrid = document.getElementById('tours-page-grid');
+  if (toursPageGrid) {
+    toursPageGrid.innerHTML = toursData.length > 0
+      ? toursData.map(renderTourCard).join('')
+      : `<p style="text-align:center;color:var(--text-mid);">${tEmpty('empty_tours')}</p>`;
+  }
+
+  // Posts page
+  try { renderPosts('posts-page-grid'); } catch (e) {}
+
+  syncSaveButtons();
+}
+
 // ===== LOAD ALL DATA AND INIT =====
 async function loadDataAndInit() {
-  // Show loading state
-  const domesticGrid = document.getElementById('domestic-tours-grid');
-  const internationalGrid = document.getElementById('international-tours-grid');
-  const carsGrid = document.getElementById('cars-grid');
-  const storiesGrid = document.getElementById('stories-grid');
-  
-  const spinnerLight = '<div class="gt-card-loader"><span class="gt-card-loader__spinner" aria-hidden="true"></span><span>' + ((window.t && window.t('loading')) || 'Loading') + '<span class="gt-card-loader__dots" aria-hidden="true"></span></span></div>';
-  const spinnerDark  = '<div class="gt-card-loader gt-card-loader--dark"><span class="gt-card-loader__spinner" aria-hidden="true"></span><span>' + ((window.t && window.t('loading')) || 'Loading') + '<span class="gt-card-loader__dots" aria-hidden="true"></span></span></div>';
-  if (domesticGrid && !domesticGrid.querySelector('.gt-card-loader')) domesticGrid.innerHTML = spinnerLight;
-  if (internationalGrid && !internationalGrid.querySelector('.gt-card-loader')) internationalGrid.innerHTML = spinnerLight;
-  if (carsGrid && !carsGrid.querySelector('.gt-card-loader')) carsGrid.innerHTML = spinnerDark;
-  if (storiesGrid && !storiesGrid.querySelector('.gt-card-loader')) storiesGrid.innerHTML = spinnerLight;
+  // One-time init (runs regardless of whether we have cache)
+  initTourTabs();
+  fetchWeather();
+  initModal();
+  initContactForm();
+  initScrollSlider('domestic-tours-grid', 'domestic-prev', 'domestic-next');
+  initScrollSlider('international-tours-grid', 'international-prev', 'international-next');
+  initScrollSlider('cars-grid', 'cars-prev', 'cars-next');
+  const toursPageGrid = document.getElementById('tours-page-grid');
+  if (toursPageGrid) initTourTabsPage();
 
-  // Fetch all data from Firebase
+  // ---------- 1. Cache-first instant render ----------
+  const cached = readDataCache();
+  let renderedFromCache = false;
+  if (cached && (cached.tours?.length || cached.cars?.length || cached.posts?.length)) {
+    toursData    = cached.tours || [];
+    carsData     = cached.cars || [];
+    postsData    = cached.posts || [];
+    featuredData = cached.featured || [];
+    reviewsData  = cached.reviews || [];
+    renderAllContent();
+    renderedFromCache = true;
+    setTimeout(initScrollAnimations, 50);
+  } else {
+    // No cache — keep the inline HTML loaders visible.
+    const spinnerLight = '<div class="gt-card-loader"><span class="gt-card-loader__spinner" aria-hidden="true"></span><span>' + ((window.t && window.t('loading')) || 'Loading') + '<span class="gt-card-loader__dots" aria-hidden="true"></span></span></div>';
+    const spinnerDark  = '<div class="gt-card-loader gt-card-loader--dark"><span class="gt-card-loader__spinner" aria-hidden="true"></span><span>' + ((window.t && window.t('loading')) || 'Loading') + '<span class="gt-card-loader__dots" aria-hidden="true"></span></span></div>';
+    const domesticGrid = document.getElementById('domestic-tours-grid');
+    const internationalGrid = document.getElementById('international-tours-grid');
+    const carsGrid = document.getElementById('cars-grid');
+    const storiesGrid = document.getElementById('stories-grid');
+    if (domesticGrid && !domesticGrid.querySelector('.gt-card-loader')) domesticGrid.innerHTML = spinnerLight;
+    if (internationalGrid && !internationalGrid.querySelector('.gt-card-loader')) internationalGrid.innerHTML = spinnerLight;
+    if (carsGrid && !carsGrid.querySelector('.gt-card-loader')) carsGrid.innerHTML = spinnerDark;
+    if (storiesGrid && !storiesGrid.querySelector('.gt-card-loader')) storiesGrid.innerHTML = spinnerLight;
+  }
+
+  // ---------- 2. Background fresh fetch ----------
   try {
-    [toursData, carsData, postsData, featuredData, reviewsData] = await Promise.all([
+    const [freshTours, freshCars, freshPosts, freshFeatured, freshReviews] = await Promise.all([
       fetchToursFromFirebase(),
       fetchCarsFromFirebase(),
       fetchPostsFromFirebase(),
       fetchFeaturedFromFirebase(),
       fetchReviewsFromFirebase()
     ]);
+
+    toursData    = freshTours;
+    carsData     = freshCars;
+    postsData    = freshPosts;
+    featuredData = freshFeatured;
+    reviewsData  = freshReviews;
+
+    // Persist the fresh snapshot for the NEXT page load.
+    writeDataCache({
+      tours: toursData,
+      cars: carsData,
+      posts: postsData,
+      featured: featuredData,
+      reviews: reviewsData
+    });
+
+    renderAllContent();
+    if (!renderedFromCache) setTimeout(initScrollAnimations, 100);
   } catch (error) {
     console.error('Error loading data:', error);
   }
-
-  // If no featured data from Firebase, use tours data with isFeatured flag
-  if (featuredData.length === 0 && toursData.length > 0) {
-    featuredData = getFeaturedToursFromData(toursData);
-  }
-
-  // Render everything
-  renderDomesticTours();
-  renderInternationalTours();
-  renderCars('cars-grid');
-  renderPosts('stories-grid', 6);
-  renderReviews();
-  renderFeaturedSlider();
-  renderMapOverlay();
-  
-  initTourTabs();
-  syncSaveButtons();
-  fetchWeather();
-  initModal();
-  initContactForm();
-
-  // Initialize sliders
-  initScrollSlider('domestic-tours-grid', 'domestic-prev', 'domestic-next');
-  initScrollSlider('international-tours-grid', 'international-prev', 'international-next');
-  initScrollSlider('cars-grid', 'cars-prev', 'cars-next');
-
-  const tEmpty = (k) => (window.t ? window.t(k) : k);
-  // Cars page full list
-  const carsStack = document.getElementById('cars-stack');
-  if (carsStack) {
-    carsStack.innerHTML = carsData.length > 0 ? carsData.map(renderCarFullCard).join('') : `<p style="text-align:center;color:var(--text-mid);padding:3rem;">${tEmpty('empty_cars')}</p>`;
-  }
-
-  // Tours page full list
-  const toursPageGrid = document.getElementById('tours-page-grid');
-  if (toursPageGrid) {
-    toursPageGrid.innerHTML = toursData.length > 0 ? toursData.map(renderTourCard).join('') : `<p style="text-align:center;color:var(--text-mid);">${tEmpty('empty_tours')}</p>`;
-    initTourTabsPage();
-  }
-
-  // Posts page
-  renderPosts('posts-page-grid');
-
-  setTimeout(initScrollAnimations, 100);
 }
 
 // ===== INIT =====
