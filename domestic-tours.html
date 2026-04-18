@@ -344,7 +344,7 @@ function getTourCount(categoryKey) {
   return getFilteredTours(categoryKey).length;
 }
 
-function renderToursGrid(categoryKey) {
+function renderToursGrid(categoryKey, opts = {}) {
   const grid = document.getElementById('tours-filter-grid');
   const countEl = document.getElementById('tours-result-count');
   if (!grid) return;
@@ -359,27 +359,29 @@ function renderToursGrid(categoryKey) {
       : `${tours.length} tours found`;
   }
 
-  grid.classList.add('grid--exit');
-
-  setTimeout(() => {
+  const paint = () => {
     if (tours.length === 0) {
       grid.innerHTML = renderEmptyState(label);
     } else {
       grid.innerHTML = tours.map(renderTourCard).join('');
     }
     grid.classList.remove('grid--exit');
-    grid.classList.add('grid--enter');
+    if (!opts.skipAnim) {
+      grid.classList.add('grid--enter');
+      const cards = grid.querySelectorAll('.tour-card');
+      cards.forEach((card, i) => { card.style.animationDelay = `${i * 40}ms`; });
+      setTimeout(() => grid.classList.remove('grid--enter'), 260 + cards.length * 40);
+    }
+    if (window.syncSaveButtons) window.syncSaveButtons();
+  };
 
-    const cards = grid.querySelectorAll('.tour-card');
-    cards.forEach((card, i) => {
-      card.style.animationDelay = `${i * 60}ms`;
-    });
-
-    setTimeout(() => {
-      grid.classList.remove('grid--enter');
-    }, 400 + cards.length * 60);
-  }, 220);
-  if (window.syncSaveButtons) window.syncSaveButtons();
+  if (opts.skipAnim) {
+    // Instant paint — used for cache hydration and initial fresh paint.
+    paint();
+  } else {
+    grid.classList.add('grid--exit');
+    setTimeout(paint, 160);
+  }
 }
 
 function buildFilterTabs() {
@@ -442,26 +444,71 @@ window.closeModal = function() {
   document.getElementById('book-modal').classList.remove('open');
 };
 
-// Initialize
-async function init() {
+// ── CACHE HELPERS (shared with index.html via gt_data_cache_v1) ──
+const DATA_CACHE_KEY = 'gt_data_cache_v1';
+const DATA_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
+
+function readToursFromCache() {
   try {
-    allTours = await getTours();
+    const raw = localStorage.getItem(DATA_CACHE_KEY);
+    if (!raw) return null;
+    const cache = JSON.parse(raw);
+    if (!cache || !Array.isArray(cache.tours) || cache.tours.length === 0) return null;
+    if (cache.timestamp && Date.now() - cache.timestamp > DATA_CACHE_MAX_AGE) return null;
+    return cache.tours;
+  } catch (e) { return null; }
+}
+
+function writeToursToCache(tours) {
+  try {
+    const raw = localStorage.getItem(DATA_CACHE_KEY);
+    const cache = raw ? JSON.parse(raw) : {};
+    cache.tours = tours;
+    cache.timestamp = Date.now();
+    localStorage.setItem(DATA_CACHE_KEY, JSON.stringify(cache));
+  } catch (e) { /* quota — ignore */ }
+}
+
+// Initialize — cache-first, then background refresh (matches index.html strategy).
+async function init() {
+  let renderedFromCache = false;
+
+  // 1. Instant paint from localStorage cache.
+  const cached = readToursFromCache();
+  if (cached) {
+    allTours = cached;
     buildFilterTabs();
-    renderToursGrid(activeCategory);
-    if (window.syncSaveButtons) window.syncSaveButtons();
+    renderToursGrid(activeCategory, { skipAnim: true });
     requestAnimationFrame(() => moveActiveIndicator(activeCategory));
-    
-    window.addEventListener('resize', () => {
-      moveActiveIndicator(activeCategory);
-    });
+    if (window.syncSaveButtons) window.syncSaveButtons();
+    renderedFromCache = true;
+  }
+
+  window.addEventListener('resize', () => moveActiveIndicator(activeCategory));
+
+  // 2. Background fresh fetch — update cache and re-render silently.
+  try {
+    const fresh = await getTours();
+    if (Array.isArray(fresh) && fresh.length > 0) {
+      allTours = fresh;
+      writeToursToCache(fresh);
+      buildFilterTabs();
+      renderToursGrid(activeCategory, { skipAnim: renderedFromCache });
+      if (window.syncSaveButtons) window.syncSaveButtons();
+      requestAnimationFrame(() => moveActiveIndicator(activeCategory));
+    } else if (!renderedFromCache) {
+      document.getElementById('tours-filter-grid').innerHTML = renderEmptyState('tours');
+    }
   } catch (error) {
     console.error('Error loading tours:', error);
-    document.getElementById('tours-filter-grid').innerHTML = `
-      <div class="tours-empty">
-        <div class="tours-empty__icon">&#9888;</div>
-        <h3>Error loading tours</h3>
-        <p>Please try again later.</p>
-      </div>`;
+    if (!renderedFromCache) {
+      document.getElementById('tours-filter-grid').innerHTML = `
+        <div class="tours-empty">
+          <div class="tours-empty__icon">&#9888;</div>
+          <h3>Error loading tours</h3>
+          <p>Please try again later.</p>
+        </div>`;
+    }
   }
 }
 
@@ -470,7 +517,7 @@ async function init() {
 window.addEventListener('languageChanged', () => {
   if (allTours && allTours.length) {
     buildFilterTabs();
-    renderToursGrid(activeCategory);
+    renderToursGrid(activeCategory, { skipAnim: true });
     requestAnimationFrame(() => moveActiveIndicator(activeCategory));
   }
 });
