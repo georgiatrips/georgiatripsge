@@ -162,18 +162,13 @@
   // ---------- apply ----------
   let runToken = 0;
 
-  /**
-   * Synchronous phase: translate every node we can from the in-memory
-   * dictionary + persistent cache. Returns the list of strings that still
-   * need an API call. Runs in a single pass — no awaits, no microtasks —
-   * so the page is visually localized the instant this function returns.
-   */
-  function applySync(targetLang) {
+  async function apply(targetLang) {
+    const myRun = ++runToken;
     const lang = targetLang || currentLang();
     const textNodes = collectTextNodes(document.body);
     const attrSpecs = collectAttrSpecs(document.body);
 
-    // Restoring to source — dump originals back and exit.
+    // 1) Restoring to source — dump originals back and exit.
     if (lang === SRC) {
       textNodes.forEach((n) => {
         if (n.__i18nOrig != null) n.nodeValue = n.__i18nOrig;
@@ -182,14 +177,18 @@
         const v = el.__i18nOrigAttrs && el.__i18nOrigAttrs[attr];
         if (v != null) el.setAttribute(attr, v);
       });
-      return { lang, missing: new Set(), textNodes, attrSpecs };
+      return;
     }
 
+    // 2) Render translations from dictionary / cache immediately.
+    //    Anything still missing goes to the API fallback.
     const missing = new Set();
 
     function resolve(trimmed) {
+      // dict first
       const fromDict = dictLookup(trimmed, lang);
       if (fromDict) return fromDict;
+      // then persistent cache
       const key = cacheKey(lang, trimmed);
       if (cache[key] != null) return cache[key];
       return null;
@@ -219,63 +218,40 @@
       }
     });
 
-    return { lang, missing, textNodes, attrSpecs };
-  }
+    if (!missing.size || !window.GTTranslate) return;
 
-  /**
-   * Full apply: runs the sync pass, then fires API fallback in the
-   * background for anything the dictionary didn't cover. Returns
-   * immediately after the sync pass — the API fallback continues in
-   * the background and re-renders on completion, so the user never
-   * waits on the network.
-   */
-  function apply(targetLang) {
-    const myRun = ++runToken;
-    const { lang, missing, textNodes, attrSpecs } = applySync(targetLang);
-
-    if (lang === SRC || !missing.size || !window.GTTranslate) {
-      return Promise.resolve();
-    }
-
-    // Fetch missing translations in the background — do NOT block.
-    const fallback = (async () => {
-      const jobs = Array.from(missing).map(async (src) => {
-        const key = cacheKey(lang, src);
-        try {
-          const tr = await window.GTTranslate.translateText(src, lang, SRC);
-          cache[key] = tr || src;
-        } catch (e) {
-          cache[key] = src;
-        }
-      });
-      await Promise.all(jobs);
-      saveCacheSoon();
-
-      // Abort if a newer apply() has started.
-      if (myRun !== runToken) return;
-
-      function resolve(trimmed) {
-        const fromDict = dictLookup(trimmed, lang);
-        if (fromDict) return fromDict;
-        const key = cacheKey(lang, trimmed);
-        if (cache[key] != null) return cache[key];
-        return null;
+    // 3) Fetch missing translations in parallel (translate.js throttles).
+    const jobs = Array.from(missing).map(async (src) => {
+      const key = cacheKey(lang, src);
+      try {
+        const tr = await window.GTTranslate.translateText(src, lang, SRC);
+        cache[key] = tr || src;
+      } catch (e) {
+        cache[key] = src;
       }
-      textNodes.forEach((n) => {
-        const orig = n.__i18nOrig;
-        if (orig == null) return;
-        const hit = resolve(orig.trim());
-        if (hit != null) n.nodeValue = preserveWhitespace(orig, hit);
-      });
-      attrSpecs.forEach(({ el, attr }) => {
-        const orig = el.__i18nOrigAttrs[attr];
-        if (orig == null) return;
-        const hit = resolve(String(orig).trim());
-        if (hit != null) el.setAttribute(attr, hit);
-      });
-    })();
+    });
 
-    return fallback;
+    await Promise.all(jobs);
+    saveCacheSoon();
+
+    // Abort if a newer apply() has started (e.g. user flipped language again).
+    if (myRun !== runToken) return;
+
+    // 4) Re-apply now that cache is populated.
+    textNodes.forEach((n) => {
+      const orig = n.__i18nOrig;
+      if (orig == null) return;
+      const trimmed = orig.trim();
+      const hit = resolve(trimmed);
+      if (hit != null) n.nodeValue = preserveWhitespace(orig, hit);
+    });
+    attrSpecs.forEach(({ el, attr }) => {
+      const orig = el.__i18nOrigAttrs[attr];
+      if (orig == null) return;
+      const trimmed = String(orig).trim();
+      const hit = resolve(trimmed);
+      if (hit != null) el.setAttribute(attr, hit);
+    });
   }
 
   // ---------- mutation observer (handle dynamically-inserted content) ----------
@@ -307,18 +283,6 @@
   }
 
   function init() {
-    // Sync dictionary pass — the page is visually localized the moment
-    // this returns (no awaits, no network).
-    applySync(currentLang());
-
-    // Lift the anti-FOUC boot overlay NOW — don't wait for the background
-    // API fallback for stragglers.
-    if (window.GTLangBoot && typeof window.GTLangBoot.done === 'function') {
-      window.GTLangBoot.done();
-    }
-
-    // Kick off observer + background API fallback for anything the
-    // dictionary didn't cover.
     initObserver();
     apply(currentLang());
   }
