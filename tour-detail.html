@@ -67,7 +67,7 @@
   <div class="detail-hero__overlay"></div>
   <div class="detail-hero__content">
     <a href="domestic-tours.html" class="breadcrumb-link">← Back to Tours</a>
-    <h1 id="detail-title" class="detail-hero__title"></h1>
+    <h1 id="detail-title" class="detail-hero__title" data-no-translate></h1>
   </div>
 </div>
 
@@ -83,52 +83,52 @@
           <div class="quick-info-card">
             <span class="quick-info-icon">⏱</span>
             <span class="quick-info-label">Duration</span>
-            <span id="detail-duration" class="quick-info-value"></span>
+            <span id="detail-duration" class="quick-info-value" data-no-translate></span>
           </div>
           <div class="quick-info-card">
             <span class="quick-info-icon">🌤</span>
             <span class="quick-info-label">Best Season</span>
-            <span id="detail-season" class="quick-info-value"></span>
+            <span id="detail-season" class="quick-info-value" data-no-translate></span>
           </div>
           <div class="quick-info-card">
             <span class="quick-info-icon">📅</span>
             <span class="quick-info-label">Category</span>
-            <span id="detail-category" class="quick-info-value"></span>
+            <span id="detail-category" class="quick-info-value" data-no-translate></span>
           </div>
           <div class="quick-info-card">
             <span class="quick-info-icon">👥</span>
             <span class="quick-info-label">Min People</span>
-            <span id="detail-min-people" class="quick-info-value"></span>
+            <span id="detail-min-people" class="quick-info-value" data-no-translate></span>
           </div>
           <div class="quick-info-card">
             <span class="quick-info-icon">👥</span>
             <span class="quick-info-label">Max People</span>
-            <span id="detail-max-people" class="quick-info-value"></span>
+            <span id="detail-max-people" class="quick-info-value" data-no-translate></span>
           </div>
         </div>
 
         <!-- Description Section -->
         <section class="detail-section">
           <h2>About This Tour</h2>
-          <p id="detail-description" class="detail-text"></p>
+          <p id="detail-description" class="detail-text" data-no-translate></p>
         </section>
 
         <!-- Highlights Section -->
         <section class="detail-section">
           <h2>Tour Highlights</h2>
-          <ul id="detail-highlights" class="highlights-list"></ul>
+          <ul id="detail-highlights" class="highlights-list" data-no-translate></ul>
         </section>
 
         <!-- What's Included Section -->
         <section class="detail-section">
           <h2>What's Included</h2>
-          <ul class="included-list"></ul>
+          <ul class="included-list" data-no-translate></ul>
         </section>
 
         <!-- Itinerary for multi-day -->
         <section class="detail-section" id="itinerary-section" style="display:none;">
           <h2>Detailed Itinerary</h2>
-          <div id="itinerary-content"></div>
+          <div id="itinerary-content" data-no-translate></div>
         </section>
 
       </div>
@@ -136,7 +136,7 @@
       <!-- Right Column - Booking Box -->
       <aside class="detail-sidebar">
         <div class="booking-card">
-          <div class="booking-card__price">
+          <div class="booking-card__price" data-no-translate>
             <span id="detail-price" class="booking-price"></span>
             <span id="detail-price-label" class="booking-per-person">per person</span>
           </div>
@@ -184,7 +184,7 @@
   <div class="modal">
     <button class="modal-close" onclick="closeBookingModal()" aria-label="Close">✕</button>
     <h3>Complete Your Booking</h3>
-    <p id="modal-tour-name" style="color: var(--text-mid); margin-bottom: 1.5rem;"></p>
+    <p id="modal-tour-name" data-no-translate style="color: var(--text-mid); margin-bottom: 1.5rem;"></p>
     
     <form id="booking-form" onsubmit="submitBooking(event)">
       <div class="form-group">
@@ -280,6 +280,9 @@
 <script src="tour-detail.js"></script>
 <script type="module" src="auth.js"></script>
 
+<script src="ui-strings.js"></script>
+<script src="translate.js"></script>
 <script src="lang.js"></script>
+<script src="ui-translate.js"></script>
 </body>
 </html>

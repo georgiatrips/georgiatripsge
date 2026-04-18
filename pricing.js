@@ -105,11 +105,20 @@
     return Number.isFinite(count) && count > 0 ? count : 1;
   }
 
-  function getPriceLabel(item, fallbackLabel = 'per person') {
+  function tr(key, tokens, fallback) {
+    if (window.t) {
+      const v = window.t(key, tokens);
+      if (v) return v;
+    }
+    return fallback;
+  }
+
+  function getPriceLabel(item, fallbackLabel) {
+    const defaultPerPerson = tr('per_person', null, 'per person');
     if (item?.priceLabel) return item.priceLabel;
     const peopleCount = getPriceAppliesTo(item);
-    if (peopleCount > 1) return `for ${peopleCount} people`;
-    return fallbackLabel;
+    if (peopleCount > 1) return tr('for_n_people', { n: peopleCount }, `for ${peopleCount} people`);
+    return fallbackLabel || defaultPerPerson;
   }
 
   function convertAmount(amount, fromCurrency, toCurrency) {
@@ -141,13 +150,14 @@
   }
 
   function formatStoredPrice(amount, currency, prefix = '') {
-    if (!Number.isFinite(amount)) return 'On Request';
+    if (!Number.isFinite(amount)) return tr('on_request', null, 'On Request');
     return `${prefix}${formatAmount(amount, currency)}`;
   }
 
   function formatConvertedPrice(item) {
     const meta = getPriceMeta(item);
-    if (!meta || meta.amount === null) return String(item?.price || 'On Request');
+    const onRequest = tr('on_request', null, 'On Request');
+    if (!meta || meta.amount === null) return String(item?.price || onRequest);
     const converted = convertAmount(meta.amount, meta.currency, state.selectedCurrency);
     return `${meta.prefix || ''}${formatAmount(converted, state.selectedCurrency)}`;
   }
@@ -155,13 +165,14 @@
   function renderPriceMarkup(item, options = {}) {
     const priceClass = options.priceClass || 'tour-price';
     const labelClass = options.labelClass || 'tour-price-label';
-    const fallbackLabel = options.defaultLabel || 'per person';
+    const fallbackLabel = options.defaultLabel || tr('per_person', null, 'per person');
     const includeLabel = options.includeLabel !== false;
     const meta = getPriceMeta(item);
     const label = getPriceLabel(item, fallbackLabel);
+    const onRequestLabel = tr('on_request', null, 'On Request');
 
     if (!meta || meta.amount === null || item.priceOnRequest) {
-      const safeText = item.priceOnRequest ? 'On Request' : escapeHtml(String(item?.price || 'On Request'));
+      const safeText = item.priceOnRequest ? onRequestLabel : escapeHtml(String(item?.price || onRequestLabel));
       return includeLabel
         ? `<span class="${priceClass}">${safeText}</span> <span class="price-separator">/</span> <span class="${labelClass}">${escapeHtml(label)}</span>`
         : `<span class="${priceClass}">${safeText}</span>`;

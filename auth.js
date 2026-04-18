@@ -52,6 +52,9 @@ function updateNavbar(user) {
   if (user) {
     isLoggedIn = true;
     const displayName = user.displayName || user.email.split('@')[0];
+    // Mark as "do not translate" so the runtime UI translator leaves the user
+    // name alone (personal content should never be machine-translated).
+    userBtn.setAttribute('data-no-translate', '');
     userBtn.textContent = displayName;
     userBtn.classList.add('logged-in');
     userBtn.disabled = false;
@@ -70,6 +73,7 @@ function updateNavbar(user) {
     }
   } else {
     isLoggedIn = false;
+    userBtn.removeAttribute('data-no-translate');
     userBtn.textContent = 'Login';
     userBtn.classList.remove('logged-in');
     userBtn.disabled = false;
@@ -137,8 +141,14 @@ function updateLoginPageUI(user) {
     if (userAvatar) {
       userAvatar.src = user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'User') + '&background=2EC4B6&color=fff';
     }
-    if (userName) userName.textContent = user.displayName || 'User';
-    if (userEmail) userEmail.textContent = user.email;
+  if (userName) {
+    userName.setAttribute('data-no-translate', '');
+    userName.textContent = user.displayName || 'User';
+  }
+  if (userEmail) {
+    userEmail.setAttribute('data-no-translate', '');
+    userEmail.textContent = user.email;
+  }
   } else {
     loginForm.classList.remove('hidden');
     userProfile.classList.remove('active');
@@ -234,7 +244,7 @@ async function signUpWithEmail(email, password, displayName) {
       displayName: displayName
     });
     
-    // გაგზავნოს ვერიფიკაცია და მაშინვე გამოვიდეს სისტემიდან
+    // გაგზავნოს ვერიფიკაცია და მაშინვე გამ���ვიდეს სისტემიდან
     await sendEmailVerification(result.user);
     await signOut(auth); 
 

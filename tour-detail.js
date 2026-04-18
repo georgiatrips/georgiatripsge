@@ -63,10 +63,26 @@ function _LA(val) {
   return [];
 }
 
+// Common-value translator: maps plain English strings like "1 Day", "5 Days",
+// "All Year", "Flexible" through window.t() when available.
+function _translateCommonValue(str) {
+  if (!str || typeof str !== 'string') return str;
+  const t = window.t;
+  if (!t) return str;
+  const s = str.trim();
+  const map = { 'All Year': 'all_year', 'Flexible': 'flexible', '1 Day': 'one_day', 'One Day': 'one_day', 'On Request': 'on_request' };
+  if (map[s]) return t(map[s]);
+  const mDays = s.match(/^(\d+)\s*[Dd]ays?$/);
+  if (mDays) return t('n_days', { n: mDays[1] });
+  const mRange = s.match(/^(\d+)\s*[–-]\s*(\d+)\s*[Dd]ays?$/);
+  if (mRange) return t('n_days', { n: `${mRange[1]}–${mRange[2]}` });
+  return s;
+}
+
 function populateTourDetail() {
   const tour = currentTour;
   const title = _L(tour.title);
-  const duration = _L(tour.duration);
+  const duration = _translateCommonValue(_L(tour.duration));
   const desc = _L(tour.desc);
 
   // Update page title
@@ -77,8 +93,18 @@ function populateTourDetail() {
   document.getElementById('detail-title').textContent = title;
 
   // Quick info cards
-  if (document.getElementById('detail-duration')) document.getElementById('detail-duration').textContent = duration || 'Flexible';
-  if (document.getElementById('detail-season')) document.getElementById('detail-season').textContent = Array.isArray(tour.season) ? tour.season.join(', ') : (tour.season || 'All Year');
+  if (document.getElementById('detail-duration')) document.getElementById('detail-duration').textContent = duration || (window.t ? window.t('flexible') : 'Flexible');
+  if (document.getElementById('detail-season')) {
+    let seasonVal;
+    if (Array.isArray(tour.season)) {
+      seasonVal = tour.season.map(_translateCommonValue).join(', ');
+    } else if (tour.season && typeof tour.season === 'object') {
+      seasonVal = _translateCommonValue(_L(tour.season));
+    } else {
+      seasonVal = tour.season ? _translateCommonValue(tour.season) : (window.t ? window.t('all_year') : 'All Year');
+    }
+    document.getElementById('detail-season').textContent = seasonVal;
+  }
   if (document.getElementById('detail-category')) document.getElementById('detail-category').textContent = (tour.category || 'general').toUpperCase().replace('-', ' ');
   if (document.getElementById('detail-min-people')) document.getElementById('detail-min-people').textContent = tour.minPeople || '1';
   if (document.getElementById('detail-max-people')) document.getElementById('detail-max-people').textContent = tour.maxPeople || '10';
@@ -129,15 +155,21 @@ function populateTourDetail() {
       priceContainer.innerHTML = window.PriceDisplay.renderPriceMarkup(tour, { priceClass: 'booking-price', labelClass: 'booking-per-person' });
     }
   } else {
-    priceEl.textContent = tour.priceOnRequest ? 'On Request' : tour.price;
-    if (priceLabelEl) priceLabelEl.style.display = tour.priceOnRequest ? 'none' : 'inline';
+    priceEl.textContent = tour.priceOnRequest ? (window.t ? window.t('on_request') : 'On Request') : tour.price;
+    if (priceLabelEl) {
+      priceLabelEl.style.display = tour.priceOnRequest ? 'none' : 'inline';
+      if (!tour.priceOnRequest) priceLabelEl.textContent = (window.t ? window.t('per_person') : 'per person');
+    }
   }
 
   const typeText = (tour.type || tour.tourType) === 'domestic' ? '🏔️ Domestic Tour' : '✈️ International Tour';
   document.getElementById('detail-type-badge').textContent = typeText;
 
   // Modal tour name
-  const modalPriceDisplay = tour.priceOnRequest ? 'Price On Request' : `${tour.price} per person`;
+  const tFn = window.t || ((k) => k);
+  const modalPriceDisplay = tour.priceOnRequest
+    ? tFn('price_on_request')
+    : `${tour.price} ${tFn('per_person')}`;
   document.getElementById('modal-tour-name').textContent = `${title} - ${modalPriceDisplay}`;
 
   // Itinerary (if multi-day)
@@ -178,7 +210,7 @@ function showItinerary() {
   itineraryContent.innerHTML = html;
 }
 
-// ── BOOKING MODAL ────────────────────────────────────────────
+// ── BOOKING MODAL ──────────────────────────────────���─────────
 function openBookingForm() {
   const modal = document.getElementById('book-modal');
   if (modal) {

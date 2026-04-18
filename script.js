@@ -1,4 +1,4 @@
-﻿// ===== DATA (loaded from Firebase) =====
+// ===== DATA (loaded from Firebase) =====
 let toursData = [];
 let carsData = [];
 let postsData = [];
@@ -114,11 +114,45 @@ function LA(val) {
   if (typeof val === 'object') return Array.isArray(val.ka) ? val.ka : (Array.isArray(val.en) ? val.en : []);
   return [];
 }
+// Translate a common English duration / season string via window.t() when the
+// value is stored as a plain English literal in Firestore (e.g. "1 Day",
+// "5 Days", "All Year", "Flexible"). Leaves Georgian/other-language strings
+// untouched so a tour authored in Georgian still renders correctly.
+function translateCommonValue(str) {
+  if (!str || typeof str !== 'string') return str;
+  const t = window.t;
+  if (!t) return str;
+  const s = str.trim();
+  // Simple fixed values
+  const map = {
+    'All Year': 'all_year',
+    'Flexible': 'flexible',
+    '1 Day': 'one_day',
+    'One Day': 'one_day',
+    'On Request': 'on_request'
+  };
+  if (map[s]) return t(map[s]);
+  // "N Days" / "N Day" pattern
+  const mDays = s.match(/^(\d+)\s*[Dd]ays?$/);
+  if (mDays) return t('n_days', { n: mDays[1] });
+  // Ranged "N–M Days" / "N-M Days"
+  const mRange = s.match(/^(\d+)\s*[–-]\s*(\d+)\s*[Dd]ays?$/);
+  if (mRange) return t('n_days', { n: `${mRange[1]}–${mRange[2]}` });
+  return s;
+}
+// Localize (multilingual obj) + common-value translate (plain English).
+function Lt(val, fallbackKey) {
+  const localized = L(val, '');
+  if (localized) return translateCommonValue(localized);
+  if (fallbackKey && window.t) return window.t(fallbackKey);
+  return localized;
+}
 
 // ===== GET FEATURED TOURS FROM TOURS DATA =====
 function getFeaturedToursFromData(tours) {
   // Filter tours that have isFeatured = true
   const featured = tours.filter(tour => tour.isFeatured === true);
+  const tFn = (k) => (window.t ? window.t(k) : k);
 
   // Transform tour data to featured card format (keep multilingual fields as-is)
   return featured.map(tour => ({
@@ -129,14 +163,21 @@ function getFeaturedToursFromData(tours) {
     minPeople: tour.minPeople,
     maxPeople: tour.maxPeople,
     highlights: tour.highlights,
-    tag: tour.category === 'one-day' ? 'One-Day Adventure' :
-         tour.category === 'multi-day' ? 'Multi-Day Experience' :
-         tour.category === 'upcoming' ? 'Upcoming Event' : 'Flexible Tour',
-    badge: tour.type === 'domestic' ? 'Domestic' : 'International',
+    // store the category key so we can re-translate on language change
+    categoryKey: tour.category,
+    tag: tour.category === 'one-day' ? tFn('tag_one_day') :
+         tour.category === 'multi-day' ? tFn('tag_multi_day') :
+         tour.category === 'upcoming' ? tFn('tag_upcoming') : tFn('tag_flexible'),
+    typeKey: tour.type,
+    badge: tour.type === 'domestic' ? tFn('badge_domestic') : tFn('badge_international'),
+    duration: tour.duration,
+    season: tour.season,
+    price: tour.price,
     meta: [
       tour.price,
-      tour.duration || 'Flexible',
-      Array.isArray(tour.season) ? tour.season.join(', ') : (tour.season || 'All Year')
+      Lt(tour.duration, 'flexible'),
+      Array.isArray(tour.season) ? tour.season.map(translateCommonValue).join(', ')
+        : (tour.season ? translateCommonValue(L(tour.season)) : tFn('all_year'))
     ]
   }));
 }
@@ -163,12 +204,13 @@ function renderHighlightsList(highlights, limit = 3, extraClass = '') {
 
 function renderFeaturedMeta(featured) {
   const meta = LA(featured.meta);
+  const tFn = (k) => (window.t ? window.t(k) : k);
   const metaItems = [
-    { icon: '💳', label: 'Price', value: window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(featured, { includeLabel: false }) : (meta[0] || 'On Request') },
-    { icon: '⏱', label: 'Duration', value: meta[1] || 'Flexible' },
-    { icon: '☀', label: 'Season', value: meta[2] || 'All Year' },
-    { icon: '👥', label: 'Min', value: `${featured.minPeople || 1}` },
-    { icon: '👥', label: 'Max', value: `${featured.maxPeople || 10}` }
+    { icon: '💳', label: tFn('label_price'),    value: window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(featured, { includeLabel: false }) : (meta[0] || tFn('on_request')) },
+    { icon: '⏱', label: tFn('label_duration'), value: meta[1] || tFn('flexible') },
+    { icon: '☀', label: tFn('label_season'),   value: meta[2] || tFn('all_year') },
+    { icon: '👥', label: tFn('label_min'),      value: `${featured.minPeople || 1}` },
+    { icon: '👥', label: tFn('label_max'),      value: `${featured.maxPeople || 10}` }
   ];
 
   return metaItems.map(item => `
@@ -304,7 +346,7 @@ function initNavbar() {
     const dropdown = e.target.closest('.nav-dropdown, .nav-user-dropdown, .nav-currency-dropdown');
     const isLink = e.target.tagName === 'A';
 
-    // ყველა სხვა ღია მენიუს დახურვა
+    // ყველა სხვა ღი�� მენიუს დახურვა
     if (!dropdown || btn) {
       document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
         if (!dropdown || menu !== dropdown.querySelector('.dropdown-menu')) {
@@ -371,8 +413,8 @@ function renderTourCard(tour) {
         <h3 class="tour-card-title">${title}</h3>
         <p class="tour-card-desc">${description}</p>
         <div class="tour-card-footer">
-          <div class="tour-price-container">${window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(tour) : `${tour.price} <span class="separator">/</span> <span>person</span>`}</div>
-          <button class="btn-sm" onclick="goToTourDetail('${getSafeAttr(tour.id)}')">Book Now</button>
+          <div class="tour-price-container">${window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(tour) : `${tour.price} <span class="separator">/</span> <span>${(window.t?window.t('per_person'):'per person')}</span>`}</div>
+          <button class="btn-sm" onclick="goToTourDetail('${getSafeAttr(tour.id)}')">${(window.t?window.t('book_now'):'Book Now')}</button>
         </div>
       </div>
     </div>`;
@@ -385,23 +427,26 @@ function renderTours(filter = 'all') {
   const grid = document.getElementById('tours-grid');
   if (!grid) return;
   const filtered = filter === 'all' ? toursData : toursData.filter(t => t.category === filter);
-  grid.innerHTML = filtered.length > 0 ? filtered.map(renderTourCard).join('') : '<p style="text-align:center;color:var(--text-mid);grid-column:1/-1;">No tours available yet.</p>';
+  const tEmpty2 = (k) => (window.t ? window.t(k) : k);
+  grid.innerHTML = filtered.length > 0 ? filtered.map(renderTourCard).join('') : `<p style="text-align:center;color:var(--text-mid);grid-column:1/-1;">${tEmpty2('empty_tours')}</p>`;
   syncSaveButtons();
 }
 
 function renderDomesticTours() {
   const grid = document.getElementById('domestic-tours-grid');
   if (!grid) return;
+  const tFn = (k) => (window.t ? window.t(k) : k);
   const domesticTours = toursData.filter(tour => (tour.type || tour.tourType) === 'domestic' || tour.category === 'one-day' || tour.category === 'oneday');
-  grid.innerHTML = domesticTours.length > 0 ? domesticTours.map(renderTourCard).join('') : '<p style="text-align:center;color:var(--text-mid);">No domestic tours available yet. Check back soon!</p>';
+  grid.innerHTML = domesticTours.length > 0 ? domesticTours.map(renderTourCard).join('') : `<p style="text-align:center;color:var(--text-mid);">${tFn('empty_domestic')}</p>`;
   syncSaveButtons();
 }
 
 function renderInternationalTours() {
   const grid = document.getElementById('international-tours-grid');
   if (!grid) return;
+  const tFn = (k) => (window.t ? window.t(k) : k);
   const internationalTours = toursData.filter(tour => (tour.type || tour.tourType) === 'international' || tour.category === 'multi-day' || tour.category === 'full');
-  grid.innerHTML = internationalTours.length > 0 ? internationalTours.map(renderTourCard).join('') : '<p style="text-align:center;color:var(--text-mid);">No international tours available yet. Check back soon!</p>';
+  grid.innerHTML = internationalTours.length > 0 ? internationalTours.map(renderTourCard).join('') : `<p style="text-align:center;color:var(--text-mid);">${tFn('empty_international')}</p>`;
   syncSaveButtons();
 }
 
@@ -442,7 +487,8 @@ function renderCarCard(car) {
 function renderCars(containerId = 'cars-grid') {
   const grid = document.getElementById(containerId);
   if (!grid) return;
-  grid.innerHTML = carsData.length > 0 ? carsData.map(renderCarCard).join('') : '<p style="text-align:center;color:rgba(255,255,255,0.6);">No vehicles available yet.</p>';
+  const tFn = (k) => (window.t ? window.t(k) : k);
+  grid.innerHTML = carsData.length > 0 ? carsData.map(renderCarCard).join('') : `<p style="text-align:center;color:rgba(255,255,255,0.6);">${tFn('empty_cars')}</p>`;
 }
 
 // ===== CAR FULL CARDS (cars page) =====
@@ -469,11 +515,11 @@ function renderCarFullCard(car) {
             <span class="tour-meta-item">Driver included</span>
           </div>
           <div class="tour-card__price-block">
-            ${window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(car, { defaultLabel: 'per day' }) : `<span class="tour-price">${car.price || 'On Request'}</span><span class="tour-price-label">per day</span>`}
+            ${window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(car, { defaultLabel: (window.t?window.t('per_day'):'per day') }) : `<span class="tour-price">${car.price || (window.t?window.t('on_request'):'On Request')}</span><span class="tour-price-label">${(window.t?window.t('per_day'):'per day')}</span>`}
           </div>
         </div>
         <button class="btn-book" onclick="openBookModal('${getSafeAttr(title)} Transfer','On Request')">
-          Book This Vehicle <span class="btn-arrow">-></span>
+          ${(window.t?window.t('book_car'):'Book This Vehicle')} <span class="btn-arrow">-></span>
         </button>
       </div>
     </article>`;
@@ -497,7 +543,7 @@ function renderPostCard(post) {
         </div>
         <h3 class="post-card-title">${title}</h3>
         <p class="post-card-text">${text}</p>
-        <span class="post-read-more">Read More -></span>
+        <span class="post-read-more">${(window.t?window.t('read_more'):'Read More')} -></span>
       </div>
     </div>`;
 }
@@ -505,8 +551,9 @@ function renderPostCard(post) {
 function renderPosts(containerId = 'posts-grid', count = null) {
   const grid = document.getElementById(containerId);
   if (!grid) return;
+  const tFn = (k) => (window.t ? window.t(k) : k);
   const data = count ? postsData.slice(0, count) : postsData;
-  grid.innerHTML = data.length > 0 ? data.map(renderPostCard).join('') : '<p style="text-align:center;color:var(--text-mid);grid-column:1/-1;">No posts available yet.</p>';
+  grid.innerHTML = data.length > 0 ? data.map(renderPostCard).join('') : `<p style="text-align:center;color:var(--text-mid);grid-column:1/-1;">${tFn('empty_posts')}</p>`;
 }
 
 // ===== REVIEW CARDS (Google Style) =====
@@ -538,28 +585,52 @@ function renderFeaturedSlider() {
   const slider = document.getElementById('featured-slider');
   if (!slider) return;
 
+  const tFn = (k) => (window.t ? window.t(k) : k);
+
   if (featuredData.length === 0) {
-    slider.innerHTML = '<p style="text-align:center;color:var(--text-mid);padding:3rem;">No featured offers available yet.</p>';
+    slider.innerHTML = `<p style="text-align:center;color:var(--text-mid);padding:3rem;">${tFn('empty_featured')}</p>`;
     return;
   }
 
   slider.innerHTML = featuredData.map((featured, index) => {
     const title = L(featured.title);
-    const tag = L(featured.tag);
+    // Always re-translate the category tag so it follows the current language.
+    // Supports both the shaped object from getFeaturedToursFromData() (categoryKey)
+    // and raw Firestore docs (featured.category).
+    const catKey = featured.categoryKey || featured.category;
+    const tag = catKey === 'one-day' ? tFn('tag_one_day')
+              : catKey === 'multi-day' ? tFn('tag_multi_day')
+              : catKey === 'upcoming' ? tFn('tag_upcoming')
+              : catKey ? tFn('tag_flexible')
+              : L(featured.tag);
     const highlightsHtml = renderHighlightsList(LA(featured.highlights), 3, 'tour-highlight--featured');
     const description = truncateText(L(featured.desc), 150);
+    const typeKey = featured.typeKey || featured.type;
+    const badgeText = typeKey === 'domestic' ? tFn('badge_domestic')
+                    : typeKey === 'international' ? tFn('badge_international')
+                    : (featured.badge || '');
+    // Season may be: multilingual object, array, or plain English string like "All Year".
+    let seasonText;
+    if (Array.isArray(featured.season)) {
+      seasonText = featured.season.map(translateCommonValue).join(', ');
+    } else if (featured.season && typeof featured.season === 'object') {
+      seasonText = translateCommonValue(L(featured.season)) || tFn('all_year');
+    } else {
+      seasonText = featured.season ? translateCommonValue(featured.season) : tFn('all_year');
+    }
+    const duration = Lt(featured.duration, 'one_day');
 
     return `
     <div class="featured-card" data-featured="${index}" ${index === 0 ? 'style="display:grid;"' : ''}>
-      <div class="featured-ribbon">⭐ Best Deal</div>
+      <div class="featured-ribbon">${tFn('best_deal')}</div>
       <div class="featured-img">
         <img src="${featured.img}" alt="${title}" loading="lazy">
-        <span class="featured-badge">${featured.badge}</span>
+        <span class="featured-badge">${badgeText}</span>
         <div class="featured-overlay">
           <div class="featured-quick-info">
             <div class="quick-stat">
               <span class="quick-icon">⏱</span>
-              <span class="quick-text">${featured.duration || '1 Day'}</span>
+              <span class="quick-text">${duration}</span>
             </div>
             <div class="quick-stat">
               <span class="quick-icon">👥</span>
@@ -572,8 +643,8 @@ function renderFeaturedSlider() {
         <div class="featured-header">
           <div class="tag">${tag}</div>
           <div class="featured-price">
-            <span class="price-label">From</span>
-            <span class="price-value">${featured.price || 'On Request'}</span>
+            <span class="price-label">${tFn('from_price')}</span>
+            <span class="price-value">${featured.price || tFn('on_request')}</span>
           </div>
         </div>
 
@@ -582,7 +653,7 @@ function renderFeaturedSlider() {
         <p class="featured-description">${description}</p>
 
         <div class="featured-features">
-          <div class="features-title">✨ Highlights</div>
+          <div class="features-title">${tFn('highlights_title')}</div>
           <div class="features-grid">
             ${highlightsHtml}
           </div>
@@ -592,15 +663,15 @@ function renderFeaturedSlider() {
           <div class="action-badges">
             <span class="action-badge">
               <span class="badge-icon">☀</span>
-              <span class="badge-text">${featured.season || 'All Year'}</span>
+              <span class="badge-text">${seasonText}</span>
             </span>
             <span class="action-badge">
               <span class="badge-icon">📍</span>
-              <span class="badge-text">Guided Tour</span>
+              <span class="badge-text">${tFn('guided_tour')}</span>
             </span>
           </div>
           <a href="tour-detail.html" class="btn-primary featured-cta" onclick="goToTourDetail('${getSafeAttr(featured.id)}'); return false;">
-            <span>Explore Now</span>
+            <span>${tFn('explore_now')}</span>
             <span class="cta-arrow">→</span>
           </a>
         </div>
@@ -674,7 +745,10 @@ function openBookModal(tourName, price, tourId) {
   const modal = document.getElementById('book-modal');
   if (!modal) return;
   document.getElementById('modal-tour-name').textContent = tourName;
-  document.getElementById('modal-tour-price').textContent = price === 'Contact Us' || price === 'On Request' ? 'Price On Request' : `From ${price} per person`;
+  const tFn = window.t || ((k) => k);
+  document.getElementById('modal-tour-price').textContent = price === 'Contact Us' || price === 'On Request'
+    ? tFn('price_on_request')
+    : `${tFn('from_price')} ${price} ${tFn('per_person')}`;
   modal.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -838,10 +912,12 @@ async function loadDataAndInit() {
   const carsGrid = document.getElementById('cars-grid');
   const storiesGrid = document.getElementById('stories-grid');
   
-  if (domesticGrid) domesticGrid.innerHTML = '<p style="text-align:center;color:var(--text-mid);padding:2rem;">Loading tours...</p>';
-  if (internationalGrid) internationalGrid.innerHTML = '<p style="text-align:center;color:var(--text-mid);padding:2rem;">Loading tours...</p>';
-  if (carsGrid) carsGrid.innerHTML = '<p style="text-align:center;color:rgba(255,255,255,0.6);padding:2rem;">Loading vehicles...</p>';
-  if (storiesGrid) storiesGrid.innerHTML = '<p style="text-align:center;color:var(--text-mid);padding:2rem;">Loading stories...</p>';
+  const spinnerLight = '<div class="gt-card-loader"><span class="gt-card-loader__spinner" aria-hidden="true"></span><span>' + ((window.t && window.t('loading')) || 'Loading') + '<span class="gt-card-loader__dots" aria-hidden="true"></span></span></div>';
+  const spinnerDark  = '<div class="gt-card-loader gt-card-loader--dark"><span class="gt-card-loader__spinner" aria-hidden="true"></span><span>' + ((window.t && window.t('loading')) || 'Loading') + '<span class="gt-card-loader__dots" aria-hidden="true"></span></span></div>';
+  if (domesticGrid && !domesticGrid.querySelector('.gt-card-loader')) domesticGrid.innerHTML = spinnerLight;
+  if (internationalGrid && !internationalGrid.querySelector('.gt-card-loader')) internationalGrid.innerHTML = spinnerLight;
+  if (carsGrid && !carsGrid.querySelector('.gt-card-loader')) carsGrid.innerHTML = spinnerDark;
+  if (storiesGrid && !storiesGrid.querySelector('.gt-card-loader')) storiesGrid.innerHTML = spinnerLight;
 
   // Fetch all data from Firebase
   try {
@@ -880,16 +956,17 @@ async function loadDataAndInit() {
   initScrollSlider('international-tours-grid', 'international-prev', 'international-next');
   initScrollSlider('cars-grid', 'cars-prev', 'cars-next');
 
+  const tEmpty = (k) => (window.t ? window.t(k) : k);
   // Cars page full list
   const carsStack = document.getElementById('cars-stack');
   if (carsStack) {
-    carsStack.innerHTML = carsData.length > 0 ? carsData.map(renderCarFullCard).join('') : '<p style="text-align:center;color:var(--text-mid);padding:3rem;">No vehicles available yet.</p>';
+    carsStack.innerHTML = carsData.length > 0 ? carsData.map(renderCarFullCard).join('') : `<p style="text-align:center;color:var(--text-mid);padding:3rem;">${tEmpty('empty_cars')}</p>`;
   }
 
   // Tours page full list
   const toursPageGrid = document.getElementById('tours-page-grid');
   if (toursPageGrid) {
-    toursPageGrid.innerHTML = toursData.length > 0 ? toursData.map(renderTourCard).join('') : '<p style="text-align:center;color:var(--text-mid);">No tours available yet.</p>';
+    toursPageGrid.innerHTML = toursData.length > 0 ? toursData.map(renderTourCard).join('') : `<p style="text-align:center;color:var(--text-mid);">${tEmpty('empty_tours')}</p>`;
     initTourTabsPage();
   }
 
@@ -919,7 +996,8 @@ function initTourTabsPage() {
       const filter = btn.dataset.pageFilter;
       const grid = document.getElementById('tours-page-grid');
       const filtered = filter === 'all' ? toursData : toursData.filter(t => t.category === filter);
-      grid.innerHTML = filtered.length > 0 ? filtered.map(renderTourCard).join('') : '<p style="text-align:center;color:var(--text-mid);">No tours in this category yet.</p>';
+      const tFn = (k) => (window.t ? window.t(k) : k);
+      grid.innerHTML = filtered.length > 0 ? filtered.map(renderTourCard).join('') : `<p style="text-align:center;color:var(--text-mid);">${tFn('empty_tours_category')}</p>`;
       syncSaveButtons();
       setTimeout(initScrollAnimations, 50);
     });
