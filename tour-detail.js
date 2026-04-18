@@ -201,7 +201,17 @@ function populateTourDetail() {
     }
     document.getElementById('detail-season').textContent = seasonVal;
   }
-  if (document.getElementById('detail-category')) document.getElementById('detail-category').textContent = (tour.category || 'general').toUpperCase().replace('-', ' ');
+  if (document.getElementById('detail-category')) {
+    const catKey = (tour.category || 'general').toLowerCase();
+    const catMap = {
+      'one-day':  'badge_one_day',
+      'multi-day':'badge_multi_day',
+      'upcoming': 'badge_upcoming',
+      'flexible': 'badge_flexible'
+    };
+    const catT = window.t && catMap[catKey] ? window.t(catMap[catKey]) : null;
+    document.getElementById('detail-category').textContent = catT || catKey.toUpperCase().replace('-', ' ');
+  }
   if (document.getElementById('detail-min-people')) document.getElementById('detail-min-people').textContent = tour.minPeople || '1';
   if (document.getElementById('detail-max-people')) document.getElementById('detail-max-people').textContent = tour.maxPeople || '10';
 
@@ -216,15 +226,16 @@ function populateTourDetail() {
 
   // What's Included Section Logic
   const included = tour.included || {};
+  const tFn = window.t || ((k) => k);
   const incItems = [
-    { key: 'guide', label: 'Expert local guide' },
-    { key: 'tickets', label: 'All entrance fees' },
-    { key: 'pickup', label: 'Hotel pickup & drop-off' },
-    { key: 'food', label: 'Full board meals' },
-    { key: 'hotel', label: 'Accommodation' },
-    { key: 'water', label: 'Water and snacks' },
-    { key: 'insurance', label: 'Travel insurance' },
-    { key: 'emergency', label: 'Emergency support 24/7' }
+    { key: 'guide',     label: tFn('inc_guide')     || 'Expert local guide' },
+    { key: 'tickets',   label: tFn('inc_tickets')   || 'All entrance fees' },
+    { key: 'pickup',    label: tFn('inc_pickup')    || 'Hotel pickup & drop-off' },
+    { key: 'food',      label: tFn('inc_food')      || 'Full board meals' },
+    { key: 'hotel',     label: tFn('inc_hotel')     || 'Accommodation' },
+    { key: 'water',     label: tFn('inc_water')     || 'Water and snacks' },
+    { key: 'insurance', label: tFn('inc_insurance') || 'Travel insurance' },
+    { key: 'emergency', label: tFn('inc_emergency') || 'Emergency support 24/7' }
   ];
 
   const includedList = document.querySelector('.included-list');
@@ -258,11 +269,13 @@ function populateTourDetail() {
     }
   }
 
-  const typeText = (tour.type || tour.tourType) === 'domestic' ? '🏔️ Domestic Tour' : '✈️ International Tour';
+  const isDomestic = (tour.type || tour.tourType) === 'domestic';
+  const typeText = isDomestic
+    ? (tFn('domestic_tour_badge') || '🏔️ Domestic Tour')
+    : (tFn('international_tour_badge') || '✈️ International Tour');
   document.getElementById('detail-type-badge').textContent = typeText;
 
   // Modal tour name
-  const tFn = window.t || ((k) => k);
   const modalPriceDisplay = tour.priceOnRequest
     ? tFn('price_on_request')
     : `${tour.price} ${tFn('per_person')}`;
@@ -282,27 +295,34 @@ function populateTourDetail() {
 function showItinerary() {
   const itinerarySection = document.getElementById('itinerary-section');
   const itineraryContent = document.getElementById('itinerary-content');
-  
+
   itinerarySection.style.display = 'block';
-  
+
   // Sample itinerary structure
   const days = currentTour.duration ? parseInt(currentTour.duration) : 3;
   let html = '';
-  
+
   const tourTitle = _L(currentTour.title);
+  const tFn = window.t || ((k) => k);
+  const includesLabel = tFn('itinerary_includes_label') || 'Includes:';
+  const includesDetail = tFn('itinerary_includes_detail') || 'Guided tours, local meals, transportation between locations.';
+
   for (let i = 1; i <= days; i++) {
+    const dayTitle = tFn('day_label', { n: i }) || `Day ${i}`;
+    const dayDesc = tFn('itinerary_day_desc', { n: i, tour: tourTitle })
+      || `Activities and highlights for Day ${i} of your ${tourTitle} tour.`;
     html += `
       <div class="itinerary-day">
-        <h4 class="itinerary-day__title">Day ${i}</h4>
+        <h4 class="itinerary-day__title">${dayTitle}</h4>
         <p class="itinerary-day__content">
-          Activities and highlights for Day ${i} of your ${tourTitle} tour.
+          ${dayDesc}
           <br><br>
-          <strong>Includes:</strong> Guided tours, local meals, transportation between locations.
+          <strong>${includesLabel}</strong> ${includesDetail}
         </p>
       </div>
     `;
   }
-  
+
   itineraryContent.innerHTML = html;
 }
 
@@ -355,8 +375,12 @@ function submitBooking(event) {
 
   console.log('Booking submitted:', data);
 
-  // Show success message
-  alert(`Thank you for booking "${_L(currentTour.title)}"!\n\nWe've received your request and will confirm within 24 hours.\n\nCheck your email for details.`);
+  // Show success message (localized)
+  const tourTitle = _L(currentTour.title);
+  const tFn = window.t || ((k) => k);
+  const successMsg = tFn('booking_success_alert', { tour: tourTitle })
+    || `Thank you for booking "${tourTitle}"!\n\nWe've received your request and will confirm within 24 hours.\n\nCheck your email for details.`;
+  alert(successMsg);
   
   // Close modal and reset form
   closeBookingModal();
