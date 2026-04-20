@@ -1,13 +1,321 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="bg-background">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Transport – Georgia Trips</title>
-<meta name="description" content="Comfortable and reliable transport services across Georgia. SUVs, minivans and premium sedans with professional drivers.">
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://flagcdn.com">
+<link rel="dns-prefetch" href="https://api.mymemory.translated.net">
+<link rel="preload" href="lang-boot.js" as="script">
+<link rel="preload" href="ui-strings.js" as="script">
+<link rel="modulepreload" href="script.js">
+<script src="lang-boot.js"></script>
+<script src="ui-strings.js" defer></script>
+<script src="translate.js" defer></script>
+<script src="lang.js" defer></script>
+<script src="ui-translate.js" defer></script>
+<title>Transport & Cars – Georgia Trips</title>
+<meta name="description" content="Comfortable and safe transport across Georgia. Book a sedan, SUV or minivan with a professional driver.">
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="tours-page.css">
-<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+  /* ======================================================
+     CARS PAGE — CUSTOM LAYOUT
+     ====================================================== */
+  .cars-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.75rem;
+    align-items: stretch;
+    min-height: 240px;
+  }
+
+  .vehicle-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--white);
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid rgba(11, 60, 93, 0.08);
+    box-shadow: 0 4px 22px rgba(11, 60, 93, 0.08);
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1),
+                box-shadow 0.28s cubic-bezier(0.4,0,0.2,1);
+    height: 100%;
+  }
+  .vehicle-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 18px 45px rgba(11, 60, 93, 0.18);
+  }
+
+  .vehicle-card__media {
+    position: relative;
+    height: 210px;
+    overflow: hidden;
+    background: var(--light-bg);
+  }
+  .vehicle-card__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+  }
+  .vehicle-card:hover .vehicle-card__media img { transform: scale(1.07); }
+
+  .vehicle-card__type {
+    position: absolute;
+    top: 0.9rem;
+    left: 0.9rem;
+    padding: 0.35rem 0.85rem;
+    background: rgba(11, 60, 93, 0.9);
+    color: var(--white);
+    font-size: 0.72rem;
+    font-weight: 700;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    backdrop-filter: blur(6px);
+  }
+
+  .vehicle-card__driver {
+    position: absolute;
+    top: 0.9rem;
+    right: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0.35rem 0.75rem;
+    background: rgba(46, 196, 182, 0.95);
+    color: var(--white);
+    font-size: 0.7rem;
+    font-weight: 700;
+    border-radius: 20px;
+    letter-spacing: 0.2px;
+  }
+
+  .vehicle-card__body {
+    padding: 1.25rem 1.35rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 0.85rem;
+  }
+
+  .vehicle-card__title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--dark-blue);
+    line-height: 1.25;
+    letter-spacing: -0.2px;
+    margin: 0;
+  }
+
+  .vehicle-card__desc {
+    font-size: 0.88rem;
+    color: var(--text-mid);
+    line-height: 1.6;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+  }
+
+  .vehicle-card__specs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    padding: 0.85rem;
+    background: rgba(46, 196, 182, 0.06);
+    border: 1px solid rgba(46, 196, 182, 0.14);
+    border-radius: 12px;
+  }
+  .vehicle-spec {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    text-align: center;
+  }
+  .vehicle-spec__icon {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: var(--white);
+    color: var(--teal);
+    font-size: 0.95rem;
+  }
+  .vehicle-spec__label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-light);
+  }
+  .vehicle-spec__value {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--dark-blue);
+    line-height: 1.15;
+    word-break: break-word;
+  }
+
+  .vehicle-card__footer {
+    margin-top: auto;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(11, 60, 93, 0.08);
+  }
+
+  .vehicle-card__price-wrap {
+    display: flex;
+    flex-direction: column;
+  }
+  .vehicle-card__price {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: var(--dark-blue);
+    line-height: 1;
+  }
+  .vehicle-card__price-sub {
+    font-size: 0.72rem;
+    color: var(--text-light);
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  .vehicle-card__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.6rem 1.05rem;
+    border: none;
+    background: var(--dark-blue);
+    color: var(--white);
+    border-radius: 10px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.22s ease, transform 0.18s ease, box-shadow 0.22s ease;
+    letter-spacing: 0.2px;
+  }
+  .vehicle-card__cta:hover {
+    background: #0a2e47;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(11, 60, 93, 0.24);
+  }
+  .vehicle-card__cta svg { width: 14px; height: 14px; }
+
+  /* Services strip */
+  .cars-services-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+  }
+  .cars-service-card {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 1.75rem 1.5rem;
+    text-align: center;
+    box-shadow: 0 2px 16px rgba(11,60,93,0.07);
+    border: 1px solid rgba(11,60,93,0.06);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .cars-service-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 26px rgba(11,60,93,0.12);
+  }
+  .cars-service-card__icon {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(46,196,182,0.18), rgba(46,196,182,0.04));
+    color: var(--teal);
+    font-size: 1.5rem;
+  }
+  .cars-service-card h4 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--dark-blue);
+    margin: 0 0 0.45rem;
+  }
+  .cars-service-card p {
+    font-size: 0.84rem;
+    color: var(--text-mid);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  /* Why choose us (dark) */
+  .cars-why-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+    margin-top: 1rem;
+  }
+  .cars-why-item {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    padding: 1.85rem 1.5rem;
+    text-align: center;
+  }
+  .cars-why-item__icon {
+    font-size: 2rem;
+    margin-bottom: 0.85rem;
+  }
+  .cars-why-item h4 {
+    font-family: 'Montserrat', sans-serif;
+    color: var(--white);
+    font-weight: 700;
+    margin-bottom: 0.45rem;
+    font-size: 1rem;
+  }
+  .cars-why-item p {
+    color: rgba(255,255,255,0.62);
+    font-size: 0.85rem;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .cars-grid-3 { grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+    .cars-services-strip { grid-template-columns: repeat(2, 1fr); }
+    .cars-why-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 600px) {
+    .cars-grid-3 { grid-template-columns: 1fr; }
+    .cars-services-strip { grid-template-columns: 1fr 1fr; }
+    .cars-why-grid { grid-template-columns: 1fr 1fr; }
+    .vehicle-card__media { height: 180px; }
+    .vehicle-card__title { font-size: 1rem; }
+    .vehicle-spec__label { font-size: 0.62rem; }
+    .vehicle-spec__value { font-size: 0.72rem; }
+  }
+  @media (max-width: 400px) {
+    .cars-services-strip { grid-template-columns: 1fr; }
+    .cars-why-grid { grid-template-columns: 1fr; }
+  }
+</style>
 </head>
 <body>
 
@@ -59,10 +367,11 @@
   </button>
 </nav>
 
+<!-- HERO -->
 <div class="page-hero">
-  <span class="section-tag">Fleet</span>
-  <h1>Transport Services</h1>
-  <p>From mountain SUVs to luxury sedans — the right vehicle for every Georgian adventure.</p>
+  <span class="section-tag">Our Fleet</span>
+  <h1>Transport and Car Services</h1>
+  <p>Comfortable and safe vehicles for every journey across Georgia. Pick the car that fits your trip — an experienced driver is always included.</p>
   <div class="breadcrumb">
     <a href="index.html">Home</a>
     <span class="sep">›</span>
@@ -70,53 +379,90 @@
   </div>
 </div>
 
+<!-- AVAILABLE VEHICLES -->
 <section class="cars-full-section" style="padding:5rem 2rem;">
   <div class="container">
     <div class="section-header">
-      <span class="section-tag">Our Fleet</span>
+      <span class="section-tag">Available Vehicles</span>
       <h2>Choose Your Vehicle</h2>
-      <p>All vehicles are professionally maintained, insured and driven by licensed, English-speaking drivers.</p>
+      <p>Every car in our fleet is well-maintained, fully insured and driven by a licensed driver who speaks English.</p>
       <div class="divider"></div>
     </div>
-    <div class="cars-stack" id="cars-stack" data-no-translate>
+    <div class="cars-grid-3" id="cars-grid-page" data-no-translate role="list" aria-live="polite" aria-label="Vehicle list">
       <div class="gt-card-loader"><span class="gt-card-loader__spinner" aria-hidden="true"></span><span>Loading<span class="gt-card-loader__dots" aria-hidden="true"></span></span></div>
     </div>
   </div>
 </section>
 
-<!-- Services Banner -->
-<section style="background:var(--light-bg);padding:4rem 2rem;">
+<!-- SERVICES -->
+<section style="background:var(--light-bg);padding:4.5rem 2rem;">
   <div class="container">
     <div class="section-header">
-      <span class="section-tag">Services</span>
+      <span class="section-tag">Our Services</span>
       <h2>What We Offer</h2>
+      <p>From a quick airport pick-up to a long mountain trip — we have the right car and driver for every plan.</p>
       <div class="divider"></div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.25rem;">
-      <div style="background:var(--white);border-radius:14px;padding:1.75rem;text-align:center;box-shadow:0 2px 16px rgba(11,60,93,0.07);border:1px solid rgba(11,60,93,0.06);">
-        <div style="font-size:2rem;margin-bottom:0.75rem;">✈️</div>
-        <h4 style="font-family:'Montserrat',sans-serif;font-size:0.95rem;font-weight:700;color:var(--dark-blue);margin-bottom:0.4rem;">Airport Transfers</h4>
-        <p style="font-size:0.83rem;color:var(--text-mid);line-height:1.6;">Meet & greet with name sign, luggage assistance and direct transfer to your hotel.</p>
+    <div class="cars-services-strip">
+      <div class="cars-service-card">
+        <div class="cars-service-card__icon">✈️</div>
+        <h4>Airport Transfers</h4>
+        <p>We meet you at the airport with a name sign, help with your luggage and take you straight to your hotel.</p>
       </div>
-      <div style="background:var(--white);border-radius:14px;padding:1.75rem;text-align:center;box-shadow:0 2px 16px rgba(11,60,93,0.07);border:1px solid rgba(11,60,93,0.06);">
-        <div style="font-size:2rem;margin-bottom:0.75rem;">🏙️</div>
-        <h4 style="font-family:'Montserrat',sans-serif;font-size:0.95rem;font-weight:700;color:var(--dark-blue);margin-bottom:0.4rem;">City Tours</h4>
-        <p style="font-size:0.83rem;color:var(--text-mid);line-height:1.6;">Explore Tbilisi comfortably with a knowledgeable driver-guide at your disposal all day.</p>
+      <div class="cars-service-card">
+        <div class="cars-service-card__icon">🏙️</div>
+        <h4>City Tours</h4>
+        <p>Discover Tbilisi and Batumi with a friendly driver who knows every street and story of the city.</p>
       </div>
-      <div style="background:var(--white);border-radius:14px;padding:1.75rem;text-align:center;box-shadow:0 2px 16px rgba(11,60,93,0.07);border:1px solid rgba(11,60,93,0.06);">
-        <div style="font-size:2rem;margin-bottom:0.75rem;">🏔️</div>
-        <h4 style="font-family:'Montserrat',sans-serif;font-size:0.95rem;font-weight:700;color:var(--dark-blue);margin-bottom:0.4rem;">Mountain Trips</h4>
-        <p style="font-size:0.83rem;color:var(--text-mid);line-height:1.6;">4WD vehicles equipped for Kazbegi, Svaneti, Tusheti and all off-road destinations.</p>
+      <div class="cars-service-card">
+        <div class="cars-service-card__icon">🏔️</div>
+        <h4>Mountain Trips</h4>
+        <p>Strong 4WD cars for Kazbegi, Svaneti, Tusheti and any off-road destination you want to visit.</p>
       </div>
-      <div style="background:var(--white);border-radius:14px;padding:1.75rem;text-align:center;box-shadow:0 2px 16px rgba(11,60,93,0.07);border:1px solid rgba(11,60,93,0.06);">
-        <div style="font-size:2rem;margin-bottom:0.75rem;">🎓</div>
-        <h4 style="font-family:'Montserrat',sans-serif;font-size:0.95rem;font-weight:700;color:var(--dark-blue);margin-bottom:0.4rem;">School Groups</h4>
-        <p style="font-size:0.83rem;color:var(--text-mid);line-height:1.6;">Large capacity minivans with safety features ideal for student and youth groups.</p>
+      <div class="cars-service-card">
+        <div class="cars-service-card__icon">👨‍👩‍👧</div>
+        <h4>Groups and Families</h4>
+        <p>Spacious minivans with safety features — perfect for families, students and travel groups.</p>
       </div>
     </div>
   </div>
 </section>
 
+<!-- WHY BOOK WITH US -->
+<section style="background:var(--dark-blue);padding:4.5rem 2rem;">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag" style="color:var(--teal);">Why Us</span>
+      <h2 style="color:var(--white);">Why Book a Car With Us</h2>
+      <p style="color:rgba(255,255,255,0.65);">We care about your comfort, your safety and your time.</p>
+      <div class="divider" style="background:var(--yellow);"></div>
+    </div>
+    <div class="cars-why-grid">
+      <div class="cars-why-item">
+        <div class="cars-why-item__icon">🧑‍✈️</div>
+        <h4>Licensed Drivers</h4>
+        <p>Professional drivers with years of experience who know Georgia very well.</p>
+      </div>
+      <div class="cars-why-item">
+        <div class="cars-why-item__icon">🚗</div>
+        <h4>Modern Vehicles</h4>
+        <p>Clean and comfortable cars with air-conditioning, checked before every trip.</p>
+      </div>
+      <div class="cars-why-item">
+        <div class="cars-why-item__icon">💰</div>
+        <h4>Fair Prices</h4>
+        <p>Honest prices with no hidden fees. You only pay for what you book.</p>
+      </div>
+      <div class="cars-why-item">
+        <div class="cars-why-item__icon">🕐</div>
+        <h4>Available Every Day</h4>
+        <p>We are here for you every day of the week, at any hour you need us.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
 <footer class="footer">
   <div class="footer-grid">
     <div class="footer-brand">
@@ -137,7 +483,7 @@
       <h4>Quick Links</h4>
       <ul>
         <li><a href="index.html">Home</a></li>
-        <li><a href="tours.html">Tours</a></li>
+        <li><a href="domestic-tours.html">Tours</a></li>
         <li><a href="cars.html">Cars</a></li>
         <li><a href="posts.html">Posts</a></li>
         <li><a href="about.html">About</a></li>
@@ -166,12 +512,13 @@
   </div>
 </footer>
 
-<div class="modal-backdrop" id="book-modal">
+<!-- BOOKING MODAL (inline quick inquiry, not used primarily) -->
+<div class="modal-backdrop" id="book-modal" role="dialog" aria-modal="true">
   <div class="modal">
-    <button class="modal-close">✕</button>
+    <button class="modal-close" onclick="closeModal()">✕</button>
     <h3 id="modal-tour-name">Vehicle Inquiry</h3>
     <div class="price" id="modal-tour-price"></div>
-    <p>Tell us your dates and we'll get back to you within a few hours with availability and pricing.</p>
+    <p>Share your dates and we will reply within a few hours with availability and a final price.</p>
     <div class="form-group"><label>Full Name</label><input type="text" placeholder="Your full name"></div>
     <div class="form-group"><label>Email</label><input type="email" placeholder="your@email.com"></div>
     <div class="form-group"><label>Trip Dates</label><input type="text" placeholder="e.g. June 10–15, 2025"></div>
@@ -184,6 +531,199 @@
 <script src="i18n-data.js"></script>
 <script type="module" src="script.js"></script>
 <script type="module" src="auth.js"></script>
+
+<!-- ============================================================
+     CARS PAGE — DATA LOADING & RENDERING
+     Cache-first paint + Firebase background refresh.
+     Same pattern as domestic-tours.html / international-tours.html.
+     ============================================================ -->
+<script type="module">
+let allCars = [];
+
+// --- i18n helpers (safe fallbacks if lang scripts haven't loaded yet) ---
+function L(val, fallback = '') {
+  if (window.localize) return window.localize(val, fallback);
+  if (val == null) return fallback;
+  if (typeof val === 'string') return val;
+  if (typeof val === 'object') return val.ka || val.en || fallback;
+  return String(val);
+}
+function T(key, tokens) {
+  return (window.t ? window.t(key, tokens) : key);
+}
+function translateCarType(type) {
+  if (!type || typeof type !== 'string') return type || '';
+  const tt = window.t;
+  if (!tt) return type;
+  const s = type.trim();
+  const map = {
+    'Sedan': 'type_sedan',
+    'SUV': 'type_suv',
+    'Minivan': 'type_minivan',
+    'Van': 'type_van',
+    'Jeep': 'type_jeep'
+  };
+  return map[s] ? tt(map[s]) : s;
+}
+
+function escapeAttr(s) {
+  return String(s || '').replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+}
+
+function renderVehicleCard(car) {
+  const title = L(car.title);
+  const info = L(car.info || car.desc || '');
+  const type = translateCarType(car.type || '');
+  const seats = car.seats || '—';
+  const transmission = car.transmission || '—';
+  const fuel = car.fuel || '—';
+  const onRequest = T('on_request');
+  const perDay = T('per_day');
+  const priceMarkup = window.PriceDisplay
+    ? window.PriceDisplay.renderPriceMarkup(car, { priceClass: 'vehicle-card__price', labelClass: 'vehicle-card__price-sub', defaultLabel: perDay })
+    : `<span class="vehicle-card__price">${car.priceOnRequest ? onRequest : (car.price || onRequest)}</span><span class="vehicle-card__price-sub">${car.priceOnRequest ? '' : perDay}</span>`;
+
+  return `
+    <article class="vehicle-card" data-id="${escapeAttr(car.id)}">
+      <div class="vehicle-card__media">
+        <img src="${car.img || ''}" alt="${escapeAttr(title)}" loading="lazy">
+        ${type ? `<span class="vehicle-card__type">${type}</span>` : ''}
+        <span class="vehicle-card__driver">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><path d="M20 6 9 17l-5-5"></path></svg>
+          <span data-no-translate-inline="false">Driver included</span>
+        </span>
+      </div>
+      <div class="vehicle-card__body">
+        <h3 class="vehicle-card__title">${title}</h3>
+        <p class="vehicle-card__desc">${info}</p>
+
+        <div class="vehicle-card__specs" aria-label="Vehicle specs">
+          <div class="vehicle-spec">
+            <span class="vehicle-spec__icon" aria-hidden="true">👥</span>
+            <span class="vehicle-spec__label">${T('spec_seats') || 'Seats'}</span>
+            <span class="vehicle-spec__value">${seats}</span>
+          </div>
+          <div class="vehicle-spec">
+            <span class="vehicle-spec__icon" aria-hidden="true">⚙️</span>
+            <span class="vehicle-spec__label">${T('spec_transmission') || 'Gearbox'}</span>
+            <span class="vehicle-spec__value">${transmission}</span>
+          </div>
+          <div class="vehicle-spec">
+            <span class="vehicle-spec__icon" aria-hidden="true">⛽</span>
+            <span class="vehicle-spec__label">${T('spec_fuel') || 'Fuel'}</span>
+            <span class="vehicle-spec__value">${fuel}</span>
+          </div>
+        </div>
+
+        <div class="vehicle-card__footer">
+          <div class="vehicle-card__price-wrap">
+            ${priceMarkup}
+          </div>
+          <button class="vehicle-card__cta" onclick="goToCarDetailPage('${escapeAttr(car.id)}')">
+            ${T('view_details') || 'View Details'}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+          </button>
+        </div>
+      </div>
+    </article>`;
+}
+
+// Navigation (writes to sessionStorage, then redirects to cars-detail.html)
+window.goToCarDetailPage = function(carId) {
+  const car = allCars.find(c => c.id === carId);
+  if (car) {
+    try {
+      sessionStorage.setItem('selectedCarId', car.id);
+      sessionStorage.setItem('selectedCarData', JSON.stringify(car));
+    } catch (e) {}
+  } else {
+    try { sessionStorage.setItem('selectedCarId', carId); } catch (e) {}
+  }
+  window.location.href = `cars-detail.html?id=${encodeURIComponent(carId)}`;
+};
+
+function renderAllCars() {
+  const grid = document.getElementById('cars-grid-page');
+  if (!grid) return;
+  if (!allCars.length) {
+    grid.innerHTML = `<p style="grid-column:1/-1;text-align:center;color:var(--text-mid);padding:3rem;">${T('empty_cars') || 'No vehicles available yet.'}</p>`;
+    return;
+  }
+  grid.innerHTML = allCars.map(renderVehicleCard).join('');
+}
+
+// --- Cache helpers (shared gt_data_cache_v1) ---
+const DATA_CACHE_KEY = 'gt_data_cache_v1';
+const DATA_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
+
+function readCarsFromCache() {
+  try {
+    const raw = localStorage.getItem(DATA_CACHE_KEY);
+    if (!raw) return null;
+    const cache = JSON.parse(raw);
+    if (!cache || !Array.isArray(cache.cars) || cache.cars.length === 0) return null;
+    if (cache.timestamp && Date.now() - cache.timestamp > DATA_CACHE_MAX_AGE) return null;
+    return cache.cars;
+  } catch (e) { return null; }
+}
+
+function writeCarsToCache(cars) {
+  try {
+    const raw = localStorage.getItem(DATA_CACHE_KEY);
+    const cache = raw ? JSON.parse(raw) : {};
+    cache.cars = cars;
+    cache.timestamp = Date.now();
+    localStorage.setItem(DATA_CACHE_KEY, JSON.stringify(cache));
+  } catch (e) { /* quota — ignore */ }
+}
+
+async function init() {
+  // 1. Instant paint from localStorage cache
+  const cached = readCarsFromCache();
+  let renderedFromCache = false;
+  if (cached) {
+    allCars = cached;
+    renderAllCars();
+    renderedFromCache = true;
+  }
+
+  // Safety restart: if the loader is still on screen after 1.5s, reload.
+  setTimeout(() => {
+    const grid = document.getElementById('cars-grid-page');
+    if (grid && grid.querySelector('.gt-card-loader')) {
+      console.warn('Cars loading timeout — reloading.');
+      window.location.reload();
+    }
+  }, 1500);
+
+  // 2. Background fresh fetch
+  try {
+    const config = await import('./firebase-config.js');
+    const fresh = await Promise.race([
+      config.getCars(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500))
+    ]);
+
+    if (Array.isArray(fresh)) {
+      allCars = fresh;
+      writeCarsToCache(fresh);
+      renderAllCars();
+    } else if (!renderedFromCache) {
+      renderAllCars();
+    }
+  } catch (e) {
+    console.warn('Background car fetch failed, keeping cached data.', e);
+    if (!renderedFromCache) renderAllCars();
+  }
+}
+
+// Re-render when user changes language (lang.js dispatches this event)
+window.addEventListener('languageChanged', () => {
+  if (allCars.length) renderAllCars();
+});
+
+init();
+</script>
 
 </body>
 </html>

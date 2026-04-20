@@ -262,7 +262,8 @@ function goToCarDetail(carId) {
   } else {
     sessionStorage.setItem('selectedCarId', carId);
   }
-  window.location.href = 'car-detail.html';
+  // Each car has a unique, shareable URL (?id=...).
+  window.location.href = `cars-detail.html?id=${encodeURIComponent(carId)}`;
 }
 
 /**
@@ -306,7 +307,7 @@ async function syncSaveButtons() {
 }
 
 /**
- * ტურის შენახვა ან წაშლა ბაზიდან
+ * ტურის შენახვა ან წ��შლა ბაზიდან
  * @param {string} tourId - ტურის ID
  * @param {Event} event - კლიკის ივენთი
  */
