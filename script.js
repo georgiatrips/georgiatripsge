@@ -536,6 +536,15 @@ function renderInternationalTours() {
   syncSaveButtons();
 }
 
+function renderBatumiTours() {
+  const grid = document.getElementById('batumi-tours-grid');
+  if (!grid) return;
+  const tFn = (k) => (window.t ? window.t(k) : k);
+  const batumiTours = toursData.filter(tour => tour.isBatumi === true);
+  grid.innerHTML = batumiTours.length > 0 ? batumiTours.map(renderTourCard).join('') : `<p style="text-align:center;color:var(--text-mid);">ბათუმის ტურები მალე დაემატება!</p>`;
+  syncSaveButtons();
+}
+
 function initTourTabs() {
   const btns = document.querySelectorAll('.tab-btn');
   btns.forEach(btn => {
@@ -1127,6 +1136,7 @@ function renderAllContent() {
     featuredData = getFeaturedToursFromData(toursData);
   }
 
+  try { renderBatumiTours(); } catch (e) {}
   try { renderDomesticTours(); } catch (e) {}
   try { renderInternationalTours(); } catch (e) {}
   try { renderCars('cars-grid'); } catch (e) {}
@@ -1174,7 +1184,7 @@ function stopIndexWatchdog() {
 }
 
 function indexContentVisible() {
-  const ids = ['domestic-tours-grid', 'international-tours-grid', 'cars-grid', 'stories-grid'];
+  const ids = ['batumi-tours-grid', 'domestic-tours-grid', 'international-tours-grid', 'cars-grid', 'stories-grid'];
   // Require at least one grid that exists on this page to have real cards.
   let foundAny = false;
   for (const id of ids) {
@@ -1239,6 +1249,7 @@ async function loadDataAndInit() {
   initModal();
   initContactForm();
   initNewsletterForms();
+  initScrollSlider('batumi-tours-grid', 'batumi-prev', 'batumi-next');
   initScrollSlider('domestic-tours-grid', 'domestic-prev', 'domestic-next');
   initScrollSlider('international-tours-grid', 'international-prev', 'international-next');
   initScrollSlider('cars-grid', 'cars-prev', 'cars-next');
@@ -1350,6 +1361,7 @@ window.reRenderAllData = function reRenderAllData() {
   // Skip if no data at all — avoid clearing already-rendered grids
   if ((!toursData || toursData.length === 0) && (!carsData || carsData.length === 0) && (!postsData || postsData.length === 0)) return;
 
+  try { renderBatumiTours(); } catch {}
   try { renderDomesticTours(); } catch {}
   try { renderInternationalTours(); } catch {}
   try { renderCars('cars-grid'); } catch {}

@@ -873,6 +873,45 @@ section { padding: 5rem 2rem; }
   box-shadow: 0 2px 8px rgba(244,180,0,0.3);
 }
 
+/* ===== BATUMI TOURS SECTION ===== */
+.batumi-tours-grid {
+  display: flex; gap: 1.5rem; overflow-x: auto; padding: 1rem 0;
+  scroll-snap-type: x mandatory; scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+  flex: 1;
+}
+.batumi-tours-grid::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+.batumi-tours-grid .tour-card {
+  flex: 0 0 320px; scroll-snap-align: start;
+  min-height: 400px;
+  background: linear-gradient(135deg, var(--white) 0%, rgba(0,150,199,0.05) 100%);
+  border: 2px solid rgba(0,150,199,0.2);
+  position: relative;
+}
+.batumi-tours-grid .tour-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, rgba(0,182,212,0.04) 0%, rgba(0,150,199,0.02) 100%);
+  border-radius: var(--radius); pointer-events: none;
+}
+.batumi-tours-grid .tour-card:hover {
+  border-color: rgba(0,150,199,0.4);
+  box-shadow: 0 15px 35px rgba(0,150,199,0.2);
+}
+.batumi-tours-grid .tour-card-badge {
+  background: linear-gradient(135deg, #0096c7 0%, #00b4d8 100%);
+  color: var(--white);
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,150,199,0.3);
+}
+.tour-card--batumi {
+  border: 2px solid rgba(0,150,199,0.25) !important;
+}
+.tour-card--batumi:hover {
+  border-color: rgba(0,150,199,0.5) !important;
+  box-shadow: 0 15px 35px rgba(0,150,199,0.2) !important;
+}
+
 /* ===== TOUR CARD ===== */
 .tour-card {
   background: var(--white); border-radius: var(--radius); overflow: hidden;
@@ -1254,6 +1293,7 @@ section { padding: 5rem 2rem; }
   .cars-slider-wrapper .slider-arrow-left { left: 8px; }
   .tours-slider-wrapper .slider-arrow-right,
   .cars-slider-wrapper .slider-arrow-right { right: 8px; }
+  .batumi-tours-grid .tour-card,
   .domestic-tours-grid .tour-card,
   .international-tours-grid .tour-card { flex: 0 0 300px; min-height: 380px; }
   .cars-grid .car-card { flex: 0 0 280px; }
@@ -1497,9 +1537,11 @@ section { padding: 5rem 2rem; }
   .post-card-body { padding: 1.1rem; }
   .post-card-title { font-size: 1rem; }
   .post-card-text { font-size: 0.85rem; margin-bottom: 0.85rem; }
+  .batumi-tours-grid,
   .domestic-tours-grid,
   .international-tours-grid,
   .cars-grid { display: flex !important; gap: 1rem; padding: 0.5rem 0; overflow-x: auto !important; scroll-snap-type: x mandatory !important; }
+  .batumi-tours-grid .tour-card,
   .domestic-tours-grid .tour-card,
   .international-tours-grid .tour-card {
     flex: 0 0 calc(100vw - 3rem) !important;
