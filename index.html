@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="bg-background">
 
 <head>
@@ -104,6 +104,138 @@
     }
     .international-tours-section { background-color: #f2f4f7; }
     .stories-section { background: linear-gradient(135deg, #ffffff 0%, #fff9f2 100%); }
+
+    /* ===== BATUMI TOURS SECTION ===== */
+    .batumi-tours-section {
+      background: linear-gradient(135deg, #e6f7fb 0%, #f0fbff 50%, #fff9e6 100%);
+      border-top: 1px solid rgba(46, 196, 182, 0.15);
+      padding: 4.5rem 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .batumi-tours-section::before {
+      content: '';
+      position: absolute;
+      top: -50px;
+      right: -50px;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(46,196,182,0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .batumi-tours-section::after {
+      content: '';
+      position: absolute;
+      bottom: -60px;
+      left: -60px;
+      width: 260px;
+      height: 260px;
+      background: radial-gradient(circle, rgba(244,180,0,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .batumi-tours-section .section-header { position: relative; z-index: 1; }
+    .batumi-tours-section .section-tag {
+      display: inline-block;
+      background: linear-gradient(135deg, #2EC4B6 0%, #1aa399 100%);
+      color: #fff;
+      padding: 0.45rem 1.1rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 14px rgba(46,196,182,0.32);
+    }
+    .batumi-tours-section h2 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: clamp(1.9rem, 4vw, 2.6rem);
+      font-weight: 900;
+      color: #0B3C5D;
+      letter-spacing: -0.5px;
+      margin-bottom: 0.75rem;
+    }
+    .batumi-tours-section h2 .wave-accent { color: #2EC4B6; }
+    .batumi-tours-section .section-header p {
+      max-width: 620px;
+      margin: 0 auto;
+      color: #3A5068;
+      font-size: 1rem;
+      line-height: 1.65;
+    }
+    .batumi-tours-section .divider {
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, #2EC4B6, #F4B400);
+      margin: 1.25rem auto 0;
+      border-radius: 999px;
+    }
+    .batumi-slider-wrapper {
+      position: relative;
+      margin-top: 2.5rem;
+      z-index: 1;
+    }
+    .batumi-tours-grid {
+      display: flex;
+      gap: 1.5rem;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      padding: 0.5rem 0.25rem 1.5rem;
+      scrollbar-width: thin;
+    }
+    .batumi-tours-grid::-webkit-scrollbar { height: 6px; }
+    .batumi-tours-grid::-webkit-scrollbar-thumb { background: rgba(46,196,182,0.35); border-radius: 999px; }
+    .batumi-tours-grid > * { flex: 0 0 320px; max-width: 320px; }
+    @media (min-width: 768px) {
+      .batumi-tours-grid > * { flex: 0 0 340px; max-width: 340px; }
+    }
+    .batumi-tours-grid .gt-card-loader { flex: 1 1 100%; max-width: none; }
+    .batumi-empty {
+      text-align: center;
+      color: #3A5068;
+      padding: 3rem 1rem;
+      width: 100%;
+    }
+    .batumi-view-all-wrap {
+      text-align: center;
+      margin-top: 2rem;
+      position: relative;
+      z-index: 1;
+    }
+    .btn-batumi-all {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.85rem 1.6rem;
+      background: #0B3C5D;
+      color: #fff;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.92rem;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+      box-shadow: 0 8px 24px rgba(11,60,93,0.22);
+    }
+    .btn-batumi-all:hover {
+      background: #2EC4B6;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(46,196,182,0.32);
+    }
+    /* Batumi card accent */
+    .tour-card--batumi {
+      position: relative;
+      box-shadow: 0 8px 28px rgba(46,196,182,0.18);
+      border: 1px solid rgba(46,196,182,0.25);
+    }
+    .tour-card--batumi::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #2EC4B6, #F4B400);
+      z-index: 4;
+      border-top-left-radius: var(--radius);
+      border-top-right-radius: var(--radius);
+    }
   </style>
 </head>
 
@@ -183,6 +315,32 @@
     <div class="hero-scroll">
       <span>Scroll</span>
       <div class="scroll-dot"></div>
+    </div>
+  </section>
+
+  <!-- BATUMI TOURS SECTION -->
+  <section class="batumi-tours-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Black Sea Coast</span>
+        <h2>Batumi Tours</h2>
+        <p>Sun, sea and unforgettable adventures on Georgia's coastline. Pick your favourite Batumi escape below.</p>
+        <div class="divider"></div>
+      </div>
+      <div class="batumi-slider-wrapper">
+        <div class="batumi-tours-grid" id="batumi-tours-grid" data-no-translate>
+          <div class="gt-card-loader"><span class="gt-card-loader__spinner" aria-hidden="true"></span><span>Loading<span
+                class="gt-card-loader__dots" aria-hidden="true"></span></span></div>
+        </div>
+      </div>
+      <div class="batumi-view-all-wrap">
+        <a href="domestic-tours.html?filter=batumi" class="btn-batumi-all">View All Batumi Tours <svg width="16" height="16"
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg></a>
+      </div>
     </div>
   </section>
 

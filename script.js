@@ -527,6 +527,18 @@ function renderDomesticTours() {
   syncSaveButtons();
 }
 
+function renderBatumiTours() {
+  const grid = document.getElementById('batumi-tours-grid');
+  if (!grid) return;
+  const batumiTours = toursData.filter(tour => tour.isBatumi === true);
+  if (batumiTours.length === 0) {
+    grid.innerHTML = '<p class="batumi-empty">No Batumi tours yet — check back soon.</p>';
+    return;
+  }
+  grid.innerHTML = batumiTours.map(renderTourCard).join('');
+  syncSaveButtons();
+}
+
 function renderInternationalTours() {
   const grid = document.getElementById('international-tours-grid');
   if (!grid) return;
@@ -1129,6 +1141,7 @@ function renderAllContent() {
 
   try { renderDomesticTours(); } catch (e) {}
   try { renderInternationalTours(); } catch (e) {}
+  try { renderBatumiTours(); } catch (e) {}
   try { renderCars('cars-grid'); } catch (e) {}
   try { renderPosts('stories-grid', 6); } catch (e) {}
   try { renderReviews(); } catch (e) {}

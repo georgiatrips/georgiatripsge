@@ -260,7 +260,7 @@ ul { list-style: none; }
   color: var(--white); line-height: 1.1; margin-bottom: 1.2rem;
   letter-spacing: -1.5px;
 }
-.hero h1 em { color: var(--teal); font-style: normal; }
+.hero h1 em { color: #e63946; font-style: normal; }
 .hero p {
   font-size: 1.15rem; color: rgba(255,255,255,0.82);
   margin-bottom: 2.2rem; font-weight: 300; max-width: 540px; margin-left: auto; margin-right: auto;
