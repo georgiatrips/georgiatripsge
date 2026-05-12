@@ -28,8 +28,15 @@
   const ATTRS = ['placeholder', 'title', 'aria-label'];
 
   // Nodes whose textual contents must be left alone.
+  // Skip translating the *text content* of these tags.
+  // Note: we still want to translate user-facing attributes like placeholder on form fields.
   const SKIP_TAGS = new Set([
     'SCRIPT', 'STYLE', 'NOSCRIPT', 'CODE', 'PRE', 'TEXTAREA'
+  ]);
+
+  // Skip translating attributes for these tags (but allow TEXTAREA so its placeholder can translate).
+  const SKIP_ATTR_TAGS = new Set([
+    'SCRIPT', 'STYLE', 'NOSCRIPT', 'CODE', 'PRE'
   ]);
 
   // Any element matching this selector (or a descendant of one) is opted out
@@ -142,7 +149,7 @@
     if (!root) return out;
     const all = root.querySelectorAll('*');
     all.forEach((el) => {
-      if (SKIP_TAGS.has(el.tagName)) return;
+      if (SKIP_ATTR_TAGS.has(el.tagName)) return;
       if (el.closest(SKIP_SELECTOR)) return;
       for (let i = 0; i < ATTRS.length; i++) {
         const attr = ATTRS[i];
@@ -292,7 +299,7 @@
     const mo = new MutationObserver((muts) => {
       for (let i = 0; i < muts.length; i++) {
         const m = muts[i];
-        if (m.type === 'childList' && (m.addedNodes.length || m.removedNodes.length)) {
+        if ((m.type === 'childList' && (m.addedNodes.length || m.removedNodes.length)) || m.type === 'characterData') {
           scheduleReapply();
           return;
         }
@@ -301,7 +308,7 @@
     mo.observe(document.body, {
       childList: true,
       subtree: true,
-      characterData: false,
+      characterData: true,
       attributes: false
     });
   }

@@ -1,8 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" class="bg-background">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="logo.png">
 <!-- Speed up Firebase / fonts / flag CDN handshakes. -->
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
@@ -108,6 +109,11 @@
     margin-right: 8px;
   }
   .share-tour-btn:hover { background: #fff; color: var(--teal); transform: scale(1.1); }
+
+  /* Background variety */
+  .filter-section {
+    background: linear-gradient(180deg, #fff9f2 0%, #ffffff 100%);
+  }
 </style>
 <link rel="stylesheet" href="tours-page.css">
 </head>
@@ -580,7 +586,7 @@ window.closeModal = function() {
 
 // ── CACHE HELPERS (shared with index.html via gt_data_cache_v1) ──
 const DATA_CACHE_KEY = 'gt_data_cache_v1';
-const DATA_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
+const DATA_CACHE_MAX_AGE = Infinity; // Never expire — stale data is better than empty screen
 
 function readToursFromCache() {
   try {
@@ -588,7 +594,7 @@ function readToursFromCache() {
     if (!raw) return null;
     const cache = JSON.parse(raw);
     if (!cache || !Array.isArray(cache.tours) || cache.tours.length === 0) return null;
-    if (cache.timestamp && Date.now() - cache.timestamp > DATA_CACHE_MAX_AGE) return null;
+    // Cache never expires — background fetch silently replaces stale data
     return cache.tours;
   } catch (e) { return null; }
 }
@@ -610,7 +616,7 @@ function writeToursToCache(tours) {
 let _contentWatchdog = null;
 let _watchdogBusy = false;
 let _watchdogAttempts = 0;
-const WATCHDOG_MAX_ATTEMPTS = 30;   // ~30 s absolute cap so we don't loop forever
+const WATCHDOG_MAX_ATTEMPTS = 60;   // ~60 s absolute cap for slow connections
 const WATCHDOG_INTERVAL_MS = 1000;
 
 function stopContentWatchdog() {
@@ -640,7 +646,7 @@ async function tickContentWatchdog() {
     const fresh = await Promise.race([
       config.getTours(),
       new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Watchdog timeout')), 1500)
+        setTimeout(() => reject(new Error('Watchdog timeout')), 8000)
       )
     ]);
 
@@ -683,18 +689,13 @@ async function init() {
   //    it will retry fetching until it is.
   scheduleContentWatchdog();
 
-  // Safety Restart: თუ 1.5 წამში სპინერი არ გაქრა, გვერდი დარესტარტდეს
-  setTimeout(() => {
-    if (document.querySelector('.gt-card-loader')) {
-      console.warn('Loading taking too long, restarting page...');
-      window.location.reload();
-    }
-  }, 1500);
+  // The watchdog handles retries — no forced page reload needed.
+  // (Removed: 1.5s forced reload was causing infinite reload loops on slow connections)
 
   // 3. Background fresh fetch — dynamically import Firebase so the cache
   //    paint above is never blocked by the SDK download.
   try {
-    const fetchWithTimeout = async (timeoutMs = 1500) => {
+    const fetchWithTimeout = async (timeoutMs = 8000) => {
       const config = await import('./firebase-config.js');
       return Promise.race([
         config.getTours(),
@@ -704,7 +705,7 @@ async function init() {
       ]);
     };
 
-    const fresh = await fetchWithTimeout(1500);
+    const fresh = await fetchWithTimeout(8000);
 
     if (Array.isArray(fresh)) {
       allTours = fresh;
@@ -730,6 +731,22 @@ window.addEventListener('languageChanged', () => {
     buildFilterTabs();
     renderToursGrid(activeCategory, { skipAnim: true });
     requestAnimationFrame(() => moveActiveIndicator(activeCategory));
+  }
+});
+
+// Re-fetch when user returns to tab (data may have disappeared)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  if (!isContentVisible() && (!allTours || allTours.length === 0)) {
+    const cached = readToursFromCache();
+    if (cached) {
+      allTours = cached;
+      buildFilterTabs();
+      renderToursGrid(activeCategory, { skipAnim: true });
+      requestAnimationFrame(() => moveActiveIndicator(activeCategory));
+    }
+    _watchdogAttempts = 0;
+    scheduleContentWatchdog();
   }
 });
 

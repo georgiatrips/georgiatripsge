@@ -1,22 +1,51 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null
+        && (request.auth.token.email in ['georgiatrips5@gmail.com', 'bassboste17@gmail.com']);
+    }
+
     // საჯარო ინფორმაცია
     match /tours/{tourId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create, update, delete: if isAdmin()
+        && request.resource.data.keys().hasAll(['title', 'img']);
     }
     match /cars/{carId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create, update, delete: if isAdmin()
+        && request.resource.data.keys().hasAll(['title', 'img']);
     }
     match /posts/{postId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create, update, delete: if isAdmin()
+        && request.resource.data.keys().hasAll(['title', 'img']);
     }
     match /featuredTours/{featuredId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create, update, delete: if isAdmin()
+        && request.resource.data.keys().hasAll(['title', 'img']);
+    }
+
+    // Leads / Inbox collections
+    // Public forms can create documents (no auth required).
+    // Only admins can read/manage all incoming leads.
+    match /tourBookings/{bookingId} {
+      allow create: if request.resource.data.keys().hasAll(['name', 'tourName']);
+      allow read, update, delete: if isAdmin();
+    }
+    match /carBookings/{bookingId} {
+      allow create: if request.resource.data.keys().hasAll(['name', 'carName']);
+      allow read, update, delete: if isAdmin();
+    }
+    match /subscribers/{subscriberId} {
+      allow create: if request.resource.data.keys().hasAll(['email']);
+      allow read, update, delete: if isAdmin();
+    }
+    match /contactMessages/{messageId} {
+      allow create: if request.resource.data.keys().hasAll(['name', 'email', 'message']);
+      allow read, update, delete: if isAdmin();
     }
 
     // შენახული ტურების ლოგიკა
@@ -25,6 +54,10 @@ service cloud.firestore {
     }
     
     // მომხმარებლის პროფილი
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }

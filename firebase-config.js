@@ -1,7 +1,7 @@
 // Firebase Configuration Module
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
-  getFirestore, 
+  getFirestore,
   collection, 
   doc, 
   addDoc, 
@@ -12,7 +12,8 @@ import {
   query, 
   orderBy,
   serverTimestamp,
-  enableIndexedDbPersistence
+  enableIndexedDbPersistence,
+  enableMultiTabIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
@@ -29,27 +30,33 @@ const firebaseConfig = {
 
 // Initialize Firebase (reuse existing default app if already initialized)
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Enable Offline Persistence for better performance and to fix "Could not reach backend" issues
-enableIndexedDbPersistence(db).catch((err) => {
-  if (err.code === 'failed-precondition') {
-    console.warn('Firestore persistence failed: Multiple tabs open.');
-  } else if (err.code === 'unimplemented') {
-    console.warn('Firestore persistence failed: Browser not supported.');
-  }
-});
+// Firestore (compat-safe for v10.8.0). Enable persistence when available.
+const db = getFirestore(app);
+try {
+  // Prefer multi-tab persistence to avoid "exclusive access" errors when
+  // multiple pages/tabs of this site are open.
+  enableMultiTabIndexedDbPersistence(db)
+    .catch(async () => {
+      // Fallback: single-tab persistence (may still fail if another tab owns it)
+      try {
+        await enableIndexedDbPersistence(db);
+      } catch (e) { /* ignore */ }
+    });
+} catch (e) { /* ignore */ }
 
 // ImgBB API Key
 const IMGBB_API_KEY = 'a5e4f8277be98927eb525c65da0615bf';
 
 // Admin emails - add your admin email here
-const ADMIN_EMAILS = ['georgiatrips5@gmail.com'];
+const ADMIN_EMAILS = ['georgiatrips5@gmail.com', 'bassboste17@gmail.com'];
 
 // Check if user is admin
 export function isAdmin(email) {
-  return ADMIN_EMAILS.includes(email);
+  const isAdminUser = ADMIN_EMAILS.includes(email);
+  console.log('[Firebase Config] isAdmin check:', email, '→', isAdminUser);
+  return isAdminUser;
 }
 
 // Upload image to ImgBB
@@ -88,7 +95,7 @@ export async function getTours() {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
     console.error('Error getting tours:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -143,7 +150,7 @@ export async function getCars() {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
     console.error('Error getting cars:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -198,7 +205,7 @@ export async function getPosts() {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
     console.error('Error getting posts:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -253,7 +260,7 @@ export async function getFeaturedTours() {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
     console.error('Error getting featured tours:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -308,7 +315,7 @@ export async function getReviews() {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
     console.error('Error getting reviews:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -352,5 +359,137 @@ export async function deleteReview(id) {
   }
 }
 
-// Export auth and db for use in other modules
-export { db, auth, onAuthStateChanged };
+// ============ LEADS / INBOX ============
+
+export async function addTourBooking(bookingData) {
+  try {
+    const ref = collection(db, 'tourBookings');
+    const docRef = await addDoc(ref, {
+      ...bookingData,
+      createdAt: serverTimestamp()
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding tour booking:', error);
+    throw error;
+  }
+}
+
+export async function getTourBookings() {
+  try {
+    const ref = collection(db, 'tourBookings');
+    const q = query(ref, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+  } catch (error) {
+    if (error && error.code === 'permission-denied') {
+      console.warn('No read permission for tourBookings collection.');
+      return [];
+    }
+    console.error('Error getting tour bookings:', error);
+    throw error;
+  }
+}
+
+export async function addCarBooking(bookingData) {
+  try {
+    const ref = collection(db, 'carBookings');
+    const docRef = await addDoc(ref, {
+      ...bookingData,
+      createdAt: serverTimestamp()
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding car booking:', error);
+    throw error;
+  }
+}
+
+export async function getCarBookings() {
+  try {
+    const ref = collection(db, 'carBookings');
+    const q = query(ref, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+  } catch (error) {
+    if (error && error.code === 'permission-denied') {
+      console.warn('No read permission for carBookings collection.');
+      return [];
+    }
+    console.error('Error getting car bookings:', error);
+    throw error;
+  }
+}
+
+export async function addSubscriber(subscriberData) {
+  try {
+    const ref = collection(db, 'subscribers');
+    const docRef = await addDoc(ref, {
+      ...subscriberData,
+      createdAt: serverTimestamp()
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding subscriber:', error);
+    throw error;
+  }
+}
+
+export async function getSubscribers() {
+  try {
+    const ref = collection(db, 'subscribers');
+    const q = query(ref, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+  } catch (error) {
+    if (error && error.code === 'permission-denied') {
+      console.warn('No read permission for subscribers collection.');
+      return [];
+    }
+    console.error('Error getting subscribers:', error);
+    throw error;
+  }
+}
+
+export async function addContactMessage(messageData) {
+  try {
+    const ref = collection(db, 'contactMessages');
+    const docRef = await addDoc(ref, {
+      ...messageData,
+      createdAt: serverTimestamp()
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding contact message:', error);
+    throw error;
+  }
+}
+
+export async function getContactMessages() {
+  try {
+    const ref = collection(db, 'contactMessages');
+    const q = query(ref, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+  } catch (error) {
+    if (error && error.code === 'permission-denied') {
+      console.warn('No read permission for contactMessages collection.');
+      return [];
+    }
+    console.error('Error getting contact messages:', error);
+    throw error;
+  }
+}
+
+// Export app, auth, db for centralized use across modules
+export { app, db, auth, onAuthStateChanged };
+
+// Helper to get current user for debugging
+export async function getCurrentUser() {
+  return new Promise((resolve) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      unsubscribe();
+      resolve(user);
+    });
+  });
+}

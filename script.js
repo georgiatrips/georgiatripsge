@@ -140,7 +140,29 @@ function translateCommonValue(str) {
     'Adventure': 'cat_adventure',
     'Travel Tips': 'cat_travel_tips',
     'Wine': 'cat_wine',
-    'School Tours': 'cat_school_tours'
+    'School Tours': 'cat_school_tours',
+    'Automatic': 'automatic',
+    'ავტომატური': 'automatic',
+    'Manual': 'manual',
+    'მექანიკური': 'manual',
+    'Petrol': 'petrol',
+    'ბენზინი': 'petrol',
+    'Diesel': 'diesel',
+    'დიზელი': 'diesel',
+    'Hybrid': 'hybrid',
+    'ჰიბრიდი': 'hybrid',
+    'Black': 'black',
+    'შავი': 'black',
+    'White': 'white',
+    'თეთრი': 'white',
+    'Silver': 'silver',
+    'ვერცხლისფერი': 'silver',
+    'წითელი': 'red',
+    'Red': 'red',
+    'ლურჯი': 'blue',
+    'Blue': 'blue',
+    'Grey': 'grey',
+    'ნაცრისფერი': 'grey'
   };
   if (map[s]) return t(map[s]);
   // "N Days" / "N Day" pattern
@@ -262,7 +284,19 @@ function goToCarDetail(carId) {
   } else {
     sessionStorage.setItem('selectedCarId', carId);
   }
-  window.location.href = 'car-detail.html';
+  // Each car has a unique, shareable URL (?id=...).
+  window.location.href = `cars-detail.html?id=${encodeURIComponent(carId)}`;
+}
+
+function goToPostDetail(postId) {
+  const post = postsData.find(item => item.id === postId);
+  if (post) {
+    sessionStorage.setItem('selectedPostId', post.id);
+    sessionStorage.setItem('selectedPostData', JSON.stringify(post));
+  } else {
+    sessionStorage.setItem('selectedPostId', postId);
+  }
+  window.location.href = `posts-detail.html?id=${encodeURIComponent(postId)}`;
 }
 
 /**
@@ -363,7 +397,9 @@ window.syncSaveButtons = syncSaveButtons;
 window.showToast = showToast;
 window.goToTourDetail = goToTourDetail;
 window.goToCarDetail = goToCarDetail;
+window.goToPostDetail = goToPostDetail;
 window.shareTour = shareTour;
+window.translateCommonValue = translateCommonValue;
 
 // renderTourCard ფუნქციის ქვემოთ განსაზღვრა (Hoisting-ისთვის)
 
@@ -445,12 +481,13 @@ function renderTourCard(tour) {
   const title = L(tour.title);
   const desc = L(tour.desc);
   const description = desc.length > 200 ? desc.substring(0, 200) + '...' : desc;
+  const batumiClass = tour.isBatumi ? 'tour-card--batumi' : '';
 
   return `
-    <div class="tour-card" data-category="${tour.category}">
+    <div class="tour-card ${batumiClass}" data-category="${tour.category}">
       <div class="tour-card-img">
         <img src="${tour.img}" alt="${title}" loading="lazy">
-        <span class="tour-card-badge ${badgeClass}">${badgeText}</span>
+        <span class="tour-card-badge ${badgeClass}">${tour.isBatumi ? '🌊 ' + badgeText : badgeText}</span>
         <button class="save-tour-btn" data-save-id="${getSafeAttr(tour.id)}" onclick="toggleSaveTour('${getSafeAttr(tour.id)}', event)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
         </button>
@@ -560,8 +597,9 @@ function renderCarFullCard(car) {
         <p class="tour-card__desc">${info} Whether you need airport transfers, city tours, or multi-day mountain excursions, we ensure comfort and safety throughout.</p>
         <ul class="tour-highlights">
           <li class="tour-highlight"><span class="highlight-dot"></span>${car.seats || 'Comfortable seating'}</li>
-          <li class="tour-highlight"><span class="highlight-dot"></span>Fuel: ${car.fuel || 'Any'}</li>
-          <li class="tour-highlight"><span class="highlight-dot"></span>Transmission: ${car.transmission || 'Any'}</li>
+          <li class="tour-highlight"><span class="highlight-dot"></span>Fuel: ${Lt(car.fuel, 'fuel')}</li>
+          <li class="tour-highlight"><span class="highlight-dot"></span>Transmission: ${Lt(car.transmission, 'transmission')}</li>
+          <li class="tour-highlight"><span class="highlight-dot"></span>Color: ${Lt(car.color, 'color')}</li>
         </ul>
         <div class="tour-card__footer">
           <div class="tour-card__meta">
@@ -583,9 +621,10 @@ function renderPostCard(post) {
   const title = L(post.title);
   const text = truncateText(L(post.text || post.content), 120);
   const category = translateCommonValue(post.category);
+  const postId = getSafeAttr(post.id);
 
   return `
-    <div class="post-card">
+    <article class="post-card" role="button" tabindex="0" onclick="goToPostDetail('${postId}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();goToPostDetail('${postId}');}">
       <div class="post-card-img">
         <img src="${post.img}" alt="${title}" loading="lazy">
         <span class="post-category">${category}</span>
@@ -596,9 +635,9 @@ function renderPostCard(post) {
         </div>
         <h3 class="post-card-title">${title}</h3>
         <p class="post-card-text">${text}</p>
-        <span class="post-read-more">${(window.t?window.t('read_more'):'Read More')} -></span>
+        <a href="posts-detail.html?id=${encodeURIComponent(post.id || '')}" class="post-read-more" onclick="event.stopPropagation();goToPostDetail('${postId}');return false;">${(window.t?window.t('read_more'):'Read More')} -></a>
       </div>
-    </div>`;
+    </article>`;
 }
 
 function renderPosts(containerId = 'posts-grid', count = null) {
@@ -849,12 +888,27 @@ function initModal() {
 function initContactForm() {
   const form = document.getElementById('contact-form');
   if (!form) return;
-  form.addEventListener('submit', e => {
+  form.addEventListener('submit', async e => {
     e.preventDefault();
     const btn = form.querySelector('.form-submit');
     const success = form.querySelector('.form-success');
     btn.textContent = 'Sending...';
     btn.disabled = true;
+    try {
+      const mod = await import('./firebase-config.js');
+      if (mod && typeof mod.addContactMessage === 'function') {
+        await mod.addContactMessage({
+          name: (document.getElementById('name')?.value || '').trim(),
+          email: (document.getElementById('email')?.value || '').trim(),
+          phone: (document.getElementById('phone')?.value || '').trim(),
+          message: (document.getElementById('message')?.value || '').trim(),
+          sourcePage: 'contact',
+          status: 'new'
+        });
+      }
+    } catch (err) {
+      console.error('Failed to save contact message:', err);
+    }
     setTimeout(() => {
       success.style.display = 'block';
       form.reset();
@@ -862,6 +916,48 @@ function initContactForm() {
       btn.disabled = false;
       setTimeout(() => { success.style.display = 'none'; }, 4000);
     }, 1200);
+  });
+}
+
+function initNewsletterForms() {
+  const subscribeButtons = Array.from(document.querySelectorAll('button.btn-primary')).filter((btn) => {
+    return /subscribe/i.test((btn.textContent || '').trim());
+  });
+  subscribeButtons.forEach((btn) => {
+    if (btn.dataset.newsletterBound === '1') return;
+    const wrapper = btn.parentElement;
+    const emailInput = wrapper ? wrapper.querySelector('input[type="email"]') : null;
+    if (!emailInput) return;
+    btn.dataset.newsletterBound = '1';
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const email = (emailInput.value || '').trim();
+      if (!email) {
+        if (window.showToast) window.showToast('Please enter email first', 'error');
+        return;
+      }
+      const original = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Subscribing...';
+      try {
+        const mod = await import('./firebase-config.js');
+        if (mod && typeof mod.addSubscriber === 'function') {
+          await mod.addSubscriber({
+            email,
+            sourcePage: window.location.pathname.split('/').pop() || 'unknown',
+            status: 'active'
+          });
+        }
+        emailInput.value = '';
+        if (window.showToast) window.showToast('Subscribed successfully!', 'success');
+      } catch (err) {
+        console.error('Failed to save subscriber:', err);
+        if (window.showToast) window.showToast('Failed to subscribe. Try again.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = original;
+      }
+    });
   });
 }
 
@@ -997,7 +1093,7 @@ function initScrollSlider(gridId, prevId, nextId) {
 // we overwrite the cache and re-render only the content grids — init
 // (navbar, modals, weather, etc.) runs exactly once.
 const DATA_CACHE_KEY = 'gt_data_cache_v1';
-const DATA_CACHE_MAX_AGE = 24 * 60 * 60 * 1000; // 24h — stale data is still useful for instant paint
+const DATA_CACHE_MAX_AGE = Infinity; // Never expire — stale data is always better than an empty screen
 
 function readDataCache() {
   try {
@@ -1005,7 +1101,7 @@ function readDataCache() {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object') return null;
-    if (parsed.timestamp && Date.now() - parsed.timestamp > DATA_CACHE_MAX_AGE) return null;
+    // Cache never expires — background fetch silently replaces stale data
     return parsed;
   } catch (e) { return null; }
 }
@@ -1070,7 +1166,7 @@ function renderAllContent() {
 let _idxWatchdog = null;
 let _idxWatchdogBusy = false;
 let _idxWatchdogAttempts = 0;
-const IDX_WATCHDOG_MAX_ATTEMPTS = 30; // ~30 s hard cap
+const IDX_WATCHDOG_MAX_ATTEMPTS = 60; // ~60 s hard cap for slow connections
 const IDX_WATCHDOG_INTERVAL_MS = 1000;
 
 function stopIndexWatchdog() {
@@ -1096,7 +1192,7 @@ function scheduleIndexWatchdog() {
   _idxWatchdog = setTimeout(tickIndexWatchdog, IDX_WATCHDOG_INTERVAL_MS);
 }
 
-async function fetchWithTimeout(promise, timeoutMs = 1500) {
+async function fetchWithTimeout(promise, timeoutMs = 8000) {
   return Promise.race([
     promise,
     new Promise((_, reject) => setTimeout(() => reject(new Error('Fetch timeout')), timeoutMs))
@@ -1111,19 +1207,21 @@ async function tickIndexWatchdog() {
   _idxWatchdogBusy = true;
   try {
     const [freshTours, freshCars, freshPosts, freshFeatured, freshReviews] = await Promise.all([
-      fetchWithTimeout(fetchToursFromFirebase()).catch(() => []),
-      fetchWithTimeout(fetchCarsFromFirebase()).catch(() => []),
-      fetchWithTimeout(fetchPostsFromFirebase()).catch(() => []),
-      fetchWithTimeout(fetchFeaturedFromFirebase()).catch(() => []),
-      fetchWithTimeout(fetchReviewsFromFirebase()).catch(() => [])
+      fetchWithTimeout(fetchToursFromFirebase()).catch(() => null),
+      fetchWithTimeout(fetchCarsFromFirebase()).catch(() => null),
+      fetchWithTimeout(fetchPostsFromFirebase()).catch(() => null),
+      fetchWithTimeout(fetchFeaturedFromFirebase()).catch(() => null),
+      fetchWithTimeout(fetchReviewsFromFirebase()).catch(() => null)
     ]);
 
-    if ((freshTours && freshTours.length) || (freshCars && freshCars.length) || (freshPosts && freshPosts.length)) {
-      toursData    = freshTours;
-      carsData     = freshCars;
-      postsData    = freshPosts;
-      featuredData = freshFeatured;
-      reviewsData  = freshReviews;
+    let dataUpdated = false;
+    if (freshTours && freshTours.length > 0) { toursData = freshTours; dataUpdated = true; }
+    if (freshCars && freshCars.length > 0) { carsData = freshCars; dataUpdated = true; }
+    if (freshPosts && freshPosts.length > 0) { postsData = freshPosts; dataUpdated = true; }
+    if (freshFeatured && freshFeatured.length > 0) { featuredData = freshFeatured; dataUpdated = true; }
+    if (freshReviews && freshReviews.length > 0) { reviewsData = freshReviews; dataUpdated = true; }
+
+    if (dataUpdated) {
       writeDataCache({ tours: toursData, cars: carsData, posts: postsData, featured: featuredData, reviews: reviewsData });
       renderAllContent();
     }
@@ -1140,6 +1238,7 @@ async function loadDataAndInit() {
   fetchWeather();
   initModal();
   initContactForm();
+  initNewsletterForms();
   initScrollSlider('domestic-tours-grid', 'domestic-prev', 'domestic-next');
   initScrollSlider('international-tours-grid', 'international-prev', 'international-next');
   initScrollSlider('cars-grid', 'cars-prev', 'cars-next');
@@ -1179,21 +1278,22 @@ async function loadDataAndInit() {
 
   // ---------- 3. Background fresh fetch ----------
   try {
-    // Use Promise.allSettled so one slow or failing request doesn't block the entire data load
+    // Use Promise.allSettled and fetchWithTimeout so one slow or failing request doesn't block the entire data load
     const results = await Promise.allSettled([
-      fetchToursFromFirebase().catch(() => toursData),
-      fetchCarsFromFirebase().catch(() => carsData),
-      fetchPostsFromFirebase().catch(() => postsData),
-      fetchFeaturedFromFirebase().catch(() => featuredData),
-      fetchReviewsFromFirebase().catch(() => reviewsData)
+      fetchWithTimeout(fetchToursFromFirebase()).catch(() => null),
+      fetchWithTimeout(fetchCarsFromFirebase()).catch(() => null),
+      fetchWithTimeout(fetchPostsFromFirebase()).catch(() => null),
+      fetchWithTimeout(fetchFeaturedFromFirebase()).catch(() => null),
+      fetchWithTimeout(fetchReviewsFromFirebase()).catch(() => null)
     ]);
 
     // Map settled results back to data variables
-    toursData    = results[0].status === 'fulfilled' ? results[0].value : toursData;
-    carsData     = results[1].status === 'fulfilled' ? results[1].value : carsData;
-    postsData    = results[2].status === 'fulfilled' ? results[2].value : postsData;
-    featuredData = results[3].status === 'fulfilled' ? results[3].value : featuredData;
-    reviewsData  = results[4].status === 'fulfilled' ? results[4].value : reviewsData;
+    // Map settled results back to data variables ONLY if they succeeded and have data
+    if (results[0].status === 'fulfilled' && results[0].value) toursData = results[0].value;
+    if (results[1].status === 'fulfilled' && results[1].value) carsData = results[1].value;
+    if (results[2].status === 'fulfilled' && results[2].value) postsData = results[2].value;
+    if (results[3].status === 'fulfilled' && results[3].value) featuredData = results[3].value;
+    if (results[4].status === 'fulfilled' && results[4].value) reviewsData = results[4].value;
 
     // Persist the fresh snapshot for the NEXT page load.
     writeDataCache({
@@ -1247,8 +1347,8 @@ window.closeModal = closeModal;
 
 // ===== Re-render all dynamic data (called by lang.js when language changes) =====
 window.reRenderAllData = function reRenderAllData() {
-  // Skip if data not loaded yet
-  if (!toursData || toursData.length === 0 && !carsData.length && !postsData.length) return;
+  // Skip if no data at all — avoid clearing already-rendered grids
+  if ((!toursData || toursData.length === 0) && (!carsData || carsData.length === 0) && (!postsData || postsData.length === 0)) return;
 
   try { renderDomesticTours(); } catch {}
   try { renderInternationalTours(); } catch {}
@@ -1285,3 +1385,28 @@ window.reRenderAllData = function reRenderAllData() {
 
   syncSaveButtons();
 };
+
+// ===== TAB VISIBILITY — re-fetch data when user returns =====
+// Replaces periodic polling: only fetches when the user actually comes back
+// to the tab after being away, ensuring data is always fresh and visible.
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState !== 'visible') return;
+  // Only re-fetch if data arrays are empty (data disappeared)
+  const needsRefresh = (!toursData || toursData.length === 0)
+    && (!carsData || carsData.length === 0)
+    && (!postsData || postsData.length === 0);
+  if (!needsRefresh) return;
+  // Try cache first
+  const cached = readDataCache();
+  if (cached && (cached.tours?.length || cached.cars?.length || cached.posts?.length)) {
+    toursData    = cached.tours || [];
+    carsData     = cached.cars || [];
+    postsData    = cached.posts || [];
+    featuredData = cached.featured || [];
+    reviewsData  = cached.reviews || [];
+    renderAllContent();
+  }
+  // Also kick off a fresh background fetch
+  _idxWatchdogAttempts = 0;
+  scheduleIndexWatchdog();
+});

@@ -1,6 +1,7 @@
-<!DOCTYPE html>
+﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="icon" type="image/png" href="logo.png">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Panel – Georgia Trips</title>
@@ -689,6 +690,97 @@
   margin-bottom: 0.5rem;
 }
 
+.leads-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
+
+.lead-stat-card {
+  background: var(--white);
+  border: 1px solid rgba(11,60,93,0.1);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: var(--card-shadow);
+}
+
+.lead-stat-label {
+  color: var(--text-mid);
+  font-size: 0.82rem;
+  margin-bottom: 0.4rem;
+}
+
+.lead-stat-value {
+  color: var(--dark-blue);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  font-size: 1.5rem;
+}
+
+.leads-table-wrap {
+  background: var(--white);
+  border-radius: 12px;
+  border: 1px solid rgba(11,60,93,0.1);
+  overflow: auto;
+}
+
+.leads-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.leads-table th,
+.leads-table td {
+  text-align: left;
+  padding: 0.8rem;
+  border-bottom: 1px solid rgba(11,60,93,0.08);
+  font-size: 0.85rem;
+  vertical-align: top;
+}
+
+.leads-table th {
+  background: var(--light-bg);
+  color: var(--dark-blue);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+}
+
+.lead-type {
+  display: inline-block;
+  border-radius: 20px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.lead-type.tour { background: rgba(46,196,182,0.15); color: #138f86; }
+.lead-type.car { background: rgba(255,193,7,0.2); color: #9a6c00; }
+.lead-type.subscriber { background: rgba(25,135,84,0.18); color: #0f6a41; }
+.lead-type.contact { background: rgba(13,110,253,0.14); color: #0b4ea2; }
+
+.lead-tips {
+  margin-top: 1rem;
+  background: rgba(46,196,182,0.08);
+  border: 1px solid rgba(46,196,182,0.25);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.lead-tips h4 {
+  margin-bottom: 0.4rem;
+  color: var(--dark-blue);
+  font-family: 'Montserrat', sans-serif;
+}
+
+.lead-tips ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: var(--text-mid);
+}
+
 /* Responsive */
 /* Translation Editor */
 .translations-section {
@@ -902,6 +994,7 @@
       <button class="admin-tab" data-panel="posts">Posts</button>
       <button class="admin-tab" data-panel="featured">Featured</button>
       <button class="admin-tab" data-panel="reviews">Reviews</button>
+      <button class="admin-tab" data-panel="leads">Inbox</button>
     </div>
   </div>
 
@@ -956,6 +1049,36 @@
       <button class="btn-add" onclick="openReviewModal()">+ Add Review</button>
     </div>
     <div class="items-grid" id="reviews-list"></div>
+  </div>
+
+  <div class="admin-panel" id="panel-leads">
+    <div class="panel-header">
+      <h2>Reservations & Inbox</h2>
+    </div>
+    <div class="leads-stats" id="leads-stats"></div>
+    <div class="leads-table-wrap">
+      <table class="leads-table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Details</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="leads-list"></tbody>
+      </table>
+    </div>
+    <div class="lead-tips">
+      <h4>Quick recommendations</h4>
+      <ul>
+        <li>Respond to new bookings within 15-30 minutes to improve conversion.</li>
+        <li>Call leads with phone numbers first, email-only leads second.</li>
+        <li>Send weekly offer email to new subscribers from the latest list.</li>
+      </ul>
+    </div>
   </div>
 
   </div>
@@ -1014,11 +1137,30 @@
               </label>
             </div>
           </label>
+          <label style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px;">
+            <span>ბათუმის ტური (Batumi Tour)</span>
+            <div class="toggle-switch">
+              <input type="checkbox" id="tour-batumi" class="toggle-checkbox">
+              <label for="tour-batumi" class="toggle-label">
+                <span class="toggle-inner"></span>
+              </label>
+            </div>
+          </label>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Duration</label>
-            <input type="text" id="tour-duration" placeholder="e.g. 1 Day">
+            <label>Days *</label>
+            <input type="number" id="tour-days" min="1" step="1" required placeholder="e.g. 3" onchange="syncTourDurationLabel()">
+          </div>
+          <div class="form-group">
+            <label>Nights *</label>
+            <input type="number" id="tour-nights" min="0" step="1" required placeholder="e.g. 2" onchange="syncTourDurationLabel()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Duration (auto)</label>
+            <input type="text" id="tour-duration" placeholder="e.g. 3 Days / 2 Nights" readonly>
           </div>
         </div>
         <div class="form-row">
@@ -1053,7 +1195,7 @@
             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="pickup" style="width: auto;"> Hotel Pickup</label>
             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="food" style="width: auto;"> Meals & Food</label>
             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="hotel" style="width: auto;"> Accommodation</label>
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="water" style="width: auto;"> Water & Snacks</label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="water" style="width: auto;"> Bottled Water</label>
             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="insurance" style="width: auto;"> Travel Insurance</label>
             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="emergency" style="width: auto;"> 24/7 Support</label>
           </div>
@@ -1151,18 +1293,18 @@
             <input type="text" id="car-seats" placeholder="e.g. 7 Seats">
           </div>
           <div class="form-group">
-            <label>Fuel Type (საწვავის ტიპი)</label>
-            <input type="text" id="car-fuel" placeholder="e.g. Diesel">
+            <label>Fuel Type *</label>
+            <input type="text" id="car-fuel" required placeholder="e.g. Diesel">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Transmission (ტრანსმისია)</label>
-            <input type="text" id="car-transmission" placeholder="e.g. Automatic">
+            <label>Transmission *</label>
+            <input type="text" id="car-transmission" required placeholder="e.g. Automatic">
           </div>
           <div class="form-group">
-            <label>Color (ფერი)</label>
-            <input type="text" id="car-color" placeholder="e.g. White">
+            <label>Color *</label>
+            <input type="text" id="car-color" required placeholder="e.g. White">
           </div>
         </div>
         <div class="form-group">
@@ -1183,19 +1325,22 @@
         <!-- Translations -->
         <div class="translations-section">
           <div class="translations-header">
-            <label>Translations (Title / Description)</label>
-            <button type="button" class="btn-translate" id="car-translate-btn" onclick="console.log('Attempting to translate car...'); if (window.AdminI18n) AdminI18n.generate('car'); else console.error('AdminI18n is not defined. Check admin-translate.js for errors.');">Auto-translate from Georgian</button>
+            <label>Translations (Title / Description / Seats / Fuel Type / Transmission / Color)</label>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn-translate car-translate-btn car-engine-btn" data-engine="mymemory" onclick="AdminI18n.generate('car', 'mymemory')">MyMemory</button>
+              <button type="button" class="btn-translate car-translate-btn car-engine-btn" data-engine="google" onclick="AdminI18n.generate('car', 'google')">Google Translate</button>
+            </div>
           </div>
           <div class="quota-tracker">
             <div class="quota-bar-bg"><div class="quota-bar-fill" id="car-quota-fill"></div></div>
             <div class="quota-info">
-              <span id="car-quota-text">Daily Limit</span>
+              <span id="car-quota-text">Daily Limit: Calculating...</span>
               <span id="car-quota-percent">100%</span>
             </div>
           </div>
           <div class="lang-tabs" id="car-lang-tabs"></div>
           <div class="lang-panels" id="car-lang-panels"></div>
-          <small class="translation-status" id="car-translate-status">Fill the Georgian fields above, then click "Auto-translate".</small>
+          <small class="translation-status" id="car-translate-status">Fill the Georgian fields above, then click "Auto-translate" to generate translations for all languages.</small>
         </div>
       </form>
     </div>
@@ -1410,38 +1555,12 @@ import {
   getCars, addCar, updateCar, deleteCar,
   getPosts, addPost, updatePost, deletePost,
   getFeaturedTours, addFeaturedTour, updateFeaturedTour, deleteFeaturedTour,
-  getReviews, addReview, updateReview, deleteReview
+  getReviews, addReview, updateReview, deleteReview,
+  getTourBookings, getCarBookings, getSubscribers, getContactMessages
 } from './firebase-config.js';
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { isAdmin } from './firebase-config.js';
-
-// Initialize auth
-const auth = getAuth();
-
-// Track current user for admin operations
-let currentAdminUser = null;
-
-// Check authentication
-onAuthStateChanged(auth, (user) => {
-  if (!user) {
-    // Not logged in, redirect to login
-    window.location.href = 'login.html';
-    return;
-  }
-  
-  // Verify admin email matches the Firestore rules
-  if (!isAdmin(user.email)) {
-    showToast('Access denied. Admin privileges required.', 'error');
-    setTimeout(() => { window.location.href = 'index.html'; }, 2000);
-    return;
-  }
-  
-  currentAdminUser = user;
-  console.log('[v0] Admin logged in as:', user.email);
-  
-  // User is logged in as admin, load data
-  loadAllData();
-});
+// NOTE: Admin panel is intentionally open (no auth gate).
+// Data access is controlled by your Firestore Security Rules.
+loadAllData();
 
 // Store data locally
 let toursData = [];
@@ -1449,6 +1568,10 @@ let carsData = [];
 let postsData = [];
 let featuredData = [];
 let reviewsData = [];
+let tourBookingsData = [];
+let carBookingsData = [];
+let subscribersData = [];
+let contactMessagesData = [];
 
 // Tour highlights state (for add-one-at-a-time input)
 let tourHighlights = [];
@@ -1496,21 +1619,36 @@ function escapeHTML(str) {
 async function loadAllData() {
   showLoading('Loading data...');
   try {
-    [toursData, carsData, postsData, featuredData, reviewsData] = await Promise.all([
+    [toursData, carsData, postsData, featuredData, reviewsData, tourBookingsData, carBookingsData, subscribersData, contactMessagesData] = await Promise.all([
       getTours(),
       getCars(),
       getPosts(),
       getFeaturedTours(),
-      getReviews()
+      getReviews(),
+      getTourBookings(),
+      getCarBookings(),
+      getSubscribers(),
+      getContactMessages()
     ]);
     renderTours();
     renderCars();
     renderPosts();
     renderFeatured();
     renderReviews();
+    renderLeads();
+    if (
+      (!toursData || toursData.length === 0) &&
+      (!carsData || carsData.length === 0) &&
+      (!postsData || postsData.length === 0) &&
+      (!featuredData || featuredData.length === 0) &&
+      (!reviewsData || reviewsData.length === 0)
+    ) {
+      showToast('No data loaded. If you expected content, check Firestore rules (read access) or your network connection.', 'info');
+    }
   } catch (error) {
     console.error('Error loading data:', error);
-    showToast('Failed to load data', 'error');
+    const msg = (error && (error.message || error.code)) ? `${error.code ? error.code + ': ' : ''}${error.message || ''}` : String(error || 'Unknown error');
+    showToast('Failed to load data: ' + msg, 'error');
   }
   hideLoading();
 }
@@ -1591,11 +1729,15 @@ window.openTourModal = function(tourId = null) {
   document.getElementById('tour-form').reset();
   document.getElementById('tour-id').value = '';
   document.getElementById('tour-image-url').value = '';
+  document.getElementById('tour-days').value = '';
+  document.getElementById('tour-nights').value = '';
+  document.getElementById('tour-duration').value = '';
   document.getElementById('tour-min-people').value = '';
   document.getElementById('tour-max-people').value = '';
   document.getElementById('tour-on-request').checked = false;
   document.getElementById('tour-price').disabled = false;
   document.getElementById('tour-price').required = true;
+  document.getElementById('tour-batumi').checked = false;
   document.getElementById('tour-image-preview').classList.remove('show');
   document.getElementById('tour-modal-title').textContent = 'Add New Tour';
   tourHighlights = [];
@@ -1627,7 +1769,15 @@ window.editTour = function(id) {
   document.getElementById('tour-price').disabled = tour.priceOnRequest || false;
   document.getElementById('tour-price').required = !tour.priceOnRequest;
   document.getElementById('tour-featured').checked = tour.isFeatured || false;
-  document.getElementById('tour-duration').value = gt(tour.duration);
+  document.getElementById('tour-batumi').checked = tour.isBatumi || false;
+  const rawDuration = gt(tour.duration);
+  const fallbackDaysMatch = String(rawDuration || '').match(/(\d+)/);
+  const fallbackDays = fallbackDaysMatch ? Number(fallbackDaysMatch[1]) : '';
+  const resolvedDays = Number(tour.days ?? tour.durationDays ?? fallbackDays) || '';
+  const resolvedNights = Number(tour.nights ?? tour.durationNights ?? (resolvedDays ? Math.max(resolvedDays - 1, 0) : 0));
+  document.getElementById('tour-days').value = resolvedDays;
+  document.getElementById('tour-nights').value = Number.isFinite(resolvedNights) ? resolvedNights : '';
+  syncTourDurationLabel();
   document.getElementById('tour-min-people').value = tour.minPeople || '';
   document.getElementById('tour-max-people').value = tour.maxPeople || '';
 
@@ -1688,6 +1838,20 @@ window.saveTour = async function() {
     const pendingHighlight = (document.getElementById('tour-highlight-input')?.value || '').trim();
     if (pendingHighlight) kaHighlights.push(pendingHighlight);
 
+    const daysValue = Number(document.getElementById('tour-days').value || 0);
+    const nightsValue = Number(document.getElementById('tour-nights').value || 0);
+    if (!daysValue || daysValue < 1) {
+      hideLoading();
+      showToast('Please enter valid days (minimum 1).', 'error');
+      return;
+    }
+    if (nightsValue < 0) {
+      hideLoading();
+      showToast('Nights cannot be negative.', 'error');
+      return;
+    }
+    syncTourDurationLabel();
+
     const tourData = {
       title: pack('tour', 'title', document.getElementById('tour-title').value),
       type: document.getElementById('tour-type').value,
@@ -1696,7 +1860,10 @@ window.saveTour = async function() {
       price: document.getElementById('tour-price').value,
       priceOnRequest: document.getElementById('tour-on-request').checked,
       isFeatured: document.getElementById('tour-featured').checked,
+      isBatumi: document.getElementById('tour-batumi').checked,
       duration: pack('tour', 'duration', document.getElementById('tour-duration').value),
+      days: daysValue,
+      nights: nightsValue,
       minPeople: document.getElementById('tour-min-people').value,
       maxPeople: document.getElementById('tour-max-people').value,
       included: included,
@@ -1723,6 +1890,18 @@ window.saveTour = async function() {
   }
   
   hideLoading();
+};
+
+window.syncTourDurationLabel = function() {
+  const days = Number(document.getElementById('tour-days')?.value || 0);
+  const nights = Number(document.getElementById('tour-nights')?.value || 0);
+  const durationField = document.getElementById('tour-duration');
+  if (!durationField) return;
+  if (!days || days < 1) {
+    durationField.value = '';
+    return;
+  }
+  durationField.value = `${days} დღე / ${Math.max(nights, 0)} ღამე`;
 };
 
 window.confirmDeleteTour = function(id) {
@@ -1771,7 +1950,10 @@ function renderCars() {
         <p class="admin-card-desc">${escapeHTML(gtc(car.info || car.desc))}</p>
         <div class="admin-card-meta">
           <span>${car.priceOnRequest ? 'On Request' : car.price}</span>
-          <span>${car.seats || ''}</span>
+          <span>${gtc(car.seats || '')}</span>
+          <span>${gtc(car.fuel || '')}</span>
+          <span>${gtc(car.transmission || '')}</span>
+          <span>${gtc(car.color || '')}</span>
         </div>
         <div class="admin-card-actions">
           <button class="btn-edit" onclick="editCar('${car.id}')">Edit</button>
@@ -1811,14 +1993,21 @@ window.editCar = function(id) {
   document.getElementById('car-price').value = car.price;
   document.getElementById('car-on-request').checked = car.priceOnRequest || false;
   document.getElementById('car-price').disabled = car.priceOnRequest || false;
-  document.getElementById('car-seats').value = car.seats || '';
-  document.getElementById('car-fuel').value = car.fuel || '';
-  document.getElementById('car-transmission').value = car.transmission || '';
-  document.getElementById('car-color').value = car.color || '';
+  document.getElementById('car-seats').value = gt(car.seats || '');
+  document.getElementById('car-fuel').value = gt(car.fuel || '');
+  document.getElementById('car-transmission').value = gt(car.transmission || '');
+  document.getElementById('car-color').value = gt(car.color || '');
   document.getElementById('car-desc').value = gt(car.info || car.desc);
   document.getElementById('car-image-url').value = car.img;
 
-  if (I18n) I18n.loadItem('car', { title: car.title, info: car.info != null ? car.info : car.desc });
+  if (I18n) I18n.loadItem('car', {
+    title:        car.title,
+    info:         car.info != null ? car.info : car.desc,
+    seats:        car.seats,
+    fuel:         car.fuel,
+    transmission: car.transmission,
+    color:        car.color
+  });
   
   const preview = document.getElementById('car-image-preview');
   preview.src = car.img;
@@ -1851,10 +2040,10 @@ window.saveCar = async function() {
       type: document.getElementById('car-type').value,
       price: document.getElementById('car-price').value,
       priceOnRequest: document.getElementById('car-on-request').checked,
-      seats: document.getElementById('car-seats').value,
-      fuel: document.getElementById('car-fuel').value,
-      transmission: document.getElementById('car-transmission').value,
-      color: document.getElementById('car-color').value,
+      seats: pack('car', 'seats', document.getElementById('car-seats').value),
+      fuel: pack('car', 'fuel', document.getElementById('car-fuel').value),
+      transmission: pack('car', 'transmission', document.getElementById('car-transmission').value),
+      color: pack('car', 'color', document.getElementById('car-color').value),
       info: pack('car', 'info', document.getElementById('car-desc').value),
       img: imageUrl
     };
@@ -2306,6 +2495,94 @@ function showToast(message, type = 'success') {
   setTimeout(() => {
     toast.classList.remove('show');
   }, 3000);
+}
+
+function formatLeadDate(value) {
+  const date = value && typeof value.toDate === 'function' ? value.toDate() : new Date(value || Date.now());
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleString();
+}
+
+function renderLeads() {
+  const stats = document.getElementById('leads-stats');
+  const list = document.getElementById('leads-list');
+  if (!stats || !list) return;
+
+  const totalBookings = (tourBookingsData?.length || 0) + (carBookingsData?.length || 0);
+  const totalSubscribers = subscribersData?.length || 0;
+  const totalContacts = contactMessagesData?.length || 0;
+  const totalLeads = totalBookings + totalSubscribers + totalContacts;
+
+  stats.innerHTML = `
+    <div class="lead-stat-card"><div class="lead-stat-label">All Leads</div><div class="lead-stat-value">${totalLeads}</div></div>
+    <div class="lead-stat-card"><div class="lead-stat-label">Bookings</div><div class="lead-stat-value">${totalBookings}</div></div>
+    <div class="lead-stat-card"><div class="lead-stat-label">Subscribers</div><div class="lead-stat-value">${totalSubscribers}</div></div>
+    <div class="lead-stat-card"><div class="lead-stat-label">Contact Messages</div><div class="lead-stat-value">${totalContacts}</div></div>
+  `;
+
+  const rows = [];
+  (tourBookingsData || []).forEach((item) => {
+    rows.push({
+      type: 'tour',
+      name: item.name || '-',
+      email: item.email || '-',
+      phone: item.phone || '-',
+      details: `${item.tourName || '-'} | ${item.people || '-'} pax | ${item.dateStart || '-'}${item.dateEnd ? ' - ' + item.dateEnd : ''}`,
+      createdAt: item.createdAt
+    });
+  });
+  (carBookingsData || []).forEach((item) => {
+    rows.push({
+      type: 'car',
+      name: item.name || '-',
+      email: item.email || '-',
+      phone: item.phone || '-',
+      details: `${item.carName || '-'} | ${item.passengers || '-'} pax | ${item.date || '-'} | pickup: ${item.pickup || '-'}`,
+      createdAt: item.createdAt
+    });
+  });
+  (subscribersData || []).forEach((item) => {
+    rows.push({
+      type: 'subscriber',
+      name: '-',
+      email: item.email || '-',
+      phone: '-',
+      details: `Source: ${item.sourcePage || '-'}`,
+      createdAt: item.createdAt
+    });
+  });
+  (contactMessagesData || []).forEach((item) => {
+    rows.push({
+      type: 'contact',
+      name: item.name || '-',
+      email: item.email || '-',
+      phone: item.phone || '-',
+      details: item.message || '-',
+      createdAt: item.createdAt
+    });
+  });
+
+  rows.sort((a, b) => {
+    const da = a.createdAt && typeof a.createdAt.toDate === 'function' ? a.createdAt.toDate().getTime() : new Date(a.createdAt || 0).getTime();
+    const db = b.createdAt && typeof b.createdAt.toDate === 'function' ? b.createdAt.toDate().getTime() : new Date(b.createdAt || 0).getTime();
+    return db - da;
+  });
+
+  if (rows.length === 0) {
+    list.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-mid);padding:1.2rem;">No bookings or inbox data yet.</td></tr>';
+    return;
+  }
+
+  list.innerHTML = rows.map((row) => `
+    <tr>
+      <td><span class="lead-type ${row.type}">${row.type}</span></td>
+      <td>${escapeHTML(String(row.name || '-'))}</td>
+      <td>${escapeHTML(String(row.email || '-'))}</td>
+      <td>${escapeHTML(String(row.phone || '-'))}</td>
+      <td>${escapeHTML(String(row.details || '-'))}</td>
+      <td>${escapeHTML(formatLeadDate(row.createdAt))}</td>
+    </tr>
+  `).join('');
 }
 
 // Image preview handlers

@@ -212,9 +212,53 @@
           <label for="book-people">Number of People *</label>
           <input type="number" id="book-people" required placeholder="e.g. 2" min="1" max="50">
         </div>
-        <div class="form-group">
-          <label for="book-date">Preferred Date *</label>
-          <input type="date" id="book-date" required>
+        <div class="form-group" style="position: relative;">
+          <label for="book-date-display">Preferred Date(s) *</label>
+          <div class="date-input-wrap">
+            <input type="text" id="book-date-display" required placeholder="Select a date" readonly style="cursor: pointer; background-color: var(--bg-card); color: var(--text-dark);">
+          </div>
+          <input type="hidden" id="book-date" required>
+          <input type="hidden" id="book-date-end" required>
+
+          <div id="custom-calendar" class="custom-calendar" aria-hidden="true">
+            <div class="calendar-header">
+              <button type="button" id="calendar-prev" class="calendar-nav-btn" aria-label="Previous month">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              </button>
+              <div id="calendar-month-year" class="calendar-month-year"></div>
+              <button type="button" id="calendar-next" class="calendar-nav-btn" aria-label="Next month">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+            </div>
+            <div class="calendar-grid">
+              <div id="calendar-weekdays" class="calendar-weekdays"></div>
+              <div id="calendar-days" class="calendar-days"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PRICE SUMMARY ── -->
+      <div id="modal-price-box" style="
+        display:none;
+        background: linear-gradient(135deg, rgba(var(--accent-rgb,46,196,182),0.08), rgba(var(--accent-rgb,46,196,182),0.03));
+        border: 1.5px solid rgba(46,196,182,0.25);
+        border-radius: 12px;
+        padding: 1rem 1.2rem;
+        margin-bottom: 1rem;
+      ">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.45rem;">
+          <span style="color:var(--text-mid); font-size:0.88rem;" id="modal-price-per-label">ფასი ადამიანზე</span>
+          <span style="color:var(--text-dark); font-weight:600;" id="modal-price-per-value">—</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.45rem;">
+          <span style="color:var(--text-mid); font-size:0.88rem;" id="modal-price-count-label">ადამიანების რაოდენობა</span>
+          <span style="color:var(--text-dark); font-weight:600;" id="modal-price-count-value">—</span>
+        </div>
+        <div style="height:1px; background:rgba(46,196,182,0.18); margin:0.5rem 0;"></div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="color:var(--text-dark); font-weight:700; font-size:1rem;" id="modal-price-total-label">სულ</span>
+          <span style="color:#2ec4b6; font-weight:800; font-size:1.15rem;" id="modal-price-total-value">—</span>
         </div>
       </div>
 
@@ -227,6 +271,55 @@
         Send Booking Request
       </button>
     </form>
+  </div>
+</div>
+
+<!-- ── WHATSAPP WARNING MODAL ─────────────────────────────── -->
+<div class="modal-backdrop" id="whatsapp-warn-modal" role="dialog" aria-modal="true" style="display:none;">
+  <div class="modal" style="max-width:420px; text-align:center;">
+    <div style="font-size:3rem; margin-bottom:1rem;">📱</div>
+    <h3 id="warn-modal-title" style="margin-bottom:0.75rem;">მნიშვნელოვანი ინფორმაცია</h3>
+    <p id="warn-modal-body" style="color:var(--text-mid); line-height:1.7; margin-bottom:1.5rem;">
+      დარწმუნდით, რომ თქვენს მოცემულ ტელეფონის ნომერზე გაქვთ <strong>WhatsApp</strong> ან <strong>Telegram</strong> დაინსტალირებული.<br><br>
+      ჯავშნის დადასტურების შემთხვევაში ამ არხებით დაგიკავშირდებით.
+    </p>
+    <div style="display:flex; gap:0.75rem; justify-content:center;">
+      <button id="warn-modal-cancel" class="btn-outline" style="flex:1; border-color:var(--text-mid); color:var(--text-mid);" onclick="closeWarnModal()">გაუქმება</button>
+      <button id="warn-modal-confirm" class="btn-primary" style="flex:1;" onclick="confirmAndSubmitBooking()">გაგზავნა</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SUCCESS MODAL ──────────────────────────────────────── -->
+<div class="modal-backdrop" id="booking-success-modal" role="dialog" aria-modal="true" style="display:none;">
+  <div class="modal" style="max-width:440px; text-align:center; padding:2.5rem 2rem;">
+    <div style="
+      width:72px; height:72px; border-radius:50%;
+      background:linear-gradient(135deg,#2ec4b6,#20a89d);
+      display:flex; align-items:center; justify-content:center;
+      font-size:2rem; margin:0 auto 1.25rem; box-shadow:0 8px 24px rgba(46,196,182,0.35);
+    ">✓</div>
+    <h3 id="success-modal-title" style="margin-bottom:0.75rem; color:var(--text-dark);">გმადლობთ ჯავშნისთვის!</h3>
+    <p id="success-modal-body" style="color:var(--text-mid); line-height:1.75; margin-bottom:1rem;">
+      მივიღეთ თქვენი მოთხოვნა და დავადასტურებთ <strong>24 საათის განმავლობაში</strong>.
+      შეამოწმეთ <strong>WhatsApp</strong> ან <strong>Telegram</strong> თქვენს მოცემულ ნომერზე.
+    </p>
+    <div style="
+      display:flex; gap:1.5rem; justify-content:center;
+      background:rgba(46,196,182,0.07); border-radius:10px;
+      padding:0.85rem 1rem; margin-bottom:1.5rem;
+    ">
+      <span style="display:flex;align-items:center;gap:0.4rem;color:#25D366;font-weight:600;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.41 0 .01 5.399 0 12.039c0 2.123.554 4.197 1.606 6.041l-1.706 6.23 6.375-1.671a11.8 11.8 0 005.772 1.503h.005c6.64 0 12.04-5.4 12.043-12.04a11.82 11.82 0 00-3.414-8.423z"/></svg>
+        WhatsApp
+      </span>
+      <span style="color:var(--text-mid); align-self:center;">ან</span>
+      <span style="display:flex;align-items:center;gap:0.4rem;color:#2AABEE;font-weight:600;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.665 3.717l-17.73 6.837c-1.213.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.953-.14.579.192l-8.533 7.703-.33 4.955c.488 0 .704-.223.978-.488l2.35-2.285 4.888 3.613c.9.497 1.545.241 1.77-.835l3.203-15.102c.328-1.314-.497-1.907-1.353-1.522z"/></svg>
+        Telegram
+      </span>
+    </div>
+    <button class="btn-primary" style="width:100%;" onclick="closeSuccessModal()">კარგი, გასაგებია</button>
   </div>
 </div>
 

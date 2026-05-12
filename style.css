@@ -18,8 +18,17 @@
   --transition: 0.28s cubic-bezier(0.4,0,0.2,1);
 }
 
-html { scroll-behavior: smooth; }
-body { font-family: 'Poppins', sans-serif; color: var(--text-dark); background: var(--white); line-height: 1.6; }
+html {
+  scroll-behavior: smooth;
+  background: linear-gradient(160deg, #fdf8f2 0%, #f8fdfb 35%, #f2f7fd 65%, #faf4fd 100%);
+  background-attachment: fixed;
+}
+body {
+  font-family: 'Poppins', sans-serif;
+  color: var(--text-dark);
+  background: transparent;
+  line-height: 1.6;
+}
 img { max-width: 100%; display: block; }
 a { text-decoration: none; color: inherit; }
 ul { list-style: none; }
@@ -357,7 +366,12 @@ section { padding: 5rem 2rem; }
 .btn-view-all:hover svg { transform: translateX(4px); }
 
 /* ===== FEATURED SECTION ===== */
-.featured-section { background: var(--light-bg); }
+.featured-section {
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(2px);
+  position: relative;
+  overflow: hidden;
+}
 .featured-slider-wrapper {
   display: flex; align-items: center; gap: 1.5rem;
   position: relative;
@@ -808,7 +822,9 @@ section { padding: 5rem 2rem; }
 .cars-slider-wrapper .slider-arrow-right { right: -24px; }
 
 /* ===== DOMESTIC TOURS SECTION ===== */
-.domestic-tours-section { background: var(--light-bg); }
+.domestic-tours-section {
+  background: rgba(255,255,255,0.60);
+}
 .domestic-tours-grid {
   display: flex; gap: 1.5rem; overflow-x: auto; padding: 1rem 0;
   scroll-snap-type: x mandatory; scroll-behavior: smooth;
@@ -823,7 +839,9 @@ section { padding: 5rem 2rem; }
 }
 
 /* ===== INTERNATIONAL TOURS SECTION ===== */
-.international-tours-section { background: var(--white); }
+.international-tours-section {
+  background: rgba(255,255,255,0.75);
+}
 .international-tours-grid {
   display: flex; gap: 1.5rem; overflow-x: auto; padding: 1rem 0;
   scroll-snap-type: x mandatory; scroll-behavior: smooth;

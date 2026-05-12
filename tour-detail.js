@@ -4,6 +4,26 @@
 // ============================================================
 
 let currentTour = null;
+const calendarState = {
+  currentMonth: new Date().getMonth(),
+  currentYear: new Date().getFullYear(),
+  selectedStart: null,
+  selectedEnd: null,
+};
+
+function getTourDaysCount() {
+  // Prefer explicit numeric days saved from admin panel.
+  const directDays = Number(currentTour?.days ?? currentTour?.durationDays);
+  if (Number.isFinite(directDays) && directDays > 0) return directDays;
+
+  const rawDuration = currentTour?.duration;
+  const raw = (rawDuration && typeof rawDuration === 'object')
+    ? (rawDuration.ka || rawDuration.en || Object.values(rawDuration)[0] || '')
+    : (rawDuration ?? document.getElementById('detail-duration')?.textContent ?? '');
+  const match = String(raw).match(/(\d+)/);
+  const days = match ? Number(match[1]) : 1;
+  return Number.isFinite(days) && days > 0 ? days : 1;
+}
 
 // ── INSTANT / RESILIENT LOAD ─────────────────────────────────
 // Strategy: try every fast in-memory source first (sessionStorage,
@@ -305,11 +325,9 @@ function populateTourDetail() {
     : (tFn('international_tour_badge') || '✈️ International Tour');
   document.getElementById('detail-type-badge').textContent = typeText;
 
-  // Modal tour name
-  const modalPriceDisplay = tour.priceOnRequest
-    ? tFn('price_on_request')
-    : `${tour.price} ${tFn('per_person')}`;
-  document.getElementById('modal-tour-name').textContent = `${title} - ${modalPriceDisplay}`;
+  // Modal tour name and price summary
+  document.getElementById('modal-tour-name').textContent = title;
+  refreshModalPriceSummary();
 
   // Itinerary (if multi-day)
   if (tour.category === 'multi-day' || tour.category === 'upcoming') {
@@ -363,6 +381,22 @@ function openBookingForm() {
     modal.classList.add('modal-open');
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
+
+    // Lock people input to tour's min/max limits
+    const peopleInput = document.getElementById('book-people');
+    if (peopleInput && currentTour) {
+      const maxP = parseInt(currentTour.maxPeople, 10);
+      const minP = parseInt(currentTour.minPeople, 10);
+      if (!isNaN(maxP) && maxP > 0) peopleInput.max = maxP;
+      if (!isNaN(minP) && minP > 0) peopleInput.min = minP;
+
+      // If current value exceeds new max, clamp it
+      const cur = parseInt(peopleInput.value, 10);
+      if (!isNaN(maxP) && !isNaN(cur) && cur > maxP) peopleInput.value = maxP;
+    }
+
+    // Show per-person price immediately on modal open
+    updateBookingPriceBox();
   }
 }
 
@@ -375,6 +409,190 @@ function closeBookingModal() {
   }
 }
 
+function openDatePicker() {
+  const calendar = document.getElementById('custom-calendar');
+  if (!calendar) return;
+  calendar.classList.toggle('open');
+  calendar.setAttribute('aria-hidden', calendar.classList.contains('open') ? 'false' : 'true');
+}
+
+function formatDateISO(dateObj) {
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const d = String(dateObj.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function formatDateReadable(dateObj) {
+  const lang = window.GT_CURRENT_LANG || document.documentElement.getAttribute('data-lang') || 'ka';
+  const locale = CALENDAR_LOCALE_DATA[lang] || CALENDAR_LOCALE_DATA.en;
+  const d = String(dateObj.getDate()).padStart(2, '0');
+  const monthName = locale.months[dateObj.getMonth()];
+  const y = dateObj.getFullYear();
+  return lang === 'ka' ? `${d} ${monthName} ${y}` : `${d} ${monthName.slice(0, 3)} ${y}`;
+}
+
+// Static month & weekday names — never depends on browser Intl locale loading
+const CALENDAR_LOCALE_DATA = {
+  ka: {
+    months: ['იანვარი','თებერვალი','მარტი','აპრილი','მაისი','ივნისი',
+             'ივლისი','აგვისტო','სექტემბერი','ოქტომბერი','ნოემბერი','დეკემბერი'],
+    weekdays: ['ორშ','სამ','ოთხ','ხუთ','პარ','შაბ','კვი']
+  },
+  en: {
+    months: ['January','February','March','April','May','June',
+             'July','August','September','October','November','December'],
+    weekdays: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+  },
+  ru: {
+    months: ['Январь','Февраль','Март','Апрель','Май','Июнь',
+             'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'],
+    weekdays: ['Пн','Вт','Ср','Чт','Пт','Сб','Вс']
+  },
+  tr: {
+    months: ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran',
+             'Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'],
+    weekdays: ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz']
+  },
+  ar: {
+    months: ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
+             'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'],
+    weekdays: ['اثن','ثلا','أرب','خمي','جمع','سبت','أحد']
+  },
+  uk: {
+    months: ['Січень','Лютий','Березень','Квітень','Травень','Червень',
+             'Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'],
+    weekdays: ['Пн','Вт','Ср','Чт','Пт','Сб','Нд']
+  }
+};
+
+function renderCustomCalendar() {
+  const monthTitle = document.getElementById('calendar-month-year');
+  const daysRoot = document.getElementById('calendar-days');
+  const weekdaysRoot = document.getElementById('calendar-weekdays');
+  if (!monthTitle || !daysRoot || !weekdaysRoot) return;
+
+  const lang = window.GT_CURRENT_LANG || document.documentElement.getAttribute('data-lang') || 'ka';
+  const locale = CALENDAR_LOCALE_DATA[lang] || CALENDAR_LOCALE_DATA.ka;
+
+  // Weekday headers — always start from Monday
+  weekdaysRoot.innerHTML = locale.weekdays.map((d) => `<span>${d}</span>`).join('');
+
+  const { currentMonth, currentYear, selectedStart, selectedEnd } = calendarState;
+  // Month + year title — fully static, zero Intl dependency
+  const monthName = locale.months[currentMonth];
+  const monthYearText = lang === 'ka'
+    ? `${currentYear} წლის ${monthName}`
+    : `${monthName} ${currentYear}`;
+  monthTitle.textContent = monthYearText;
+
+  const firstDay = new Date(currentYear, currentMonth, 1);
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const startOffset = (firstDay.getDay() + 6) % 7;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const cells = [];
+  for (let i = 0; i < startOffset; i++) {
+    cells.push('<button type="button" class="calendar-day muted" disabled></button>');
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const cellDate = new Date(currentYear, currentMonth, day);
+    cellDate.setHours(0, 0, 0, 0);
+    const isPast = cellDate < today;
+    const iso = formatDateISO(cellDate);
+    const isRangeStart = selectedStart === iso;
+    const isRangeEnd = selectedEnd === iso;
+    const inRange = selectedStart && selectedEnd && iso >= selectedStart && iso <= selectedEnd;
+    cells.push(
+      `<button type="button" class="calendar-day ${isPast ? 'muted' : ''} ${inRange ? 'inrange' : ''} ${isRangeStart ? 'range-start' : ''} ${isRangeEnd ? 'range-end' : ''}" data-date="${iso}" ${isPast ? 'disabled' : ''}>${day}</button>`
+    );
+  }
+
+  daysRoot.innerHTML = cells.join('');
+}
+
+function setModalDateRange(startISO, endISO, daysCount) {
+  const hiddenDate = document.getElementById('book-date');
+  const hiddenEnd = document.getElementById('book-date-end');
+  const displayDate = document.getElementById('book-date-display');
+  const dateSummary = document.getElementById('modal-date-summary');
+  if (!hiddenDate || !displayDate || !hiddenEnd) return;
+  hiddenDate.value = startISO;
+  hiddenEnd.value = endISO;
+  const start = new Date(`${startISO}T00:00:00`);
+  const end = new Date(`${endISO}T00:00:00`);
+  const startText = formatDateReadable(start);
+  const endText = formatDateReadable(end);
+  displayDate.value = daysCount > 1 ? `${startText} – ${endText} (${daysCount} დღე)` : `${startText} (1 დღე)`;
+  if (dateSummary) {
+    dateSummary.textContent = `ტური: ${daysCount} დღე (${startText} - ${endText})`;
+  }
+}
+
+function refreshModalPriceSummary() {
+  if (!currentTour) return;
+  const priceEl = document.getElementById('modal-price-summary');
+  const currencyEl = document.getElementById('modal-currency-summary');
+  if (!priceEl || !currencyEl) return;
+  const tFn = window.t || ((k) => k);
+
+  if (window.PriceDisplay) {
+    const selectedCurrency = window.PriceDisplay.getSelectedCurrency();
+    const currencyMeta = window.PriceDisplay.currencies?.[selectedCurrency];
+    const priceText = window.PriceDisplay.formatConvertedPrice(currentTour);
+    const label = window.PriceDisplay.getPriceLabel(currentTour, tFn('per_person') || 'per person');
+    priceEl.textContent = `${priceText} / ${label}`;
+    currencyEl.textContent = `${tFn('Selected Currency') || 'Selected Currency'}: ${selectedCurrency} (${currencyMeta?.label || selectedCurrency})`;
+    return;
+  }
+
+  priceEl.textContent = currentTour.price || '-';
+  currencyEl.textContent = `${tFn('Selected Currency') || 'Selected Currency'}: -`;
+}
+
+// ── LIVE PRICE CALCULATOR ────────────────────────────────────
+function updateBookingPriceBox() {
+  const box = document.getElementById('modal-price-box');
+  if (!box || !currentTour) return;
+
+  // If tour is on-request, hide the box
+  if (currentTour.priceOnRequest) { box.style.display = 'none'; return; }
+
+  const peopleInput = document.getElementById('book-people');
+  const people = peopleInput ? parseInt(peopleInput.value, 10) : 0;
+
+  // Resolve numeric per-person price
+  let pricePerPerson = 0;
+  let currencySymbol = '$';
+  let currencyCode = 'USD';
+
+  if (window.PriceDisplay) {
+    const cur = window.PriceDisplay.getSelectedCurrency();
+    const meta = window.PriceDisplay.currencies?.[cur];
+    currencySymbol = meta?.symbol || cur;
+    currencyCode = cur;
+    // PriceDisplay.getBasePrice returns the numeric price in base currency
+    const base = parseFloat(currentTour.price) || 0;
+    const rate = window.PriceDisplay.rates?.[cur] || 1;
+    pricePerPerson = base * rate;
+  } else {
+    pricePerPerson = parseFloat(currentTour.price) || 0;
+    currencySymbol = '$';
+  }
+
+  if (!pricePerPerson || pricePerPerson <= 0) { box.style.display = 'none'; return; }
+
+  const fmt = (n) => currencySymbol + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+
+  document.getElementById('modal-price-per-value').textContent = fmt(pricePerPerson);
+  document.getElementById('modal-price-count-value').textContent = (people > 0 ? `× ${people}` : '—');
+  document.getElementById('modal-price-total-value').textContent = (people > 0 ? fmt(pricePerPerson * people) : '—');
+
+  box.style.display = 'block';
+}
+
 // Close modal when backdrop is clicked
 document.addEventListener('DOMContentLoaded', function() {
   const backdrop = document.getElementById('book-modal');
@@ -385,37 +603,192 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+
+  // Live price calculation on people count change
+  const peopleInput = document.getElementById('book-people');
+  if (peopleInput) {
+    peopleInput.addEventListener('input', updateBookingPriceBox);
+  }
+  const today = new Date();
+  calendarState.currentMonth = today.getMonth();
+  calendarState.currentYear = today.getFullYear();
+  renderCustomCalendar();
+
+  const prevBtn = document.getElementById('calendar-prev');
+  const nextBtn = document.getElementById('calendar-next');
+  const daysRoot = document.getElementById('calendar-days');
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      calendarState.currentMonth -= 1;
+      if (calendarState.currentMonth < 0) {
+        calendarState.currentMonth = 11;
+        calendarState.currentYear -= 1;
+      }
+      renderCustomCalendar();
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      calendarState.currentMonth += 1;
+      if (calendarState.currentMonth > 11) {
+        calendarState.currentMonth = 0;
+        calendarState.currentYear += 1;
+      }
+      renderCustomCalendar();
+    });
+  }
+
+  if (daysRoot) {
+    daysRoot.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const dayBtn = e.target.closest('.calendar-day[data-date]');
+      if (!dayBtn || dayBtn.disabled) return;
+      const selectedStart = dayBtn.dataset.date;
+      const daysCount = getTourDaysCount();
+      const startDate = new Date(`${selectedStart}T00:00:00`);
+      const endDate = new Date(startDate);
+      // Days-based selection: 3-day tour should highlight exactly 3 calendar days.
+      endDate.setDate(endDate.getDate() + Math.max(daysCount - 1, 0));
+      const selectedEnd = formatDateISO(endDate);
+
+      calendarState.selectedStart = selectedStart;
+      calendarState.selectedEnd = selectedEnd;
+      setModalDateRange(selectedStart, selectedEnd, daysCount);
+      renderCustomCalendar();
+    });
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!(e.target instanceof Element)) return;
+    const clickedInsidePicker = e.target.closest('.date-input-wrap, #custom-calendar');
+    if (clickedInsidePicker) return;
+    const cal = document.getElementById('custom-calendar');
+    if (cal) cal.classList.remove('open');
+  });
+
+  window.addEventListener('gt:currencychange', () => {
+    refreshModalPriceSummary();
+    updateBookingPriceBox();
+  });
+
+  const displayDate = document.getElementById('book-date-display');
+  if (displayDate) {
+    displayDate.addEventListener('click', openDatePicker);
+  }
 });
 
+// ── BOOKING MODALS (warn + success) ─────────────────────────
+function closeWarnModal() {
+  const m = document.getElementById('whatsapp-warn-modal');
+  if (m) { m.style.display = 'none'; document.body.style.overflow = 'auto'; }
+}
+function closeSuccessModal() {
+  const m = document.getElementById('booking-success-modal');
+  if (m) { m.style.display = 'none'; document.body.style.overflow = 'auto'; }
+}
+
 // ── SUBMIT BOOKING ───────────────────────────────────────────
-function submitBooking(event) {
+// Step 1 — intercept submit: show WhatsApp/Telegram warning first
+async function submitBooking(event) {
   event.preventDefault();
-  
+
+  const tFn = window.t || ((k) => k);
+
+  // Localize the warning modal text
+  const warnTitle = document.getElementById('warn-modal-title');
+  const warnBody  = document.getElementById('warn-modal-body');
+  const warnOk    = document.getElementById('warn-modal-confirm');
+  const warnCancel = document.getElementById('warn-modal-cancel');
+
+  if (warnTitle) warnTitle.textContent = tFn('booking_whatsapp_warning')?.split('\n')[0]?.replace('📱 ','') || 'მნიშვნელოვანი ინფორმაცია';
+  if (warnBody) {
+    const lang = window.GT_CURRENT_LANG || 'ka';
+    const bodyMap = {
+      ka: 'დარწმუნდით, რომ თქვენს მოცემულ ტელეფონის ნომერზე გაქვთ <strong>WhatsApp</strong> ან <strong>Telegram</strong> დაინსტალირებული.<br><br>ჯავშნის დადასტურების შემთხვევაში ამ არხებით დაგიკავშირდებით.',
+      en: 'Please make sure your provided phone number has <strong>WhatsApp</strong> or <strong>Telegram</strong> installed.<br><br>We will contact you through these channels to confirm your booking.',
+      ru: 'Пожалуйста, убедитесь, что на вашем номере телефона установлен <strong>WhatsApp</strong> или <strong>Telegram</strong>.<br><br>Мы свяжемся с вами для подтверждения бронирования.',
+      tr: 'Lütfen verdiğiniz telefon numarasında <strong>WhatsApp</strong> veya <strong>Telegram</strong> yüklü olduğundan emin olun.<br><br>Rezervasyonunuzu onaylamak için bu kanallar üzerinden iletişime geçeceğiz.',
+      ar: 'يرجى التأكد من أن رقم هاتفك به <strong>WhatsApp</strong> أو <strong>Telegram</strong>.<br><br>سنتواصل معك عبر هذه القنوات لتأكيد الحجز.',
+      he: 'אנא ודאו שמספר הטלפון שלכם מותקן עליו <strong>WhatsApp</strong> או <strong>Telegram</strong>.<br><br>ניצור אתכם קשר דרך ערוצים אלה לאישור ההזמנה.',
+      uk: 'Будь ласка, переконайтеся, що на вашому номері встановлено <strong>WhatsApp</strong> або <strong>Telegram</strong>.<br><br>Ми зв\'яжемося з вами для підтвердження бронювання.',
+    };
+    warnBody.innerHTML = bodyMap[lang] || bodyMap.ka;
+  }
+  if (warnOk)    warnOk.textContent    = tFn('booking_confirm_btn') || 'გაგზავნა';
+  if (warnCancel) warnCancel.textContent = tFn('booking_cancel_btn') || 'გაუქმება';
+
+  const warnModal = document.getElementById('whatsapp-warn-modal');
+  if (warnModal) {
+    warnModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+// Step 2 — user confirmed: actually send the booking
+async function confirmAndSubmitBooking() {
+  closeWarnModal();
+
   const form = document.getElementById('booking-form');
   const data = {
-    name: document.getElementById('book-name').value,
-    email: document.getElementById('book-email').value,
-    phone: document.getElementById('book-phone').value,
-    people: document.getElementById('book-people').value,
-    date: document.getElementById('book-date').value,
-    notes: document.getElementById('book-notes').value,
-    tourName: _L(currentTour.title),
+    name:      document.getElementById('book-name').value,
+    email:     document.getElementById('book-email').value,
+    phone:     document.getElementById('book-phone').value,
+    people:    document.getElementById('book-people').value,
+    dateStart: document.getElementById('book-date').value,
+    dateEnd:   document.getElementById('book-date-end').value,
+    notes:     document.getElementById('book-notes').value,
+    tourName:  _L(currentTour.title),
     tourPrice: currentTour.price,
   };
 
   console.log('Booking submitted:', data);
+  try {
+    const mod = await import('./firebase-config.js');
+    if (mod && typeof mod.addTourBooking === 'function') {
+      await mod.addTourBooking({
+        ...data,
+        sourcePage: 'tour-detail',
+        tourId: currentTour?.id || '',
+        status: 'new'
+      });
+    }
+  } catch (err) {
+    console.error('Failed to persist tour booking:', err);
+  }
 
-  // Show success message (localized)
-  const tourTitle = _L(currentTour.title);
-  const tFn = window.t || ((k) => k);
-  const successMsg = tFn('booking_success_alert', { tour: tourTitle })
-    || `Thank you for booking "${tourTitle}"!\n\nWe've received your request and will confirm within 24 hours.\n\nCheck your email for details.`;
-  alert(successMsg);
-  
-  // Close modal and reset form
+  // Close booking form
   closeBookingModal();
-  form.reset();
+  if (form) form.reset();
+
+  // Show styled success modal
+  const tFn = window.t || ((k) => k);
+  const tourTitle = _L(currentTour.title);
+
+  const successTitle = document.getElementById('success-modal-title');
+  const successBody  = document.getElementById('success-modal-body');
+  const successOk    = document.querySelector('#booking-success-modal .btn-primary');
+
+  if (successTitle) successTitle.textContent = tFn('booking_success_title') || 'გმადლობთ ჯავშნისთვის!';
+  if (successBody)  successBody.innerHTML    = tFn('booking_success_body')  ||
+    'მივიღეთ თქვენი მოთხოვნა და დავადასტურებთ <strong>24 საათის განმავლობაში</strong>. შეამოწმეთ <strong>WhatsApp</strong> ან <strong>Telegram</strong> თქვენს მოცემულ ნომერზე.';
+
+  // Localize "ან" divider
+  const orSpan = document.querySelector('#booking-success-modal span[style*="text-mid"]');
+  if (orSpan) {
+    const lang = window.GT_CURRENT_LANG || 'ka';
+    const orMap = { ka:'ან', en:'or', ru:'или', tr:'veya', ar:'أو', he:'או', uk:'або' };
+    orSpan.textContent = orMap[lang] || 'ან';
+  }
+
+  const successModal = document.getElementById('booking-success-modal');
+  if (successModal) {
+    successModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
 }
+
 
 window.shareCurrentTour = function(event) {
   if (!currentTour) return;
@@ -425,13 +798,15 @@ window.shareCurrentTour = function(event) {
   }
 };
 
-// ── INIT ──────────────────────────────────────���───────────────
+// ── INIT ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', loadTourDetail);
 
-// Re-populate when user switches language
+// Re-populate & re-render calendar when user switches language
 window.addEventListener('languageChanged', function () {
+  renderCustomCalendar();
   if (currentTour) populateTourDetail();
 });
 window.reRenderAllData = function () {
+  renderCustomCalendar();
   if (currentTour) populateTourDetail();
 };

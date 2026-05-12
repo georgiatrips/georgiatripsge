@@ -22,8 +22,8 @@
   // Basic concurrency limiter so we don't hammer the API. Lowered to 1
   // because MyMemory comfortably handles parallel requests from one IP and the
   // language-switch overlay is blocking until this finishes.
-  const MAX_CONCURRENT = 1;
-  const COOLDOWN_MS = 500; // პაუზა მოთხოვნებს შორის
+  const MAX_CONCURRENT = 10;
+  const COOLDOWN_MS = 50; // პაუზა მოთხოვნებს შორის
   let active = 0;
   const queue = [];
 

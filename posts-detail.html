@@ -1,33 +1,25 @@
 ﻿<!DOCTYPE html>
 <html lang="en" class="bg-background">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/png" href="logo.png">
-  <title>Stories & Blog – Georgia Trips</title>
-  <meta name="description"
-    content="Travel guides, insider tips and authentic stories from Georgia. Read about culture, food, wine, adventure and more.">
-  <!-- Speed up Firebase / fonts / flag CDN handshakes. -->
+  <title>Post Details – Georgia Trips</title>
+  <meta name="description" content="Read full travel stories, tips and insights from Georgia Trips.">
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="dns-prefetch" href="https://flagcdn.com">
-  <link rel="dns-prefetch" href="https://api.mymemory.translated.net">
   <link rel="preload" href="lang-boot.js" as="script">
   <link rel="preload" href="ui-strings.js" as="script">
-  <link rel="modulepreload" href="script.js">
   <script src="lang-boot.js"></script>
   <script src="ui-strings.js" defer></script>
   <script src="translate.js" defer></script>
   <script src="lang.js" defer></script>
   <script src="ui-translate.js" defer></script>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="posts-detail.css">
 </head>
-
 <body>
-
   <nav class="navbar">
     <a href="index.html" class="nav-logo">
       <div class="logo-icon"><img src="logo.png" alt="Georgia Trips Logo" class="logo-img"></div>
@@ -47,27 +39,19 @@
       <a href="about.html">About</a>
       <a href="contact.html">Contact</a>
       <div class="nav-dropdown nav-lang-dropdown" id="nav-lang-dropdown">
-        <button class="nav-dropdown-btn nav-lang-btn" id="nav-lang-btn" aria-label="Select language"
-          aria-haspopup="true">
+        <button class="nav-dropdown-btn nav-lang-btn" id="nav-lang-btn" aria-label="Select language" aria-haspopup="true">
           <span class="lang-flag" id="nav-lang-flag"><img src="https://flagcdn.com/w20/ge.png" alt="ქართული"></span>
           <span class="lang-code" id="nav-lang-code">KA</span>
           <span class="lang-caret">▼</span>
         </button>
         <div class="dropdown-menu lang-dropdown-menu">
-          <a href="#" data-lang="ka"><span class="lang-flag"><img src="https://flagcdn.com/w20/ge.png"
-                alt="GE"></span><span class="lang-name">ქართული</span></a>
-          <a href="#" data-lang="en"><span class="lang-flag"><img src="https://flagcdn.com/w20/gb.png"
-                alt="EN"></span><span class="lang-name">English</span></a>
-          <a href="#" data-lang="ru"><span class="lang-flag"><img src="https://flagcdn.com/w20/ru.png"
-                alt="RU"></span><span class="lang-name">Русский</span></a>
-          <a href="#" data-lang="tr"><span class="lang-flag"><img src="https://flagcdn.com/w20/tr.png"
-                alt="TR"></span><span class="lang-name">Türkçe</span></a>
-          <a href="#" data-lang="ar"><span class="lang-flag"><img src="https://flagcdn.com/w20/sa.png"
-                alt="AR"></span><span class="lang-name">العربية</span></a>
-          <a href="#" data-lang="he"><span class="lang-flag"><img src="https://flagcdn.com/w20/il.png"
-                alt="HE"></span><span class="lang-name">עברית</span></a>
-          <a href="#" data-lang="uk"><span class="lang-flag"><img src="https://flagcdn.com/w20/ua.png"
-                alt="UK"></span><span class="lang-name">Українська</span></a>
+          <a href="#" data-lang="ka"><span class="lang-flag"><img src="https://flagcdn.com/w20/ge.png" alt="GE"></span><span class="lang-name">ქართული</span></a>
+          <a href="#" data-lang="en"><span class="lang-flag"><img src="https://flagcdn.com/w20/gb.png" alt="EN"></span><span class="lang-name">English</span></a>
+          <a href="#" data-lang="ru"><span class="lang-flag"><img src="https://flagcdn.com/w20/ru.png" alt="RU"></span><span class="lang-name">Русский</span></a>
+          <a href="#" data-lang="tr"><span class="lang-flag"><img src="https://flagcdn.com/w20/tr.png" alt="TR"></span><span class="lang-name">Türkçe</span></a>
+          <a href="#" data-lang="ar"><span class="lang-flag"><img src="https://flagcdn.com/w20/sa.png" alt="AR"></span><span class="lang-name">العربية</span></a>
+          <a href="#" data-lang="he"><span class="lang-flag"><img src="https://flagcdn.com/w20/il.png" alt="HE"></span><span class="lang-name">עברית</span></a>
+          <a href="#" data-lang="uk"><span class="lang-flag"><img src="https://flagcdn.com/w20/ua.png" alt="UK"></span><span class="lang-name">Українська</span></a>
         </div>
       </div>
       <div class="nav-user-dropdown" id="nav-user-dropdown">
@@ -79,54 +63,41 @@
         </div>
       </div>
     </div>
-    <button class="nav-toggle" aria-label="Menu">
-      <span></span><span></span><span></span>
-    </button>
+    <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
   </nav>
 
-  <div class="page-hero">
-    <span class="section-tag">Travel Stories</span>
-    <h1>Stories & Blog</h1>
-    <p>Explore authentic Georgian stories, local guides, and travel insights from our experts.</p>
-    <div class="breadcrumb">
-      <a href="index.html">Home</a>
-      <span class="sep">›</span>
-      <span class="current">Posts</span>
+  <header class="post-hero">
+    <img id="post-hero-img" src="" alt="Post cover" class="post-hero__img">
+    <div class="post-hero__overlay"></div>
+    <div class="post-hero__content container">
+      <a href="posts.html" class="post-back-link">← Back to Posts</a>
+      <span id="post-category" class="post-category-badge" data-no-translate>Story</span>
+      <h1 id="post-title" data-no-translate>Loading...</h1>
+      <div class="post-meta-line">
+        <span id="post-date" data-no-translate></span>
+      </div>
     </div>
-  </div>
+  </header>
 
-  <section class="posts-full-section" style="padding:5rem 2rem; background: #f8f9fb;">
-    <div class="container">
-      <div class="section-header">
-        <span class="section-tag">All Articles</span>
-        <h2>Latest from the Blog</h2>
-        <p>Practical travel advice and inspiring stories — updated regularly by our local team.</p>
-        <div class="divider"></div>
-      </div>
-      <div class="posts-grid" id="posts-page-grid" data-no-translate>
-        <div class="gt-card-loader"><span class="gt-card-loader__spinner" aria-hidden="true"></span><span>Loading<span
-              class="gt-card-loader__dots" aria-hidden="true"></span></span></div>
-      </div>
-    </div>
-  </section>
+  <main class="post-main container">
+    <article class="post-article">
+      <h2>Full Story</h2>
+      <p id="post-body" data-no-translate></p>
+    </article>
 
-  <!-- Newsletter -->
-  <section style="background:var(--dark-blue);padding:4rem 2rem;">
-    <div class="container" style="max-width:640px;text-align:center;">
-      <span class="section-tag" style="color:var(--teal);">Newsletter</span>
-      <h2
-        style="font-family:'Montserrat',sans-serif;font-size:2rem;font-weight:800;color:var(--white);margin:0.5rem 0 1rem;letter-spacing:-0.5px;">
-        Get Travel Tips in Your Inbox</h2>
-      <p style="color:rgba(255,255,255,0.65);margin-bottom:2rem;">Join 2,000+ travelers who get our weekly Georgian
-        travel inspiration and exclusive deals.</p>
-      <div style="display:flex;gap:0.75rem;max-width:440px;margin:0 auto;flex-wrap:wrap;">
-        <input type="email" placeholder="your@email.com"
-          style="flex:1;min-width:200px;padding:0.8rem 1rem;border-radius:30px;border:1.5px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:var(--white);font-family:'Poppins',sans-serif;outline:none;">
-        <button class="btn-primary" style="border-radius:30px;">Subscribe ✦</button>
+    <aside class="post-sidebar">
+      <div class="post-share-card">
+        <h3>Share This Story</h3>
+        <p>Send this post to your friends or keep the link for later.</p>
+        <button class="btn-primary" onclick="shareCurrentPost(event)">Copy Link</button>
       </div>
-      <p style="font-size:0.78rem;color:rgba(255,255,255,0.35);margin-top:1rem;">No spam. Unsubscribe any time.</p>
-    </div>
-  </section>
+      <div class="post-share-card">
+        <h3>Explore More</h3>
+        <p>Discover more travel stories and practical tips in our blog.</p>
+        <a class="btn-outline" href="posts.html">View All Posts</a>
+      </div>
+    </aside>
+  </main>
 
   <!-- FOOTER -->
   <footer class="footer">
@@ -198,11 +169,9 @@
     </div>
   </footer>
 
-  <script src="pricing.js"></script>
   <script src="i18n-data.js"></script>
+  <script src="posts-detail.js"></script>
   <script type="module" src="script.js"></script>
   <script type="module" src="auth.js"></script>
-
 </body>
-
 </html>

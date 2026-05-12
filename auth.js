@@ -18,22 +18,9 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyAuLpaONrIUwnJJ3ycgzWWlSTiujotfo4U",
-  authDomain: "georgiatripsge.firebaseapp.com",
-  projectId: "georgiatripsge",
-  storageBucket: "georgiatripsge.firebasestorage.app",
-  messagingSenderId: "458133209260",
-  appId: "1:458133209260:web:884340052c037e6fcd9f09",
-  measurementId: "G-KVGPVEVHQ0"
-};
+// Import centralized Firebase from firebase-config.js
+import { app, auth } from './firebase-config.js';
 
-// Initialize Firebase (reuse existing default app if already initialized)
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-let analytics;
-try { analytics = getAnalytics(app); } catch (e) { /* Analytics may fail if already initialized */ }
-const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 const facebookProvider = new FacebookAuthProvider();
 

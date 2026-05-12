@@ -29,8 +29,12 @@
       { key: 'highlights', inputId: null,             label: 'Highlights',  type: 'array' },
     ],
     car: [
-      { key: 'title', inputId: 'car-title', label: 'Title',       type: 'input' },
-      { key: 'info',  inputId: 'car-desc',  label: 'Description', type: 'textarea' },
+      { key: 'title',        inputId: 'car-title',        label: 'Title',        type: 'input' },
+      { key: 'info',         inputId: 'car-desc',         label: 'Description',  type: 'textarea' },
+      { key: 'seats',        inputId: 'car-seats',        label: 'Seats',        type: 'input' },
+      { key: 'fuel',         inputId: 'car-fuel',         label: 'Fuel Type',    type: 'input' },
+      { key: 'transmission', inputId: 'car-transmission', label: 'Transmission', type: 'input' },
+      { key: 'color',        inputId: 'car-color',        label: 'Color',        type: 'input' },
     ],
     post: [
       { key: 'title',    inputId: 'post-title',    label: 'Title',    type: 'input' },
