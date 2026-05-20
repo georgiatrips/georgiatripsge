@@ -14,7 +14,8 @@ import {
   query, 
   orderBy,
   limit,
-  serverTimestamp
+  serverTimestamp,
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
@@ -524,5 +525,142 @@ export async function getCurrentUser() {
       unsubscribe();
       resolve(user);
     });
+  });
+}
+
+// ============ REAL-TIME SUBSCRIPTIONS ============
+
+export function subscribeTours(callback) {
+  const ref = collection(db, 'tours');
+  const q = query(ref, orderBy('createdAt', 'desc'));
+  return onSnapshot(q, (snapshot) => {
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(data);
+  }, (error) => {
+    console.error('Error subscribing to tours:', error);
+  });
+}
+
+export function subscribeCars(callback) {
+  const ref = collection(db, 'cars');
+  const q = query(ref, orderBy('createdAt', 'desc'));
+  return onSnapshot(q, (snapshot) => {
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(data);
+  }, (error) => {
+    console.error('Error subscribing to cars:', error);
+  });
+}
+
+export function subscribePosts(callback) {
+  const ref = collection(db, 'posts');
+  const q = query(ref, orderBy('createdAt', 'desc'));
+  return onSnapshot(q, (snapshot) => {
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(data);
+  }, (error) => {
+    console.error('Error subscribing to posts:', error);
+  });
+}
+
+export function subscribeFeatured(callback) {
+  const ref = collection(db, 'featuredTours');
+  const q = query(ref, orderBy('order', 'asc'));
+  return onSnapshot(q, (snapshot) => {
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(data);
+  }, (error) => {
+    console.error('Error subscribing to featured:', error);
+  });
+}
+
+export function subscribeReviews(callback) {
+  const ref = collection(db, 'reviews');
+  const q = query(ref);
+  return onSnapshot(q, (snapshot) => {
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(data);
+  }, (error) => {
+    console.error('Error subscribing to reviews:', error);
+  });
+}
+
+export function subscribeTourBookings(callback) {
+  const ref = collection(db, 'tourBookings');
+  const q = query(ref, orderBy('createdAt', 'desc'), limit(300));
+  return onSnapshot(q, (snapshot) => {
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(data);
+  }, (error) => {
+    if (error && error.code === 'permission-denied') {
+      console.warn('No read permission to subscribe to tourBookings.');
+      callback([]);
+      return;
+    }
+    console.error('Error subscribing to tourBookings:', error);
+  });
+}
+
+export function subscribeCarBookings(callback) {
+  const ref = collection(db, 'carBookings');
+  const q = query(ref, orderBy('createdAt', 'desc'), limit(300));
+  return onSnapshot(q, (snapshot) => {
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(data);
+  }, (error) => {
+    if (error && error.code === 'permission-denied') {
+      console.warn('No read permission to subscribe to carBookings.');
+      callback([]);
+      return;
+    }
+    console.error('Error subscribing to carBookings:', error);
+  });
+}
+
+export function subscribeSubscribers(callback) {
+  const ref = collection(db, 'subscribers');
+  const q = query(ref, orderBy('createdAt', 'desc'), limit(300));
+  return onSnapshot(q, (snapshot) => {
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(data);
+  }, (error) => {
+    if (error && error.code === 'permission-denied') {
+      console.warn('No read permission to subscribe to subscribers.');
+      callback([]);
+      return;
+    }
+    console.error('Error subscribing to subscribers:', error);
+  });
+}
+
+export function subscribeContactMessages(callback) {
+  const ref = collection(db, 'contactMessages');
+  const q = query(ref, orderBy('createdAt', 'desc'), limit(300));
+  return onSnapshot(q, (snapshot) => {
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(data);
+  }, (error) => {
+    if (error && error.code === 'permission-denied') {
+      console.warn('No read permission to subscribe to contactMessages.');
+      callback([]);
+      return;
+    }
+    console.error('Error subscribing to contactMessages:', error);
+  });
+}
+
+export function subscribeTrafficLogs(callback) {
+  const ref = collection(db, 'traffic_logs');
+  const q = query(ref, orderBy('createdAt', 'desc'), limit(150));
+  return onSnapshot(q, (snapshot) => {
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(data);
+  }, (error) => {
+    if (error && error.code === 'permission-denied') {
+      console.warn('No read permission to subscribe to traffic_logs.');
+      callback([]);
+      return;
+    }
+    console.error('Error subscribing to traffic_logs:', error);
   });
 }

@@ -1894,7 +1894,9 @@ import {
   getFeaturedTours, addFeaturedTour, updateFeaturedTour, deleteFeaturedTour,
   getReviews, addReview, updateReview, deleteReview,
   getTourBookings, getCarBookings, getSubscribers, getContactMessages, getTrafficLogs,
-  auth, onAuthStateChanged, isAdmin
+  auth, onAuthStateChanged, isAdmin,
+  subscribeTours, subscribeCars, subscribePosts, subscribeFeatured, subscribeReviews,
+  subscribeTourBookings, subscribeCarBookings, subscribeSubscribers, subscribeContactMessages, subscribeTrafficLogs
 } from './firebase-config.js';
 // NOTE: Admin panel is intentionally open (no auth gate).
 // Data access is controlled by your Firestore Security Rules.
@@ -1966,6 +1968,70 @@ function showAdminAccessRequired(message) {
   }
 }
 
+let unsubscribes = [];
+
+function setupRealTimeListeners() {
+  // Clear any existing subscriptions first to avoid memory leaks or duplicate handlers
+  unsubscribes.forEach(unsub => {
+    try { unsub(); } catch (e) { console.error('Error unsubscribing:', e); }
+  });
+  unsubscribes = [];
+
+  console.log('[Admin] Initializing real-time listeners...');
+
+  unsubscribes.push(subscribeTours(data => {
+    toursData = data;
+    renderTours();
+  }));
+
+  unsubscribes.push(subscribeCars(data => {
+    carsData = data;
+    renderCars();
+  }));
+
+  unsubscribes.push(subscribePosts(data => {
+    postsData = data;
+    renderPosts();
+  }));
+
+  unsubscribes.push(subscribeFeatured(data => {
+    featuredData = data;
+    renderFeatured();
+  }));
+
+  unsubscribes.push(subscribeReviews(data => {
+    reviewsData = data;
+    renderReviews();
+  }));
+
+  if (isAdminUser) {
+    unsubscribes.push(subscribeTourBookings(data => {
+      tourBookingsData = data;
+      renderLeads();
+    }));
+
+    unsubscribes.push(subscribeCarBookings(data => {
+      carBookingsData = data;
+      renderLeads();
+    }));
+
+    unsubscribes.push(subscribeSubscribers(data => {
+      subscribersData = data;
+      renderLeads();
+    }));
+
+    unsubscribes.push(subscribeContactMessages(data => {
+      contactMessagesData = data;
+      renderLeads();
+    }));
+
+    unsubscribes.push(subscribeTrafficLogs(data => {
+      trafficLogsData = data;
+      renderAnalytics();
+    }));
+  }
+}
+
 async function waitForAuthThenLoadData() {
   // We no longer show a blocking full-screen loading spinner on start!
   onAuthStateChanged(auth, async (user) => {
@@ -2002,72 +2068,13 @@ async function waitForAuthThenLoadData() {
   });
 }
 
-// Load all data on page load
+// Load all data on page load (sets up real-time sync listeners)
 async function loadAllData() {
-  // We no longer use a blocking full-screen loading spinner here either for a faster, smoother experience!
   try {
-    const safeFetch = async (promise, name, fallback = []) => {
-      try {
-        return await promise;
-      } catch (err) {
-        console.error(`Error loading ${name}:`, err);
-        return fallback;
-      }
-    };
-
-    const basePromises = [
-      safeFetch(getTours(), 'ტურები'),
-      safeFetch(getCars(), 'ავტომობილები'),
-      safeFetch(getPosts(), 'პოსტები'),
-      safeFetch(getFeaturedTours(), 'რჩეულები'),
-      safeFetch(getReviews(), 'შეფასებები')
-    ];
-
-    const leadPromises = isAdminUser ? [
-      safeFetch(getTourBookings(), 'ტურის ჯავშნები'),
-      safeFetch(getCarBookings(), 'მანქანის ჯავშნები'),
-      safeFetch(getSubscribers(), 'გამომწერები'),
-      safeFetch(getContactMessages(), 'შეტყობინებები'),
-      safeFetch(getTrafficLogs(), 'ანალიტიკა')
-    ] : [
-      Promise.resolve([]),
-      Promise.resolve([]),
-      Promise.resolve([]),
-      Promise.resolve([]),
-      Promise.resolve([])
-    ];
-
-    const results = await Promise.all([
-      ...basePromises,
-      ...leadPromises
-    ]);
-
-    [
-      toursData, carsData, postsData, featuredData, reviewsData,
-      tourBookingsData, carBookingsData, subscribersData, contactMessagesData,
-      trafficLogsData
-    ] = results;
-
-    renderTours();
-    renderCars();
-    renderPosts();
-    renderFeatured();
-    renderReviews();
-    renderLeads();
-    renderAnalytics();
-
-    if (
-      (!toursData || toursData.length === 0) &&
-      (!carsData || carsData.length === 0) &&
-      (!postsData || postsData.length === 0) &&
-      (!featuredData || featuredData.length === 0) &&
-      (!reviewsData || reviewsData.length === 0)
-    ) {
-      showToast('მონაცემები ვერ ჩაიტვირთა. თუ კონტენტს ელოდით, შეამოწმეთ ფაირბეისის წესები ან თქვენი ქსელის კავშირი.', 'info');
-    }
+    setupRealTimeListeners();
   } catch (error) {
     console.error('Critical error in loadAllData:', error);
-    showToast('მონაცემების ჩატვირთვა ვერ მოხერხდა: ' + String(error.message || error), 'error');
+    showToast('მონაცემების სინქრონიზაციის ჩართვა ვერ მოხერხდა: ' + String(error.message || error), 'error');
   }
 }
 
@@ -2329,8 +2336,6 @@ window.saveTour = async function() {
     }
     
     closeTourModal();
-    toursData = await getTours();
-    renderTours();
   } catch (error) {
     console.error('Error saving tour:', error);
     showToast('ტურის შენახვა ვერ მოხერხდა: ' + (error.message || error.code || 'უცნობი შეცდომა'), 'error');
@@ -2367,8 +2372,6 @@ async function deleteTourItem(id) {
   try {
     await deleteTour(id);
     showToast('ტური წარმატებით წაიშალა', 'success');
-    toursData = await getTours();
-    renderTours();
   } catch (error) {
     console.error('Error deleting tour:', error);
     showToast('ტურის წაშლა ვერ მოხერხდა: ' + (error.message || error.code || 'უცნობი შეცდომა'), 'error');
@@ -2518,8 +2521,6 @@ window.saveCar = async function() {
     }
     
     closeCarModal();
-    carsData = await getCars();
-    renderCars();
   } catch (error) {
     console.error('Error saving car:', error);
     showToast('ტრანსპორტის შენახვა ვერ მოხერხდა: ' + (error.message || error.code || 'უცნობი შეცდომა'), 'error');
@@ -2539,8 +2540,6 @@ async function deleteCarItem(id) {
   try {
     await deleteCar(id);
     showToast('ტრანსპორტი წარმატებით წაიშალა', 'success');
-    carsData = await getCars();
-    renderCars();
   } catch (error) {
     console.error('Error deleting car:', error);
     showToast('ტრანსპორტის წაშლა ვერ მოხერხდა: ' + (error.message || error.code || 'უცნობი შეცდომა'), 'error');
@@ -2662,8 +2661,6 @@ window.savePost = async function() {
     }
     
     closePostModal();
-    postsData = await getPosts();
-    renderPosts();
   } catch (error) {
     console.error('Error saving post:', error);
     showToast('პოსტის შენახვა ვერ მოხერხდა: ' + (error.message || error.code || 'უცნობი შეცდომა'), 'error');
@@ -2683,8 +2680,6 @@ async function deletePostItem(id) {
   try {
     await deletePost(id);
     showToast('პოსტი წარმატებით წაიშალა', 'success');
-    postsData = await getPosts();
-    renderPosts();
   } catch (error) {
     console.error('Error deleting post:', error);
     showToast('პოსტის წაშლა ვერ მოხერხდა: ' + (error.message || error.code || 'უცნობი შეცდომა'), 'error');
@@ -2819,8 +2814,6 @@ window.saveFeatured = async function() {
     }
     
     closeFeaturedModal();
-    featuredData = await getFeaturedTours();
-    renderFeatured();
   } catch (error) {
     console.error('Error saving featured offer:', error);
     showToast('შეთავაზების შენახვა ვერ მოხერხდა: ' + (error.message || error.code || 'უცნობი შეცდომა'), 'error');
@@ -2840,8 +2833,6 @@ async function deleteFeaturedItem(id) {
   try {
     await deleteFeaturedTour(id);
     showToast('შეთავაზება წარმატებით წაიშალა', 'success');
-    featuredData = await getFeaturedTours();
-    renderFeatured();
   } catch (error) {
     console.error('Error deleting featured offer:', error);
     showToast('შეთავაზების წაშლა ვერ მოხერხდა: ' + (error.message || error.code || 'უცნობი შეცდომა'), 'error');
@@ -2922,8 +2913,6 @@ window.saveReview = async function() {
     
     showToast('შეფასება წარმატებით შეინახა!', 'success');
     closeReviewModal();
-    reviewsData = await getReviews();
-    renderReviews();
   } catch (e) {
     showToast('შეფასების შენახვა ვერ მოხერხდა', 'error');
   }
@@ -2941,8 +2930,6 @@ async function deleteReviewItem(id) {
   try {
     await deleteReview(id);
     showToast('წარმატებით წაიშალა!', 'success');
-    reviewsData = await getReviews();
-    renderReviews();
   } catch (e) { console.error('Error deleting review:', e); showToast('შეფასების წაშლა ვერ მოხერხდა: ' + (e.message || e.code || 'უცნობი შეცდომა'), 'error'); }
   hideLoading();
 }
