@@ -222,6 +222,8 @@ async function signInWithGoogle() {
       errorText = 'Pop-up was blocked. Please allow pop-ups for this site.';
     } else if (error.code === 'auth/network-request-failed') {
       errorText = 'Network error. Please check your connection.';
+    } else if (error.code === 'auth/unauthorized-domain') {
+      errorText = 'Domain not authorized. Please add this domain to Firebase Console.';
     }
     
     showError(errorText);
@@ -246,6 +248,8 @@ async function signInWithFacebook() {
       errorText = 'Pop-up was blocked. Please allow pop-ups for this site.';
     } else if (error.code === 'auth/account-exists-with-different-credential') {
       errorText = 'An account already exists with the same email. Try signing in with a different method.';
+    } else if (error.code === 'auth/unauthorized-domain') {
+      errorText = 'Domain not authorized. Please add this domain to Firebase Console.';
     }
     
     showError(errorText);

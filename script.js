@@ -5,10 +5,7 @@ let postsData = [];
 let featuredData = [];
 let reviewsData = [];
 
-// Firebase Firestore imports
-import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
-  getFirestore, 
   collection, 
   getDocs,
   doc,
@@ -19,23 +16,10 @@ import {
   orderBy,
   where
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { app, db, auth } from './firebase-config.js';
 
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyAuLpaONrIUwnJJ3ycgzWWlSTiujotfo4U",
-  authDomain: "georgiatripsge.firebaseapp.com",
-  projectId: "georgiatripsge",
-  storageBucket: "georgiatripsge.firebasestorage.app",
-  messagingSenderId: "458133209260",
-  appId: "1:458133209260:web:884340052c037e6fcd9f09",
-  measurementId: "G-KVGPVEVHQ0"
-};
 
-// Initialize Firebase (reuse existing default app if already initialized)
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
 
 // ===== FETCH DATA FROM FIREBASE =====
 async function fetchToursFromFirebase() {
