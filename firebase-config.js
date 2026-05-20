@@ -13,6 +13,7 @@ import {
   getDoc,
   query, 
   orderBy,
+  limit,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -43,13 +44,33 @@ const db = initializeFirestore(app, {
 const IMGBB_API_KEY = 'a5e4f8277be98927eb525c65da0615bf';
 
 // Admin emails - add your admin email here
-const ADMIN_EMAILS = ['georgiatrips5@gmail.com', 'bassboste17@gmail.com'];
+const ADMIN_EMAILS = ['georgiatrips5@gmail.com'];
 
 // Check if user is admin
-export function isAdmin(email) {
-  const isAdminUser = ADMIN_EMAILS.includes(email);
-  console.log('[Firebase Config] isAdmin check:', email, '→', isAdminUser);
-  return isAdminUser;
+export async function isAdmin(email) {
+  if (!email) return false;
+  const lowerEmail = email.toLowerCase();
+  
+  // Developer/Owner hardcoded fallback
+  const ADMIN_EMAILS = ['georgiatrips5@gmail.com'];
+  if (ADMIN_EMAILS.includes(lowerEmail)) {
+    console.log('[Firebase Config] isAdmin check (hardcoded):', lowerEmail, '→ true');
+    return true;
+  }
+  
+  try {
+    const docRef = doc(db, 'users', lowerEmail);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const isUserAdmin = !!docSnap.data().isAdmin;
+      console.log('[Firebase Config] isAdmin check (Firestore):', lowerEmail, '→', isUserAdmin);
+      return isUserAdmin;
+    }
+  } catch (error) {
+    console.error('[Firebase Config] Error checking isAdmin in Firestore:', error);
+  }
+  console.log('[Firebase Config] isAdmin check:', lowerEmail, '→ false');
+  return false;
 }
 
 // Upload image to ImgBB
@@ -371,7 +392,7 @@ export async function addTourBooking(bookingData) {
 export async function getTourBookings() {
   try {
     const ref = collection(db, 'tourBookings');
-    const q = query(ref, orderBy('createdAt', 'desc'));
+    const q = query(ref, orderBy('createdAt', 'desc'), limit(300));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
   } catch (error) {
@@ -401,7 +422,7 @@ export async function addCarBooking(bookingData) {
 export async function getCarBookings() {
   try {
     const ref = collection(db, 'carBookings');
-    const q = query(ref, orderBy('createdAt', 'desc'));
+    const q = query(ref, orderBy('createdAt', 'desc'), limit(300));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
   } catch (error) {
@@ -431,7 +452,7 @@ export async function addSubscriber(subscriberData) {
 export async function getSubscribers() {
   try {
     const ref = collection(db, 'subscribers');
-    const q = query(ref, orderBy('createdAt', 'desc'));
+    const q = query(ref, orderBy('createdAt', 'desc'), limit(300));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
   } catch (error) {
@@ -461,7 +482,7 @@ export async function addContactMessage(messageData) {
 export async function getContactMessages() {
   try {
     const ref = collection(db, 'contactMessages');
-    const q = query(ref, orderBy('createdAt', 'desc'));
+    const q = query(ref, orderBy('createdAt', 'desc'), limit(300));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
   } catch (error) {
@@ -474,7 +495,26 @@ export async function getContactMessages() {
   }
 }
 
-// Export app, auth, db for centralized use across modules
+// ============ TRAFFIC LOGS / ANALYTICS ============
+
+export async function getTrafficLogs() {
+  try {
+    const ref = collection(db, 'traffic_logs');
+    // Fetch last 150 logs to prevent heavy reads and slow loading
+    const q = query(ref, orderBy('createdAt', 'desc'), limit(150));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+  } catch (error) {
+    if (error && error.code === 'permission-denied') {
+      console.warn('No read permission for traffic_logs collection.');
+      return [];
+    }
+    console.error('Error getting traffic logs:', error);
+    throw error;
+  }
+}
+
+// Export app, db, auth, onAuthStateChanged, and other items
 export { app, db, auth, onAuthStateChanged };
 
 // Helper to get current user for debugging

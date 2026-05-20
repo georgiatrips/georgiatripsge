@@ -23,28 +23,28 @@
   // Describes which fields of each entity should be translated
   const TRANSLATABLE_FIELDS = {
     tour: [
-      { key: 'title',      inputId: 'tour-title',     label: 'Title',       type: 'input' },
-      { key: 'desc',       inputId: 'tour-desc',      label: 'Description', type: 'textarea' },
-      { key: 'duration',   inputId: 'tour-duration',  label: 'Duration',    type: 'input' },
-      { key: 'highlights', inputId: null,             label: 'Highlights',  type: 'array' },
+      { key: 'title',      inputId: 'tour-title',     label: 'სათაური',       type: 'input' },
+      { key: 'desc',       inputId: 'tour-desc',      label: 'აღწერა', type: 'textarea' },
+      { key: 'duration',   inputId: 'tour-duration',  label: 'ხანგრძლივობა',    type: 'input' },
+      { key: 'highlights', inputId: null,             label: 'მთავარი დეტალები',  type: 'array' },
     ],
     car: [
-      { key: 'title',        inputId: 'car-title',        label: 'Title',        type: 'input' },
-      { key: 'info',         inputId: 'car-desc',         label: 'Description',  type: 'textarea' },
-      { key: 'seats',        inputId: 'car-seats',        label: 'Seats',        type: 'input' },
-      { key: 'fuel',         inputId: 'car-fuel',         label: 'Fuel Type',    type: 'input' },
-      { key: 'transmission', inputId: 'car-transmission', label: 'Transmission', type: 'input' },
-      { key: 'color',        inputId: 'car-color',        label: 'Color',        type: 'input' },
+      { key: 'title',        inputId: 'car-title',        label: 'სათაური',        type: 'input' },
+      { key: 'info',         inputId: 'car-desc',         label: 'აღწერა',  type: 'textarea' },
+      { key: 'seats',        inputId: 'car-seats',        label: 'ადგილები',        type: 'input' },
+      { key: 'fuel',         inputId: 'car-fuel',         label: 'საწვავის ტიპი',    type: 'input' },
+      { key: 'transmission', inputId: 'car-transmission', label: 'გადაცემათა კოლოფი', type: 'input' },
+      { key: 'color',        inputId: 'car-color',        label: 'ფერი',        type: 'input' },
     ],
     post: [
-      { key: 'title',    inputId: 'post-title',    label: 'Title',    type: 'input' },
-      { key: 'text',     inputId: 'post-content',  label: 'Content',  type: 'textarea' },
+      { key: 'title',    inputId: 'post-title',    label: 'სათაური',    type: 'input' },
+      { key: 'text',     inputId: 'post-content',  label: 'შინაარსი',  type: 'textarea' },
     ],
     featured: [
-      { key: 'title', inputId: 'featured-title', label: 'Title',       type: 'input' },
-      { key: 'desc',  inputId: 'featured-desc',  label: 'Description', type: 'textarea' },
-      { key: 'tag',   inputId: 'featured-tag',   label: 'Tag',         type: 'input' },
-      { key: 'meta',  inputId: 'featured-meta',  label: 'Meta (comma-separated)', type: 'array-csv' },
+      { key: 'title', inputId: 'featured-title', label: 'სათაური',       type: 'input' },
+      { key: 'desc',  inputId: 'featured-desc',  label: 'აღწერა', type: 'textarea' },
+      { key: 'tag',   inputId: 'featured-tag',   label: 'ტეგი',         type: 'input' },
+      { key: 'meta',  inputId: 'featured-meta',  label: 'მეტა (მძიმით გამოყოფილი)', type: 'array-csv' },
     ],
   };
 
@@ -119,7 +119,7 @@
           const display = Array.isArray(val) ? val.join(', ') : String(val || '');
           return `<div class="lang-field">
             <label>${f.label}</label>
-            <input type="text" ${dirAttr} value="${escapeAttr(display)}" placeholder="item1, item2, item3"
+            <input type="text" ${dirAttr} value="${escapeAttr(display)}" placeholder="პუნქტი 1, პუნქტი 2, პუნქტი 3"
               oninput="AdminI18n.setArrayValue('${entity}','${f.key}', this.value)">
           </div>`;
         }
@@ -155,7 +155,7 @@
       fill.style.backgroundColor = color;
       percent.style.color = color;
       percent.textContent = `${Math.round(stats.percent)}%`;
-      text.textContent = `${engineName} Remaining: ${stats.remaining.toLocaleString()} words`;
+      text.textContent = `დარჩენილია ${engineName}: ${stats.remaining.toLocaleString()} სიტყვა`;
 
       // განვაახლოთ ღილაკების "active" კლასი
       document.querySelectorAll(`.${entity}-engine-btn`).forEach(btn => {
@@ -175,7 +175,7 @@
     const statusEl = document.getElementById(`${entity}-translate-status`);
     if (statusEl) {
       statusEl.textContent =
-        'Fill the Georgian fields above, then click "Auto-translate" to generate translations for all languages.';
+        'შეავსეთ ქართული ველები ზემოთ, შემდეგ დააჭირეთ „ავტომატურ თარგმანს“ ყველა ენაზე თარგმანების გენერირებისთვის.';
       statusEl.style.color = '';
     }
     render(entity);
@@ -206,7 +206,7 @@
   async function generate(entity, engineOverride = null) {
     const statusEl = document.getElementById(`${entity}-translate-status`);
     if (!window.GTTranslate) {
-      if (statusEl) { statusEl.textContent = 'Translation service not loaded.'; statusEl.style.color = '#dc3545'; }
+      if (statusEl) { statusEl.textContent = 'თარგმნის სერვისი ვერ ჩაიტვირთა.'; statusEl.style.color = '#dc3545'; }
       return;
     }
 
@@ -215,7 +215,7 @@
 
     const fields = TRANSLATABLE_FIELDS[entity];
     document.querySelectorAll(`.${entity}-translate-btn`).forEach(b => b.disabled = true);
-    if (statusEl) { statusEl.textContent = 'Translating... please wait.'; statusEl.style.color = '#0b3c5d'; }
+    if (statusEl) { statusEl.textContent = 'მიმდინარეობს თარგმნა... გთხოვთ დაელოდოთ.'; statusEl.style.color = '#0b3c5d'; }
 
     try {
       for (const field of fields) {
@@ -252,10 +252,10 @@
         // Render after each field so the user sees progress
         render(entity);
       }
-      if (statusEl) { statusEl.textContent = '✓ Translations generated. Click language tabs above to review & edit.'; statusEl.style.color = '#28a745'; }
+      if (statusEl) { statusEl.textContent = '✓ თარგმანები გენერირებულია. გადახედვისთვის და რედაქტირებისთვის დააჭირეთ ენების ჩანართებს ზემოთ.'; statusEl.style.color = '#28a745'; }
     } catch (err) {
       console.error('[AdminI18n] translation error:', err);
-      if (statusEl) { statusEl.textContent = 'Translation failed: ' + (err.message || err); statusEl.style.color = '#dc3545'; }
+      if (statusEl) { statusEl.textContent = 'თარგმნა ვერ მოხერხდა: ' + (err.message || err); statusEl.style.color = '#dc3545'; }
     } finally {
       document.querySelectorAll(`.${entity}-translate-btn`).forEach(b => b.disabled = false);
     }
@@ -303,7 +303,7 @@
     render(entity);
     const statusEl = document.getElementById(`${entity}-translate-status`);
     if (statusEl && hasTranslations(entity)) {
-      statusEl.textContent = '✓ Existing translations loaded. You can edit or re-translate.';
+      statusEl.textContent = '✓ არსებული თარგმანები ჩატვირთულია. შეგიძლიათ დაარედაქტიროთ ან ხელახლა თარგმნოთ.';
       statusEl.style.color = '#28a745';
     }
   }

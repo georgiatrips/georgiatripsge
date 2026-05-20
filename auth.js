@@ -19,7 +19,7 @@ import {
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
 // Import centralized Firebase from firebase-config.js
-import { app, auth } from './firebase-config.js';
+import { app, auth, isAdmin } from './firebase-config.js';
 
 const googleProvider = new GoogleAuthProvider();
 const facebookProvider = new FacebookAuthProvider();
@@ -72,6 +72,7 @@ function updateNavbar(user) {
     try {
       localStorage.removeItem('gt_user_logged_in');
       localStorage.removeItem('gt_user_display_name');
+      localStorage.removeItem('gt_user_is_admin');
     } catch(e) {}
 
     // Only overwrite if we were previously logged in or the text was explicitly modified
@@ -98,7 +99,7 @@ function setupNavbarClick() {
   const userBtn = document.getElementById('nav-user-btn');
   if (!userBtn) return;
   
-  // Instant Cache Restoration: Paint user's name immediately before Firebase initializes
+  // Instant Cache Restoration: Paint user's name and admin link immediately before Firebase initializes
   try {
     const cachedLoggedIn = localStorage.getItem('gt_user_logged_in') === 'true';
     const cachedName = localStorage.getItem('gt_user_display_name');
@@ -111,6 +112,28 @@ function setupNavbarClick() {
       const dropdownMenu = document.querySelector('.user-dropdown-menu');
       if (dropdownMenu) {
         dropdownMenu.style.display = 'block';
+      }
+    }
+
+    const cachedIsAdmin = localStorage.getItem('gt_user_is_admin') === 'true';
+    if (cachedIsAdmin) {
+      const navLinks = document.querySelector('.nav-links');
+      if (navLinks && !document.getElementById('nav-admin-link')) {
+        const adminLink = document.createElement('a');
+        adminLink.href = 'admin.html';
+        adminLink.id = 'nav-admin-link';
+        adminLink.textContent = 'Admin Panel';
+        
+        const langDropdown = document.getElementById('nav-lang-dropdown');
+        if (langDropdown) {
+          navLinks.insertBefore(adminLink, langDropdown);
+        } else {
+          navLinks.appendChild(adminLink);
+        }
+        
+        if (window.GTUITranslate && typeof window.GTUITranslate.apply === 'function') {
+          window.GTUITranslate.apply();
+        }
       }
     }
   } catch (e) {}
@@ -127,9 +150,58 @@ function setupNavbarClick() {
   });
 }
 
+// Dynamic admin link check & render
+async function handleAdminLink(user) {
+  const navLinks = document.querySelector('.nav-links');
+  if (!navLinks) return;
+
+  const existingLink = document.getElementById('nav-admin-link');
+
+  if (user) {
+    try {
+      const isUserAdmin = await isAdmin(user.email);
+      if (isUserAdmin) {
+        try {
+          localStorage.setItem('gt_user_is_admin', 'true');
+        } catch (e) {}
+        
+        if (!existingLink) {
+          const adminLink = document.createElement('a');
+          adminLink.href = 'admin.html';
+          adminLink.id = 'nav-admin-link';
+          adminLink.textContent = 'Admin Panel';
+          
+          const langDropdown = document.getElementById('nav-lang-dropdown');
+          if (langDropdown) {
+            navLinks.insertBefore(adminLink, langDropdown);
+          } else {
+            navLinks.appendChild(adminLink);
+          }
+          
+          if (window.GTUITranslate && typeof window.GTUITranslate.apply === 'function') {
+            window.GTUITranslate.apply();
+          }
+        }
+        return;
+      }
+    } catch (e) {
+      console.error('Error checking admin status:', e);
+    }
+  }
+
+  // Not logged in or not an admin
+  try {
+    localStorage.removeItem('gt_user_is_admin');
+  } catch (e) {}
+  if (existingLink) {
+    existingLink.remove();
+  }
+}
+
 // Listen for auth state changes on all pages
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   updateNavbar(user);
+  await handleAdminLink(user);
 
   // If on login page, update the UI
   if (window.location.pathname.includes('login.html')) {

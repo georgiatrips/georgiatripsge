@@ -3,7 +3,13 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function isAdmin() {
       return request.auth != null
-        && (request.auth.token.email in ['georgiatrips5@gmail.com', 'bassboste17@gmail.com']);
+        && (
+          request.auth.token.email == 'georgiatrips5@gmail.com'
+          || (
+            exists(/databases/$(database)/documents/users/$(request.auth.token.email))
+            && get(/databases/$(database)/documents/users/$(request.auth.token.email)).data.isAdmin == true
+          )
+        );
     }
 
     // საჯარო ინფორმაცია
@@ -54,8 +60,15 @@ service cloud.firestore {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    match /users/{email} {
+      allow read: if request.auth != null && request.auth.token.email == email;
+      allow write: if isAdmin();
+    }
+
+    // Visitor Analytics & Traffic Logs
+    match /traffic_logs/{logId} {
+      allow create, update: if true;
+      allow read, delete: if isAdmin();
     }
   }
 }

@@ -92,8 +92,29 @@
       gap: 4px !important;
     }
     .tour-card__meta { display: none !important; }
-    .tour-price { font-size: 1.05rem !important; }
     .btn-book { padding: 0.5rem !important; font-size: 0.8rem !important; }
+  }
+
+  @media (max-width: 560px) {
+    #tours-filter-grid {
+      grid-template-columns: 1fr !important;
+      gap: 15px !important;
+    }
+    .tour-card__img-wrap {
+      height: 180px !important;
+    }
+    .tour-card__title {
+      font-size: 0.95rem !important;
+      height: auto !important;
+      max-height: 2.8rem !important;
+    }
+    .tour-price {
+      font-size: 1.15rem !important;
+    }
+    .btn-book {
+      padding: 0.65rem !important;
+      font-size: 0.85rem !important;
+    }
   }
 
   .share-tour-btn {

@@ -14,7 +14,10 @@ import {
   getDoc,
   query, 
   orderBy,
-  where
+  where,
+  updateDoc,
+  arrayUnion,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { app, db, auth } from './firebase-config.js';
@@ -1639,3 +1642,180 @@ document.addEventListener('visibilitychange', function () {
   _idxWatchdogAttempts = 0;
   scheduleIndexWatchdog();
 });
+
+// ============================================================
+// VISITOR ANALYTICS & TRAFFIC TRACKER
+// ============================================================
+class TrafficTracker {
+  static init() {
+    try {
+      // 1. Session Setup
+      let sessionId = sessionStorage.getItem('analytics_session_id');
+      const isNewSession = !sessionId;
+
+      if (isNewSession) {
+        sessionId = 'sess_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+        sessionStorage.setItem('analytics_session_id', sessionId);
+      }
+
+      this.sessionId = sessionId;
+      const pageName = this.getCurrentPage();
+
+      // Don't log visits from the admin page itself to avoid polluting stats
+      if (pageName === 'admin.html') return;
+
+      if (isNewSession) {
+        this.startNewSession(pageName);
+      } else {
+        this.logPageVisit(pageName);
+      }
+
+      // 2. Setup event delegation for clicks
+      this.setupClickTracker();
+      
+      // 3. Connect auth state change to update user info
+      this.setupAuthTracker();
+    } catch (e) {
+      console.error('[TrafficTracker] Init failed:', e);
+    }
+  }
+
+  static getCurrentPage() {
+    const path = window.location.pathname.split('/').pop() || 'index.html';
+    return path;
+  }
+
+  static detectDevice() {
+    const ua = navigator.userAgent;
+    if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
+      return 'Tablet';
+    }
+    if (/Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) {
+      return 'Mobile';
+    }
+    return 'Desktop';
+  }
+
+  static async fetchLocation() {
+    try {
+      const cached = sessionStorage.getItem('analytics_location');
+      if (cached) return JSON.parse(cached);
+
+      const res = await fetch('https://ipapi.co/json/');
+      const data = await res.json();
+      const loc = {
+        country: data.country_name || 'Unknown',
+        city: data.city || 'Unknown',
+        ip: data.ip || 'Unknown'
+      };
+      sessionStorage.setItem('analytics_location', JSON.stringify(loc));
+      return loc;
+    } catch (e) {
+      console.warn('[TrafficTracker] Geolocation lookup failed, falling back to local defaults.', e);
+      return { country: 'Unknown', city: 'Unknown', ip: 'Unknown' };
+    }
+  }
+
+  static async startNewSession(pageName) {
+    try {
+      const loc = await this.fetchLocation();
+      const user = auth.currentUser;
+
+      const sessionDoc = {
+        sessionId: this.sessionId,
+        userId: user ? user.uid : 'anonymous',
+        userEmail: user ? user.email : 'anonymous',
+        ip: loc.ip,
+        country: loc.country,
+        city: loc.city,
+        device: this.detectDevice(),
+        userAgent: navigator.userAgent,
+        createdAt: new Date().toISOString(),
+        lastActive: new Date().toISOString(),
+        visitedPages: [pageName],
+        clicks: []
+      };
+
+      await setDoc(doc(db, 'traffic_logs', this.sessionId), sessionDoc);
+    } catch (e) {
+      console.error('[TrafficTracker] Failed to start new session:', e);
+    }
+  }
+
+  static async logPageVisit(pageName) {
+    try {
+      const docRef = doc(db, 'traffic_logs', this.sessionId);
+      await updateDoc(docRef, {
+        visitedPages: arrayUnion(pageName),
+        lastActive: new Date().toISOString()
+      });
+    } catch (e) {
+      // If document does not exist (e.g. deleted or error), create a new session
+      console.warn('[TrafficTracker] Session document not found, restarting session.');
+      this.startNewSession(pageName);
+    }
+  }
+
+  static setupAuthTracker() {
+    onAuthStateChanged(auth, (user) => {
+      if (user && this.sessionId) {
+        const docRef = doc(db, 'traffic_logs', this.sessionId);
+        updateDoc(docRef, {
+          userId: user.uid,
+          userEmail: user.email,
+          lastActive: new Date().toISOString()
+        }).catch(() => {}); // silent fail if doc doesn't exist yet
+      }
+    });
+  }
+
+  static setupClickTracker() {
+    document.addEventListener('click', (e) => {
+      try {
+        const tourCard = e.target.closest('.tour-card, .featured-card, .batumi-card, .tour-card--standard');
+        const carCard = e.target.closest('.vehicle-card, .car-full-card');
+        const bookBtn = e.target.closest('.btn-book, .btn-primary, .btn-outline, .btn-cta, .whatsapp-float');
+        
+        let clickData = null;
+
+        if (tourCard) {
+          const titleEl = tourCard.querySelector('.tour-card-title, .tour-card__title, .featured-title, .batumi-title');
+          const title = titleEl ? titleEl.textContent.trim() : 'Tour Details';
+          clickData = {
+            type: 'tour_click',
+            name: title,
+            time: new Date().toISOString()
+          };
+        } else if (carCard) {
+          const titleEl = carCard.querySelector('.vehicle-card__title, .car-card-title, h3');
+          const title = titleEl ? titleEl.textContent.trim() : 'Car Details';
+          clickData = {
+            type: 'car_click',
+            name: title,
+            time: new Date().toISOString()
+          };
+        } else if (bookBtn) {
+          const label = bookBtn.textContent.trim() || 'WhatsApp Float';
+          clickData = {
+            type: 'button_click',
+            name: label,
+            time: new Date().toISOString()
+          };
+        }
+
+        if (clickData && this.sessionId) {
+          const docRef = doc(db, 'traffic_logs', this.sessionId);
+          updateDoc(docRef, {
+            clicks: arrayUnion(clickData),
+            lastActive: new Date().toISOString()
+          }).catch(() => {});
+        }
+      } catch (err) {
+        console.error('[TrafficTracker] Click tracking error:', err);
+      }
+    });
+  }
+}
+
+// Auto-initialize Traffic Tracker
+TrafficTracker.init();

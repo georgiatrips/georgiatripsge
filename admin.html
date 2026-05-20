@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ka">
 <head>
   <link rel="icon" type="image/png" href="logo.png">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Panel – Georgia Trips</title>
+<title>ადმინ პანელი – Georgia Trips</title>
 <link rel="stylesheet" href="style.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <style>
@@ -931,6 +931,272 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Analytics Dashboard Premium Styling */
+.analytics-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+.analytics-stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.analytics-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+.analytics-icon-wrap {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  background: rgba(46, 204, 113, 0.1);
+  color: #2ecc71;
+}
+.analytics-icon-wrap.blue {
+  background: rgba(52, 152, 219, 0.1);
+  color: #3498db;
+}
+.analytics-icon-wrap.purple {
+  background: rgba(155, 89, 182, 0.1);
+  color: #9b59b6;
+}
+.analytics-icon-wrap.orange {
+  background: rgba(230, 126, 34, 0.1);
+  color: #e67e22;
+}
+.analytics-stat-info h3 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-dark);
+}
+.analytics-stat-info p {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  margin: 0.2rem 0 0 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.analytics-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1.5rem;
+}
+@media (max-width: 1024px) {
+  .analytics-layout {
+    grid-template-columns: 1fr;
+  }
+}
+.analytics-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  margin-bottom: 1.5rem;
+}
+.analytics-card h3 {
+  font-size: 1.1rem;
+  margin: 0 0 1.2rem 0;
+  color: var(--text-dark);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding-bottom: 0.75rem;
+}
+.analytics-card h3 span {
+  font-size: 0.8rem;
+  font-weight: normal;
+  color: var(--text-light);
+}
+.progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.progress-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.progress-item-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.progress-item-name {
+  color: var(--text-dark);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.progress-item-val {
+  color: var(--text-light);
+}
+.progress-bar-bg {
+  height: 8px;
+  background: #f1f2f6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #3498db, #2ecc71);
+  transition: width 0.6s ease;
+}
+.progress-item:nth-child(2n) .progress-bar-fill {
+  background: linear-gradient(90deg, #9b59b6, #e74c3c);
+}
+.progress-item:nth-child(3n) .progress-bar-fill {
+  background: linear-gradient(90deg, #f1c40f, #e67e22);
+}
+.live-feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: 650px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+.live-feed-item {
+  background: #fdfdfd;
+  border: 1px solid rgba(0,0,0,0.04);
+  border-radius: 8px;
+  padding: 1rem;
+  position: relative;
+  transition: box-shadow 0.2s ease, background 0.2s ease;
+}
+.live-feed-item:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  background: white;
+}
+.live-feed-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+.feed-user-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.feed-user-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.feed-user-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-light);
+}
+.feed-status-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+.feed-badge {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.feed-badge.guest {
+  background: #f1f2f6;
+  color: #57606f;
+}
+.feed-badge.user {
+  background: #e3f2fd;
+  color: #1e88e5;
+}
+.feed-badge.device {
+  background: #f5f6fa;
+  color: #7f8c8d;
+}
+.feed-badge.duration {
+  background: #fff9db;
+  color: #f59f00;
+}
+.live-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2ecc71;
+  box-shadow: 0 0 8px #2ecc71;
+  display: inline-block;
+  animation: pulse-green 2s infinite;
+}
+@keyframes pulse-green {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(46, 204, 113, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+}
+.feed-path {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed rgba(0, 0, 0, 0.05);
+}
+.feed-path-title {
+  font-size: 0.72rem;
+  font-weight: bold;
+  color: var(--text-light);
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.feed-path-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+.feed-step {
+  font-size: 0.75rem;
+  background: rgba(52, 152, 219, 0.08);
+  color: #2980b9;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+}
+.feed-arrow {
+  color: var(--text-light);
+  font-size: 0.7rem;
+}
+.feed-clicks {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.feed-click-tag {
+  font-size: 0.72rem;
+  background: rgba(230, 126, 34, 0.08);
+  color: #d35400;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
 </style>
 </head>
 <body>
@@ -942,18 +1208,18 @@
     Georgia<span>Trips</span>
   </a>
   <div class="nav-links">
-    <a href="index.html">Home</a>
+    <a href="index.html">მთავარი</a>
     <div class="nav-dropdown">
-      <button class="nav-dropdown-btn">Tours ▼</button>
+      <button class="nav-dropdown-btn">ტურები ▼</button>
       <div class="dropdown-menu">
-        <a href="domestic-tours.html">Domestic Tours</a>
-        <a href="international-tours.html">International Tours</a>
+        <a href="domestic-tours.html">შიდა ტურები</a>
+        <a href="international-tours.html">საერთაშორისო ტურები</a>
       </div>
     </div>
     <a href="cars.html">ტრანსპორტი</a>
-    <a href="posts.html">Posts</a>
-    <a href="about.html">About</a>
-    <a href="contact.html">Contact</a>
+    <a href="posts.html">პოსტები</a>
+    <a href="about.html">შესახებ</a>
+    <a href="contact.html">კონტაქტი</a>
     <div class="nav-dropdown nav-lang-dropdown" id="nav-lang-dropdown">
       <button class="nav-dropdown-btn nav-lang-btn" id="nav-lang-btn" aria-label="Select language" aria-haspopup="true">
         <span class="lang-flag" id="nav-lang-flag"><img src="https://flagcdn.com/w20/ge.png" alt="GE"></span>
@@ -971,11 +1237,11 @@
       </div>
     </div>
     <div class="nav-user-dropdown" id="nav-user-dropdown">
-      <button class="nav-cta nav-user-btn" id="nav-user-btn">Login</button>
+      <button class="nav-cta nav-user-btn" id="nav-user-btn">შესვლა</button>
       <div class="dropdown-menu user-dropdown-menu">
-        <a href="profile.html" class="user-profile-link">My Profile</a>
-        <a href="saved-tours.html" class="user-saved-tours">Saved Tours</a>
-        <a href="#" class="user-logout">Sign Out</a>
+        <a href="profile.html" class="user-profile-link">ჩემი პროფილი</a>
+        <a href="saved-tours.html" class="user-saved-tours">შენახული ტურები</a>
+        <a href="#" class="user-logout">გამოსვლა</a>
       </div>
     </div>
   </div>
@@ -985,31 +1251,32 @@
 </nav>
 
 <!-- Admin Panel -->
-<div class="admin-container" id="admin-panel">
+<div class="admin-container" id="admin-panel" style="display: none;">
   <div class="admin-header">
-    <h1>Admin Panel</h1>
+    <h1>ადმინ პანელი</h1>
     <div class="admin-tabs">
-      <button class="admin-tab active" data-panel="tours">Tours</button>
-      <button class="admin-tab" data-panel="cars">Transport</button>
-      <button class="admin-tab" data-panel="posts">Posts</button>
-      <button class="admin-tab" data-panel="featured">Featured</button>
-      <button class="admin-tab" data-panel="reviews">Reviews</button>
-      <button class="admin-tab" data-panel="leads">Inbox</button>
+      <button class="admin-tab active" data-panel="tours">ტურები</button>
+      <button class="admin-tab" data-panel="cars">ტრანსპორტი</button>
+      <button class="admin-tab" data-panel="posts">პოსტები</button>
+      <button class="admin-tab" data-panel="featured">რეკომენდებული</button>
+      <button class="admin-tab" data-panel="reviews">შეფასებები</button>
+      <button class="admin-tab" data-panel="leads">შემოსულები</button>
+      <button class="admin-tab" data-panel="analytics">ანალიტიკა</button>
     </div>
   </div>
 
   <!-- Tours Panel -->
   <div class="admin-panel active" id="panel-tours">
     <div class="panel-header">
-      <h2>Manage Tours</h2>
-      <button class="btn-add" onclick="openTourModal()">+ Add Tour</button>
+      <h2>ტურების მართვა</h2>
+      <button class="btn-add" onclick="openTourModal()">+ ტურის დამატება</button>
     </div>
     
     <!-- Tour Type Tabs -->
     <div class="admin-tabs" style="margin-bottom: 1.5rem;">
-      <button class="admin-tab tour-type-tab active" data-type="all">All Tours</button>
-      <button class="admin-tab tour-type-tab" data-type="domestic">Domestic Tours</button>
-      <button class="admin-tab tour-type-tab" data-type="international">International Tours</button>
+      <button class="admin-tab tour-type-tab active" data-type="all">ყველა ტური</button>
+      <button class="admin-tab tour-type-tab" data-type="domestic">შიდა ტურები</button>
+      <button class="admin-tab tour-type-tab" data-type="international">საერთაშორისო ტურები</button>
     </div>
     
     <div class="items-grid" id="tours-list"></div>
@@ -1018,8 +1285,8 @@
   <!-- Cars Panel -->
   <div class="admin-panel" id="panel-cars">
     <div class="panel-header">
-      <h2>Manage Cars</h2>
-      <button class="btn-add" onclick="openCarModal()">+ Add Car</button>
+      <h2>ტრანსპორტის მართვა</h2>
+      <button class="btn-add" onclick="openCarModal()">+ ტრანსპორტის დამატება</button>
     </div>
     <div class="items-grid" id="cars-list"></div>
   </div>
@@ -1027,8 +1294,8 @@
   <!-- Posts Panel -->
   <div class="admin-panel" id="panel-posts">
     <div class="panel-header">
-      <h2>Manage Posts</h2>
-      <button class="btn-add" onclick="openPostModal()">+ Add Post</button>
+      <h2>პოსტების მართვა</h2>
+      <button class="btn-add" onclick="openPostModal()">+ პოსტის დამატება</button>
     </div>
     <div class="items-grid" id="posts-list"></div>
   </div>
@@ -1036,8 +1303,8 @@
   <!-- Featured Panel -->
   <div class="admin-panel" id="panel-featured">
     <div class="panel-header">
-      <h2>Manage Best Offers</h2>
-      <button class="btn-add" onclick="openFeaturedModal()">+ Add Best Offer</button>
+      <h2>რეკომენდებული შეთავაზებები</h2>
+      <button class="btn-add" onclick="openFeaturedModal()">+ შეთავაზების დამატება</button>
     </div>
     <div class="items-grid" id="featured-list"></div>
   </div>
@@ -1045,39 +1312,109 @@
   <!-- Reviews Panel -->
   <div class="admin-panel" id="panel-reviews">
     <div class="panel-header">
-      <h2>Manage Reviews</h2>
-      <button class="btn-add" onclick="openReviewModal()">+ Add Review</button>
+      <h2>შეფასებების მართვა</h2>
+      <button class="btn-add" onclick="openReviewModal()">+ შეფასების დამატება</button>
     </div>
     <div class="items-grid" id="reviews-list"></div>
   </div>
 
   <div class="admin-panel" id="panel-leads">
     <div class="panel-header">
-      <h2>Reservations & Inbox</h2>
+      <h2>რეზერვაციები და შემოსულები</h2>
     </div>
     <div class="leads-stats" id="leads-stats"></div>
     <div class="leads-table-wrap">
       <table class="leads-table">
         <thead>
           <tr>
-            <th>Type</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Details</th>
-            <th>Date</th>
+            <th>ტიპი</th>
+            <th>სახელი</th>
+            <th>ელ.ფოსტა</th>
+            <th>ტელეფონი</th>
+            <th>დეტალები</th>
+            <th>თარიღი</th>
           </tr>
         </thead>
         <tbody id="leads-list"></tbody>
       </table>
     </div>
     <div class="lead-tips">
-      <h4>Quick recommendations</h4>
+      <h4>სწრაფი რეკომენდაციები</h4>
       <ul>
-        <li>Respond to new bookings within 15-30 minutes to improve conversion.</li>
-        <li>Call leads with phone numbers first, email-only leads second.</li>
-        <li>Send weekly offer email to new subscribers from the latest list.</li>
+        <li>უპასუხეთ ახალ ჯავშნებს 15-30 წუთში კონვერტაციის გასაუმჯობესებლად.</li>
+        <li>ჯერ დაურეკეთ მომხმარებლებს, რომლებსაც მითითებული აქვთ ტელეფონის ნომერი, ხოლო შემდეგ დაუკავშირდით ელ.ფოსტით.</li>
+        <li>გაუგზავნეთ ყოველკვირეული შეთავაზებები ახალ გამომწერებს უახლესი სიიდან.</li>
       </ul>
+    </div>
+  </div>
+
+  <div class="admin-panel" id="panel-analytics">
+    <div class="panel-header">
+      <h2>ვიზიტორების ანალიტიკა</h2>
+      <button class="btn-primary" id="refresh-analytics-btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rotate-cw"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+        მონაცემების განახლება
+      </button>
+    </div>
+    
+    <!-- 4 Stats Summary Cards -->
+    <div class="analytics-grid-4" id="analytics-summary">
+      <!-- Will be populated dynamically -->
+    </div>
+
+    <!-- Main Analytics Content -->
+    <div class="analytics-layout">
+      <!-- Left Column: Locations & Pages -->
+      <div class="analytics-col-left">
+        
+        <!-- Top Countries -->
+        <div class="analytics-card">
+          <h3>ტოპ ქვეყნები <span>ვიზიტების მიხედვით</span></h3>
+          <div class="progress-list" id="analytics-countries">
+            <!-- Dynamic country bars -->
+          </div>
+        </div>
+
+        <!-- Top Cities -->
+        <div class="analytics-card">
+          <h3>ტოპ ქალაქები <span>ვიზიტების მიხედვით</span></h3>
+          <div class="progress-list" id="analytics-cities">
+            <!-- Dynamic city bars -->
+          </div>
+        </div>
+
+        <!-- Popular Pages -->
+        <div class="analytics-card">
+          <h3>პოპულარული გვერდები <span>ნახვების მიხედვით</span></h3>
+          <div class="progress-list" id="analytics-pages">
+            <!-- Dynamic page views bars -->
+          </div>
+        </div>
+
+        <!-- Top Clicks -->
+        <div class="analytics-card">
+          <h3>ყველაზე ხშირი ქლიქები <span>ტურები / ტრანსპორტი / CTAs</span></h3>
+          <div class="progress-list" id="analytics-clicks-summary">
+            <!-- Dynamic click counts -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Live Feed -->
+      <div class="analytics-col-right">
+        <div class="analytics-card" style="height: calc(100% - 1.5rem); display: flex; flex-direction: column;">
+          <h3 style="flex-shrink: 0; margin-bottom: 1rem;">
+            აქტიური ვიზიტორები 
+            <span style="display: flex; align-items: center; gap: 0.35rem;">
+              <span class="live-indicator"></span> სესიები რეალურ დროში
+            </span>
+          </h3>
+          <div class="live-feed-list" id="analytics-live-feed" style="flex-grow: 1; overflow-y: auto;">
+            <!-- Dynamic live sessions -->
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1088,48 +1425,48 @@
 <div class="admin-modal" id="tour-modal">
   <div class="modal-content">
     <div class="modal-header">
-      <h3 id="tour-modal-title">Add New Tour</h3>
+      <h3 id="tour-modal-title">ახალი ტურის დამატება</h3>
       <button class="modal-close" onclick="closeTourModal()">&#10005;</button>
     </div>
     <div class="modal-body">
       <form id="tour-form">
         <input type="hidden" id="tour-id">
         <div class="form-group">
-          <label>Title *</label>
-          <input type="text" id="tour-title" required placeholder="e.g. Kazbegi Mountain Adventure">
+          <label>სათაური *</label>
+          <input type="text" id="tour-title" required placeholder="მაგ. ყაზბეგის მთის თავგადასავალი">
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Tour Type *</label>
+            <label>ტურის ტიპი *</label>
             <select id="tour-type" required>
-              <option value="">Select type</option>
-              <option value="domestic">Domestic Tour</option>
-              <option value="international">International Tour</option>
+              <option value="">აირჩიეთ ტიპი</option>
+              <option value="domestic">შიდა ტური</option>
+              <option value="international">საერთაშორისო ტური</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Category *</label>
+            <label>კატეგორია *</label>
             <select id="tour-category" required>
-              <option value="">Select category</option>
-              <option value="one-day">One-Day Tour</option>
-              <option value="multi-day">Multi-Day Tour</option>
-              <option value="fixed">Fixed Tour</option>
+              <option value="">აირჩიეთ კატეგორია</option>
+              <option value="one-day">ერთდღიანი ტური</option>
+              <option value="multi-day">მრავალდღიანი ტური</option>
+              <option value="fixed">ფიქსირებული ტური</option>
             </select>
           </div>
         </div>
         <div class="form-group">
-          <label>Price *</label>
+          <label>ფასი *</label>
           <div style="display: flex; gap: 10px; align-items: center;">
-            <input type="text" id="tour-price" required placeholder="e.g. $79" style="flex: 1;">
+            <input type="text" id="tour-price" required placeholder="მაგ. $79" style="flex: 1;">
             <label style="display: flex; align-items: center; gap: 5px; white-space: nowrap; margin-bottom: 0; cursor: pointer;">
               <input type="checkbox" id="tour-on-request" onchange="document.getElementById('tour-price').disabled = this.checked; document.getElementById('tour-price').required = !this.checked"> 
-              On Request
+              მოთხოვნით
             </label>
           </div>
         </div>
         <div class="form-group">
           <label style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0;">
-            <span>Best Offer (This Season's Best Deal)</span>
+            <span>საუკეთესო შეთავაზება (ამ სეზონის საუკეთესო ფასი)</span>
             <div class="toggle-switch">
               <input type="checkbox" id="tour-featured" class="toggle-checkbox">
               <label for="tour-featured" class="toggle-label">
@@ -1138,7 +1475,7 @@
             </div>
           </label>
           <label style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px;">
-            <span>Batumi Tour</span>
+            <span>ბათუმის ტური</span>
             <div class="toggle-switch">
               <input type="checkbox" id="tour-batumi" class="toggle-checkbox">
               <label for="tour-batumi" class="toggle-label">
@@ -1149,73 +1486,73 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Days *</label>
-            <input type="number" id="tour-days" min="1" step="1" required placeholder="e.g. 3" onchange="syncTourDurationLabel()">
+            <label>დღეები *</label>
+            <input type="number" id="tour-days" min="1" step="1" required placeholder="მაგ. 3" onchange="syncTourDurationLabel()">
           </div>
           <div class="form-group">
-            <label>Nights *</label>
-            <input type="number" id="tour-nights" min="0" step="1" required placeholder="e.g. 2" onchange="syncTourDurationLabel()">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Duration (auto)</label>
-            <input type="text" id="tour-duration" placeholder="e.g. 3 Days / 2 Nights" readonly>
+            <label>ღამეები *</label>
+            <input type="number" id="tour-nights" min="0" step="1" required placeholder="მაგ. 2" onchange="syncTourDurationLabel()">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Min People *</label>
-            <input type="number" id="tour-min-people" required min="1" placeholder="e.g. 1">
+            <label>ხანგრძლივობა (ავტომატური)</label>
+            <input type="text" id="tour-duration" placeholder="მაგ. 3 დღე / 2 ღამე" readonly>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>მინ. ხალხი *</label>
+            <input type="number" id="tour-min-people" required min="1" placeholder="მაგ. 1">
           </div>
           <div class="form-group">
-            <label>Max People *</label>
-            <input type="number" id="tour-max-people" required min="1" placeholder="e.g. 10">
+            <label>მაქს. ხალხი *</label>
+            <input type="number" id="tour-max-people" required min="1" placeholder="მაგ. 10">
           </div>
         </div>
         <div class="form-group">
-          <label>Recommended Seasons</label>
+          <label>რეკომენდებული სეზონები</label>
           <div class="season-checkboxes" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; background: var(--light-bg); padding: 0.75rem; border-radius: 8px; border: 1.5px solid rgba(11,60,93,0.15);">
-            <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem; cursor: pointer;"><input type="checkbox" name="tour-season" value="Spring" style="width: auto;"> Spring</label>
-            <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem; cursor: pointer;"><input type="checkbox" name="tour-season" value="Summer" style="width: auto;"> Summer</label>
-            <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem; cursor: pointer;"><input type="checkbox" name="tour-season" value="Autumn" style="width: auto;"> Autumn</label>
-            <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem; cursor: pointer;"><input type="checkbox" name="tour-season" value="Winter" style="width: auto;"> Winter</label>
-            <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem; cursor: pointer; border-left: 1px solid #ccc; padding-left: 10px;"><input type="checkbox" name="tour-season" value="All Year" style="width: auto;"> All Year</label>
+            <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem; cursor: pointer;"><input type="checkbox" name="tour-season" value="Spring" style="width: auto;"> გაზაფხული</label>
+            <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem; cursor: pointer;"><input type="checkbox" name="tour-season" value="Summer" style="width: auto;"> ზაფხული</label>
+            <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem; cursor: pointer;"><input type="checkbox" name="tour-season" value="Autumn" style="width: auto;"> შემოდგომა</label>
+            <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem; cursor: pointer;"><input type="checkbox" name="tour-season" value="Winter" style="width: auto;"> ზამთარი</label>
+            <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem; cursor: pointer; border-left: 1px solid #ccc; padding-left: 10px;"><input type="checkbox" name="tour-season" value="All Year" style="width: auto;"> მთელი წელი</label>
           </div>
         </div>
         <div class="form-group">
-          <label>Description *</label>
-          <textarea id="tour-desc" required placeholder="Describe the tour experience..."></textarea>
+          <label>აღწერა *</label>
+          <textarea id="tour-desc" required placeholder="აღწერეთ ტურის დეტალები..."></textarea>
         </div>
         <div class="form-group">
-          <label>What's Included (Select all that apply)</label>
+          <label>რა შედის ღირებულებაში (მონიშნეთ ყველა შესაბამისი)</label>
           <div class="included-checkboxes" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; background: var(--light-bg); padding: 1rem; border-radius: 8px; border: 1.5px solid rgba(11,60,93,0.15);">
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="guide" style="width: auto;"> Local Guide</label>
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="tickets" style="width: auto;"> Entrance Fees</label>
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="pickup" style="width: auto;"> Hotel Pickup</label>
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="food" style="width: auto;"> Meals & Food</label>
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="hotel" style="width: auto;"> Accommodation</label>
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="water" style="width: auto;"> Bottled Water</label>
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="insurance" style="width: auto;"> Travel Insurance</label>
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="emergency" style="width: auto;"> 24/7 Support</label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="guide" style="width: auto;"> ადგილობრივი გიდი</label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="tickets" style="width: auto;"> შესვლის საფასური</label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="pickup" style="width: auto;"> სასტუმროდან აყვანა</label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="food" style="width: auto;"> კვება</label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="hotel" style="width: auto;"> განთავსება</label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="water" style="width: auto;"> ბოთლი წყალი</label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="insurance" style="width: auto;"> სამოგზაურო დაზღვევა</label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;"><input type="checkbox" name="inc-item" value="emergency" style="width: auto;"> 24/7 მხარდაჭერა</label>
           </div>
         </div>
         <div class="form-group">
-          <label>Highlights</label>
+          <label>მნიშვნელოვანი დეტალები (Highlights)</label>
           <div class="highlights-input-row">
-            <input type="text" id="tour-highlight-input" placeholder="e.g. Gergeti Church" onkeydown="if(event.key==='Enter'){event.preventDefault();addHighlight();}">
-            <button type="button" class="btn-add-highlight" onclick="addHighlight()">+ Add</button>
+            <input type="text" id="tour-highlight-input" placeholder="მაგ. გერგეტის სამება" onkeydown="if(event.key==='Enter'){event.preventDefault();addHighlight();}">
+            <button type="button" class="btn-add-highlight" onclick="addHighlight()">+ დამატება</button>
           </div>
           <div class="highlights-list" id="tour-highlights-list"></div>
-          <small style="color: var(--text-light); font-size: 0.8rem; display: block; margin-top: 0.4rem;">Type a highlight and click Add (or press Enter). Click the X to remove.</small>
+          <small style="color: var(--text-light); font-size: 0.8rem; display: block; margin-top: 0.4rem;">ჩაწერეთ დეტალი და დააჭირეთ „დამატებას“ (ან Enter-ს). წასაშლელად დააჭირეთ X-ს.</small>
         </div>
         
         <div class="form-group">
-          <label>Tour Image *</label>
+          <label>ტურის სურათი *</label>
           <div class="image-upload">
             <input type="file" id="tour-image" accept="image/*">
             <div class="image-upload-icon">&#128247;</div>
-            <div class="image-upload-text">Click to upload image</div>
+            <div class="image-upload-text">დააჭირეთ სურათის ასატვირთად</div>
           </div>
           <img class="image-preview" id="tour-image-preview" alt="Preview">
           <input type="hidden" id="tour-image-url">
@@ -1224,7 +1561,7 @@
         <!-- Translations -->
         <div class="translations-section">
           <div class="translations-header">
-            <label>Translations (Title / Description / Duration / Highlights)</label>
+            <label>თარგმანები (სათაური / აღწერა / ხანგრძლივობა / Highlights)</label>
             <div style="display: flex; gap: 8px;">
               <button type="button" class="btn-translate tour-translate-btn tour-engine-btn" data-engine="mymemory" onclick="AdminI18n.generate('tour', 'mymemory')">MyMemory</button>
               <button type="button" class="btn-translate tour-translate-btn tour-engine-btn" data-engine="google" onclick="AdminI18n.generate('tour', 'google')">Google Translate</button>
@@ -1233,19 +1570,19 @@
           <div class="quota-tracker">
             <div class="quota-bar-bg"><div class="quota-bar-fill" id="tour-quota-fill"></div></div>
             <div class="quota-info">
-              <span id="tour-quota-text">Daily Limit: Calculating...</span>
+              <span id="tour-quota-text">დღიური ლიმიტი: გამოითვლება...</span>
               <span id="tour-quota-percent">100%</span>
             </div>
           </div>
           <div class="lang-tabs" id="tour-lang-tabs"></div>
           <div class="lang-panels" id="tour-lang-panels"></div>
-          <small class="translation-status" id="tour-translate-status">Fill the Georgian fields above, then click "Auto-translate" to generate translations for all languages.</small>
+          <small class="translation-status" id="tour-translate-status">შეავსეთ ქართული ველები ზემოთ, შემდეგ დააჭირეთ "ავტო-თარგმანს" ყველა ენაზე თარგმანის შესაქმნელად.</small>
         </div>
       </form>
     </div>
     <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeTourModal()">Cancel</button>
-      <button class="btn-save" id="tour-save-btn" onclick="saveTour()">Save Tour</button>
+      <button class="btn-cancel" onclick="closeTourModal()">გაუქმება</button>
+      <button class="btn-save" id="tour-save-btn" onclick="saveTour()">ტურის შენახვა</button>
     </div>
   </div>
 </div>
@@ -1254,69 +1591,69 @@
 <div class="admin-modal" id="car-modal">
   <div class="modal-content">
     <div class="modal-header">
-      <h3 id="car-modal-title">Add New Car</h3>
+      <h3 id="car-modal-title">ახალი ტრანსპორტის დამატება</h3>
       <button class="modal-close" onclick="closeCarModal()">&#10005;</button>
     </div>
     <div class="modal-body">
       <form id="car-form">
         <input type="hidden" id="car-id">
         <div class="form-group">
-          <label>Title *</label>
-          <input type="text" id="car-title" required placeholder="e.g. Toyota Land Cruiser 200">
+          <label>სათაური *</label>
+          <input type="text" id="car-title" required placeholder="მაგ. Toyota Land Cruiser 200">
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Type *</label>
+            <label>ტიპი *</label>
             <select id="car-type" required>
-              <option value="">Select type</option>
-              <option value="SUV">SUV</option>
-              <option value="Minivan">Minivan</option>
-              <option value="Sedan">Sedan</option>
-              <option value="Van">Van</option>
-              <option value="Jeep">Jeep</option>
+              <option value="">აირჩიეთ ტიპი</option>
+              <option value="SUV">SUV (ჯიპი)</option>
+              <option value="Minivan">მინივენი</option>
+              <option value="Sedan">სედანი</option>
+              <option value="Van">ფურგონი</option>
+              <option value="Jeep">ჯიპი</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Price *</label>
+            <label>ფასი *</label>
             <div style="display: flex; gap: 10px; align-items: center;">
-              <input type="text" id="car-price" required placeholder="e.g. $180/day" style="flex: 1;">
+              <input type="text" id="car-price" required placeholder="მაგ. $180/დღე" style="flex: 1;">
               <label style="display: flex; align-items: center; gap: 5px; white-space: nowrap; margin-bottom: 0; cursor: pointer;">
                 <input type="checkbox" id="car-on-request" onchange="document.getElementById('car-price').disabled = this.checked; document.getElementById('car-price').required = !this.checked"> 
-                On Request
+                მოთხოვნით
               </label>
             </div>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Seats</label>
-            <input type="text" id="car-seats" placeholder="e.g. 7 Seats">
+            <label>ადგილები</label>
+            <input type="text" id="car-seats" placeholder="მაგ. 7 ადგილი">
           </div>
           <div class="form-group">
-            <label>Fuel Type *</label>
-            <input type="text" id="car-fuel" required placeholder="e.g. Diesel">
+            <label>საწვავის ტიპი *</label>
+            <input type="text" id="car-fuel" required placeholder="მაგ. დიზელი">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Transmission *</label>
-            <input type="text" id="car-transmission" required placeholder="e.g. Automatic">
+            <label>გადაცემათა კოლოფი *</label>
+            <input type="text" id="car-transmission" required placeholder="მაგ. ავტომატიკა">
           </div>
           <div class="form-group">
-            <label>Color *</label>
-            <input type="text" id="car-color" required placeholder="e.g. White">
+            <label>ფერი *</label>
+            <input type="text" id="car-color" required placeholder="მაგ. თეთრი">
           </div>
         </div>
         <div class="form-group">
-          <label>Description *</label>
-          <textarea id="car-desc" required placeholder="Describe the vehicle..."></textarea>
+          <label>აღწერა *</label>
+          <textarea id="car-desc" required placeholder="აღწერეთ ტრანსპორტი..."></textarea>
         </div>
         <div class="form-group">
-          <label>Car Image *</label>
+          <label>ტრანსპორტის სურათი *</label>
           <div class="image-upload">
             <input type="file" id="car-image" accept="image/*">
             <div class="image-upload-icon">&#128663;</div>
-            <div class="image-upload-text">Click to upload image</div>
+            <div class="image-upload-text">დააწკაპუნეთ სურათის ასატვირთად</div>
           </div>
           <img class="image-preview" id="car-image-preview" alt="Preview">
           <input type="hidden" id="car-image-url">
@@ -1325,7 +1662,7 @@
         <!-- Translations -->
         <div class="translations-section">
           <div class="translations-header">
-            <label>Translations (Title / Description / Seats / Fuel Type / Transmission / Color)</label>
+            <label>თარგმანები (სათაური / აღწერა / ადგილები / საწვავის ტიპი / გადაცემათა კოლოფი / ფერი)</label>
             <div style="display: flex; gap: 8px;">
               <button type="button" class="btn-translate car-translate-btn car-engine-btn" data-engine="mymemory" onclick="AdminI18n.generate('car', 'mymemory')">MyMemory</button>
               <button type="button" class="btn-translate car-translate-btn car-engine-btn" data-engine="google" onclick="AdminI18n.generate('car', 'google')">Google Translate</button>
@@ -1334,19 +1671,19 @@
           <div class="quota-tracker">
             <div class="quota-bar-bg"><div class="quota-bar-fill" id="car-quota-fill"></div></div>
             <div class="quota-info">
-              <span id="car-quota-text">Daily Limit: Calculating...</span>
+              <span id="car-quota-text">დღიური ლიმიტი: გამოითვლება...</span>
               <span id="car-quota-percent">100%</span>
             </div>
           </div>
           <div class="lang-tabs" id="car-lang-tabs"></div>
           <div class="lang-panels" id="car-lang-panels"></div>
-          <small class="translation-status" id="car-translate-status">Fill the Georgian fields above, then click "Auto-translate" to generate translations for all languages.</small>
+          <small class="translation-status" id="car-translate-status">შეავსეთ ქართული ველები ზემოთ, შემდეგ დააჭირეთ „ავტომატურ თარგმანს“ ყველა ენაზე თარგმანების გენერირებისთვის.</small>
         </div>
       </form>
     </div>
     <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeCarModal()">Cancel</button>
-      <button class="btn-save" id="car-save-btn" onclick="saveCar()">Save Car</button>
+      <button class="btn-cancel" onclick="closeCarModal()">გაუქმება</button>
+      <button class="btn-save" id="car-save-btn" onclick="saveCar()">შენახვა</button>
     </div>
   </div>
 </div>
@@ -1355,40 +1692,40 @@
 <div class="admin-modal" id="post-modal">
   <div class="modal-content">
     <div class="modal-header">
-      <h3 id="post-modal-title">Add New Post</h3>
+      <h3 id="post-modal-title">ახალი პოსტის დამატება</h3>
       <button class="modal-close" onclick="closePostModal()">&#10005;</button>
     </div>
     <div class="modal-body">
       <form id="post-form">
         <input type="hidden" id="post-id">
         <div class="form-group">
-          <label>Title *</label>
-          <input type="text" id="post-title" required placeholder="e.g. The Ultimate Guide to Georgian Food">
+          <label>სათაური *</label>
+          <input type="text" id="post-title" required placeholder="მაგ. გზამკვლევი ქართული სამზარეულოს შესახებ">
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Category *</label>
+            <label>კატეგორია *</label>
             <select id="post-category" required>
-              <option value="">Select category</option>
-              <option value="Culture">Culture</option>
-              <option value="Food">Food</option>
-              <option value="Adventure">Adventure</option>
-              <option value="Travel Tips">Travel Tips</option>
-              <option value="Wine">Wine</option>
-              <option value="School Tours">School Tours</option>
+              <option value="">აირჩიეთ კატეგორია</option>
+              <option value="Culture">კულტურა</option>
+              <option value="Food">სამზარეულო</option>
+              <option value="Adventure">თავგადასავალი</option>
+              <option value="Travel Tips">რჩევები მოგზაურთათვის</option>
+              <option value="Wine">ღვინო</option>
+              <option value="School Tours">სასკოლო ტურები</option>
             </select>
           </div>
         </div>
         <div class="form-group">
-          <label>Content *</label>
-          <textarea id="post-content" required placeholder="Write your article content..." style="min-height: 150px;"></textarea>
+          <label>შინაარსი *</label>
+          <textarea id="post-content" required placeholder="დაწერეთ სტატიის შინაარსი..." style="min-height: 150px;"></textarea>
         </div>
         <div class="form-group">
-          <label>Post Image *</label>
+          <label>პოსტის სურათი *</label>
           <div class="image-upload">
             <input type="file" id="post-image" accept="image/*">
             <div class="image-upload-icon">&#128221;</div>
-            <div class="image-upload-text">Click to upload image</div>
+            <div class="image-upload-text">დააწკაპუნეთ სურათის ასატვირთად</div>
           </div>
           <img class="image-preview" id="post-image-preview" alt="Preview">
           <input type="hidden" id="post-image-url">
@@ -1397,25 +1734,25 @@
         <!-- Translations -->
         <div class="translations-section">
           <div class="translations-header">
-            <label>Translations (Title / Content)</label>
-            <button type="button" class="btn-translate" id="post-translate-btn" onclick="console.log('Attempting to translate post...'); if (window.AdminI18n) AdminI18n.generate('post'); else console.error('AdminI18n is not defined. Check admin-translate.js for errors.');">Auto-translate from Georgian</button>
+            <label>თარგმანები (სათაური / შინაარსი)</label>
+            <button type="button" class="btn-translate" id="post-translate-btn" onclick="console.log('Attempting to translate post...'); if (window.AdminI18n) AdminI18n.generate('post'); else console.error('AdminI18n is not defined. Check admin-translate.js for errors.');">ავტომატური თარგმანი ქართულიდან</button>
           </div>
           <div class="quota-tracker">
             <div class="quota-bar-bg"><div class="quota-bar-fill" id="post-quota-fill"></div></div>
             <div class="quota-info">
-              <span id="post-quota-text">Daily Limit</span>
+              <span id="post-quota-text">დღიური ლიმიტი</span>
               <span id="post-quota-percent">100%</span>
             </div>
           </div>
           <div class="lang-tabs" id="post-lang-tabs"></div>
           <div class="lang-panels" id="post-lang-panels"></div>
-          <small class="translation-status" id="post-translate-status">Fill the Georgian fields above, then click "Auto-translate".</small>
+          <small class="translation-status" id="post-translate-status">შეავსეთ ქართული ველები ზემოთ, შემდეგ დააჭირეთ „ავტომატურ თარგმანს“.</small>
         </div>
       </form>
     </div>
     <div class="modal-footer">
-      <button class="btn-cancel" onclick="closePostModal()">Cancel</button>
-      <button class="btn-save" id="post-save-btn" onclick="savePost()">Save Post</button>
+      <button class="btn-cancel" onclick="closePostModal()">გაუქმება</button>
+      <button class="btn-save" id="post-save-btn" onclick="savePost()">პოსტის შენახვა</button>
     </div>
   </div>
 </div>
@@ -1424,53 +1761,53 @@
 <div class="admin-modal" id="featured-modal">
   <div class="modal-content">
     <div class="modal-header">
-      <h3 id="featured-modal-title">Add Best Offer</h3>
+      <h3 id="featured-modal-title">სპეციალური შეთავაზების დამატება</h3>
       <button class="modal-close" onclick="closeFeaturedModal()">&#10005;</button>
     </div>
     <div class="modal-body">
       <form id="featured-form">
         <input type="hidden" id="featured-id">
         <div class="form-group">
-          <label>Title *</label>
-          <input type="text" id="featured-title" required placeholder="e.g. School Excursions – Best Offer">
+          <label>სათაური *</label>
+          <input type="text" id="featured-title" required placeholder="მაგ. სასკოლო ექსკურსიები – საუკეთესო შეთავაზება">
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Tag *</label>
-            <input type="text" id="featured-tag" required placeholder="e.g. Education & Groups">
+            <label>ტეგი *</label>
+            <input type="text" id="featured-tag" required placeholder="მაგ. განათლება და ჯგუფები">
           </div>
           <div class="form-group">
-            <label>Badge *</label>
-            <input type="text" id="featured-badge" required value="Best Offer">
+            <label>ბეიჯი *</label>
+            <input type="text" id="featured-badge" required value="საუკეთესო შეთავაზება">
           </div>
         </div>
         <div class="form-group">
-          <label>Description *</label>
-          <textarea id="featured-desc" required placeholder="Describe this special offer..."></textarea>
+          <label>აღწერა *</label>
+          <textarea id="featured-desc" required placeholder="აღწერეთ ეს სპეციალური შეთავაზება..."></textarea>
         </div>
         <div class="form-group">
-          <label>Price (Optional)</label>
+          <label>ფასი (არასავალდებულო)</label>
           <div style="display: flex; gap: 10px; align-items: center;">
-            <input type="text" id="featured-price" placeholder="e.g. $150" style="flex: 1;">
+            <input type="text" id="featured-price" placeholder="მაგ. $150" style="flex: 1;">
             <label style="display: flex; align-items: center; gap: 5px; white-space: nowrap; margin-bottom: 0; cursor: pointer;">
-              <input type="checkbox" id="featured-on-request" onchange="document.getElementById('featured-price').disabled = this.checked"> On Request
+              <input type="checkbox" id="featured-on-request" onchange="document.getElementById('featured-price').disabled = this.checked"> მოთხოვნით
             </label>
           </div>
         </div>
         <div class="form-group">
-          <label>Meta Info (comma separated)</label>
-          <input type="text" id="featured-meta" placeholder="e.g. Flexible Dates, 10-50 Students, All Inclusive">
+          <label>მეტა ინფორმაცია (მძიმით გამოყოფილი)</label>
+          <input type="text" id="featured-meta" placeholder="მაგ. მოქნილი თარიღები, 10-50 მოსწავლე, ყველაფერი შესული">
         </div>
         <div class="form-group">
-          <label>Order (lower = first)</label>
+          <label>თანმიმდევრობა (დაბალი = პირველი)</label>
           <input type="number" id="featured-order" value="0" min="0">
         </div>
         <div class="form-group">
-          <label>Featured Image *</label>
+          <label>სურათი *</label>
           <div class="image-upload">
             <input type="file" id="featured-image" accept="image/*">
             <div class="image-upload-icon">&#11088;</div>
-            <div class="image-upload-text">Click to upload image</div>
+            <div class="image-upload-text">დააწკაპუნეთ სურათის ასატვირთად</div>
           </div>
           <img class="image-preview" id="featured-image-preview" alt="Preview">
           <input type="hidden" id="featured-image-url">
@@ -1479,25 +1816,25 @@
         <!-- Translations -->
         <div class="translations-section">
           <div class="translations-header">
-            <label>Translations (Title / Description / Tag / Meta)</label>
-            <button type="button" class="btn-translate" id="featured-translate-btn" onclick="console.log('Attempting to translate featured...'); if (window.AdminI18n) AdminI18n.generate('featured'); else console.error('AdminI18n is not defined. Check admin-translate.js for errors.');">Auto-translate from Georgian</button>
+            <label>თარგმანები (სათაური / აღწერა / ტეგი / მეტა)</label>
+            <button type="button" class="btn-translate" id="featured-translate-btn" onclick="console.log('Attempting to translate featured...'); if (window.AdminI18n) AdminI18n.generate('featured'); else console.error('AdminI18n is not defined. Check admin-translate.js for errors.');">ავტომატური თარგმანი ქართულიდან</button>
           </div>
           <div class="quota-tracker">
             <div class="quota-bar-bg"><div class="quota-bar-fill" id="featured-quota-fill"></div></div>
             <div class="quota-info">
-              <span id="featured-quota-text">Daily Limit</span>
+              <span id="featured-quota-text">დღიური ლიმიტი</span>
               <span id="featured-quota-percent">100%</span>
             </div>
           </div>
           <div class="lang-tabs" id="featured-lang-tabs"></div>
           <div class="lang-panels" id="featured-lang-panels"></div>
-          <small class="translation-status" id="featured-translate-status">Fill the Georgian fields above, then click "Auto-translate".</small>
+          <small class="translation-status" id="featured-translate-status">შეავსეთ ქართული ველები ზემოთ, შემდეგ დააჭირეთ „ავტომატურ თარგმანს“.</small>
         </div>
       </form>
     </div>
     <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeFeaturedModal()">Cancel</button>
-      <button class="btn-save" id="featured-save-btn" onclick="saveFeatured()">Save Featured</button>
+      <button class="btn-cancel" onclick="closeFeaturedModal()">გაუქმება</button>
+      <button class="btn-save" id="featured-save-btn" onclick="saveFeatured()">შენახვა</button>
     </div>
   </div>
 </div>
@@ -1506,29 +1843,29 @@
 <div class="admin-modal" id="review-modal">
   <div class="modal-content">
     <div class="modal-header">
-      <h3 id="review-modal-title">Add New Review</h3>
+      <h3 id="review-modal-title">ახალი შეფასების დამატება</h3>
       <button class="modal-close" onclick="closeReviewModal()">&#10005;</button>
     </div>
     <div class="modal-body">
       <form id="review-form">
         <input type="hidden" id="review-id">
         <div class="form-group">
-          <label>Reviewer Name *</label>
-          <input type="text" id="review-name" required placeholder="e.g. John Doe">
+          <label>ავტორის სახელი *</label>
+          <input type="text" id="review-name" required placeholder="მაგ. ივანე ივანიშვილი">
         </div>
         <div class="form-group">
-          <label>Rating (1-5) *</label>
+          <label>რეიტინგი (1-5) *</label>
           <input type="number" id="review-rating" required min="1" max="5" value="5">
         </div>
         <div class="form-group">
-          <label>Review Text *</label>
-          <textarea id="review-text" required placeholder="What the customer said..."></textarea>
+          <label>შეფასების ტექსტი *</label>
+          <textarea id="review-text" required placeholder="რას ამბობს მომხმარებელი..."></textarea>
         </div>
       </form>
     </div>
     <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeReviewModal()">Cancel</button>
-      <button class="btn-save" id="review-save-btn" onclick="saveReview()">Save Review</button>
+      <button class="btn-cancel" onclick="closeReviewModal()">გაუქმება</button>
+      <button class="btn-save" id="review-save-btn" onclick="saveReview()">შეფასების შენახვა</button>
     </div>
   </div>
 </div>
@@ -1537,7 +1874,7 @@
 <!-- Loading Overlay -->
 <div class="loading-overlay" id="loading-overlay">
   <div class="loading-spinner"></div>
-  <div class="loading-text" id="loading-text">Loading...</div>
+  <div class="loading-text" id="loading-text">იტვირთება...</div>
 </div>
 
 <!-- Toast -->
@@ -1556,7 +1893,7 @@ import {
   getPosts, addPost, updatePost, deletePost,
   getFeaturedTours, addFeaturedTour, updateFeaturedTour, deleteFeaturedTour,
   getReviews, addReview, updateReview, deleteReview,
-  getTourBookings, getCarBookings, getSubscribers, getContactMessages,
+  getTourBookings, getCarBookings, getSubscribers, getContactMessages, getTrafficLogs,
   auth, onAuthStateChanged, isAdmin
 } from './firebase-config.js';
 // NOTE: Admin panel is intentionally open (no auth gate).
@@ -1573,6 +1910,7 @@ let tourBookingsData = [];
 let carBookingsData = [];
 let subscribersData = [];
 let contactMessagesData = [];
+let trafficLogsData = [];
 
 let currentUser = null;
 let isAdminUser = false;
@@ -1629,17 +1967,30 @@ function showAdminAccessRequired(message) {
 }
 
 async function waitForAuthThenLoadData() {
-  showLoading('Checking authentication...');
+  // We no longer show a blocking full-screen loading spinner on start!
   onAuthStateChanged(auth, async (user) => {
     currentUser = user;
-    isAdminUser = !!(user && user.email && isAdmin(user.email));
+    
+    let isUserAdmin = false;
+    if (user && user.email) {
+      isUserAdmin = await isAdmin(user.email);
+    }
+    isAdminUser = isUserAdmin;
 
-    if (!user) {
-      showAdminAccessRequired('Please sign in with an admin account to edit protected data and view leads.');
-    } else if (!isAdminUser) {
-      showAdminAccessRequired('Signed in with a non-admin account. Editing protected collections is disabled.');
-    } else if (window.showToast) {
-      window.showToast('Admin authentication detected. Full access enabled.', 'success');
+    if (!user || !isAdminUser) {
+      // If not logged in or not an administrator, redirect to login page immediately
+      window.location.href = 'login.html';
+      return;
+    }
+
+    // Admin authorized! Make the panel container visible
+    const panel = document.getElementById('admin-panel');
+    if (panel) {
+      panel.style.display = 'block';
+    }
+
+    if (window.showToast) {
+      window.showToast('ადმინისტრატორის ავტორიზაცია დადასტურდა. სრული წვდომა ჩართულია.', 'success');
     }
 
     if (!authStateInitialized) {
@@ -1653,38 +2004,58 @@ async function waitForAuthThenLoadData() {
 
 // Load all data on page load
 async function loadAllData() {
-  showLoading('Loading data...');
+  // We no longer use a blocking full-screen loading spinner here either for a faster, smoother experience!
   try {
-    const baseFetches = [
-      getTours(),
-      getCars(),
-      getPosts(),
-      getFeaturedTours(),
-      getReviews()
+    const safeFetch = async (promise, name, fallback = []) => {
+      try {
+        return await promise;
+      } catch (err) {
+        console.error(`Error loading ${name}:`, err);
+        return fallback;
+      }
+    };
+
+    const basePromises = [
+      safeFetch(getTours(), 'ტურები'),
+      safeFetch(getCars(), 'ავტომობილები'),
+      safeFetch(getPosts(), 'პოსტები'),
+      safeFetch(getFeaturedTours(), 'რჩეულები'),
+      safeFetch(getReviews(), 'შეფასებები')
     ];
 
-    const leadFetches = isAdminUser ? [
-      getTourBookings(),
-      getCarBookings(),
-      getSubscribers(),
-      getContactMessages()
+    const leadPromises = isAdminUser ? [
+      safeFetch(getTourBookings(), 'ტურის ჯავშნები'),
+      safeFetch(getCarBookings(), 'მანქანის ჯავშნები'),
+      safeFetch(getSubscribers(), 'გამომწერები'),
+      safeFetch(getContactMessages(), 'შეტყობინებები'),
+      safeFetch(getTrafficLogs(), 'ანალიტიკა')
     ] : [
+      Promise.resolve([]),
       Promise.resolve([]),
       Promise.resolve([]),
       Promise.resolve([]),
       Promise.resolve([])
     ];
 
-    [toursData, carsData, postsData, featuredData, reviewsData, tourBookingsData, carBookingsData, subscribersData, contactMessagesData] = await Promise.all([
-      ...baseFetches,
-      ...leadFetches
+    const results = await Promise.all([
+      ...basePromises,
+      ...leadPromises
     ]);
+
+    [
+      toursData, carsData, postsData, featuredData, reviewsData,
+      tourBookingsData, carBookingsData, subscribersData, contactMessagesData,
+      trafficLogsData
+    ] = results;
+
     renderTours();
     renderCars();
     renderPosts();
     renderFeatured();
     renderReviews();
     renderLeads();
+    renderAnalytics();
+
     if (
       (!toursData || toursData.length === 0) &&
       (!carsData || carsData.length === 0) &&
@@ -1692,14 +2063,12 @@ async function loadAllData() {
       (!featuredData || featuredData.length === 0) &&
       (!reviewsData || reviewsData.length === 0)
     ) {
-      showToast('No data loaded. If you expected content, check Firestore rules (read access) or your network connection.', 'info');
+      showToast('მონაცემები ვერ ჩაიტვირთა. თუ კონტენტს ელოდით, შეამოწმეთ ფაირბეისის წესები ან თქვენი ქსელის კავშირი.', 'info');
     }
   } catch (error) {
-    console.error('Error loading data:', error);
-    const msg = (error && (error.message || error.code)) ? `${error.code ? error.code + ': ' : ''}${error.message || ''}` : String(error || 'Unknown error');
-    showToast('Failed to load data: ' + msg, 'error');
+    console.error('Critical error in loadAllData:', error);
+    showToast('მონაცემების ჩატვირთვა ვერ მოხერხდა: ' + String(error.message || error), 'error');
   }
-  hideLoading();
 }
 
 // Tab switching for panels
@@ -1742,36 +2111,60 @@ function renderTours() {
     container.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1;">
         <div class="empty-state-icon">&#127956;</div>
-        <h3>No Tours Yet</h3>
-        <p>Add your first tour to get started</p>
+        <h3>ტურები ჯერ არ არის</h3>
+        <p>დასაწყებად დაამატეთ თქვენი პირველი ტური</p>
       </div>`;
     return;
   }
   
+  const catMap = {
+    'Culture': 'კულტურა',
+    'Food': 'სამზარეულო',
+    'Adventure': 'თავგადასავალი',
+    'Travel Tips': 'რჩევები მოგზაურთათვის',
+    'Wine': 'ღვინო',
+    'School Tours': 'სასკოლო ტურები'
+  };
+
+  const seasonMap = {
+    'Spring': 'გაზაფხული',
+    'Summer': 'ზაფხული',
+    'Autumn': 'შემოდგომა',
+    'Winter': 'ზამთარი',
+    'All Year': 'მთელი წელი'
+  };
+
   const gt = (v) => window.AdminI18n ? window.AdminI18n.extractGeorgian(v) : (typeof v === 'string' ? v : (v && v.ka) || '');
-  container.innerHTML = filteredTours.map(tour => `
-    <div class="admin-card" data-id="${tour.id}">
-      <div class="admin-card-img">
-        <img src="${tour.img}" alt="${escapeHTML(gt(tour.title))}">
-        <span class="admin-card-badge">${tour.type || tour.tourType || 'domestic'}</span>
-        ${tour.isFeatured ? '<span class="admin-card-featured">? Best Offer</span>' : ''}
-      </div>
-      <div class="admin-card-body">
-        <h3 class="admin-card-title">${escapeHTML(gt(tour.title))}</h3>
-        <p class="admin-card-desc">${escapeHTML(gt(tour.desc))}</p>
-        <div class="admin-card-meta">
-          <span>${tour.category}</span>
-          <span>${tour.priceOnRequest ? 'On Request' : tour.price}</span>
-          <span>${tour.minPeople || '1'}-${tour.maxPeople || '10'} people</span>
-          <span>${Array.isArray(tour.season) ? tour.season.join(', ') : (tour.season || 'All Year')}</span>
+  container.innerHTML = filteredTours.map(tour => {
+    const displayCat = catMap[tour.category] || tour.category;
+    const displaySeason = Array.isArray(tour.season) 
+      ? tour.season.map(s => seasonMap[s] || s).join(', ') 
+      : (seasonMap[tour.season] || tour.season || 'მთელი წელი');
+
+    return `
+      <div class="admin-card" data-id="${tour.id}">
+        <div class="admin-card-img">
+          <img src="${tour.img}" alt="${escapeHTML(gt(tour.title))}">
+          <span class="admin-card-badge">${(tour.type || tour.tourType) === 'domestic' ? 'შიდა ტური' : 'საერთაშორისო ტური'}</span>
+          ${tour.isFeatured ? '<span class="admin-card-featured">⭐ რეკომენდებული</span>' : ''}
         </div>
-        <div class="admin-card-actions">
-          <button class="btn-edit" onclick="editTour('${tour.id}')">Edit</button>
-          <button class="btn-delete" onclick="confirmDeleteTour('${tour.id}')">Delete</button>
+        <div class="admin-card-body">
+          <h3 class="admin-card-title">${escapeHTML(gt(tour.title))}</h3>
+          <p class="admin-card-desc">${escapeHTML(gt(tour.desc))}</p>
+          <div class="admin-card-meta">
+            <span>${displayCat}</span>
+            <span>${tour.priceOnRequest ? 'მოთხოვნით' : tour.price}</span>
+            <span>${tour.minPeople || '1'}-${tour.maxPeople || '10'} ადამიანი</span>
+            <span>${displaySeason}</span>
+          </div>
+          <div class="admin-card-actions">
+            <button class="btn-edit" onclick="editTour('${tour.id}')">რედაქტირება</button>
+            <button class="btn-delete" onclick="confirmDeleteTour('${tour.id}')">წაშლა</button>
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 window.openTourModal = function(tourId = null) {
@@ -1788,7 +2181,7 @@ window.openTourModal = function(tourId = null) {
   document.getElementById('tour-price').required = true;
   document.getElementById('tour-batumi').checked = false;
   document.getElementById('tour-image-preview').classList.remove('show');
-  document.getElementById('tour-modal-title').textContent = 'Add New Tour';
+  document.getElementById('tour-modal-title').textContent = 'ახალი ტურის დამატება';
   tourHighlights = [];
   window.tourHighlights = tourHighlights;
   renderHighlightsList();
@@ -1853,13 +2246,13 @@ window.editTour = function(id) {
 
   if (I18n) I18n.loadItem('tour', tour);
 
-  document.getElementById('tour-modal-title').textContent = 'Edit Tour';
+  document.getElementById('tour-modal-title').textContent = 'ტურის რედაქტირება';
   document.getElementById('tour-modal').classList.add('open');
 };
 
 window.saveTour = async function() {
   if (!isAdminUser) {
-    showToast('Admin rights required to save tours. Please sign in with an admin account.', 'error');
+    showToast('ტურების შესანახად საჭიროა ადმინისტრატორის უფლებები. გთხოვთ, შეხვიდეთ ადმინისტრატორის ანგარიშით.', 'error');
     return;
   }
 
@@ -1868,11 +2261,11 @@ window.saveTour = async function() {
   let imageUrl = document.getElementById('tour-image-url').value;
   
   if (!imageUrl && !imageFile) {
-    showToast('Please upload an image', 'error');
+    showToast('გთხოვთ, ატვირთოთ სურათი', 'error');
     return;
   }
   
-  showLoading('Saving tour...');
+  showLoading('ტური ინახება...');
   
   try {
     if (imageFile) {
@@ -1896,12 +2289,12 @@ window.saveTour = async function() {
     const nightsValue = Number(document.getElementById('tour-nights').value || 0);
     if (!daysValue || daysValue < 1) {
       hideLoading();
-      showToast('Please enter valid days (minimum 1).', 'error');
+      showToast('გთხოვთ, მიუთითოთ დღეების ვალიდური რაოდენობა (მინიმუმ 1).', 'error');
       return;
     }
     if (nightsValue < 0) {
       hideLoading();
-      showToast('Nights cannot be negative.', 'error');
+      showToast('ღამეების რაოდენობა არ შეიძლება იყოს უარყოფითი.', 'error');
       return;
     }
     syncTourDurationLabel();
@@ -1929,10 +2322,10 @@ window.saveTour = async function() {
     
     if (id) {
       await updateTour(id, tourData);
-      showToast('Tour updated successfully', 'success');
+      showToast('ტური წარმატებით განახლდა', 'success');
     } else {
       await addTour(tourData);
-      showToast('Tour added successfully', 'success');
+      showToast('ტური წარმატებით დაემატა', 'success');
     }
     
     closeTourModal();
@@ -1940,7 +2333,7 @@ window.saveTour = async function() {
     renderTours();
   } catch (error) {
     console.error('Error saving tour:', error);
-    showToast('Failed to save tour: ' + (error.message || error.code || 'Unknown error'), 'error');
+    showToast('ტურის შენახვა ვერ მოხერხდა: ' + (error.message || error.code || 'უცნობი შეცდომა'), 'error');
   }
   
   hideLoading();
@@ -1955,35 +2348,44 @@ window.syncTourDurationLabel = function() {
     durationField.value = '';
     return;
   }
-  durationField.value = `${days} days / ${Math.max(nights, 0)} nights`;
+  durationField.value = `${days} დღე / ${Math.max(nights, 0)} ღამე`;
 };
 
 window.confirmDeleteTour = function(id) {
-  if (confirm('Are you sure you want to delete this tour?')) {
+  if (confirm('დარწმუნებული ხართ, რომ გსურთ ამ ტურის წაშლა?')) {
     deleteTourItem(id);
   }
 };
 
 async function deleteTourItem(id) {
   if (!isAdminUser) {
-    showToast('Admin rights required to delete tours. Please sign in with an admin account.', 'error');
+    showToast('ტურების წასაშლელად საჭიროა ადმინისტრატორის უფლებები. გთხოვთ, შეხვიდეთ ადმინისტრატორის ანგარიშით.', 'error');
     return;
   }
 
-  showLoading('Deleting tour...');
+  showLoading('ტური იშლება...');
   try {
     await deleteTour(id);
-    showToast('Tour deleted successfully', 'success');
+    showToast('ტური წარმატებით წაიშალა', 'success');
     toursData = await getTours();
     renderTours();
   } catch (error) {
     console.error('Error deleting tour:', error);
-    showToast('Failed to delete tour: ' + (error.message || error.code || 'Unknown error'), 'error');
+    showToast('ტურის წაშლა ვერ მოხერხდა: ' + (error.message || error.code || 'უცნობი შეცდომა'), 'error');
   }
   hideLoading();
 }
 
+
 // ============ CARS ============
+
+const carTypeMap = {
+  'SUV': 'SUV (ჯიპი)',
+  'Minivan': 'მინივენი',
+  'Sedan': 'სედანი',
+  'Van': 'ფურგონი',
+  'Jeep': 'ჯიპი'
+};
 
 function renderCars() {
   const container = document.getElementById('cars-list');
@@ -1991,8 +2393,8 @@ function renderCars() {
     container.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1;">
         <div class="empty-state-icon">&#128663;</div>
-        <h3>No Cars Yet</h3>
-        <p>Add your first vehicle to get started</p>
+        <h3>ტრანსპორტი არ არის დამატებული</h3>
+        <p>დასაწყებად დაამატეთ თქვენი პირველი ტრანსპორტი</p>
       </div>`;
     return;
   }
@@ -2002,21 +2404,21 @@ function renderCars() {
     <div class="admin-card" data-id="${car.id}">
       <div class="admin-card-img">
         <img src="${car.img}" alt="${escapeHTML(gtc(car.title))}">
-        <span class="admin-card-badge">${car.type}</span>
+        <span class="admin-card-badge">${carTypeMap[car.type] || car.type}</span>
       </div>
       <div class="admin-card-body">
         <h3 class="admin-card-title">${escapeHTML(gtc(car.title))}</h3>
         <p class="admin-card-desc">${escapeHTML(gtc(car.info || car.desc))}</p>
         <div class="admin-card-meta">
-          <span>${car.priceOnRequest ? 'On Request' : car.price}</span>
+          <span>${car.priceOnRequest ? 'მოთხოვნით' : car.price}</span>
           <span>${gtc(car.seats || '')}</span>
           <span>${gtc(car.fuel || '')}</span>
           <span>${gtc(car.transmission || '')}</span>
           <span>${gtc(car.color || '')}</span>
         </div>
         <div class="admin-card-actions">
-          <button class="btn-edit" onclick="editCar('${car.id}')">Edit</button>
-          <button class="btn-delete" onclick="confirmDeleteCar('${car.id}')">Delete</button>
+          <button class="btn-edit" onclick="editCar('${car.id}')">რედაქტირება</button>
+          <button class="btn-delete" onclick="confirmDeleteCar('${car.id}')">წაშლა</button>
         </div>
       </div>
     </div>
@@ -2030,7 +2432,7 @@ window.openCarModal = function(carId = null) {
   document.getElementById('car-on-request').checked = false;
   document.getElementById('car-price').disabled = false;
   document.getElementById('car-image-preview').classList.remove('show');
-  document.getElementById('car-modal-title').textContent = 'Add New Car';
+  document.getElementById('car-modal-title').textContent = 'ახალი ტრანსპორტის დამატება';
   if (window.AdminI18n) window.AdminI18n.reset('car');
   document.getElementById('car-modal').classList.add('open');
 };
@@ -2072,7 +2474,7 @@ window.editCar = function(id) {
   preview.src = car.img;
   preview.classList.add('show');
   
-  document.getElementById('car-modal-title').textContent = 'Edit Car';
+  document.getElementById('car-modal-title').textContent = 'ტრანსპორტის რედაქტირება';
   document.getElementById('car-modal').classList.add('open');
 };
 
@@ -2082,11 +2484,11 @@ window.saveCar = async function() {
   let imageUrl = document.getElementById('car-image-url').value;
   
   if (!imageUrl && !imageFile) {
-    showToast('Please upload an image', 'error');
+    showToast('გთხოვთ, ატვირთოთ სურათი', 'error');
     return;
   }
   
-  showLoading('Saving car...');
+  showLoading('ტრანსპორტი ინახება...');
   
   try {
     if (imageFile) {
@@ -2109,10 +2511,10 @@ window.saveCar = async function() {
     
     if (id) {
       await updateCar(id, carData);
-      showToast('Car updated successfully', 'success');
+      showToast('ტრანსპორტი წარმატებით განახლდა', 'success');
     } else {
       await addCar(carData);
-      showToast('Car added successfully', 'success');
+      showToast('ტრანსპორტი წარმატებით დაემატა', 'success');
     }
     
     closeCarModal();
@@ -2120,33 +2522,42 @@ window.saveCar = async function() {
     renderCars();
   } catch (error) {
     console.error('Error saving car:', error);
-    showToast('Failed to save car: ' + (error.message || error.code || 'Unknown error'), 'error');
+    showToast('ტრანსპორტის შენახვა ვერ მოხერხდა: ' + (error.message || error.code || 'უცნობი შეცდომა'), 'error');
   }
   
   hideLoading();
 };
 
 window.confirmDeleteCar = function(id) {
-  if (confirm('Are you sure you want to delete this car?')) {
+  if (confirm('დარწმუნებული ხართ, რომ გსურთ ამ ტრანსპორტის წაშლა?')) {
     deleteCarItem(id);
   }
 };
 
 async function deleteCarItem(id) {
-  showLoading('Deleting car...');
+  showLoading('ტრანსპორტი იშლება...');
   try {
     await deleteCar(id);
-    showToast('Car deleted successfully', 'success');
+    showToast('ტრანსპორტი წარმატებით წაიშალა', 'success');
     carsData = await getCars();
     renderCars();
   } catch (error) {
     console.error('Error deleting car:', error);
-    showToast('Failed to delete car: ' + (error.message || error.code || 'Unknown error'), 'error');
+    showToast('ტრანსპორტის წაშლა ვერ მოხერხდა: ' + (error.message || error.code || 'უცნობი შეცდომა'), 'error');
   }
   hideLoading();
 }
 
 // ============ POSTS ============
+
+const postCategoryMap = {
+  'Culture': 'კულტურა',
+  'Food': 'სამზარეულო',
+  'Adventure': 'თავგადასავალი',
+  'Travel Tips': 'რჩევები მოგზაურთათვის',
+  'Wine': 'ღვინო',
+  'School Tours': 'სასკოლო ტურები'
+};
 
 function renderPosts() {
   const container = document.getElementById('posts-list');
@@ -2154,8 +2565,8 @@ function renderPosts() {
     container.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1;">
         <div class="empty-state-icon">&#128221;</div>
-        <h3>No Posts Yet</h3>
-        <p>Add your first blog post to get started</p>
+        <h3>პოსტები არ არის დამატებული</h3>
+        <p>დასაწყებად დაამატეთ თქვენი პირველი ბლოგ-პოსტი</p>
       </div>`;
     return;
   }
@@ -2165,14 +2576,14 @@ function renderPosts() {
     <div class="admin-card" data-id="${post.id}">
       <div class="admin-card-img">
         <img src="${post.img}" alt="${escapeHTML(gtp(post.title))}">
-        <span class="admin-card-badge">${post.category}</span>
+        <span class="admin-card-badge">${postCategoryMap[post.category] || post.category}</span>
       </div>
       <div class="admin-card-body">
         <h3 class="admin-card-title">${escapeHTML(gtp(post.title))}</h3>
         <p class="admin-card-desc">${escapeHTML(gtp(post.text || post.content))}</p>
         <div class="admin-card-actions">
-          <button class="btn-edit" onclick="editPost('${post.id}')">Edit</button>
-          <button class="btn-delete" onclick="confirmDeletePost('${post.id}')">Delete</button>
+          <button class="btn-edit" onclick="editPost('${post.id}')">რედაქტირება</button>
+          <button class="btn-delete" onclick="confirmDeletePost('${post.id}')">წაშლა</button>
         </div>
       </div>
     </div>
@@ -2184,7 +2595,7 @@ window.openPostModal = function(postId = null) {
   document.getElementById('post-id').value = '';
   document.getElementById('post-image-url').value = '';
   document.getElementById('post-image-preview').classList.remove('show');
-  document.getElementById('post-modal-title').textContent = 'Add New Post';
+  document.getElementById('post-modal-title').textContent = 'ახალი პოსტის დამატება';
   if (window.AdminI18n) window.AdminI18n.reset('post');
   document.getElementById('post-modal').classList.add('open');
 };
@@ -2212,7 +2623,7 @@ window.editPost = function(id) {
   preview.src = post.img;
   preview.classList.add('show');
   
-  document.getElementById('post-modal-title').textContent = 'Edit Post';
+  document.getElementById('post-modal-title').textContent = 'პოსტის რედაქტირება';
   document.getElementById('post-modal').classList.add('open');
 };
 
@@ -2222,11 +2633,11 @@ window.savePost = async function() {
   let imageUrl = document.getElementById('post-image-url').value;
   
   if (!imageUrl && !imageFile) {
-    showToast('Please upload an image', 'error');
+    showToast('გთხოვთ, ატვირთოთ სურათი', 'error');
     return;
   }
   
-  showLoading('Saving post...');
+  showLoading('პოსტი ინახება...');
   
   try {
     if (imageFile) {
@@ -2244,10 +2655,10 @@ window.savePost = async function() {
     
     if (id) {
       await updatePost(id, postData);
-      showToast('Post updated successfully', 'success');
+      showToast('პოსტი წარმატებით განახლდა', 'success');
     } else {
       await addPost(postData);
-      showToast('Post added successfully', 'success');
+      showToast('პოსტი წარმატებით დაემატა', 'success');
     }
     
     closePostModal();
@@ -2255,28 +2666,28 @@ window.savePost = async function() {
     renderPosts();
   } catch (error) {
     console.error('Error saving post:', error);
-    showToast('Failed to save post: ' + (error.message || error.code || 'Unknown error'), 'error');
+    showToast('პოსტის შენახვა ვერ მოხერხდა: ' + (error.message || error.code || 'უცნობი შეცდომა'), 'error');
   }
   
   hideLoading();
 };
 
 window.confirmDeletePost = function(id) {
-  if (confirm('Are you sure you want to delete this post?')) {
+  if (confirm('დარწმუნებული ხართ, რომ გსურთ ამ პოსტის წაშლა?')) {
     deletePostItem(id);
   }
 };
 
 async function deletePostItem(id) {
-  showLoading('Deleting post...');
+  showLoading('პოსტი იშლება...');
   try {
     await deletePost(id);
-    showToast('Post deleted successfully', 'success');
+    showToast('პოსტი წარმატებით წაიშალა', 'success');
     postsData = await getPosts();
     renderPosts();
   } catch (error) {
     console.error('Error deleting post:', error);
-    showToast('Failed to delete post: ' + (error.message || error.code || 'Unknown error'), 'error');
+    showToast('პოსტის წაშლა ვერ მოხერხდა: ' + (error.message || error.code || 'უცნობი შეცდომა'), 'error');
   }
   hideLoading();
 }
@@ -2289,8 +2700,8 @@ function renderFeatured() {
     container.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1;">
         <div class="empty-state-icon">&#11088;</div>
-        <h3>No Featured Offers Yet</h3>
-        <p>Add your first featured offer to get started</p>
+        <h3>საუკეთესო შეთავაზებები არ არის დამატებული</h3>
+        <p>დასაწყებად დაამატეთ თქვენი პირველი საუკეთესო შეთავაზება</p>
       </div>`;
     return;
   }
@@ -2306,13 +2717,13 @@ function renderFeatured() {
         <h3 class="admin-card-title">${escapeHTML(gtf(featured.title))}</h3>
         <p class="admin-card-desc">${escapeHTML(gtf(featured.desc))}</p>
         <div class="admin-card-meta">
-          <span>Order: ${featured.order || 0}</span>
-          <span>${featured.priceOnRequest ? 'On Request' : (featured.price || '')}</span>
+          <span>თანმიმდევრობა: ${featured.order || 0}</span>
+          <span>${featured.priceOnRequest ? 'მოთხოვნით' : (featured.price || '')}</span>
           <span>${escapeHTML(gtf(featured.tag))}</span>
         </div>
         <div class="admin-card-actions">
-          <button class="btn-edit" onclick="editFeatured('${featured.id}')">Edit</button>
-          <button class="btn-delete" onclick="confirmDeleteFeatured('${featured.id}')">Delete</button>
+          <button class="btn-edit" onclick="editFeatured('${featured.id}')">რედაქტირება</button>
+          <button class="btn-delete" onclick="confirmDeleteFeatured('${featured.id}')">წაშლა</button>
         </div>
       </div>
     </div>
@@ -2322,12 +2733,12 @@ function renderFeatured() {
 window.openFeaturedModal = function(featuredId = null) {
   document.getElementById('featured-form').reset();
   document.getElementById('featured-id').value = '';
-  document.getElementById('featured-badge').value = 'Best Offer';
+  document.getElementById('featured-badge').value = 'საუკეთესო შეთავაზება';
   document.getElementById('featured-on-request').checked = false;
   document.getElementById('featured-price').disabled = false;
   document.getElementById('featured-image-url').value = '';
   document.getElementById('featured-image-preview').classList.remove('show');
-  document.getElementById('featured-modal-title').textContent = 'Add Featured Offer';
+  document.getElementById('featured-modal-title').textContent = 'საუკეთესო შეთავაზების დამატება';
   if (window.AdminI18n) window.AdminI18n.reset('featured');
   document.getElementById('featured-modal').classList.add('open');
 };
@@ -2364,7 +2775,7 @@ window.editFeatured = function(id) {
   preview.src = featured.img;
   preview.classList.add('show');
   
-  document.getElementById('featured-modal-title').textContent = 'Edit Featured Offer';
+  document.getElementById('featured-modal-title').textContent = 'საუკეთესო შეთავაზების რედაქტირება';
   document.getElementById('featured-modal').classList.add('open');
 };
 
@@ -2374,11 +2785,11 @@ window.saveFeatured = async function() {
   let imageUrl = document.getElementById('featured-image-url').value;
   
   if (!imageUrl && !imageFile) {
-    showToast('Please upload an image', 'error');
+    showToast('გთხოვთ, ატვირთოთ სურათი', 'error');
     return;
   }
   
-  showLoading('Saving featured offer...');
+  showLoading('შეთავაზება ინახება...');
   
   try {
     if (imageFile) {
@@ -2401,10 +2812,10 @@ window.saveFeatured = async function() {
     
     if (id) {
       await updateFeaturedTour(id, featuredDataObj);
-      showToast('Featured offer updated successfully', 'success');
+      showToast('შეთავაზება წარმატებით განახლდა', 'success');
     } else {
       await addFeaturedTour(featuredDataObj);
-      showToast('Featured offer added successfully', 'success');
+      showToast('შეთავაზება წარმატებით დაემატა', 'success');
     }
     
     closeFeaturedModal();
@@ -2412,28 +2823,28 @@ window.saveFeatured = async function() {
     renderFeatured();
   } catch (error) {
     console.error('Error saving featured offer:', error);
-    showToast('Failed to save featured offer: ' + (error.message || error.code || 'Unknown error'), 'error');
+    showToast('შეთავაზების შენახვა ვერ მოხერხდა: ' + (error.message || error.code || 'უცნობი შეცდომა'), 'error');
   }
   
   hideLoading();
 };
 
 window.confirmDeleteFeatured = function(id) {
-  if (confirm('Are you sure you want to delete this featured offer?')) {
+  if (confirm('დარწმუნებული ხართ, რომ გსურთ ამ შეთავაზების წაშლა?')) {
     deleteFeaturedItem(id);
   }
 };
 
 async function deleteFeaturedItem(id) {
-  showLoading('Deleting featured offer...');
+  showLoading('შეთავაზება იშლება...');
   try {
     await deleteFeaturedTour(id);
-    showToast('Featured offer deleted successfully', 'success');
+    showToast('შეთავაზება წარმატებით წაიშალა', 'success');
     featuredData = await getFeaturedTours();
     renderFeatured();
   } catch (error) {
     console.error('Error deleting featured offer:', error);
-    showToast('Failed to delete featured offer: ' + (error.message || error.code || 'Unknown error'), 'error');
+    showToast('შეთავაზების წაშლა ვერ მოხერხდა: ' + (error.message || error.code || 'უცნობი შეცდომა'), 'error');
   }
   hideLoading();
 }
@@ -2446,8 +2857,8 @@ function renderReviews() {
     container.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1;">
         <div class="empty-state-icon">&#11088;</div>
-        <h3>No Reviews Yet</h3>
-        <p>Add your first customer review to get started</p>
+        <h3>შეფასებები არ არის დამატებული</h3>
+        <p>დასაწყებად დაამატეთ თქვენი პირველი მომხმარებლის შეფასება</p>
       </div>`;
     return;
   }
@@ -2458,13 +2869,13 @@ function renderReviews() {
         <div style="display:flex; gap:15px; align-items:center; margin-bottom:1rem;">
           <div>
             <h3 class="admin-card-title" style="margin:0;">${rev.name}</h3>
-            <div style="color:#FFD700;">${'?'.repeat(rev.rating)}${'?'.repeat(5-rev.rating)}</div>
+            <div style="color:#FFD700;">${'★'.repeat(rev.rating)}${'☆'.repeat(5-rev.rating)}</div>
           </div>
         </div>
         <p class="admin-card-desc">${rev.text}</p>
         <div class="admin-card-actions">
-          <button class="btn-edit" onclick="editReview('${rev.id}')">Edit</button>
-          <button class="btn-delete" onclick="confirmDeleteReview('${rev.id}')">Delete</button>
+          <button class="btn-edit" onclick="editReview('${rev.id}')">რედაქტირება</button>
+          <button class="btn-delete" onclick="confirmDeleteReview('${rev.id}')">წაშლა</button>
         </div>
       </div>
     </div>
@@ -2474,7 +2885,7 @@ function renderReviews() {
 window.openReviewModal = function() {
   document.getElementById('review-form').reset();
   document.getElementById('review-id').value = '';
-  document.getElementById('review-modal-title').textContent = 'Add New Review';
+  document.getElementById('review-modal-title').textContent = 'ახალი შეფასების დამატება';
   document.getElementById('review-modal').classList.add('open');
 };
 
@@ -2491,14 +2902,14 @@ window.editReview = function(id) {
   document.getElementById('review-rating').value = rev.rating;
   document.getElementById('review-text').value = rev.text;
   
-  document.getElementById('review-modal-title').textContent = 'Edit Review';
+  document.getElementById('review-modal-title').textContent = 'შეფასების რედაქტირება';
   document.getElementById('review-modal').classList.add('open');
 };
 
 window.saveReview = async function() {
   const id = document.getElementById('review-id').value;
   
-  showLoading('Saving review...');
+  showLoading('შეფასება ინახება...');
   try {
     const data = {
       name: document.getElementById('review-name').value,
@@ -2509,36 +2920,36 @@ window.saveReview = async function() {
     if (id) await updateReview(id, data);
     else await addReview(data);
     
-    showToast('Review saved!', 'success');
+    showToast('შეფასება წარმატებით შეინახა!', 'success');
     closeReviewModal();
     reviewsData = await getReviews();
     renderReviews();
   } catch (e) {
-    showToast('Error saving review', 'error');
+    showToast('შეფასების შენახვა ვერ მოხერხდა', 'error');
   }
   hideLoading();
 };
 
 window.confirmDeleteReview = function(id) {
-  if (confirm('Delete this review?')) {
+  if (confirm('დარწმუნებული ხართ, რომ გსურთ ამ შეფასების წაშლა?')) {
     deleteReviewItem(id);
   }
 };
 
 async function deleteReviewItem(id) {
-  showLoading('Deleting...');
+  showLoading('შეფასება იშლება...');
   try {
     await deleteReview(id);
-    showToast('Deleted!', 'success');
+    showToast('წარმატებით წაიშალა!', 'success');
     reviewsData = await getReviews();
     renderReviews();
-  } catch (e) { console.error('Error deleting review:', e); showToast('Failed to delete review: ' + (e.message || e.code || 'Unknown error'), 'error'); }
+  } catch (e) { console.error('Error deleting review:', e); showToast('შეფასების წაშლა ვერ მოხერხდა: ' + (e.message || e.code || 'უცნობი შეცდომა'), 'error'); }
   hideLoading();
 }
 
 // ============ UTILITIES ============
 
-function showLoading(text = 'Loading...') {
+function showLoading(text = 'იტვირთება...') {
   document.getElementById('loading-text').textContent = text;
   document.getElementById('loading-overlay').classList.add('show');
 }
@@ -2559,8 +2970,15 @@ function showToast(message, type = 'success') {
 function formatLeadDate(value) {
   const date = value && typeof value.toDate === 'function' ? value.toDate() : new Date(value || Date.now());
   if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '-';
-  return date.toLocaleString();
+  return date.toLocaleString('ka-GE');
 }
+
+const leadTypeMap = {
+  'tour': 'ტური',
+  'car': 'ტრანსპორტი',
+  'subscriber': 'გამომწერი',
+  'contact': 'კონტაქტი'
+};
 
 function renderLeads() {
   const stats = document.getElementById('leads-stats');
@@ -2573,10 +2991,10 @@ function renderLeads() {
   const totalLeads = totalBookings + totalSubscribers + totalContacts;
 
   stats.innerHTML = `
-    <div class="lead-stat-card"><div class="lead-stat-label">All Leads</div><div class="lead-stat-value">${totalLeads}</div></div>
-    <div class="lead-stat-card"><div class="lead-stat-label">Bookings</div><div class="lead-stat-value">${totalBookings}</div></div>
-    <div class="lead-stat-card"><div class="lead-stat-label">Subscribers</div><div class="lead-stat-value">${totalSubscribers}</div></div>
-    <div class="lead-stat-card"><div class="lead-stat-label">Contact Messages</div><div class="lead-stat-value">${totalContacts}</div></div>
+    <div class="lead-stat-card"><div class="lead-stat-label">ყველა ლიდი</div><div class="lead-stat-value">${totalLeads}</div></div>
+    <div class="lead-stat-card"><div class="lead-stat-label">ჯავშნები</div><div class="lead-stat-value">${totalBookings}</div></div>
+    <div class="lead-stat-card"><div class="lead-stat-label">გამომწერები</div><div class="lead-stat-value">${totalSubscribers}</div></div>
+    <div class="lead-stat-card"><div class="lead-stat-label">საკონტაქტო შეტყობინებები</div><div class="lead-stat-value">${totalContacts}</div></div>
   `;
 
   const rows = [];
@@ -2586,7 +3004,7 @@ function renderLeads() {
       name: item.name || '-',
       email: item.email || '-',
       phone: item.phone || '-',
-      details: `${item.tourName || '-'} | ${item.people || '-'} pax | ${item.dateStart || '-'}${item.dateEnd ? ' - ' + item.dateEnd : ''}`,
+      details: `${item.tourName || '-'} | ${item.people || '-'} კაცი | ${item.dateStart || '-'}${item.dateEnd ? ' - ' + item.dateEnd : ''}`,
       createdAt: item.createdAt
     });
   });
@@ -2596,7 +3014,7 @@ function renderLeads() {
       name: item.name || '-',
       email: item.email || '-',
       phone: item.phone || '-',
-      details: `${item.carName || '-'} | ${item.passengers || '-'} pax | ${item.date || '-'} | pickup: ${item.pickup || '-'}`,
+      details: `${item.carName || '-'} | ${item.passengers || '-'} კაცი | ${item.date || '-'} | აყვანა: ${item.pickup || '-'}`,
       createdAt: item.createdAt
     });
   });
@@ -2606,7 +3024,7 @@ function renderLeads() {
       name: '-',
       email: item.email || '-',
       phone: '-',
-      details: `Source: ${item.sourcePage || '-'}`,
+      details: `წყარო: ${item.sourcePage || '-'}`,
       createdAt: item.createdAt
     });
   });
@@ -2628,13 +3046,13 @@ function renderLeads() {
   });
 
   if (rows.length === 0) {
-    list.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-mid);padding:1.2rem;">No bookings or inbox data yet.</td></tr>';
+    list.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-mid);padding:1.2rem;">ჯავშნები ან შეტყობინებები ჯერ არ არის.</td></tr>';
     return;
   }
 
   list.innerHTML = rows.map((row) => `
     <tr>
-      <td><span class="lead-type ${row.type}">${row.type}</span></td>
+      <td><span class="lead-type ${row.type}">${leadTypeMap[row.type] || row.type}</span></td>
       <td>${escapeHTML(String(row.name || '-'))}</td>
       <td>${escapeHTML(String(row.email || '-'))}</td>
       <td>${escapeHTML(String(row.phone || '-'))}</td>
@@ -2666,6 +3084,325 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error('AdminI18n object is not defined. Automatic translation will not work. Please check admin-translate.js for errors.');
   }
 });
+
+const countryNameMap = {
+  'Georgia': 'საქართველო',
+  'United States': 'აშშ',
+  'Germany': 'გერმანია',
+  'United Kingdom': 'დიდი ბრიტანეთი',
+  'Russia': 'რუსეთი',
+  'Ukraine': 'უკრაინა',
+  'Turkey': 'თურქეთი',
+  'Armenia': 'სომხეთი',
+  'Azerbaijan': 'აზერბაიჯანი',
+  'Israel': 'ისრაელი',
+  'Poland': 'პოლონეთი',
+  'France': 'საფრანგეთი',
+  'Italy': 'იტალია',
+  'Kazakhstan': 'ყაზახეთი',
+  'Unknown': 'უცნობი'
+};
+
+const pageNameMap = {
+  'TOURS': 'ტურები',
+  'CARS': 'ტრანსპორტი',
+  'ABOUT': 'ჩვენს შესახებ',
+  'CONTACT': 'კონტაქტი',
+  'BLOG': 'ბლოგი',
+  'POST': 'პოსტი',
+  'BOOKING': 'დაჯავშნა',
+  'ADMIN': 'ადმინ პანელი',
+  'Home Page': 'მთავარი გვერდი'
+};
+
+function renderAnalytics() {
+  const summaryEl = document.getElementById('analytics-summary');
+  const countriesEl = document.getElementById('analytics-countries');
+  const citiesEl = document.getElementById('analytics-cities');
+  const pagesEl = document.getElementById('analytics-pages');
+  const clicksEl = document.getElementById('analytics-clicks-summary');
+  const feedEl = document.getElementById('analytics-live-feed');
+
+  if (!summaryEl) return;
+
+  const logs = trafficLogsData || [];
+
+  // 1. Calculations & Aggregates
+  const totalSessions = logs.length;
+  
+  // Registered Users (emails that are not 'anonymous' or empty)
+  const registeredEmails = new Set();
+  logs.forEach(log => {
+    if (log.userEmail && log.userEmail !== 'anonymous' && log.userEmail.includes('@')) {
+      registeredEmails.add(log.userEmail);
+    }
+  });
+  const totalRegistered = registeredEmails.size;
+  const totalGuests = Math.max(0, totalSessions - totalRegistered);
+
+  // Total Clicks
+  let totalClicks = 0;
+  logs.forEach(log => {
+    if (Array.isArray(log.clicks)) {
+      totalClicks += log.clicks.length;
+    }
+  });
+
+  // Render 4 Summary Cards
+  summaryEl.innerHTML = `
+    <div class="analytics-stat-card">
+      <div class="analytics-icon-wrap blue">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+      </div>
+      <div class="analytics-stat-info">
+        <h3>${totalSessions}</h3>
+        <p>სულ სესიები</p>
+      </div>
+    </div>
+    <div class="analytics-stat-card">
+      <div class="analytics-icon-wrap">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
+      </div>
+      <div class="analytics-stat-info">
+        <h3>${totalRegistered}</h3>
+        <p>რეგისტრირებული მომხმარებლები</p>
+      </div>
+    </div>
+    <div class="analytics-stat-card">
+      <div class="analytics-icon-wrap purple">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4l3 3"></path></svg>
+      </div>
+      <div class="analytics-stat-info">
+        <h3>${totalGuests}</h3>
+        <p>სტუმრების სესიები</p>
+      </div>
+    </div>
+    <div class="analytics-stat-card">
+      <div class="analytics-icon-wrap orange">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
+      </div>
+      <div class="analytics-stat-info">
+        <h3>${totalClicks}</h3>
+        <p>სულ ინტერაქციები</p>
+      </div>
+    </div>
+  `;
+
+  // Helper for Top charts rendering
+  const renderProgressList = (element, countsMap, totalCount, isPercentage = false) => {
+    if (!element) return;
+    const sorted = Object.entries(countsMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+
+    if (sorted.length === 0) {
+      element.innerHTML = `<div style="text-align: center; color: var(--text-light); font-size: 0.85rem; padding: 1rem 0;">მონაცემები ჯერ არ არის</div>`;
+      return;
+    }
+
+    element.innerHTML = sorted.map(([name, count]) => {
+      const pct = totalCount > 0 ? Math.round((count / totalCount) * 100) : 0;
+      const displayVal = isPercentage ? `${pct}%` : `${count} ნახვა`;
+      
+      let displayName = name;
+      if (name.startsWith('/') || name === 'index.html' || name === '') {
+        displayName = name === 'index.html' || name === '/' || name === '' ? 'მთავარი გვერდი' : name.replace('.html', '').replace('/', '').toUpperCase();
+      }
+      if (pageNameMap[displayName]) {
+        displayName = pageNameMap[displayName];
+      }
+
+      return `
+        <div class="progress-item">
+          <div class="progress-item-meta">
+            <span class="progress-item-name">${displayName}</span>
+            <span class="progress-item-val">${count} (${displayVal})</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: ${pct}%"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  };
+
+  // 2. Aggregate Geolocation - Countries
+  const countryCounts = {};
+  logs.forEach(log => {
+    const country = log.country || 'Unknown';
+    const mappedCountry = countryNameMap[country] || country;
+    countryCounts[mappedCountry] = (countryCounts[mappedCountry] || 0) + 1;
+  });
+  renderProgressList(countriesEl, countryCounts, totalSessions, true);
+
+  // 3. Aggregate Geolocation - Cities
+  const cityCounts = {};
+  logs.forEach(log => {
+    const city = log.city || 'Unknown';
+    const mappedCity = city === 'Unknown' ? 'უცნობი' : city;
+    const country = log.country || 'Unknown';
+    const mappedCountry = countryNameMap[country] || country;
+    const c = log.country ? `${mappedCity}, ${mappedCountry}` : mappedCity;
+    cityCounts[c] = (cityCounts[c] || 0) + 1;
+  });
+  renderProgressList(citiesEl, cityCounts, totalSessions, true);
+
+  // 4. Aggregate Page Views
+  const pageCounts = {};
+  let totalPageViews = 0;
+  logs.forEach(log => {
+    if (Array.isArray(log.visitedPages)) {
+      log.visitedPages.forEach(page => {
+        const cleanPage = page || 'Home';
+        pageCounts[cleanPage] = (pageCounts[cleanPage] || 0) + 1;
+        totalPageViews++;
+      });
+    }
+  });
+  renderProgressList(pagesEl, pageCounts, totalPageViews, false);
+
+  // 5. Aggregate Clicks
+  const clickCounts = {};
+  let totalClicksSum = 0;
+  logs.forEach(log => {
+    if (Array.isArray(log.clicks)) {
+      log.clicks.forEach(click => {
+        let clickName = click.name || click.type || 'ინტერაქცია';
+        if (clickName === 'Interaction') clickName = 'ინტერაქცია';
+        clickCounts[clickName] = (clickCounts[clickName] || 0) + 1;
+        totalClicksSum++;
+      });
+    }
+  });
+  renderProgressList(clicksEl, clickCounts, totalClicksSum, false);
+
+  // 6. Render Live Feed (Recent sessions)
+  if (feedEl) {
+    if (logs.length === 0) {
+      feedEl.innerHTML = `<div style="text-align: center; color: var(--text-light); font-size: 0.85rem; padding: 2rem 0;">აქტიური ვიზიტორების სესიები ვერ მოიძებნა.</div>`;
+      return;
+    }
+
+    const sortedLogs = [...logs].sort((a, b) => {
+      const timeA = new Date(a.lastActive || a.createdAt).getTime();
+      const timeB = new Date(b.lastActive || b.createdAt).getTime();
+      return timeB - timeA;
+    });
+
+    feedEl.innerHTML = sortedLogs.slice(0, 50).map(log => {
+      const createdTime = new Date(log.createdAt).getTime();
+      const lastActiveTime = new Date(log.lastActive || log.createdAt).getTime();
+      
+      const durationMs = lastActiveTime - createdTime;
+      const durationMin = Math.floor(durationMs / 60000);
+      const durationSec = Math.floor((durationMs % 60000) / 1000);
+      const durationStr = durationMin > 0 ? `${durationMin}წთ ${durationSec}წმ` : `${durationSec}წმ`;
+
+      const now = Date.now();
+      const isLive = (now - lastActiveTime) < 300000;
+
+      const isReg = log.userEmail && log.userEmail !== 'anonymous' && log.userEmail.includes('@');
+      const emailBadge = isReg 
+        ? `<span class="feed-badge user" title="${log.userEmail}">👤 ${log.userEmail}</span>`
+        : `<span class="feed-badge guest">სტუმარი</span>`;
+
+      const deviceType = log.device || 'Desktop';
+      const deviceTypeMap = {
+        'Desktop': 'კომპიუტერი',
+        'Mobile': 'მობილური',
+        'Tablet': 'ტაბლეტი'
+      };
+      const mappedDevice = deviceTypeMap[deviceType] || deviceType;
+      
+      let deviceIcon = '💻';
+      if (deviceType.toLowerCase().includes('mobile') || deviceType.toLowerCase().includes('phone')) deviceIcon = '📱';
+      if (deviceType.toLowerCase().includes('tablet')) deviceIcon = '📟';
+
+      const locationStr = (log.city && log.country) ? `${log.city}, ${countryNameMap[log.country] || log.country}` : (countryNameMap[log.country] || log.country || 'უცნობი მდებარეობა');
+
+      const pagesTrail = Array.isArray(log.visitedPages) ? log.visitedPages : [];
+      const trailHtml = pagesTrail.map((page, idx) => {
+        let displayName = page || 'Home';
+        if (displayName.startsWith('/') || displayName === 'index.html') {
+          displayName = displayName === 'index.html' || displayName === '/' ? 'მთავარი' : displayName.replace('.html', '').replace('/', '').toUpperCase();
+        }
+        if (pageNameMap[displayName]) {
+          displayName = pageNameMap[displayName];
+        }
+        return `
+          <span class="feed-step">${displayName}</span>
+          ${idx < pagesTrail.length - 1 ? '<span class="feed-arrow">→</span>' : ''}
+        `;
+      }).join('');
+
+      const clicksList = Array.isArray(log.clicks) ? log.clicks : [];
+      const clicksHtml = clicksList.map(click => {
+        let clickIcon = '🖱️';
+        if (click.type === 'tour_click') clickIcon = '🗺️';
+        if (click.type === 'car_click') clickIcon = '🚗';
+        if (click.type === 'button_click') clickIcon = '🟢';
+        
+        let clickName = click.name;
+        if (window.AdminI18n) {
+          clickName = window.AdminI18n.extractGeorgian(clickName);
+        }
+        
+        return `
+          <span class="feed-click-tag" title="დაწკაპუნდა ${new Date(click.time).toLocaleTimeString()}-ზე">
+            ${clickIcon} ${clickName}
+          </span>
+        `;
+      }).join('');
+
+      const startTimeStr = new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      return `
+        <div class="live-feed-item">
+          <div class="live-feed-header">
+            <div class="feed-user-meta">
+              <div class="feed-user-title">
+                ${isLive ? '<span class="live-indicator" title="აქტიურია ახლა"></span>' : ''}
+                📍 ${locationStr}
+              </div>
+              <div class="feed-user-subtitle">
+                სესია დაიწყო ${startTimeStr}-ზე
+              </div>
+            </div>
+            <div class="feed-status-badges">
+              ${emailBadge}
+              <span class="feed-badge device">${deviceIcon} ${mappedDevice}</span>
+              <span class="feed-badge duration" title="საიტზე გატარებული დრო">⏱️ ${durationStr}</span>
+            </div>
+          </div>
+          
+          <div class="feed-path">
+            <div class="feed-path-title">ნავიგაციის გზა</div>
+            <div class="feed-path-steps">
+              ${trailHtml || '<span class="feed-step" style="background:#eee;color:#666">ნავიგაციის გზა არ არის</span>'}
+            </div>
+          </div>
+
+          ${clicksList.length > 0 ? `
+            <div class="feed-path" style="margin-top: 0.5rem; padding-top: 0.5rem;">
+              <div class="feed-path-title">ინტერაქციები / დაწკაპუნებები</div>
+              <div class="feed-clicks">
+                ${clicksHtml}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+// Global click delegation for Refresh Analytics button
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#refresh-analytics-btn')) {
+    loadAllData();
+  }
+});
+
 // Close modals on backdrop click
 ['tour', 'car', 'post', 'featured', 'review'].forEach(type => {
   document.getElementById(`${type}-modal`).addEventListener('click', function(e) {
