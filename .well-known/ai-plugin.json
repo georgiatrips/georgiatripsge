@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Georgia Trips",
+  "name_for_model": "georgia_trips",
+  "description_for_human": "Georgia Trips – Tour and travel company based in Batumi, Georgia. Book guided tours, transport, and custom travel packages across Georgia and beyond.",
+  "description_for_model": "Georgia Trips is a travel company based in Batumi, Georgia (Caucasus region). They offer domestic tours (one-day, multi-day, fixed), international tours, car/transport rental with professional drivers, and custom travel packages. Languages: Georgian (ქართული), English, Russian (Русский), Turkish (Türkçe), Arabic (العربية), Hebrew (עברית), Ukrainian (Українська). Contact: +995 504 22 00 20, georgiatrips5@gmail.com, 27 Kutaisi St, Batumi 6010. Website: https://georgiatrips.ge. Social: Instagram @georgiatrips.ge, Facebook, WhatsApp, Telegram @Georgia_Trips7.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://georgiatrips.ge"
+  },
+  "logo_url": "https://georgiatrips.ge/logo.png",
+  "contact_email": "georgiatrips5@gmail.com",
+  "legal_info_url": "https://georgiatrips.ge/terms.html"
+}

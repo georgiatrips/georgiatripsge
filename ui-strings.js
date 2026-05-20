@@ -45,9 +45,19 @@
       tr: '{n} kişi için', ar: 'لـ {n} أشخاص', he: 'עבור {n} אנשים',
       uk: 'за {n} осіб'
     },
+    price_per_person: {
+      ka: 'ფასი ადამიანზე', en: 'Price per person', ru: 'Цена за человека',
+      tr: 'Kişi başı fiyat', ar: 'السعر لكل شخص', he: 'מחיר לאדם',
+      uk: 'Ціна за особу'
+    },
+    number_of_people: {
+      ka: 'ადამიანების რაოდენობა', en: 'Number of people', ru: 'Количество человек',
+      tr: 'Kişi sayısı', ar: 'عدد الأشخاص', he: 'מספר אנשים',
+      uk: 'Кількість осіб'
+    },
     total: {
-      ka: 'სულ', en: 'total', ru: 'всего', tr: 'toplam',
-      ar: 'إجمالي', he: 'סה״כ', uk: 'всього'
+      ka: 'სულ', en: 'Total', ru: 'Всего', tr: 'Toplam',
+      ar: 'إجمالي', he: 'סה״כ', uk: 'Всього'
     },
     on_request: {
       ka: 'შეთანხმებით', en: 'Negotiable', ru: 'Договорная', tr: 'Görüşülür',
@@ -185,10 +195,24 @@
       tr: '{n} Gün', ar: '{n} أيام', he: '{n} ימים',
       uk: '{n} днів'
     },
+    n_nights: {
+      ka: '{n} ღამე', en: '{n} Nights', ru: '{n} ночей',
+      tr: '{n} Gece', ar: '{n} ليالٍ', he: '{n} לילות',
+      uk: '{n} ночей'
+    },
+    n_people_count: {
+      ka: '{n} ადამიანი', en: '{n} People', ru: '{n} человек',
+      tr: '{n} Kişi', ar: '{n} أشخاص', he: '{n} אנשים',
+      uk: '{n} осіб'
+    },
+    batumi_badge: {
+      ka: 'ბათუმი', en: 'Batumi', ru: 'Батуми', tr: 'Batum',
+      ar: 'باتومي', he: 'בטומי', uk: 'Батумі'
+    },
     loading: {
       ka: 'იტვირთება', en: 'Loading', ru: 'Загрузка',
       tr: 'Yükleniyor', ar: 'جاري التحميل', he: 'טוען',
-      uk: 'Завантаження'
+      uk: 'Завантაження'
     },
     /* ---- Badges (tour type / category) ---- */
     badge_domestic: {
@@ -650,14 +674,30 @@
      and never asks the translation API for anything listed here.
   */
   const PHRASES = {
+    /* --- Page Titles --- */
+    'Georgia Trips | Guided Tours, Transport & Travel in Georgia': { ka: 'Georgia Trips – ტურები საქართველოში | Guided Tours, Transport & Travel in Georgia', ru: 'Georgia Trips – Туры по Грузии | Guided Tours, Transport & Travel in Georgia', tr: 'Georgia Trips – Gürcistan Turları | Guided Tours, Transport & Travel in Georgia', ar: 'Georgia Trips – جولات جورجيا', he: 'Georgia Trips – סיורים בגאורגיה', uk: 'Georgia Trips – Тури Грузією' },
+    'Tour Details | Georgia Trips': { ka: 'Tour Details – ტურის დეტალები | Georgia Trips', ru: 'Tour Details – Детали тура | Georgia Trips', tr: 'Tour Details – Tur Detayları | Georgia Trips', ar: 'تفاصيل الجولة | Georgia Trips', he: 'פרטי הסיור | Georgia Trips', uk: 'Деталі туру | Georgia Trips' },
+    'Terms & Conditions | Georgia Trips': { ka: 'Terms & Conditions – წესები და პირობები | Georgia Trips', ru: 'Terms & Conditions – Условия использования | Georgia Trips', tr: 'Terms & Conditions – Şartlar ve Koşullar | Georgia Trips', ar: 'الشروط والأحكام | Georgia Trips', he: 'תנאים והגבלות | Georgia Trips', uk: 'Умови та положення | Georgia Trips' },
+    'Privacy Policy | Georgia Trips': { ka: 'Privacy Policy – კონფიდენციალურობის პოლიტიკა | Georgia Trips', ru: 'Privacy Policy – Политика конфиденциальности | Georgia Trips', tr: 'Privacy Policy – Gizlilik Politikası | Georgia Trips', ar: 'سياسة الخصوصية | Georgia Trips', he: 'מדיניות פרטיות | Georgia Trips', uk: 'Політика конфіденційності | Georgia Trips' },
+    'Stories & Blog | Georgia Trips Travel Guides & Tips': { ka: 'Stories & Blog – ბლოგი | Georgia Trips Travel Guides & Tips', ru: 'Stories & Blog – Блог | Georgia Trips Travel Guides & Tips', tr: 'Stories & Blog – Blog | Georgia Trips Travel Guides & Tips', ar: 'القصص والمدونة | Georgia Trips', he: 'סיפורים ובלוג | Georgia Trips', uk: 'Історії та блог | Georgia Trips' },
+    'Post Details | Georgia Trips Blog': { ka: 'Post Details – სტატია | Georgia Trips Blog', ru: 'Post Details – Статья | Georgia Trips Blog', tr: 'Post Details – Yazı | Georgia Trips Blog', ar: 'تفاصيل المقال | Georgia Trips', he: 'פרטי הפוסט | Georgia Trips', uk: 'Деталі публікації | Georgia Trips' },
+    'International Tours from Georgia | Multi-Country Adventures': { ka: 'International Tours from Georgia – საერთაშორისო ტურები | Multi-Country Adventures', ru: 'International Tours from Georgia – Международные туры | Multi-Country Adventures', tr: 'International Tours from Georgia – Uluslararası Turlar | Multi-Country Adventures', ar: 'جولات دولية من جورجيا', he: 'סיורים בינלאומיים מגאורגיה', uk: 'Міжнародні тури з Грузії' },
+    'Domestic Tours in Georgia | One-Day & Multi-Day Guided Tours': { ka: 'Domestic Tours in Georgia – ტურები საქართველოში | One-Day & Multi-Day Guided Tours', ru: 'Domestic Tours in Georgia – Туры по Грузии | One-Day & Multi-Day Guided Tours', tr: 'Domestic Tours in Georgia – Yurt İçi Turlar | One-Day & Multi-Day Guided Tours', ar: 'جولات محلية في جورجيا', he: 'סיורים מקומיים בגאורגיה', uk: 'Внутрішні тури Грузією' },
+    'Contact Georgia Trips | Book Tours & Transport in Georgia': { ka: 'Contact Georgia Trips – დაგვიკავშირდით | Book Tours & Transport in Georgia', ru: 'Contact Georgia Trips – Контакты | Book Tours & Transport in Georgia', tr: 'Contact Georgia Trips – İletişim | Book Tours & Transport in Georgia', ar: 'اتصل بنا | Georgia Trips', he: 'צור קשר | Georgia Trips', uk: 'Контакти | Georgia Trips' },
+    'Transport & Cars | Georgia Trips Car Rental with Driver': { ka: 'Transport & Cars – ტრანსპორტი საქართველოში | Georgia Trips Car Rental with Driver', ru: 'Transport & Cars – Транспорт | Georgia Trips Car Rental with Driver', tr: 'Transport & Cars – Ulaşım | Georgia Trips Car Rental with Driver', ar: 'النقل والسيارات | Georgia Trips', he: 'תחבורה ורכבים | Georgia Trips', uk: 'Транспорт та авто | Georgia Trips' },
+    'About Georgia Trips | Your Travel Partner in Batumi & Georgia': { ka: 'About Georgia Trips – ჩვენ შესახებ | Your Travel Partner in Batumi & Georgia', ru: 'About Georgia Trips – О нас | Your Travel Partner in Batumi & Georgia', tr: 'About Georgia Trips – Hakkımızda | Your Travel Partner in Batumi & Georgia', ar: 'من نحن | Georgia Trips', he: 'אודות | Georgia Trips', uk: 'Про нас | Georgia Trips' },
+    'Login – Georgia Trips': { ka: 'Login – შესვლა | Georgia Trips', ru: 'Login – Войти | Georgia Trips', tr: 'Login – Giriş | Georgia Trips', ar: 'تسجيل الدخول | Georgia Trips', he: 'התחברות | Georgia Trips', uk: 'Вхід | Georgia Trips' },
+    'Saved Tours - Georgia Trips': { ka: 'Saved Tours – შენახული ტურები | Georgia Trips', ru: 'Saved Tours – Сохранённые туры | Georgia Trips', tr: 'Saved Tours – Kaydedilen Turlar | Georgia Trips', ar: 'الجولات المحفوظة | Georgia Trips', he: 'סיורים שמורים | Georgia Trips', uk: 'Збережені тури | Georgia Trips' },
+    'My Profile - Georgia Trips': { ka: 'My Profile – ჩემი პროფილი | Georgia Trips', ru: 'My Profile – Мой профиль | Georgia Trips', tr: 'My Profile – Profilim | Georgia Trips', ar: 'ملفي الشخصي | Georgia Trips', he: 'הפרופיל שלי | Georgia Trips', uk: 'Мій профіль | Georgia Trips' },
+
     /* --- Navbar --- */
     'Home': { ka: 'მთავარი', ru: 'Главная', tr: 'Ana Sayfa', ar: 'الرئيسية', he: 'דף הבית', uk: 'Головна' },
     'Tours': { ka: 'ტურები', ru: 'Туры', tr: 'Turlar', ar: 'الجولات', he: 'סיורים', uk: 'Тури' },
     'Tours ▼': { ka: 'ტურები ▼', ru: 'Туры ▼', tr: 'Turlar ▼', ar: 'الجولات ▼', he: 'סיורים ▼', uk: 'Тури ▼' },
     'Domestic Tours': { ka: 'შიდა ტურები', ru: 'Туры по Грузии', tr: 'Yurt İçi Turlar', ar: 'جولات داخلية', he: 'סיורים מקומיים', uk: 'Внутрішні тури' },
     'International Tours': { ka: 'საერთაშორისო ტურები', ru: 'Международные туры', tr: 'Uluslararası Turlar', ar: 'جولات دولية', he: 'סיורים בינלאומיים', uk: 'Міжнародні тури' },
-    'Cars': { ka: 'მანქანები', ru: 'Автомобили', tr: 'Araçlar', ar: 'السيارات', he: 'רכבים', uk: 'Авто' },
-    'Posts': { ka: 'სტატიები', ru: 'Статьи', tr: 'Yazılar', ar: 'المقالات', he: 'פוסטים', uk: 'Публікації' },
+    'Cars': { ka: 'ავტომობილები', ru: 'Автомобили', tr: 'Araçlar', ar: 'السيارات', he: 'רכבים', uk: 'Авто' },
+    'Posts': { ka: 'სტატიები', ru: 'Статьи', tr: 'Yazılar', ar: 'المقالات', he: 'פოსטים', uk: 'Публікації' },
     'About': { ka: 'ჩვენ შესახებ', ru: 'О нас', tr: 'Hakkımızda', ar: 'من نحن', he: 'אודות', uk: 'Про нас' },
     'Contact': { ka: 'კონტაქტი', ru: 'Контакты', tr: 'İletişim', ar: 'اتصل بنا', he: 'צור קשר', uk: 'Контакти' },
     'Login': { ka: 'შესვლა', ru: 'Войти', tr: 'Giriş', ar: 'تسجيل الدخول', he: 'התחברות', uk: 'Увійти' },
@@ -671,7 +711,7 @@
     /* --- Hero / Index --- */
     'Discover the Caucasus': { ka: 'აღმოაჩინეთ კავკასია', ru: 'Откройте Кавказ', tr: 'Kafkasya\'yı Keşfedin', ar: 'اكتشف القوقاز', he: 'גלו את הקווקז', uk: 'Відкрийте Кавказ' },
     'Explore': { ka: 'აღმოაჩინეთ', ru: 'Исследуйте', tr: 'Keşfedin', ar: 'استكشف', he: 'גלו את', uk: 'Досліджуйте' },
-    'Georgia': { ka: 'საქართველო', ru: 'Грузию', tr: 'Gürcistan\'ı', ar: 'جورجيا', he: 'גאורגיה', uk: 'Грузію' },
+    '"Georgia"': { ka: '"საქართველო"', ru: '"Грузию"', tr: '"Gürcistan"\'ı', ar: '"جورجيا"', he: '"גאורגיה"', uk: '"Грузію"' },
     'With Us': { ka: 'ჩვენთან ერთად', ru: 'Вместе с нами', tr: 'Bizimle', ar: 'معنا', he: 'איתנו', uk: 'Разом з нами' },
     'Ancient culture, breathtaking mountains, world-class wine and legendary hospitality — all in one extraordinary destination.': {
       ka: 'უძველესი კულტურა, თვალწარმტაცი მთები, მსოფლიო დონის ღვინო და ლეგენდარული სტუმართმოყვარეობა — ყველა ერთ განსაკუთრებულ მიმართულებაში.',
@@ -688,7 +728,11 @@
     'Scroll': { ka: 'დაათვალიერე', ru: 'Листать', tr: 'Kaydır', ar: 'مرر', he: 'גלילה', uk: 'Гортайте' },
 
     /* --- Section headers --- */
-    'This Season\'s Best Deal': { ka: 'ბათუმის ტურები', ru: 'Лучшее предложение сезона', tr: 'Sezonun En İyi Teklifi', ar: 'أفضل عرض لهذا الموسم', he: 'המבצע הטוב ביותר של העונה', uk: 'Найкраща пропозиცია сезону' },
+    'This Season\'s Best Deal': { ka: 'საუკეთესო შეთავაზება', ru: 'Лучшее предложение сезона', tr: 'Sezonun En İyi Teklifi', ar: 'أفضل عرض لهذا الموسم', he: 'המבצע הטוב ביותר של העונה', uk: 'Найкраща пропозиცია сезону' },
+    'Batumi Tours': { ka: 'ბათუმის ტურები', ru: 'Батумские туры', tr: 'Batum Turları', ar: 'جولات باتومي', he: 'סיורי בטומי', uk: 'Батумські тури' },
+    'Best Batumi Tours': { ka: 'ბათუმის საუკეთესო ტურები', ru: 'Лучшие туры в Батуми', tr: 'En İyi Batum Turları', ar: 'أفضل جولات باتومي', he: 'הסיורים הטובים ביותר בבטומי', uk: 'Найкращі тури до Батумі' },
+    'Discover special tours in Batumi — comfort, best atmosphere and seaside relaxation.': { ka: 'აღმოაჩინეთ განსაკუთრებული ტურები ბათუმში — კომფორტი, საუკეთესო განწყობა და სანაპიროზე დასვენება.', ru: 'Откройте уникальные туры в Батуми — комфорт, отличная атмосфера и отдых у моря.', tr: 'Batum\'da özel turları keşfedin — konfor, harika atmosfer ve kıyı tatili.', ar: 'اكتشف جولات خاصة في باتومي — راحة، أجواء رائعة واستجمام على الشاطئ.', he: 'גלו סיורים מיוחדים בבטומי — נוחות, אווירה מצוינת ומנוחה ליד הים.', uk: 'Відкрийте особливі тури в Батумі — комфорт, чудова атмосфера та відпочинок біля моря.' },
+    'Seaside Escapes': { ka: 'ზღვისპირა დასვენება', ru: 'Морской отдых', tr: 'Sahil Kaçamakları', ar: 'عطلات ساحلية', he: 'חופשות על הים', uk: 'Морський відпочинок' },
     'Local Adventures': { ka: 'ადგილობრივი თავგადასავლები', ru: 'Местные приключения', tr: 'Yerel Maceralar', ar: 'مغامرات محلية', he: 'הרפתקאות מקומיות', uk: 'Місцеві пригоди' },
     'International Adventures': { ka: 'საერთაშორისო თავგადასავლები', ru: 'Международные приключения', tr: 'Uluslararası Maceralar', ar: 'مغامرات دولية', he: 'הרפתקאות בינלאומיות', uk: 'Міжнародні пригоди' },
     'Transport': { ka: 'ტრანსპორტი', ru: 'Транспорт', tr: 'Ulaşım', ar: 'النقل', he: 'תחבורה', uk: 'Транспорт' },
@@ -780,6 +824,20 @@
     'Kakheti – Wine Region': { ka: 'კახეთი – ღვინის რეგიონი', ru: 'Кахетия – Винный регион', tr: 'Kaheti – Şarap Bölgesi', ar: 'كاخيتي – منطقة النبيذ', he: 'קחתי – אזור היין', uk: 'Кахетія – винний регіон' },
     'Batumi – Black Sea Coast': { ka: 'ბათუმი – შავი ზღვის სანაპირო', ru: 'Батуми – Побережье Чёрного моря', tr: 'Batum – Karadeniz Kıyısı', ar: 'باتومي – ساحل البحر الأسود', he: 'בטומי – חוף הים השחור', uk: 'Батумі – узбережжя Чорного моря' },
     'Svaneti – Ancient Highlands': { ka: 'სვანეთი – უძველესი მთიანეთი', ru: 'Сванетия – Древнее высокогорье', tr: 'Svaneti – Kadim Dağlık Bölge', ar: 'سفانيتي – المرتفعات القديمة', he: 'סוואנטי – רמות עתיקות', uk: 'Сванетія – давні високогір\'я' },
+
+    /* --- Map Regions (raw names from SVG) --- */
+    'Abkhazia': { ka: 'აფხაზეთი', ru: 'Абхазия', tr: 'Abhazya', ar: 'أبخازيا', he: 'אבחזיה', uk: 'Абхазія' },
+    'Ajaria': { ka: 'აჭარა', ru: 'Аджария', tr: 'Acara', ar: 'أجاريا', he: 'אג\'ריה', uk: 'Аджарія' },
+    'Guria': { ka: 'გურია', ru: 'Гурия', tr: 'Guria', ar: 'غوريا', he: 'גוריה', uk: 'Гурія' },
+    'Imereti': { ka: 'იმერეთი', ru: 'Имеретия', tr: 'İmereti', ar: 'إيميريتي', he: 'אימרתי', uk: 'Імеретія' },
+    "K'akheti": { ka: 'კახეთი', ru: 'Кахетия', tr: 'Kaheti', ar: 'كاخيتي', he: 'קחתי', uk: 'Кахетія' },
+    'Kvemo Kartli': { ka: 'ქვემო ქართლი', ru: 'Квемо-Картли', tr: 'Kvemo Kartli', ar: 'كفيمو كارتلي', he: 'כארתלי תחתית', uk: 'Квемо-Картлі' },
+    'Mtskheta-Mtianeti': { ka: 'მცხეთა-მთიანეთი', ru: 'Мцхета-Мтианети', tr: 'Mtsheta-Mtianeti', ar: 'متسخيتا-متيانيتي', he: 'מצחתה-מתיאנתי', uk: 'Мцхета-Мтіанеті' },
+    "Rach'a-Lechkhumi-Kvemo Svaneti": { ka: 'რაჭა-ლეჩხუმი ქვემო სვანეთი', ru: 'Рача-Лечхуми и Нижняя Сванетия', tr: 'Raca-Leçhumi ve Alt Svaneti', ar: 'راتشا-ليتخومي وسفانيتي السفلى', he: 'רצ\'ה-לצ\'חומי וסוואנטי תחתית', uk: 'Рача-Лечхумі та Нижня Сванетія' },
+    'Samtskhe-Javakheti': { ka: 'სამცხე-ჯავახეთი', ru: 'Самцхе-Джавахети', tr: 'Samtshe-Cavaheti', ar: 'سامتسخه-جافاخيتي', he: 'סאמצחה-ג\'אוואחתי', uk: 'Самцхе-Джавахеті' },
+    'Shida Kartli': { ka: 'შიდა ქართლი', ru: 'Шида-Картли', tr: 'Şida Kartli', ar: 'شيدا كارتلي', he: 'כארתלי פנימית', uk: 'Шида-Картлі' },
+    'Samegrelo-Zemo Svaneti': { ka: 'სამეგრელო-ზემო სვანეთი', ru: 'Самегрело-Верхняя Сванетия', tr: 'Samegrelo-Üst Svaneti', ar: 'ساميغريلو-زيمو سفانيتي', he: 'סמגרלו-סוואנטי עילית', uk: 'Самегрело-Верхня Сванетія' },
+    'Tbilisi': { ka: 'თბილისი', ru: 'Тбилиси', tr: 'Tiflis', ar: 'تبليسي', he: 'טביליסי', uk: 'Тбілісі' },
 
     /* --- Footer --- */
     'The best choice for a special journey.': {

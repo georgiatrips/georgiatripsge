@@ -6,6 +6,7 @@
 <title>Saved Tours - Georgia Trips</title>
 <meta name="description" content="View your saved tours and favorite destinations with Georgia Trips.">
 <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="mobile.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="dns-prefetch" href="https://flagcdn.com">
 <link rel="dns-prefetch" href="https://api.mymemory.translated.net">
@@ -227,7 +228,7 @@
         <a href="international-tours.html">International Tours</a>
       </div>
     </div>
-    <a href="cars.html">Cars</a>
+    <a href="cars.html">Transport</a>
     <a href="posts.html">Posts</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
@@ -318,7 +319,7 @@
       <ul>
         <li><a href="index.html">Home</a></li>
         <li><a href="domestic-tours.html">Tours</a></li>
-        <li><a href="cars.html">Cars</a></li>
+        <li><a href="cars.html">Transport</a></li>
         <li><a href="posts.html">Posts</a></li>
         <li><a href="about.html">About</a></li>
       </ul>
@@ -341,7 +342,7 @@
   </div>
   <div class="footer-bottom">
     <p>© 2026 Georgia Trips. All rights reserved.</p>
-    <p><a href="privacy-policy.html">Privacy Policy</a> · <a href="terms.html">Terms</a></p>
+    <p><a href="privacy-policy.html">Privacy Policy</a> • <a href="terms.html">Terms</a></p>
     <p>developed by <a href="https://www.instagram.com/lominadzee10/" target="_blank">lominadzee10</a></p>
   </div>
 </footer>
@@ -351,7 +352,7 @@
 <script type="module" src="auth.js"></script>
 <script type="module">
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { getFirestore, collection, getDocs, doc, getDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
   
   function waitForAuth() {
     return new Promise((resolve) => {
@@ -374,7 +375,8 @@
     savedGrid.innerHTML = `<p style="grid-column:1/-1;text-align:center;">${tFn('loading_saved_tours')}</p>`;
     
     try {
-      const savedSnap = await getDocs(collection(db, 'users', userId, 'savedTours'));
+      const q = query(collection(db, 'users', userId, 'savedTours'), orderBy('savedAt', 'desc'));
+      const savedSnap = await getDocs(q);
       const savedIds = savedSnap.docs.map(doc => doc.id);
       
       if (savedIds.length === 0) {
@@ -424,7 +426,14 @@
   }
   
   initSavedTours();
+
+  // Refresh saved-list when another part of the app changes saved tours
+  window.addEventListener('savedToursChanged', (e) => {
+    const userId = e?.detail?.userId || (window.firebaseAuth && window.firebaseAuth.auth && window.firebaseAuth.auth.currentUser && window.firebaseAuth.auth.currentUser.uid);
+    if (userId) fetchSavedTours(userId);
+  });
 </script>
 
 </body>
 </html>
+

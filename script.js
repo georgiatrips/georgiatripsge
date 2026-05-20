@@ -16,7 +16,8 @@ import {
   deleteDoc,
   getDoc,
   query, 
-  orderBy 
+  orderBy,
+  where
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
@@ -322,6 +323,7 @@ function showToast(message, type = 'success') {
 async function syncSaveButtons() {
   if (!auth.currentUser) {
     document.querySelectorAll('.save-tour-btn').forEach(btn => btn.classList.remove('active'));
+    const statEl = document.getElementById('stat-saved'); if (statEl) statEl.textContent = '0';
     return;
   }
   try {
@@ -334,10 +336,64 @@ async function syncSaveButtons() {
         btn.classList.remove('active');
       }
     });
+    // Update saved counter if present
+    const statEl = document.getElementById('stat-saved');
+    if (statEl) statEl.textContent = String(savedIds.length);
   } catch (e) {
     console.error("Sync error:", e);
   }
 }
+
+// Update bookings count for the current user
+async function updateBookingCount(userId) {
+  if (!userId) return;
+  try {
+    const tourQ = query(collection(db, 'tourBookings'), where('userId', '==', userId));
+    const carQ = query(collection(db, 'carBookings'), where('userId', '==', userId));
+    const [tourSnap, carSnap] = await Promise.all([getDocs(tourQ), getDocs(carQ)]);
+    const total = (tourSnap?.size || 0) + (carSnap?.size || 0);
+    const el = document.getElementById('stat-booked'); if (el) el.textContent = String(total);
+  } catch (e) {
+    console.error('Failed to update booking count:', e);
+  }
+}
+
+// Update reviews count for the current user — tries userId then email
+async function updateReviewCount(user) {
+  if (!user) return;
+  try {
+    const uid = user.uid;
+    const email = user.email;
+    let count = 0;
+    // Try fields commonly used for authors
+    const q1 = query(collection(db, 'reviews'), where('userId', '==', uid));
+    const snap1 = await getDocs(q1);
+    count = snap1.size;
+    if (count === 0 && email) {
+      const q2 = query(collection(db, 'reviews'), where('email', '==', email));
+      const snap2 = await getDocs(q2);
+      count = snap2.size;
+    }
+    const el = document.getElementById('stat-reviews'); if (el) el.textContent = String(count);
+  } catch (e) {
+    console.error('Failed to update review count:', e);
+  }
+}
+
+// Listen for events dispatched when data changes elsewhere in the app
+window.addEventListener('savedToursChanged', (e) => {
+  const userId = e?.detail?.userId || (auth && auth.currentUser && auth.currentUser.uid);
+  if (userId) syncSaveButtons();
+});
+window.addEventListener('bookingsChanged', (e) => {
+  const userId = e?.detail?.userId || (auth && auth.currentUser && auth.currentUser.uid);
+  if (userId) updateBookingCount(userId);
+});
+window.addEventListener('reviewsChanged', (e) => {
+  const user = (auth && auth.currentUser) || (e && e.detail && e.detail.user);
+  if (user) updateReviewCount(user);
+});
+
 
 /**
  * ტურის შენახვა ან წაშლა ბაზიდან
@@ -361,10 +417,16 @@ async function toggleSaveTour(tourId, event) {
       await deleteDoc(saveRef);
       showToast('Tour removed from saved', 'info');
       document.querySelectorAll(`[data-save-id="${tourId}"]`).forEach(btn => btn.classList.remove('active'));
+      // Notify other modules
+      if (typeof window.syncSaveButtons === 'function') window.syncSaveButtons();
+      if (auth.currentUser) window.dispatchEvent(new CustomEvent('savedToursChanged', { detail: { userId: auth.currentUser.uid } }));
     } else {
       await setDoc(saveRef, { savedAt: new Date().toISOString() });
       showToast('Tour saved successfully!', 'success');
       document.querySelectorAll(`[data-save-id="${tourId}"]`).forEach(btn => btn.classList.add('active'));
+      // Notify other modules
+      if (typeof window.syncSaveButtons === 'function') window.syncSaveButtons();
+      if (auth.currentUser) window.dispatchEvent(new CustomEvent('savedToursChanged', { detail: { userId: auth.currentUser.uid } }));
     }
   } catch (error) {
     console.error("Error toggling save:", error);
@@ -409,14 +471,45 @@ function initNavbar() {
   const toggle = document.querySelector('.nav-toggle');
   const links = document.querySelector('.nav-links');
 
+  // Throttled scroll handler via rAF for smooth mobile performance
+  let _scrollTick = false;
   window.addEventListener('scroll', () => {
-    navbar.classList.toggle('scrolled', window.scrollY > 40);
-  });
+    if (_scrollTick) return;
+    _scrollTick = true;
+    requestAnimationFrame(() => {
+      navbar.classList.toggle('scrolled', window.scrollY > 40);
+      _scrollTick = false;
+    });
+  }, { passive: true });
 
-  if (toggle) {
+  // Helper: close mobile menu
+  function closeMobileMenu() {
+    if (toggle && links) {
+      toggle.classList.remove('open');
+      links.classList.remove('open');
+    }
+  }
+
+  if (toggle && links) {
     toggle.addEventListener('click', () => {
       toggle.classList.toggle('open');
       links.classList.toggle('open');
+    });
+
+    // Close mobile menu when any nav link is clicked
+    links.querySelectorAll('a[href]').forEach(a => {
+      a.addEventListener('click', () => {
+        if (window.innerWidth <= 768) closeMobileMenu();
+      });
+    });
+
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth <= 768 && links.classList.contains('open')) {
+        if (!navbar.contains(e.target) && !links.contains(e.target) && !toggle.contains(e.target)) {
+          closeMobileMenu();
+        }
+      }
     });
   }
 
@@ -774,6 +867,65 @@ function renderFeaturedSlider() {
   initFeaturedSlider();
 }
 
+// ===== BATUMI SLIDER =====
+function renderBatumiSlider() {
+  const slider = document.getElementById('batumi-slider');
+  if (!slider) return;
+
+  const tFn = (k) => (window.t ? window.t(k) : k);
+  const batumiTours = toursData.filter(t => t.isBatumi === true);
+
+  if (batumiTours.length === 0) {
+    slider.innerHTML = `<p style="text-align:center;color:var(--text-mid);padding:3rem;">${tFn('empty_tours')}</p>`;
+    const section = document.querySelector('.batumi-tours-section');
+    if (section) section.style.display = 'none';
+    return;
+  } else {
+    const section = document.querySelector('.batumi-tours-section');
+    if (section) section.style.display = 'block';
+  }
+
+  const slides = [];
+  for (let i = 0; i < batumiTours.length; i += 2) {
+    const pair = batumiTours.slice(i, i + 2);
+    const cardsHtml = pair.map((tour, index) => {
+      const title = L(tour.title);
+      const description = truncateText(L(tour.desc), 120);
+      return `
+        <div class="batumi-card">
+          <div class="batumi-img">
+            <img src="${tour.img}" alt="${title}" loading="lazy">
+            <span class="batumi-badge">${tFn('batumi_badge')}</span>
+          </div>
+          <div class="batumi-body">
+            <h3 class="batumi-title">${title}</h3>
+            <p class="batumi-desc">${description}</p>
+            <div class="batumi-info">
+              ${tour.days ? `<div class="batumi-info-item"><span>🕒</span><strong>${tFn('n_days').replace('{n}', tour.days)}</strong></div>` : ''}
+              ${tour.nights ? `<div class="batumi-info-item"><span>🌙</span><strong>${tFn('n_nights').replace('{n}', tour.nights)}</strong></div>` : ''}
+              <div class="batumi-info-item"><span>👥</span><strong>${tFn('n_people_count').replace('{n}', tour.minPeople || '1')}</strong></div>
+            </div>
+            <div class="batumi-footer">
+              <div>
+                <div class="batumi-price-label">${tFn('from_price')}</div>
+                <div class="batumi-price-value">${tour.price || tFn('on_request')}</div>
+              </div>
+              <a href="tour-detail.html?id=${encodeURIComponent(tour.id || '')}" class="batumi-cta" onclick="goToTourDetail('${getSafeAttr(tour.id)}'); return false;">
+                ${tFn('explore_now')} →
+              </a>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    slides.push(`<div class="batumi-slide">${cardsHtml}</div>`);
+  }
+
+  slider.innerHTML = slides.join('');
+
+  initBatumiSlider();
+}
+
 function renderMapOverlay() {
   const overlay = document.getElementById('map-overlay-info');
   if (!overlay) return;
@@ -1042,6 +1194,72 @@ function initFeaturedSlider() {
   updateSlider();
 }
 
+// ===== BATUMI SLIDER INIT =====
+function initBatumiSlider() {
+  const slider = document.getElementById('batumi-slider');
+  const dotsContainer = document.getElementById('batumi-dots');
+  
+  if (!slider) return;
+  
+  const slides = slider.querySelectorAll('.batumi-slide');
+  if (slides.length === 0) return;
+  
+  let currentIndex = 0;
+  let autoplay = null;
+  
+  if (dotsContainer) {
+    dotsContainer.innerHTML = '';
+    slides.forEach((_, i) => {
+      const dot = document.createElement('button');
+      dot.classList.add('slider-dot');
+      if (i === 0) dot.classList.add('active');
+      dot.addEventListener('click', () => goToSlide(i));
+      dotsContainer.appendChild(dot);
+    });
+  }
+  
+  function updateSlider() {
+    slides.forEach((slide, i) => {
+      slide.style.display = i === currentIndex ? 'grid' : 'none';
+      slide.classList.toggle('active', i === currentIndex);
+    });
+    if (dotsContainer) {
+      const dots = dotsContainer.querySelectorAll('.slider-dot');
+      dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === currentIndex);
+      });
+    }
+  }
+  
+  function goToSlide(index) {
+    currentIndex = index;
+    updateSlider();
+  }
+  
+  function nextSlide() {
+    currentIndex = (currentIndex + 1) % slides.length;
+    updateSlider();
+  }
+  
+  function startAutoplay() {
+    stopAutoplay();
+    autoplay = setInterval(nextSlide, 7000);
+  }
+  
+  function stopAutoplay() {
+    if (autoplay) {
+      clearInterval(autoplay);
+      autoplay = null;
+    }
+  }
+  
+  slider.addEventListener('mouseenter', stopAutoplay);
+  slider.addEventListener('mouseleave', startAutoplay);
+  
+  updateSlider();
+  startAutoplay();
+}
+
 // ===== SCROLL SLIDER =====
 function initScrollSlider(gridId, prevId, nextId) {
   const grid = document.getElementById(gridId);
@@ -1133,6 +1351,7 @@ function renderAllContent() {
   try { renderPosts('stories-grid', 6); } catch (e) {}
   try { renderReviews(); } catch (e) {}
   try { renderFeaturedSlider(); } catch (e) {}
+  try { renderBatumiSlider(); } catch (e) {}
   try { renderMapOverlay(); } catch (e) {}
 
   const tEmpty = (k) => (window.t ? window.t(k) : k);
@@ -1166,7 +1385,7 @@ function renderAllContent() {
 let _idxWatchdog = null;
 let _idxWatchdogBusy = false;
 let _idxWatchdogAttempts = 0;
-const IDX_WATCHDOG_MAX_ATTEMPTS = 60; // ~60 s hard cap for slow connections
+const IDX_WATCHDOG_MAX_ATTEMPTS = 10; // ~10 s hard cap for slow connections
 const IDX_WATCHDOG_INTERVAL_MS = 1000;
 
 function stopIndexWatchdog() {
@@ -1202,7 +1421,12 @@ async function fetchWithTimeout(promise, timeoutMs = 8000) {
 async function tickIndexWatchdog() {
   if (indexContentVisible()) { stopIndexWatchdog(); return; }
   if (_idxWatchdogBusy) { scheduleIndexWatchdog(); return; }
-  if (_idxWatchdogAttempts >= IDX_WATCHDOG_MAX_ATTEMPTS) { stopIndexWatchdog(); return; }
+  if (_idxWatchdogAttempts >= IDX_WATCHDOG_MAX_ATTEMPTS) { 
+    stopIndexWatchdog(); 
+    // Remove loaders so UI doesn't look frozen if network fails completely
+    document.querySelectorAll('.gt-card-loader').forEach(l => l.remove());
+    return; 
+  }
   _idxWatchdogAttempts++;
   _idxWatchdogBusy = true;
   try {
@@ -1242,6 +1466,7 @@ async function loadDataAndInit() {
   initScrollSlider('domestic-tours-grid', 'domestic-prev', 'domestic-next');
   initScrollSlider('international-tours-grid', 'international-prev', 'international-next');
   initScrollSlider('cars-grid', 'cars-prev', 'cars-next');
+  initScrollSlider('transport-photos-grid', 'transport-prev', 'transport-next');
   const toursPageGrid = document.getElementById('tours-page-grid');
   if (toursPageGrid) initTourTabsPage();
 
@@ -1314,8 +1539,27 @@ async function loadDataAndInit() {
 }
 
 // ===== INIT =====
+function insertWhatsAppFloatingButton() {
+  if (document.getElementById('whatsapp-float-link')) return;
+  const whatsappUrl = 'https://api.whatsapp.com/send/?phone=995504220020&text=Hello%2C%20I%20have%20a%20question%20about%20your%20trips.';
+  const link = document.createElement('a');
+  link.id = 'whatsapp-float-link';
+  link.className = 'whatsapp-float';
+  link.href = whatsappUrl;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.setAttribute('aria-label', 'Chat on WhatsApp');
+  link.innerHTML = `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.41 0 .01 5.399 0 12.039c0 2.123.554 4.197 1.606 6.041l-1.706 6.23 6.375-1.671a11.8 11.8 0 005.772 1.503h.005c6.64 0 12.04-5.4 12.043-12.04a11.82 11.82 0 00-3.414-8.423z"/>
+    </svg>
+  `;
+  document.body.appendChild(link);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
+  insertWhatsAppFloatingButton();
   // ავტორიზაციის სტატუსის მოსმენა
   onAuthStateChanged(auth, (user) => {
     // ყოველთვის გავუშვათ sync, რომ თუ გამოვიდა სისტემიდან, გულები გათეთრდეს
@@ -1355,6 +1599,7 @@ window.reRenderAllData = function reRenderAllData() {
   try { renderCars('cars-grid'); } catch {}
   try { renderPosts('stories-grid', 6); } catch {}
   try { renderFeaturedSlider(); } catch {}
+  try { renderBatumiSlider(); } catch {}
   try { renderMapOverlay(); } catch {}
 
   // Cars page full list

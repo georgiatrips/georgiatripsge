@@ -168,6 +168,28 @@
 
   // ---------- apply ----------
   let runToken = 0;
+  let origTitle = null;
+
+  // ---------- mutation observer helper functions ----------
+  let globalObserver = null;
+  function startObserving() {
+    if (!globalObserver) return;
+    try {
+      globalObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+        attributes: false
+      });
+    } catch (e) {}
+  }
+  function stopObserving() {
+    if (globalObserver) {
+      try {
+        globalObserver.disconnect();
+      } catch (e) {}
+    }
+  }
 
   /**
    * Synchronous phase: translate every node we can from the in-memory
@@ -179,15 +201,23 @@
     const lang = targetLang || currentLang();
     const textNodes = collectTextNodes(document.body);
     const attrSpecs = collectAttrSpecs(document.body);
+    if (origTitle == null) origTitle = document.title;
 
     // Restoring to source — dump originals back and exit.
     if (lang === SRC) {
+      if (document.title !== origTitle) {
+        document.title = origTitle;
+      }
       textNodes.forEach((n) => {
-        if (n.__i18nOrig != null) n.nodeValue = n.__i18nOrig;
+        if (n.__i18nOrig != null && n.nodeValue !== n.__i18nOrig) {
+          n.nodeValue = n.__i18nOrig;
+        }
       });
       attrSpecs.forEach(({ el, attr }) => {
         const v = el.__i18nOrigAttrs && el.__i18nOrigAttrs[attr];
-        if (v != null) el.setAttribute(attr, v);
+        if (v != null && el.getAttribute(attr) !== v) {
+          el.setAttribute(attr, v);
+        }
       });
       return { lang, missing: new Set(), textNodes, attrSpecs };
     }
@@ -208,7 +238,10 @@
       const trimmed = orig.trim();
       const hit = resolve(trimmed);
       if (hit != null) {
-        n.nodeValue = preserveWhitespace(orig, hit);
+        const val = preserveWhitespace(orig, hit);
+        if (n.nodeValue !== val) {
+          n.nodeValue = val;
+        }
       } else {
         missing.add(trimmed);
       }
@@ -220,11 +253,25 @@
       const trimmed = String(orig).trim();
       const hit = resolve(trimmed);
       if (hit != null) {
-        el.setAttribute(attr, hit);
+        if (el.getAttribute(attr) !== hit) {
+          el.setAttribute(attr, hit);
+        }
       } else {
         missing.add(trimmed);
       }
     });
+
+    if (origTitle && isTranslatable(origTitle)) {
+      const trimmedTitle = origTitle.trim();
+      const titleHit = resolve(trimmedTitle);
+      if (titleHit != null) {
+        if (document.title !== titleHit) {
+          document.title = titleHit;
+        }
+      } else {
+        missing.add(trimmedTitle);
+      }
+    }
 
     return { lang, missing, textNodes, attrSpecs };
   }
@@ -238,7 +285,9 @@
    */
   function apply(targetLang) {
     const myRun = ++runToken;
+    stopObserving();
     const { lang, missing, textNodes, attrSpecs } = applySync(targetLang);
+    startObserving();
 
     if (lang === SRC || !missing.size || !window.GTTranslate) {
       return Promise.resolve();
@@ -268,18 +317,38 @@
         if (cache[key] != null) return cache[key];
         return null;
       }
+      
+      stopObserving();
       textNodes.forEach((n) => {
         const orig = n.__i18nOrig;
         if (orig == null) return;
         const hit = resolve(orig.trim());
-        if (hit != null) n.nodeValue = preserveWhitespace(orig, hit);
+        if (hit != null) {
+          const val = preserveWhitespace(orig, hit);
+          if (n.nodeValue !== val) {
+            n.nodeValue = val;
+          }
+        }
       });
       attrSpecs.forEach(({ el, attr }) => {
         const orig = el.__i18nOrigAttrs[attr];
         if (orig == null) return;
         const hit = resolve(String(orig).trim());
-        if (hit != null) el.setAttribute(attr, hit);
+        if (hit != null) {
+          if (el.getAttribute(attr) !== hit) {
+            el.setAttribute(attr, hit);
+          }
+        }
       });
+      if (origTitle && isTranslatable(origTitle)) {
+        const titleHit = resolve(origTitle.trim());
+        if (titleHit != null) {
+          if (document.title !== titleHit) {
+            document.title = titleHit;
+          }
+        }
+      }
+      startObserving();
     })();
 
     return fallback;
@@ -296,27 +365,29 @@
   }
 
   function initObserver() {
-    const mo = new MutationObserver((muts) => {
+    if (globalObserver) return;
+    globalObserver = new MutationObserver((muts) => {
+      let shouldReapply = false;
       for (let i = 0; i < muts.length; i++) {
         const m = muts[i];
         if ((m.type === 'childList' && (m.addedNodes.length || m.removedNodes.length)) || m.type === 'characterData') {
-          scheduleReapply();
-          return;
+          shouldReapply = true;
+          break;
         }
       }
+      if (shouldReapply) {
+        scheduleReapply();
+      }
     });
-    mo.observe(document.body, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-      attributes: false
-    });
+    startObserving();
   }
 
   function init() {
     // Sync dictionary pass — the page is visually localized the moment
     // this returns (no awaits, no network).
+    stopObserving();
     applySync(currentLang());
+    startObserving();
 
     // Lift the anti-FOUC boot overlay NOW — don't wait for the background
     // API fallback for stragglers.

@@ -9,23 +9,19 @@ service cloud.firestore {
     // საჯარო ინფორმაცია
     match /tours/{tourId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin()
-        && request.resource.data.keys().hasAll(['title', 'img']);
+      allow write: if isAdmin();
     }
     match /cars/{carId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin()
-        && request.resource.data.keys().hasAll(['title', 'img']);
+      allow write: if isAdmin();
     }
     match /posts/{postId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin()
-        && request.resource.data.keys().hasAll(['title', 'img']);
+      allow write: if isAdmin();
     }
     match /featuredTours/{featuredId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin()
-        && request.resource.data.keys().hasAll(['title', 'img']);
+      allow write: if isAdmin();
     }
 
     // Leads / Inbox collections

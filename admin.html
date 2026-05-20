@@ -1,4 +1,4 @@
-﻿﻿﻿﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <link rel="icon" type="image/png" href="logo.png">
@@ -950,13 +950,13 @@
         <a href="international-tours.html">International Tours</a>
       </div>
     </div>
-    <a href="cars.html">Cars</a>
+    <a href="cars.html">ტრანსპორტი</a>
     <a href="posts.html">Posts</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
     <div class="nav-dropdown nav-lang-dropdown" id="nav-lang-dropdown">
       <button class="nav-dropdown-btn nav-lang-btn" id="nav-lang-btn" aria-label="Select language" aria-haspopup="true">
-        <span class="lang-flag" id="nav-lang-flag"><img src="https://flagcdn.com/w20/ge.png" alt="ქართული"></span>
+        <span class="lang-flag" id="nav-lang-flag"><img src="https://flagcdn.com/w20/ge.png" alt="GE"></span>
         <span class="lang-code" id="nav-lang-code">KA</span>
         <span class="lang-caret">▼</span>
       </button>
@@ -990,7 +990,7 @@
     <h1>Admin Panel</h1>
     <div class="admin-tabs">
       <button class="admin-tab active" data-panel="tours">Tours</button>
-      <button class="admin-tab" data-panel="cars">Cars</button>
+      <button class="admin-tab" data-panel="cars">Transport</button>
       <button class="admin-tab" data-panel="posts">Posts</button>
       <button class="admin-tab" data-panel="featured">Featured</button>
       <button class="admin-tab" data-panel="reviews">Reviews</button>
@@ -1138,7 +1138,7 @@
             </div>
           </label>
           <label style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px;">
-            <span>ბათუმის ტური (Batumi Tour)</span>
+            <span>Batumi Tour</span>
             <div class="toggle-switch">
               <input type="checkbox" id="tour-batumi" class="toggle-checkbox">
               <label for="tour-batumi" class="toggle-label">
@@ -1556,11 +1556,12 @@ import {
   getPosts, addPost, updatePost, deletePost,
   getFeaturedTours, addFeaturedTour, updateFeaturedTour, deleteFeaturedTour,
   getReviews, addReview, updateReview, deleteReview,
-  getTourBookings, getCarBookings, getSubscribers, getContactMessages
+  getTourBookings, getCarBookings, getSubscribers, getContactMessages,
+  auth, onAuthStateChanged, isAdmin
 } from './firebase-config.js';
 // NOTE: Admin panel is intentionally open (no auth gate).
 // Data access is controlled by your Firestore Security Rules.
-loadAllData();
+waitForAuthThenLoadData();
 
 // Store data locally
 let toursData = [];
@@ -1572,6 +1573,10 @@ let tourBookingsData = [];
 let carBookingsData = [];
 let subscribersData = [];
 let contactMessagesData = [];
+
+let currentUser = null;
+let isAdminUser = false;
+let authStateInitialized = false;
 
 // Tour highlights state (for add-one-at-a-time input)
 let tourHighlights = [];
@@ -1615,20 +1620,64 @@ function escapeHTML(str) {
   return div.innerHTML;
 }
 
+function showAdminAccessRequired(message) {
+  if (window.showToast) {
+    window.showToast(message, 'error');
+  } else {
+    console.warn(message);
+  }
+}
+
+async function waitForAuthThenLoadData() {
+  showLoading('Checking authentication...');
+  onAuthStateChanged(auth, async (user) => {
+    currentUser = user;
+    isAdminUser = !!(user && user.email && isAdmin(user.email));
+
+    if (!user) {
+      showAdminAccessRequired('Please sign in with an admin account to edit protected data and view leads.');
+    } else if (!isAdminUser) {
+      showAdminAccessRequired('Signed in with a non-admin account. Editing protected collections is disabled.');
+    } else if (window.showToast) {
+      window.showToast('Admin authentication detected. Full access enabled.', 'success');
+    }
+
+    if (!authStateInitialized) {
+      authStateInitialized = true;
+      await loadAllData();
+    } else {
+      await loadAllData();
+    }
+  });
+}
+
 // Load all data on page load
 async function loadAllData() {
   showLoading('Loading data...');
   try {
-    [toursData, carsData, postsData, featuredData, reviewsData, tourBookingsData, carBookingsData, subscribersData, contactMessagesData] = await Promise.all([
+    const baseFetches = [
       getTours(),
       getCars(),
       getPosts(),
       getFeaturedTours(),
-      getReviews(),
+      getReviews()
+    ];
+
+    const leadFetches = isAdminUser ? [
       getTourBookings(),
       getCarBookings(),
       getSubscribers(),
       getContactMessages()
+    ] : [
+      Promise.resolve([]),
+      Promise.resolve([]),
+      Promise.resolve([]),
+      Promise.resolve([])
+    ];
+
+    [toursData, carsData, postsData, featuredData, reviewsData, tourBookingsData, carBookingsData, subscribersData, contactMessagesData] = await Promise.all([
+      ...baseFetches,
+      ...leadFetches
     ]);
     renderTours();
     renderCars();
@@ -1705,7 +1754,7 @@ function renderTours() {
       <div class="admin-card-img">
         <img src="${tour.img}" alt="${escapeHTML(gt(tour.title))}">
         <span class="admin-card-badge">${tour.type || tour.tourType || 'domestic'}</span>
-        ${tour.isFeatured ? '<span class="admin-card-featured">★ Best Offer</span>' : ''}
+        ${tour.isFeatured ? '<span class="admin-card-featured">? Best Offer</span>' : ''}
       </div>
       <div class="admin-card-body">
         <h3 class="admin-card-title">${escapeHTML(gt(tour.title))}</h3>
@@ -1809,6 +1858,11 @@ window.editTour = function(id) {
 };
 
 window.saveTour = async function() {
+  if (!isAdminUser) {
+    showToast('Admin rights required to save tours. Please sign in with an admin account.', 'error');
+    return;
+  }
+
   const id = document.getElementById('tour-id').value;
   const imageFile = document.getElementById('tour-image').files[0];
   let imageUrl = document.getElementById('tour-image-url').value;
@@ -1901,7 +1955,7 @@ window.syncTourDurationLabel = function() {
     durationField.value = '';
     return;
   }
-  durationField.value = `${days} დღე / ${Math.max(nights, 0)} ღამე`;
+  durationField.value = `${days} days / ${Math.max(nights, 0)} nights`;
 };
 
 window.confirmDeleteTour = function(id) {
@@ -1911,6 +1965,11 @@ window.confirmDeleteTour = function(id) {
 };
 
 async function deleteTourItem(id) {
+  if (!isAdminUser) {
+    showToast('Admin rights required to delete tours. Please sign in with an admin account.', 'error');
+    return;
+  }
+
   showLoading('Deleting tour...');
   try {
     await deleteTour(id);
@@ -2399,7 +2458,7 @@ function renderReviews() {
         <div style="display:flex; gap:15px; align-items:center; margin-bottom:1rem;">
           <div>
             <h3 class="admin-card-title" style="margin:0;">${rev.name}</h3>
-            <div style="color:#FFD700;">${'★'.repeat(rev.rating)}${'☆'.repeat(5-rev.rating)}</div>
+            <div style="color:#FFD700;">${'?'.repeat(rev.rating)}${'?'.repeat(5-rev.rating)}</div>
           </div>
         </div>
         <p class="admin-card-desc">${rev.text}</p>
@@ -2619,3 +2678,4 @@ document.addEventListener('DOMContentLoaded', () => {
 <script type="module" src="auth.js"></script>
 </body>
 </html>
+

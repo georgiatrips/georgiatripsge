@@ -1,0 +1,40 @@
+# Georgia Trips – https://georgiatrips.ge
+# Allow all search engines and AI crawlers
+
+User-agent: *
+Allow: /
+
+# AI / LLM Crawlers – explicitly allowed
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Anthropic-AI
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+# Block admin panel
+User-agent: *
+Disallow: /admin.html
+Disallow: /login.html
+Disallow: /profile.html
+Disallow: /saved-tours.html
+
+# Sitemap
+Sitemap: https://georgiatrips.ge/sitemap.xml

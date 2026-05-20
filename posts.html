@@ -1,13 +1,15 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="bg-background">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="logo.png">
-  <title>Stories & Blog – Georgia Trips</title>
+  <title>Stories & Blog | Georgia Trips Travel Guides & Tips</title>
   <meta name="description"
-    content="Travel guides, insider tips and authentic stories from Georgia. Read about culture, food, wine, adventure and more.">
+    content="სამოგზაურო ბლოგი და სტატიები საქართველოს შესახებ. Travel guides, insider tips and authentic stories from Georgia — culture, food, wine, adventure. Блог о путешествиях по Грузии. مدونة السفر جورجيا.">
+  <meta name="keywords" content="Georgia travel blog, ბლოგი საქართველო, блог Грузия, travel tips Georgia, Georgia stories, seyahat rehberi Gürcistan, مدونة سفر جورجيا, בלוג גאורגיה, блог Грузія, wine tour guide, Batumi guide">
+  <script src="seo-head.js"></script>
   <!-- Speed up Firebase / fonts / flag CDN handshakes. -->
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
@@ -24,6 +26,7 @@
   <script src="lang.js" defer></script>
   <script src="ui-translate.js" defer></script>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="mobile.css">
 </head>
 
 <body>
@@ -42,14 +45,14 @@
           <a href="international-tours.html">International Tours</a>
         </div>
       </div>
-      <a href="cars.html">Cars</a>
+      <a href="cars.html">Transport</a>
       <a href="posts.html" class="active">Posts</a>
       <a href="about.html">About</a>
       <a href="contact.html">Contact</a>
       <div class="nav-dropdown nav-lang-dropdown" id="nav-lang-dropdown">
         <button class="nav-dropdown-btn nav-lang-btn" id="nav-lang-btn" aria-label="Select language"
           aria-haspopup="true">
-          <span class="lang-flag" id="nav-lang-flag"><img src="https://flagcdn.com/w20/ge.png" alt="ქართული"></span>
+          <span class="lang-flag" id="nav-lang-flag"><img src="https://flagcdn.com/w20/ge.png" alt="GE"></span>
           <span class="lang-code" id="nav-lang-code">KA</span>
           <span class="lang-caret">▼</span>
         </button>
@@ -90,7 +93,7 @@
     <p>Explore authentic Georgian stories, local guides, and travel insights from our experts.</p>
     <div class="breadcrumb">
       <a href="index.html">Home</a>
-      <span class="sep">›</span>
+      <span class="sep">•</span>
       <span class="current">Posts</span>
     </div>
   </div>
@@ -100,7 +103,7 @@
       <div class="section-header">
         <span class="section-tag">All Articles</span>
         <h2>Latest from the Blog</h2>
-        <p>Practical travel advice and inspiring stories — updated regularly by our local team.</p>
+        <p>Practical travel advice and inspiring stories • updated regularly by our local team.</p>
         <div class="divider"></div>
       </div>
       <div class="posts-grid" id="posts-page-grid" data-no-translate>
@@ -111,7 +114,7 @@
   </section>
 
   <!-- Newsletter -->
-  <section style="background:var(--dark-blue);padding:4rem 2rem;">
+  <section class="surface-panel-dark" style="padding:4rem 2rem;">
     <div class="container" style="max-width:640px;text-align:center;">
       <span class="section-tag" style="color:var(--teal);">Newsletter</span>
       <h2
@@ -122,7 +125,7 @@
       <div style="display:flex;gap:0.75rem;max-width:440px;margin:0 auto;flex-wrap:wrap;">
         <input type="email" placeholder="your@email.com"
           style="flex:1;min-width:200px;padding:0.8rem 1rem;border-radius:30px;border:1.5px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:var(--white);font-family:'Poppins',sans-serif;outline:none;">
-        <button class="btn-primary" style="border-radius:30px;">Subscribe ✦</button>
+        <button class="btn-primary" style="border-radius:30px;">Subscribe ?</button>
       </div>
       <p style="font-size:0.78rem;color:rgba(255,255,255,0.35);margin-top:1rem;">No spam. Unsubscribe any time.</p>
     </div>
@@ -136,7 +139,7 @@
           <div class="logo-icon"><img src="logo.png" alt="Georgia Trips Logo" class="logo-img"></div>
           Georgia<span>Trips</span>
         </div>
-        <p>Your trusted travel partner in Georgia. Crafting genuine experiences since 2017.</p>
+        <p>The best choice for a special journey.</p>
         <div class="footer-social">
           <a href="https://www.facebook.com/profile.php?id=61588059054976" class="social-btn" aria-label="Facebook"
             target="_blank"><svg viewBox="0 0 24 24">
@@ -170,7 +173,7 @@
         <ul>
           <li><a href="index.html">Home</a></li>
           <li><a href="domestic-tours.html">Tours</a></li>
-          <li><a href="cars.html">Cars</a></li>
+          <li><a href="cars.html">Transport</a></li>
           <li><a href="posts.html">Posts</a></li>
           <li><a href="about.html">About</a></li>
         </ul>
@@ -193,7 +196,7 @@
     </div>
     <div class="footer-bottom">
       <p>© 2026 Georgia Trips. All rights reserved.</p>
-      <p><a href="#">Privacy Policy</a> · <a href="#">Terms</a></p>
+      <p><a href="privacy-policy.html">Privacy Policy</a> • <a href="terms.html">Terms</a></p>
       <p>developed by <a href="https://www.instagram.com/lominadzee10/" target="_blank">lominadzee10</a></p>
     </div>
   </footer>
@@ -202,6 +205,8 @@
   <script src="i18n-data.js"></script>
   <script type="module" src="script.js"></script>
   <script type="module" src="auth.js"></script>
+
+<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "314352f1c1eb4623a31c466d4da285b8"}'></script><!-- End Cloudflare Web Analytics -->
 
 </body>
 

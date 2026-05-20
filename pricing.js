@@ -4,6 +4,8 @@
     USD: { code: 'USD', symbol: '$', label: 'Dollar' },
     EUR: { code: 'EUR', symbol: '€', label: 'Euro' },
     TRY: { code: 'TRY', symbol: '₺', label: 'Lira' },
+    RUB: { code: 'RUB', symbol: '₽', label: 'Ruble' },
+    SAR: { code: 'SAR', symbol: 'ر.س', label: 'Riyal' },
   };
 
   const SELECTED_CURRENCY_KEY = 'gt_selected_currency';
@@ -14,6 +16,8 @@
     USD: 0.37,
     EUR: 0.34,
     TRY: 14.25,
+    RUB: 30,
+    SAR: 1.02,
   };
 
   const savedCurrency = localStorage.getItem(SELECTED_CURRENCY_KEY);
@@ -64,6 +68,8 @@
     if (value.includes('₾')) return 'GEL';
     if (value.includes('€')) return 'EUR';
     if (value.includes('₺')) return 'TRY';
+    if (value.includes('₽')) return 'RUB';
+    if (value.includes('ر.س') || /SAR/.test(value)) return 'SAR';
     if (value.includes('$')) return 'USD';
     return DEFAULT_CURRENCY;
   }
@@ -233,9 +239,11 @@
 
       state.rates = {
         GEL: 1,
-        USD: payload.rates.USD,
-        EUR: payload.rates.EUR,
-        TRY: payload.rates.TRY,
+        USD: payload.rates.USD || FALLBACK_RATES.USD,
+        EUR: payload.rates.EUR || FALLBACK_RATES.EUR,
+        TRY: payload.rates.TRY || FALLBACK_RATES.TRY,
+        RUB: payload.rates.RUB || FALLBACK_RATES.RUB,
+        SAR: payload.rates.SAR || FALLBACK_RATES.SAR,
       };
       state.lastUpdated = payload.time_last_update_utc || new Date().toISOString();
       state.live = true;
@@ -270,6 +278,8 @@
         <div class="currency-board__item"><strong>${formatAmount(state.rates.USD, 'USD')}</strong><span>USD</span></div>
         <div class="currency-board__item"><strong>${formatAmount(state.rates.EUR, 'EUR')}</strong><span>EUR</span></div>
         <div class="currency-board__item"><strong>${formatAmount(state.rates.TRY, 'TRY')}</strong><span>TRY</span></div>
+        <div class="currency-board__item"><strong>${formatAmount(state.rates.RUB, 'RUB')}</strong><span>RUB</span></div>
+        <div class="currency-board__item"><strong>${formatAmount(state.rates.SAR, 'SAR')}</strong><span>SAR</span></div>
       </div>
       <p class="currency-board__note">Updated: ${timestamp}</p>
     `;
@@ -367,6 +377,7 @@
     renderPriceMarkup,
     formatStoredPrice,
     formatConvertedPrice,
+    convertAmount,
     getSelectedCurrency: () => state.selectedCurrency,
     setSelectedCurrency,
     refreshVisiblePrices,

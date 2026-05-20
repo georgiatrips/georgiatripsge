@@ -1,10 +1,13 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="bg-background">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Post Details – Georgia Trips</title>
-  <meta name="description" content="Read full travel stories, tips and insights from Georgia Trips.">
+  <link rel="icon" type="image/png" href="logo.png">
+  <title>Post Details | Georgia Trips Blog</title>
+  <meta name="description" content="სრული სამოგზაურო სტატია Georgia Trips-ისგან. Read full travel stories, tips and insights from Georgia. Статья о путешествии — Georgia Trips. قصة سفر.">
+  <meta name="keywords" content="Georgia travel story, სტატია საქართველო, статья Грузия, blog post Georgia Trips, seyahat yazısı, مقال سفر, פוסט גאורגיה, стаття Грузія">
+  <script src="seo-head.js"></script>
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,6 +20,7 @@
   <script src="lang.js" defer></script>
   <script src="ui-translate.js" defer></script>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="mobile.css">
   <link rel="stylesheet" href="posts-detail.css">
 </head>
 <body>
@@ -34,13 +38,13 @@
           <a href="international-tours.html">International Tours</a>
         </div>
       </div>
-      <a href="cars.html">Cars</a>
+      <a href="cars.html">Transport</a>
       <a href="posts.html" class="active">Posts</a>
       <a href="about.html">About</a>
       <a href="contact.html">Contact</a>
       <div class="nav-dropdown nav-lang-dropdown" id="nav-lang-dropdown">
         <button class="nav-dropdown-btn nav-lang-btn" id="nav-lang-btn" aria-label="Select language" aria-haspopup="true">
-          <span class="lang-flag" id="nav-lang-flag"><img src="https://flagcdn.com/w20/ge.png" alt="ქართული"></span>
+          <span class="lang-flag" id="nav-lang-flag"><img src="https://flagcdn.com/w20/ge.png" alt="GE"></span>
           <span class="lang-code" id="nav-lang-code">KA</span>
           <span class="lang-caret">▼</span>
         </button>
@@ -70,7 +74,7 @@
     <img id="post-hero-img" src="" alt="Post cover" class="post-hero__img">
     <div class="post-hero__overlay"></div>
     <div class="post-hero__content container">
-      <a href="posts.html" class="post-back-link">← Back to Posts</a>
+      <a href="posts.html" class="post-back-link">? Back to Posts</a>
       <span id="post-category" class="post-category-badge" data-no-translate>Story</span>
       <h1 id="post-title" data-no-translate>Loading...</h1>
       <div class="post-meta-line">
@@ -107,7 +111,7 @@
           <div class="logo-icon"><img src="logo.png" alt="Georgia Trips Logo" class="logo-img"></div>
           Georgia<span>Trips</span>
         </div>
-        <p>Your trusted travel partner in Georgia. Crafting genuine experiences since 2017.</p>
+        <p>The best choice for a special journey.</p>
         <div class="footer-social">
           <a href="https://www.facebook.com/profile.php?id=61588059054976" class="social-btn" aria-label="Facebook"
             target="_blank"><svg viewBox="0 0 24 24">
@@ -141,7 +145,7 @@
         <ul>
           <li><a href="index.html">Home</a></li>
           <li><a href="domestic-tours.html">Tours</a></li>
-          <li><a href="cars.html">Cars</a></li>
+          <li><a href="cars.html">Transport</a></li>
           <li><a href="posts.html">Posts</a></li>
           <li><a href="about.html">About</a></li>
         </ul>
@@ -164,7 +168,7 @@
     </div>
     <div class="footer-bottom">
       <p>© 2026 Georgia Trips. All rights reserved.</p>
-      <p><a href="#">Privacy Policy</a> · <a href="#">Terms</a></p>
+      <p><a href="privacy-policy.html">Privacy Policy</a> • <a href="terms.html">Terms</a></p>
       <p>developed by <a href="https://www.instagram.com/lominadzee10/" target="_blank">lominadzee10</a></p>
     </div>
   </footer>
@@ -173,5 +177,8 @@
   <script src="posts-detail.js"></script>
   <script type="module" src="script.js"></script>
   <script type="module" src="auth.js"></script>
+
+<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "314352f1c1eb4623a31c466d4da285b8"}'></script><!-- End Cloudflare Web Analytics -->
+
 </body>
 </html>

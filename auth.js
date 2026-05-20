@@ -30,7 +30,6 @@ let isLoggedIn = false;
 // Update navbar with user info
 function updateNavbar(user) {
   const userBtn = document.getElementById('nav-user-btn');
-  const userDropdown = document.getElementById('nav-user-dropdown');
   const logoutLink = document.querySelector('.user-logout');
   const dropdownMenu = document.querySelector('.user-dropdown-menu');
   
@@ -39,6 +38,13 @@ function updateNavbar(user) {
   if (user) {
     isLoggedIn = true;
     const displayName = user.displayName || user.email.split('@')[0];
+    
+    // Save to localStorage cache for instant next-page load painting
+    try {
+      localStorage.setItem('gt_user_logged_in', 'true');
+      localStorage.setItem('gt_user_display_name', displayName);
+    } catch(e) {}
+
     // Mark as "do not translate" so the runtime UI translator leaves the user
     // name alone (personal content should never be machine-translated).
     userBtn.setAttribute('data-no-translate', '');
@@ -61,8 +67,23 @@ function updateNavbar(user) {
   } else {
     isLoggedIn = false;
     userBtn.removeAttribute('data-no-translate');
-    userBtn.textContent = 'Login';
-    userBtn.classList.remove('logged-in');
+    
+    // Clear localStorage cache
+    try {
+      localStorage.removeItem('gt_user_logged_in');
+      localStorage.removeItem('gt_user_display_name');
+    } catch(e) {}
+
+    // Only overwrite if we were previously logged in or the text was explicitly modified
+    if (userBtn.classList.contains('logged-in') || userBtn.textContent === 'Loading...') {
+      userBtn.textContent = 'Login';
+      userBtn.classList.remove('logged-in');
+      if (window.GTUITranslate && typeof window.GTUITranslate.apply === 'function') {
+        window.GTUITranslate.apply();
+      }
+    } else {
+      userBtn.classList.remove('logged-in');
+    }
     userBtn.disabled = false;
     
     // Hide dropdown menu when not logged in
@@ -75,14 +96,25 @@ function updateNavbar(user) {
 // Handle navbar button click
 function setupNavbarClick() {
   const userBtn = document.getElementById('nav-user-btn');
-  const dropdownMenu = document.querySelector('.user-dropdown-menu');
-  
   if (!userBtn) return;
   
-  // Set initial loading state
-  userBtn.textContent = 'Loading...';
-  userBtn.disabled = true;
-  
+  // Instant Cache Restoration: Paint user's name immediately before Firebase initializes
+  try {
+    const cachedLoggedIn = localStorage.getItem('gt_user_logged_in') === 'true';
+    const cachedName = localStorage.getItem('gt_user_display_name');
+    if (cachedLoggedIn && cachedName) {
+      isLoggedIn = true;
+      userBtn.setAttribute('data-no-translate', '');
+      userBtn.textContent = cachedName;
+      userBtn.classList.add('logged-in');
+      
+      const dropdownMenu = document.querySelector('.user-dropdown-menu');
+      if (dropdownMenu) {
+        dropdownMenu.style.display = 'block';
+      }
+    }
+  } catch (e) {}
+
   userBtn.addEventListener('click', (e) => {
     if (!isLoggedIn) {
       // Not logged in - redirect to login page

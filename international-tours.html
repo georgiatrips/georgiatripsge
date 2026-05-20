@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="bg-background">
 <head>
 <meta charset="UTF-8">
@@ -19,15 +19,18 @@
 <script src="translate.js" defer></script>
 <script src="lang.js" defer></script>
 <script src="ui-translate.js" defer></script>
-<title>International Tours – Georgia Trips</title>
-<meta name="description" content="Explore international tours from Georgia - multi-country adventures and cross-border experiences.">
+<title>International Tours from Georgia | Multi-Country Adventures</title>
+<meta name="description" content="საერთაშორისო ტურები საქართველოდან — მრავალქვეყნიანი მოგზაურობა. International tours from Georgia — multi-country adventures, cross-border experiences to Turkey, Armenia, Azerbaijan. Международные туры из Грузии. جولات دولية من جورجيا.">
+<meta name="keywords" content="international tours Georgia, საერთაშორისო ტურები, международные туры Грузия, Turkey tour from Georgia, Armenia tour, uluslararası turlar, رحلات دولية جورجيا, טיולים בינלאומיים, міжнародні тури Грузія, cross-border Caucasus tour">
+<script src="seo-head.js"></script>
 <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="mobile.css">
 <style>
-  /* მობილურის ოპტიმიზაცია */
+  /* Responsive layout adjustments */
   @media (max-width: 768px) {
     .filter-section { padding: 2rem 1rem; }
     
-    /* ფილტრის ღილაკები სკროლვადი რომ იყოს */
+    /* Enable horizontal filter tab scrolling */
     .filter-tabs-wrapper {
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
@@ -45,10 +48,10 @@
       font-size: 0.85rem;
     }
 
-    /* ტურების Grid მობილურზე */
+    /* Filter grid fallback for small screens */
     #tours-filter-grid {
       display: grid !important;
-      grid-template-columns: repeat(2, 1fr) !important; /* 2-2 წყვილებად */
+      grid-template-columns: repeat(2, 1fr) !important; /* 2-column grid fallback */
       gap: 10px !important;
       flex-direction: unset !important;
       overflow-x: visible !important;
@@ -60,7 +63,7 @@
       max-width: 100%;
     }
 
-    /* ბარათის შიგთავსის მორგება 2-სვეტიანი განლაგებისთვის */
+    /* Compact mobile styling for tour cards */
     .tour-card__img-wrap { height: 130px !important; }
     .tour-card__body { padding: 10px !important; }
     .tour-card__title { 
@@ -112,7 +115,7 @@
 
   /* Background variety */
   .filter-section {
-    background: linear-gradient(180deg, #f5f7f9 0%, #ffffff 100%);
+    background: transparent;
   }
 </style>
 <link rel="stylesheet" href="tours-page.css">
@@ -134,13 +137,13 @@
         <a href="international-tours.html" class="active">International Tours</a>
       </div>
     </div>
-    <a href="cars.html">Cars</a>
+    <a href="cars.html">Transport</a>
     <a href="posts.html">Posts</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
     <div class="nav-dropdown nav-lang-dropdown" id="nav-lang-dropdown">
       <button class="nav-dropdown-btn nav-lang-btn" id="nav-lang-btn" aria-label="Select language" aria-haspopup="true">
-        <span class="lang-flag" id="nav-lang-flag"><img src="https://flagcdn.com/w20/ge.png" alt="ქართული"></span>
+        <span class="lang-flag" id="nav-lang-flag"><img src="https://flagcdn.com/w20/ge.png" alt="GE"></span>
         <span class="lang-code" id="nav-lang-code">KA</span>
         <span class="lang-caret">▼</span>
       </button>
@@ -216,7 +219,7 @@
 </section>
 
 <!-- WHY CHOOSE US -->
-<section style="background:var(--dark-blue);padding:4.5rem 2rem;">
+<section class="surface-panel-dark" style="padding:4.5rem 2rem;">
   <div class="container">
     <div class="section-header">
       <span class="section-tag" style="color:var(--teal);">Why Us</span>
@@ -224,22 +227,22 @@
       <div class="divider" style="background:var(--yellow);"></div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem;margin-top:1rem;">
-      <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:2rem;text-align:center;">
+      <div class="surface-card">
         <div style="font-size:2.5rem;margin-bottom:1rem;">&#127956;</div>
         <h4 style="font-family:'Montserrat',sans-serif;color:var(--white);font-weight:700;margin-bottom:0.5rem;">Local Expert Guides</h4>
         <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Professional guides who speak your language clearly and know Georgian history, culture and nature inside out.</p>
       </div>
-      <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:2rem;text-align:center;">
+      <div class="surface-card">
         <div style="font-size:2.5rem;margin-bottom:1rem;">&#128654;</div>
         <h4 style="font-family:'Montserrat',sans-serif;color:var(--white);font-weight:700;margin-bottom:0.5rem;">Comfortable Transport</h4>
         <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Modern, air-conditioned vehicles maintained to the highest safety standards for every route.</p>
       </div>
-      <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:2rem;text-align:center;">
+      <div class="surface-card">
         <div style="font-size:2.5rem;margin-bottom:1rem;">&#128176;</div>
         <h4 style="font-family:'Montserrat',sans-serif;color:var(--white);font-weight:700;margin-bottom:0.5rem;">Best Prices</h4>
         <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Transparent prices with no hidden fees and great deals on every tour.</p>
       </div>
-      <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:2rem;text-align:center;">
+      <div class="surface-card">
         <div style="font-size:2.5rem;margin-bottom:1rem;">&#128274;</div>
         <h4 style="font-family:'Montserrat',sans-serif;color:var(--white);font-weight:700;margin-bottom:0.5rem;">Safe Travel</h4>
         <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Every tour includes insurance and fast assistance when needed.</p>
@@ -256,7 +259,7 @@
         <div class="logo-icon"><img src="logo.png" alt="Georgia Trips Logo" class="logo-img"></div>
         Georgia<span>Trips</span>
       </div>
-      <p>Your trusted travel partner in Georgia. Crafting genuine experiences since 2017.</p>
+      <p>The best choice for a special journey.</p>
       <div class="footer-social">
         <a href="https://www.facebook.com/profile.php?id=61588059054976" class="social-btn" aria-label="Facebook" target="_blank"><svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
         <a href="https://www.instagram.com/georgiatrips.ge/" class="social-btn" aria-label="Instagram" target="_blank"><svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>
@@ -270,7 +273,7 @@
       <ul>
         <li><a href="index.html">Home</a></li>
         <li><a href="domestic-tours.html">Tours</a></li>
-        <li><a href="cars.html">Cars</a></li>
+      <li><a href="cars.html">Transport</a></li>
         <li><a href="posts.html">Posts</a></li>
         <li><a href="about.html">About</a></li>
       </ul>
@@ -292,7 +295,7 @@
   </div>
   <div class="footer-bottom">
     <p>&copy; 2026 Georgia Trips. All rights reserved.</p>
-    <p><a href="#">Privacy Policy</a> &middot; <a href="#">Terms</a></p>
+    <p><a href="privacy-policy.html">Privacy Policy</a> • <a href="terms.html">Terms</a></p>
     <p>developed by <a href="https://www.instagram.com/lominadzee10/" target="_blank">lominadzee10</a></p>
   </div>
 </footer>
@@ -377,7 +380,7 @@ function translateCommonValue(str) {
   if (map[s]) return tt(map[s]);
   const mDays = s.match(/^(\d+)\s*[Dd]ays?$/);
   if (mDays) return tt('n_days', { n: mDays[1] });
-  const mRange = s.match(/^(\d+)\s*[–-]\s*(\d+)\s*[Dd]ays?$/);
+  const mRange = s.match(/^(\d+)\s*[-–—]\s*(\d+)\s*[Dd]ays?$/);
   if (mRange) return tt('n_days', { n: `${mRange[1]}–${mRange[2]}` });
   return s;
 }
@@ -548,7 +551,7 @@ function buildFilterTabs() {
 function handleTabClick(categoryKey) {
   if (categoryKey === activeCategory) return;
   activeCategory = categoryKey;
-  currentPage = 1; // კატეგორიის შეცვლისას პირველ გვერდზე დაბრუნება
+  currentPage = 1; // Reset pagination when category changes
 
   document.querySelectorAll('.filter-tab').forEach(btn => {
     const isActive = btn.dataset.category === categoryKey;
@@ -583,7 +586,7 @@ window.closeModal = function() {
   document.getElementById('book-modal').classList.remove('open');
 };
 
-// ── CACHE HELPERS (shared with index.html via gt_data_cache_v1) ──
+// -- CACHE HELPERS (shared with index.html via gt_data_cache_v1) --
 const DATA_CACHE_KEY = 'gt_data_cache_v1';
 const DATA_CACHE_MAX_AGE = Infinity; // Never expire — stale data is better than empty screen
 
@@ -608,7 +611,7 @@ function writeToursToCache(tours) {
   } catch (e) { /* quota — ignore */ }
 }
 
-// ── CONTENT WATCHDOG ────────────────────────────────────────
+// -- CONTENT WATCHDOG ----------------------------------------
 // If the initial fetch is slow or fails, this keeps retrying every 1s
 // until the grid actually shows content (real cards OR a legitimate
 // "no tours" empty state). As soon as something is on screen, it stops.
@@ -662,13 +665,13 @@ async function tickContentWatchdog() {
   else stopContentWatchdog();
 }
 
-// Initialize — cache-first, then background refresh (matches index.html strategy).
+// Initialize cache-first, then background refresh (matches index.html strategy).
 async function init() {
   let renderedFromCache = false;
 
   // Translate the initial "Loading tours..." placeholder immediately.
   const countEl = document.getElementById('tours-result-count');
-  if (countEl) countEl.textContent = T('loading') + '…';
+if (countEl) countEl.textContent = T('loading') + '…';
 
   // 1. Instant paint from localStorage cache.
   const cached = readToursFromCache();
@@ -751,6 +754,7 @@ document.addEventListener('visibilitychange', () => {
 init();
 </script>
 
+<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "314352f1c1eb4623a31c466d4da285b8"}'></script><!-- End Cloudflare Web Analytics -->
 
 </body>
 </html>

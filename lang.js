@@ -203,6 +203,24 @@
         if (menu) menu.classList.remove('show');
       });
     });
+
+    // Handle bfcache language synchronization on back/forward navigation
+    window.addEventListener('pageshow', function (event) {
+      const current = getStoredLang();
+      const domLang = document.documentElement.getAttribute('data-lang');
+      if (current !== domLang) {
+        window.GT_CURRENT_LANG = current;
+        updateButton(current);
+        markActive(current);
+        applyDocAttrs(current);
+
+        if (window.GTUITranslate && typeof window.GTUITranslate.refresh === 'function') {
+          window.GTUITranslate.refresh();
+        }
+
+        triggerReRender(current);
+      }
+    });
   }
 
   // Expose minimal API for future use

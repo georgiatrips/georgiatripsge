@@ -1,400 +1,487 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="bg-background">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/png" href="logo.png">
-<!-- Speed up Firebase / fonts / flag CDN handshakes. -->
-<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
-<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="dns-prefetch" href="https://flagcdn.com">
-<link rel="dns-prefetch" href="https://api.mymemory.translated.net">
-<link rel="preload" href="lang-boot.js" as="script">
-<link rel="preload" href="ui-strings.js" as="script">
-<link rel="modulepreload" href="script.js">
-<script src="lang-boot.js"></script>
-<script src="ui-strings.js" defer></script>
-<script src="translate.js" defer></script>
-<script src="lang.js" defer></script>
-<script src="ui-translate.js" defer></script>
-<title>Domestic Tours – Georgia Trips</title>
-<meta name="description" content="Explore one-day tours, multi-day packages, and fixed tours across Georgia.">
-<link rel="stylesheet" href="style.css">
-<style>
-  /* მობილურის ოპტიმიზაცია */
-  @media (max-width: 768px) {
-    .filter-section { padding: 2rem 1rem; }
-    
-    /* ფილტრის ღილაკები სკროლვადი რომ იყოს */
-    .filter-tabs-wrapper {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: 10px;
-      margin-bottom: 1rem;
-    }
-    #tours-filter-tabs {
-      display: inline-flex !important;
-      width: max-content !important;
-      padding: 0 5px;
-    }
-    .filter-tab {
-      white-space: nowrap;
-      padding: 0.6rem 1rem;
-      font-size: 0.85rem;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="logo.png">
+  <!-- Speed up Firebase / fonts / flag CDN handshakes. -->
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://flagcdn.com">
+  <link rel="dns-prefetch" href="https://api.mymemory.translated.net">
+  <link rel="preload" href="lang-boot.js" as="script">
+  <link rel="preload" href="ui-strings.js" as="script">
+  <link rel="modulepreload" href="script.js">
+  <script src="lang-boot.js"></script>
+  <script src="ui-strings.js" defer></script>
+  <script src="translate.js" defer></script>
+  <script src="lang.js" defer></script>
+  <script src="ui-translate.js" defer></script>
+  <title>Domestic Tours in Georgia | One-Day & Multi-Day Guided Tours</title>
+  <meta name="description" content="ტურები საქართველოში — ერთდღიანი, მრავალდღიანი და ჯგუფური ტურები. Explore one-day tours, multi-day packages, and fixed tours across Georgia — Kazbegi, Svaneti, Mtskheta, Kakheti. Экскурсии по Грузии — однодневные и многодневные туры.">
+  <meta name="keywords" content="domestic tours Georgia, ტურები საქართველოში, ერთდღიანი ტურები, однодневные туры Грузия, Kazbegi tour, Svaneti tour, Mtskheta tour, Kakheti wine tour, yurt içi turlar Gürcistan, جولات محلية جورجيا, סיורים מקומיים גאורגיה, тури по Грузії, ბათუმის ტურები, group tour Georgia">
+  <script src="seo-head.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="mobile.css">
+  <style>
+    /* Responsive mobile layout */
+    @media (max-width: 768px) {
+      .filter-section {
+        padding: 2rem 1rem;
+      }
+
+      /* Allow filter tabs to scroll horizontally */
+      .filter-tabs-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 10px;
+        margin-bottom: 1rem;
+      }
+
+      #tours-filter-tabs {
+        display: inline-flex !important;
+        width: max-content !important;
+        padding: 0 5px;
+      }
+
+      .filter-tab {
+        white-space: nowrap;
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+      }
+
+      /* Compact tour grid layout */
+      #tours-filter-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        /* Two columns on mobile */
+        gap: 10px !important;
+        flex-direction: unset !important;
+        overflow-x: visible !important;
+        scroll-snap-type: none !important;
+        padding: 0 !important;
+      }
+
+      .tour-card--standard {
+        max-width: 100%;
+      }
+
+      /* Adjust card spacing for 2-column layout */
+      .tour-card__img-wrap {
+        height: 130px !important;
+      }
+
+      .tour-card__body {
+        padding: 10px !important;
+      }
+
+      .tour-card__title {
+        font-size: 0.85rem !important;
+        margin-bottom: 0.4rem !important;
+        height: 2.4rem !important;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+      }
+
+      .tour-card__desc {
+        display: none !important;
+      }
+
+      /* Hide descriptions on small screens */
+      .tour-highlights {
+        display: flex !important;
+        flex-direction: column !important;
+        min-height: auto !important;
+        gap: 4px !important;
+        margin-bottom: 8px !important;
+      }
+
+      .tour-highlight {
+        font-size: 0.72rem !important;
+      }
+
+      .tour-highlight:nth-child(n+4) {
+        display: none !important;
+      }
+
+      /* Keep only first three highlights */
+      .tour-card__footer {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        padding-top: 8px !important;
+        gap: 4px !important;
+      }
+
+      .tour-card__meta {
+        display: none !important;
+      }
+
+      .tour-price {
+        font-size: 1.05rem !important;
+      }
+
+      .btn-book {
+        padding: 0.5rem !important;
+        font-size: 0.8rem !important;
+      }
     }
 
-    /* ტურების Grid მობილურზე */
-    #tours-filter-grid {
-      display: grid !important;
-      grid-template-columns: repeat(2, 1fr) !important; /* 2-2 წყვილებად */
-      gap: 10px !important;
-      flex-direction: unset !important;
-      overflow-x: visible !important;
-      scroll-snap-type: none !important;
-      padding: 0 !important;
-    }
-    
-    .tour-card--standard {
-      max-width: 100%;
+    .share-tour-btn {
+      background: rgba(255, 255, 255, 0.9);
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--dark-blue);
+      transition: all 0.2s;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-right: 8px;
     }
 
-    /* ბარათის შიგთავსის მორგება 2-სვეტიანი განლაგებისთვის */
-    .tour-card__img-wrap { height: 130px !important; }
-    .tour-card__body { padding: 10px !important; }
-    .tour-card__title { 
-      font-size: 0.85rem !important; 
-      margin-bottom: 0.4rem !important; 
-      height: 2.4rem !important; 
-      overflow: hidden; 
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
+    .share-tour-btn:hover {
+      background: #fff;
+      color: var(--teal);
+      transform: scale(1.1);
     }
-    .tour-card__desc { display: none !important; } /* აღწერა იმალება სივრცის დასაზოგად */
-    .tour-highlights { 
-      display: flex !important; 
-      flex-direction: column !important; 
-      min-height: auto !important; 
-      gap: 4px !important;
-      margin-bottom: 8px !important;
-    }
-    .tour-highlight { font-size: 0.72rem !important; }
-    .tour-highlight:nth-child(n+4) { display: none !important; } /* მაქსიმუმ 3 ჰაილაითი */
-    .tour-card__footer { 
-      flex-direction: column !important; 
-      align-items: flex-start !important; 
-      padding-top: 8px !important;
-      gap: 4px !important;
-    }
-    .tour-card__meta { display: none !important; }
-    .tour-price { font-size: 1.05rem !important; }
-    .btn-book { padding: 0.5rem !important; font-size: 0.8rem !important; }
-  }
-  
-  .share-tour-btn {
-    background: rgba(255, 255, 255, 0.9);
-    border: none;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: var(--dark-blue);
-    transition: all 0.2s;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    margin-right: 8px;
-  }
-  .share-tour-btn:hover { background: #fff; color: var(--teal); transform: scale(1.1); }
 
-  /* Background variety */
-  .filter-section {
-    background: linear-gradient(180deg, #fff9f2 0%, #ffffff 100%);
-  }
-</style>
-<link rel="stylesheet" href="tours-page.css">
+    /* Background variety */
+    .filter-section {
+      background: transparent;
+    }
+  </style>
+  <link rel="stylesheet" href="tours-page.css">
 </head>
+
 <body>
 
-<!-- NAVBAR -->
-<nav class="navbar">
-  <a href="index.html" class="nav-logo">
-    <div class="logo-icon"><img src="logo.png" alt="Georgia Trips Logo" class="logo-img"></div>
-    Georgia<span>Trips</span>
-  </a>
-  <div class="nav-links">
-    <a href="index.html">Home</a>
-    <div class="nav-dropdown">
-      <button class="nav-dropdown-btn active">Tours ▼</button>
-      <div class="dropdown-menu">
-        <a href="domestic-tours.html" class="active">Domestic Tours</a>
-        <a href="international-tours.html">International Tours</a>
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <a href="index.html" class="nav-logo">
+      <div class="logo-icon"><img src="logo.png" alt="Georgia Trips Logo" class="logo-img"></div>
+      Georgia<span>Trips</span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-btn active">Tours ▼</button>
+        <div class="dropdown-menu">
+          <a href="domestic-tours.html" class="active">Domestic Tours</a>
+          <a href="international-tours.html">International Tours</a>
+        </div>
+      </div>
+      <a href="cars.html">Transport</a>
+      <a href="posts.html">Posts</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <div class="nav-dropdown nav-lang-dropdown" id="nav-lang-dropdown">
+        <button class="nav-dropdown-btn nav-lang-btn" id="nav-lang-btn" aria-label="Select language"
+          aria-haspopup="true">
+          <span class="lang-flag" id="nav-lang-flag"><img src="https://flagcdn.com/w20/ge.png" alt="GE"></span>
+          <span class="lang-code" id="nav-lang-code">KA</span>
+          <span class="lang-caret">▼</span>
+        </button>
+        <div class="dropdown-menu lang-dropdown-menu">
+          <a href="#" data-lang="ka"><span class="lang-flag"><img src="https://flagcdn.com/w20/ge.png"
+                alt="GE"></span><span class="lang-name">ქართული</span></a>
+          <a href="#" data-lang="en"><span class="lang-flag"><img src="https://flagcdn.com/w20/gb.png"
+                alt="EN"></span><span class="lang-name">English</span></a>
+          <a href="#" data-lang="ru"><span class="lang-flag"><img src="https://flagcdn.com/w20/ru.png"
+                alt="RU"></span><span class="lang-name">Русский</span></a>
+          <a href="#" data-lang="tr"><span class="lang-flag"><img src="https://flagcdn.com/w20/tr.png"
+                alt="TR"></span><span class="lang-name">Türkçe</span></a>
+          <a href="#" data-lang="ar"><span class="lang-flag"><img src="https://flagcdn.com/w20/sa.png"
+                alt="AR"></span><span class="lang-name">العربية</span></a>
+          <a href="#" data-lang="he"><span class="lang-flag"><img src="https://flagcdn.com/w20/il.png"
+                alt="HE"></span><span class="lang-name">עברית</span></a>
+          <a href="#" data-lang="uk"><span class="lang-flag"><img src="https://flagcdn.com/w20/ua.png"
+                alt="UK"></span><span class="lang-name">Українська</span></a>
+        </div>
+      </div>
+      <div class="nav-user-dropdown" id="nav-user-dropdown">
+        <button class="nav-cta nav-user-btn" id="nav-user-btn">Login</button>
+        <div class="dropdown-menu user-dropdown-menu">
+          <a href="profile.html" class="user-profile-link">My Profile</a>
+          <a href="saved-tours.html" class="user-saved-tours">Saved Tours</a>
+          <a href="#" class="user-logout">Sign Out</a>
+        </div>
       </div>
     </div>
-    <a href="cars.html">Cars</a>
-    <a href="posts.html">Posts</a>
-    <a href="about.html">About</a>
-    <a href="contact.html">Contact</a>
-    <div class="nav-dropdown nav-lang-dropdown" id="nav-lang-dropdown">
-      <button class="nav-dropdown-btn nav-lang-btn" id="nav-lang-btn" aria-label="Select language" aria-haspopup="true">
-        <span class="lang-flag" id="nav-lang-flag"><img src="https://flagcdn.com/w20/ge.png" alt="ქართული"></span>
-        <span class="lang-code" id="nav-lang-code">KA</span>
-        <span class="lang-caret">▼</span>
-      </button>
-      <div class="dropdown-menu lang-dropdown-menu">
-        <a href="#" data-lang="ka"><span class="lang-flag"><img src="https://flagcdn.com/w20/ge.png" alt="GE"></span><span class="lang-name">ქართული</span></a>
-        <a href="#" data-lang="en"><span class="lang-flag"><img src="https://flagcdn.com/w20/gb.png" alt="EN"></span><span class="lang-name">English</span></a>
-        <a href="#" data-lang="ru"><span class="lang-flag"><img src="https://flagcdn.com/w20/ru.png" alt="RU"></span><span class="lang-name">Русский</span></a>
-        <a href="#" data-lang="tr"><span class="lang-flag"><img src="https://flagcdn.com/w20/tr.png" alt="TR"></span><span class="lang-name">Türkçe</span></a>
-        <a href="#" data-lang="ar"><span class="lang-flag"><img src="https://flagcdn.com/w20/sa.png" alt="AR"></span><span class="lang-name">العربية</span></a>
-        <a href="#" data-lang="he"><span class="lang-flag"><img src="https://flagcdn.com/w20/il.png" alt="HE"></span><span class="lang-name">עברית</span></a>
-        <a href="#" data-lang="uk"><span class="lang-flag"><img src="https://flagcdn.com/w20/ua.png" alt="UK"></span><span class="lang-name">Українська</span></a>
-      </div>
-    </div>
-    <div class="nav-user-dropdown" id="nav-user-dropdown">
-      <button class="nav-cta nav-user-btn" id="nav-user-btn">Login</button>
-      <div class="dropdown-menu user-dropdown-menu">
-        <a href="profile.html" class="user-profile-link">My Profile</a>
-        <a href="saved-tours.html" class="user-saved-tours">Saved Tours</a>
-        <a href="#" class="user-logout">Sign Out</a>
-      </div>
+    <button class="nav-toggle" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- PAGE HERO -->
+  <div class="page-hero">
+    <span class="section-tag">Explore Georgia</span>
+    <h1>Domestic Tours</h1>
+    <p>Discover the beauty of Georgia with our carefully curated domestic tours - from day trips to multi-day
+      adventures.</p>
+    <div class="breadcrumb">
+      <a href="index.html">Home</a>
+      <span class="sep">&#8250;</span>
+      <a href="domestic-tours.html">Tours</a>
+      <span class="sep">&#8250;</span>
+      <span class="current">Domestic Tours</span>
     </div>
   </div>
-  <button class="nav-toggle" aria-label="Menu">
-    <span></span><span></span><span></span>
-  </button>
-</nav>
 
-<!-- PAGE HERO -->
-<div class="page-hero">
-  <span class="section-tag">Explore Georgia</span>
-  <h1>Domestic Tours</h1>
-  <p>Discover the beauty of Georgia with our carefully curated domestic tours - from day trips to multi-day adventures.</p>
-  <div class="breadcrumb">
-    <a href="index.html">Home</a>
-    <span class="sep">&#8250;</span>
-    <a href="domestic-tours.html">Tours</a>
-    <span class="sep">&#8250;</span>
-    <span class="current">Domestic Tours</span>
-  </div>
-</div>
+  <!-- TOUR FILTER SECTION -->
+  <section class="filter-section">
+    <div class="container">
 
-<!-- TOUR FILTER SECTION -->
-<section class="filter-section">
-  <div class="container">
-
-    <div class="section-header">
-      <span class="section-tag">Browse</span>
-      <h2>Find Your Perfect Tour</h2>
-      <p>Choose your preferred category and discover an experience that fits your time and interests.</p>
-      <div class="divider"></div>
-    </div>
-
-    <!-- Filter tabs -->
-    <div class="filter-tabs-wrapper" role="tablist" aria-label="Tour categories">
-      <div id="tab-indicator" aria-hidden="true"></div>
-      <div id="tours-filter-tabs" style="display:flex;gap:4px;width:100%;"></div>
-    </div>
-
-    <!-- Results count -->
-    <div class="tours-meta-row">
-      <span id="tours-result-count">Loading tours...</span>
-    </div>
-
-    <!-- Tour grid -->
-    <div id="tours-filter-grid" data-no-translate role="list" aria-live="polite" aria-label="Tour results">
-      <div class="gt-card-loader"><span class="gt-card-loader__spinner" aria-hidden="true"></span><span>Loading<span class="gt-card-loader__dots" aria-hidden="true"></span></span></div>
-    </div>
-
-    <!-- Pagination Container -->
-    <div id="pagination-container" class="pagination"></div>
-
-  </div>
-</section>
-
-<!-- WHY CHOOSE US -->
-<section style="background:var(--dark-blue);padding:4.5rem 2rem;">
-  <div class="container">
-    <div class="section-header">
-      <span class="section-tag" style="color:var(--teal);">Why Us</span>
-      <h2 style="color:var(--white);">Why Book With Georgia Trips</h2>
-      <div class="divider" style="background:var(--yellow);"></div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem;margin-top:1rem;">
-      <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:2rem;text-align:center;">
-        <div style="font-size:2.5rem;margin-bottom:1rem;">&#127956;</div>
-        <h4 style="font-family:'Montserrat',sans-serif;color:var(--white);font-weight:700;margin-bottom:0.5rem;">Local Expert Guides</h4>
-        <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Professional guides who speak your language clearly and know Georgian history, culture and nature inside out.</p>
+      <div class="section-header">
+        <span class="section-tag">Browse</span>
+        <h2>Find Your Perfect Tour</h2>
+        <p>Choose your preferred category and discover an experience that fits your time and interests.</p>
+        <div class="divider"></div>
       </div>
-      <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:2rem;text-align:center;">
-        <div style="font-size:2.5rem;margin-bottom:1rem;">&#128654;</div>
-        <h4 style="font-family:'Montserrat',sans-serif;color:var(--white);font-weight:700;margin-bottom:0.5rem;">Comfortable Transport</h4>
-        <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Modern, air-conditioned vehicles maintained to the highest safety standards for every route.</p>
+
+      <!-- Filter tabs -->
+      <div class="filter-tabs-wrapper" role="tablist" aria-label="Tour categories">
+        <div id="tab-indicator" aria-hidden="true"></div>
+        <div id="tours-filter-tabs" style="display:flex;gap:4px;width:100%;"></div>
       </div>
-      <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:2rem;text-align:center;">
-        <div style="font-size:2.5rem;margin-bottom:1rem;">&#128176;</div>
-        <h4 style="font-family:'Montserrat',sans-serif;color:var(--white);font-weight:700;margin-bottom:0.5rem;">Best Prices</h4>
-        <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Transparent prices with no hidden fees and great deals on every tour.</p>
+
+      <!-- Results count -->
+      <div class="tours-meta-row">
+        <span id="tours-result-count">Loading tours...</span>
       </div>
-      <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:2rem;text-align:center;">
-        <div style="font-size:2.5rem;margin-bottom:1rem;">&#128274;</div>
-        <h4 style="font-family:'Montserrat',sans-serif;color:var(--white);font-weight:700;margin-bottom:0.5rem;">Safe Travel</h4>
-        <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Every tour includes insurance and fast assistance when needed.</p>
+
+      <!-- Tour grid -->
+      <div id="tours-filter-grid" data-no-translate role="list" aria-live="polite" aria-label="Tour results">
+        <div class="gt-card-loader"><span class="gt-card-loader__spinner" aria-hidden="true"></span><span>Loading<span
+              class="gt-card-loader__dots" aria-hidden="true"></span></span></div>
+      </div>
+
+      <!-- Pagination Container -->
+      <div id="pagination-container" class="pagination"></div>
+
+    </div>
+  </section>
+
+  <!-- WHY CHOOSE US -->
+  <section class="surface-panel-dark" style="padding:4.5rem 2rem;">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag" style="color:var(--teal);">Why Us</span>
+        <h2 style="color:var(--white);">Why Book With Georgia Trips</h2>
+        <div class="divider" style="background:var(--yellow);"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem;margin-top:1rem;">
+        <div class="surface-card">
+          <div style="font-size:2.5rem;margin-bottom:1rem;">&#127956;</div>
+          <h4 style="font-family:'Montserrat',sans-serif;color:var(--white);font-weight:700;margin-bottom:0.5rem;">Local
+            Expert Guides</h4>
+          <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Professional guides who speak your
+            language clearly and know Georgian history, culture and nature inside out.</p>
+        </div>
+        <div class="surface-card">
+          <div style="font-size:2.5rem;margin-bottom:1rem;">&#128654;</div>
+          <h4 style="font-family:'Montserrat',sans-serif;color:var(--white);font-weight:700;margin-bottom:0.5rem;">
+            Comfortable Transport</h4>
+          <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Modern, air-conditioned vehicles
+            maintained to the highest safety standards for every route.</p>
+        </div>
+        <div class="surface-card">
+          <div style="font-size:2.5rem;margin-bottom:1rem;">&#128176;</div>
+          <h4 style="font-family:'Montserrat',sans-serif;color:var(--white);font-weight:700;margin-bottom:0.5rem;">Best
+            Prices</h4>
+          <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Transparent prices with no hidden
+            fees and great deals on every tour.</p>
+        </div>
+        <div class="surface-card">
+          <div style="font-size:2.5rem;margin-bottom:1rem;">&#128274;</div>
+          <h4 style="font-family:'Montserrat',sans-serif;color:var(--white);font-weight:700;margin-bottom:0.5rem;">Safe
+            Travel</h4>
+          <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.6;">Every tour includes insurance and
+            fast assistance when needed.</p>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- FOOTER -->
-<footer class="footer">
-  <div class="footer-grid">
-    <div class="footer-brand">
-      <div class="nav-logo" style="margin-bottom:1rem;">
-        <div class="logo-icon"><img src="logo.png" alt="Georgia Trips Logo" class="logo-img"></div>
-        Georgia<span>Trips</span>
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="nav-logo" style="margin-bottom:1rem;">
+          <div class="logo-icon"><img src="logo.png" alt="Georgia Trips Logo" class="logo-img"></div>
+          Georgia<span>Trips</span>
+        </div>
+        <p>The best choice for a special journey.</p>
+        <div class="footer-social">
+          <a href="https://www.facebook.com/profile.php?id=61588059054976" class="social-btn" aria-label="Facebook"
+            target="_blank"><svg viewBox="0 0 24 24">
+              <path
+                d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+            </svg></a>
+          <a href="https://www.instagram.com/georgiatrips.ge/" class="social-btn" aria-label="Instagram"
+            target="_blank"><svg viewBox="0 0 24 24">
+              <path
+                d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+            </svg></a>
+          <a href="https://api.whatsapp.com/send/?phone=995504220020&text&type=phone_number&app_absent=0"
+            class="social-btn" aria-label="WhatsApp" target="_blank"><svg viewBox="0 0 24 24">
+              <path
+                d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.41 0 .01 5.399 0 12.039c0 2.123.554 4.197 1.606 6.041l-1.706 6.23 6.375-1.671a11.8 11.8 0 005.772 1.503h.005c6.64 0 12.04-5.4 12.043-12.04a11.82 11.82 0 00-3.414-8.423z" />
+            </svg></a>
+          <a href="https://t.me/Georgia_Trips7" class="social-btn" aria-label="Telegram" target="_blank"><svg
+              viewBox="0 0 24 24">
+              <path
+                d="M20.665 3.717l-17.73 6.837c-1.213.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.953-.14.579.192l-8.533 7.703-.33 4.955c.488 0 .704-.223.978-.488l2.35-2.285 4.888 3.613c.9.497 1.545.241 1.77-.835l3.203-15.102c.328-1.314-.497-1.907-1.353-1.522z" />
+            </svg></a>
+          <a href="https://www.snapchat.com/@aslan_georgia?invite_id=0Y0eNJew&locale=en_GE&share_id=wW5EBgIMRlS6DKwl9IyQKA&sid=1460a6139caf4ee783266e6717d128ab"
+            class="social-btn" aria-label="Snapchat" target="_blank"><svg viewBox="0 0 24 24">
+              <path
+                d="M12 2c-3.9 0-5.2 3.2-5.2 5.2 0 1.9.8 3 .8 3s-.5.8-1 1.9c-.4.9-1.3 1.3-1.3 2.2 0 .9 1.3 1.7 3.2 1.7.7 0 1.3-.1 1.9-.2-.4.8-.8 1.6-.8 1.6s.8.4 1.2.7c.3.2.5.3.5.5s-.7.8-1.2 1.2c-.6.4-.8.8-.8 1.2 0 .8.8 1.3 1.9 1.3s1.9-.5 1.9-1.3c0-.4-.2-.8-.8-1.2-.6-.4-1.2-.9-1.2-1.2 0-.2.2-.3.5-.5.4-.3 1.2-.7 1.2-.7s-.4-.8-.8-1.6c.6.2 1.2.2 1.9.2 1.9 0 3.2-.8 3.2-1.7s-.9-1.3-1.3-2.2c-.5-1.1-1-1.9-1-1.9s.8-1 1.1-3C17.2 5.2 15.9 2 12 2z" />
+            </svg></a>
+        </div>
       </div>
-      <p>Your trusted travel partner in Georgia. Crafting genuine experiences since 2017.</p>
-      <div class="footer-social">
-        <a href="https://www.facebook.com/profile.php?id=61588059054976" class="social-btn" aria-label="Facebook" target="_blank"><svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
-        <a href="https://www.instagram.com/georgiatrips.ge/" class="social-btn" aria-label="Instagram" target="_blank"><svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>
-        <a href="https://api.whatsapp.com/send/?phone=995504220020&text&type=phone_number&app_absent=0" class="social-btn" aria-label="WhatsApp" target="_blank"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.41 0 .01 5.399 0 12.039c0 2.123.554 4.197 1.606 6.041l-1.706 6.23 6.375-1.671a11.8 11.8 0 005.772 1.503h.005c6.64 0 12.04-5.4 12.043-12.04a11.82 11.82 0 00-3.414-8.423z"/></svg></a>
-        <a href="https://t.me/Georgia_Trips7" class="social-btn" aria-label="Telegram" target="_blank"><svg viewBox="0 0 24 24"><path d="M20.665 3.717l-17.73 6.837c-1.213.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.953-.14.579.192l-8.533 7.703-.33 4.955c.488 0 .704-.223.978-.488l2.35-2.285 4.888 3.613c.9.497 1.545.241 1.77-.835l3.203-15.102c.328-1.314-.497-1.907-1.353-1.522z"/></svg></a>
-        <a href="https://www.snapchat.com/@aslan_georgia?invite_id=0Y0eNJew&locale=en_GE&share_id=wW5EBgIMRlS6DKwl9IyQKA&sid=1460a6139caf4ee783266e6717d128ab" class="social-btn" aria-label="Snapchat" target="_blank"><svg viewBox="0 0 24 24"><path d="M12 2c-3.9 0-5.2 3.2-5.2 5.2 0 1.9.8 3 .8 3s-.5.8-1 1.9c-.4.9-1.3 1.3-1.3 2.2 0 .9 1.3 1.7 3.2 1.7.7 0 1.3-.1 1.9-.2-.4.8-.8 1.6-.8 1.6s.8.4 1.2.7c.3.2.5.3.5.5s-.7.8-1.2 1.2c-.6.4-.8.8-.8 1.2 0 .8.8 1.3 1.9 1.3s1.9-.5 1.9-1.3c0-.4-.2-.8-.8-1.2-.6-.4-1.2-.9-1.2-1.2 0-.2.2-.3.5-.5.4-.3 1.2-.7 1.2-.7s-.4-.8-.8-1.6c.6.2 1.2.2 1.9.2 1.9 0 3.2-.8 3.2-1.7s-.9-1.3-1.3-2.2c-.5-1.1-1-1.9-1-1.9s.8-1 1.1-3C17.2 5.2 15.9 2 12 2z"/></svg></a>
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="domestic-tours.html">Tours</a></li>
+          <li><a href="cars.html">Transport</a></li>
+          <li><a href="posts.html">Posts</a></li>
+          <li><a href="about.html">About</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Tour Types</h4>
+        <ul>
+          <li><a href="domestic-tours.html">Domestic Tours</a></li>
+          <li><a href="international-tours.html">International Tours</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <div class="footer-contact-item"><span class="icon">&#128205;</span><span>27 Kutaisi St, Batumi 6010</span>
+        </div>
+        <div class="footer-contact-item"><span class="icon">&#128222;</span><span>+995 504 22 00 20</span></div>
+        <div class="footer-contact-item"><span class="icon">&#9993;</span><span>georgiatrips5@gmail.com</span></div>
+        <div class="footer-contact-item"><span class="icon">&#128336;</span><span>Mon – Sun: 10:00 – 19:00</span></div>
       </div>
     </div>
-    <div class="footer-col">
-      <h4>Quick Links</h4>
-      <ul>
-        <li><a href="index.html">Home</a></li>
-        <li><a href="domestic-tours.html">Tours</a></li>
-        <li><a href="cars.html">Cars</a></li>
-        <li><a href="posts.html">Posts</a></li>
-        <li><a href="about.html">About</a></li>
-      </ul>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Georgia Trips. All rights reserved.</p>
+      <p><a href="privacy-policy.html">Privacy Policy</a> • <a href="terms.html">Terms</a></p>
+      <p>developed by <a href="https://www.instagram.com/lominadzee10/" target="_blank">lominadzee10</a></p>
     </div>
-    <div class="footer-col">
-      <h4>Tour Types</h4>
-      <ul>
-        <li><a href="domestic-tours.html">Domestic Tours</a></li>
-        <li><a href="international-tours.html">International Tours</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h4>Contact</h4>
-      <div class="footer-contact-item"><span class="icon">&#128205;</span><span>27 Kutaisi St, Batumi 6010</span></div>
-      <div class="footer-contact-item"><span class="icon">&#128222;</span><span>+995 504 22 00 20</span></div>
-      <div class="footer-contact-item"><span class="icon">&#9993;</span><span>georgiatrips5@gmail.com</span></div>
-      <div class="footer-contact-item"><span class="icon">&#128336;</span><span>Mon – Sun: 10:00 – 19:00</span></div>
+  </footer>
+
+  <!-- BOOKING MODAL -->
+  <div class="modal-backdrop" id="book-modal" role="dialog" aria-modal="true" aria-labelledby="modal-tour-name">
+    <div class="modal">
+      <button class="modal-close" aria-label="Close">&#10005;</button>
+      <h3 id="modal-tour-name">Tour Name</h3>
+      <div class="price" id="modal-tour-price"></div>
+      <p>Fill in your details and our team will confirm your reservation within 24 hours.</p>
+      <div class="form-group"><label for="m-name">Full Name</label><input type="text" id="m-name"
+          placeholder="Your full name"></div>
+      <div class="form-group"><label for="m-email">Email</label><input type="email" id="m-email"
+          placeholder="your@email.com"></div>
+      <div class="form-row">
+        <div class="form-group"><label for="m-people">No. of People</label><input type="number" id="m-people"
+            placeholder="e.g. 2" min="1"></div>
+        <div class="form-group"><label for="m-date">Preferred Date</label><input type="date" id="m-date"></div>
+      </div>
+      <button class="btn-primary" style="width:100%;justify-content:center;" onclick="closeModal()">Send Booking Request
+        &#10022;</button>
     </div>
   </div>
-  <div class="footer-bottom">
-    <p>&copy; 2026 Georgia Trips. All rights reserved.</p>
-    <p><a href="#">Privacy Policy</a> &middot; <a href="#">Terms</a></p>
-    <p>developed by <a href="https://www.instagram.com/lominadzee10/" target="_blank">lominadzee10</a></p>
-  </div>
-</footer>
 
-<!-- BOOKING MODAL -->
-<div class="modal-backdrop" id="book-modal" role="dialog" aria-modal="true" aria-labelledby="modal-tour-name">
-  <div class="modal">
-    <button class="modal-close" aria-label="Close">&#10005;</button>
-    <h3 id="modal-tour-name">Tour Name</h3>
-    <div class="price" id="modal-tour-price"></div>
-    <p>Fill in your details and our team will confirm your reservation within 24 hours.</p>
-    <div class="form-group"><label for="m-name">Full Name</label><input type="text" id="m-name" placeholder="Your full name"></div>
-    <div class="form-group"><label for="m-email">Email</label><input type="email" id="m-email" placeholder="your@email.com"></div>
-    <div class="form-row">
-      <div class="form-group"><label for="m-people">No. of People</label><input type="number" id="m-people" placeholder="e.g. 2" min="1"></div>
-      <div class="form-group"><label for="m-date">Preferred Date</label><input type="date" id="m-date"></div>
-    </div>
-    <button class="btn-primary" style="width:100%;justify-content:center;" onclick="closeModal()">Send Booking Request &#10022;</button>
-  </div>
-</div>
+  <script src="pricing.js"></script>
+  <script src="i18n-data.js"></script>
+  <script type="module" src="script.js"></script>
+  <script type="module" src="auth.js"></script>
+  <script type="module">
+    // NOTE: We intentionally use a DYNAMIC import for firebase-config.js below
+    // instead of a static top-level import. A top-level import would delay the
+    // entire module (and our cache-hydration paint) until the full Firebase SDK
+    // downloads from gstatic.com. With a dynamic import the cache paint runs
+    // immediately and Firebase is only loaded for the background refresh.
 
-<script src="pricing.js"></script>
-<script src="i18n-data.js"></script>
-<script type="module" src="script.js"></script>
-<script type="module" src="auth.js"></script>
-<script type="module">
-// NOTE: We intentionally use a DYNAMIC import for firebase-config.js below
-// instead of a static top-level import. A top-level import would delay the
-// entire module (and our cache-hydration paint) until the full Firebase SDK
-// downloads from gstatic.com. With a dynamic import the cache paint runs
-// immediately and Firebase is only loaded for the background refresh.
+    // Tour type filter
+    const TOUR_TYPE = 'domestic';
 
-// Tour type filter
-const TOUR_TYPE = 'domestic';
+    // Categories
+    const TOUR_CATEGORIES = [
+      { key: 'all', label: 'All', labelKey: 'all' },
+      { key: 'one-day', label: 'One-Day Tours', labelKey: 'cat_one_day' },
+      { key: 'multi-day', label: 'Multi-Day Tours', labelKey: 'cat_multi_day' },
+      { key: 'fixed', label: 'Fixed Tours', labelKey: 'cat_fixed' }
+    ];
 
-// Categories
-const TOUR_CATEGORIES = [
-  { key: 'all',       label: 'All',             labelKey: 'all'           },
-  { key: 'one-day',   label: 'One-Day Tours',   labelKey: 'cat_one_day'   },
-  { key: 'multi-day', label: 'Multi-Day Tours', labelKey: 'cat_multi_day' },
-  { key: 'fixed',     label: 'Fixed Tours',     labelKey: 'cat_fixed'     }
-];
+    let allTours = [];
+    let activeCategory = 'all';
+    let currentPage = 1;
+    const ITEMS_PER_PAGE = 10;
 
-let allTours = [];
-let activeCategory = 'all';
-let currentPage = 1;
-const ITEMS_PER_PAGE = 10;
+    // i18n helpers (support multilingual Firestore values)
+    function L(val, fallback = '') {
+      if (window.localize) return window.localize(val, fallback);
+      if (val == null) return fallback;
+      if (typeof val === 'string') return val;
+      if (typeof val === 'object') return val.ka || val.en || fallback;
+      return String(val);
+    }
+    function LA(val) {
+      if (window.localizeArray) return window.localizeArray(val);
+      if (!val) return [];
+      if (Array.isArray(val)) return val;
+      if (typeof val === 'object') return Array.isArray(val.ka) ? val.ka : (Array.isArray(val.en) ? val.en : []);
+      return [];
+    }
 
-// i18n helpers (support multilingual Firestore values)
-function L(val, fallback = '') {
-  if (window.localize) return window.localize(val, fallback);
-  if (val == null) return fallback;
-  if (typeof val === 'string') return val;
-  if (typeof val === 'object') return val.ka || val.en || fallback;
-  return String(val);
-}
-function LA(val) {
-  if (window.localizeArray) return window.localizeArray(val);
-  if (!val) return [];
-  if (Array.isArray(val)) return val;
-  if (typeof val === 'object') return Array.isArray(val.ka) ? val.ka : (Array.isArray(val.en) ? val.en : []);
-  return [];
-}
+    // Helper functions
+    function formatHighlights(highlights) {
+      const arr = LA(highlights);
+      if (!arr.length) return '';
+      return arr.map(h => `<li class="tour-highlight"><span class="highlight-dot"></span>${h}</li>`).join('');
+    }
 
-// Helper functions
-function formatHighlights(highlights) {
-  const arr = LA(highlights);
-  if (!arr.length) return '';
-  return arr.map(h => `<li class="tour-highlight"><span class="highlight-dot"></span>${h}</li>`).join('');
-}
+    function T(key, tokens) {
+      return (window.t ? window.t(key, tokens) : key);
+    }
+    // Translate common English "1 Day" / "5 Days" / "All Year" / "Flexible" etc.
+    function translateCommonValue(str) {
+      if (!str || typeof str !== 'string') return str;
+      const tt = window.t;
+      if (!tt) return str;
+      const s = str.trim();
+      const map = { 'All Year': 'all_year', 'Flexible': 'flexible', '1 Day': 'one_day', 'One Day': 'one_day', 'On Request': 'on_request' };
+      if (map[s]) return tt(map[s]);
+      const mDays = s.match(/^(\d+)\s*[Dd]ays?$/);
+      if (mDays) return tt('n_days', { n: mDays[1] });
+      const mRange = s.match(/^(\d+)\s*[-–—]\s*(\d+)\s*[Dd]ays?$/);
+      if (mRange) return tt('n_days', { n: `${mRange[1]}–${mRange[2]}` });
+      return s;
+    }
+    function Lt(val, fallbackKey) {
+      const localized = L(val, '');
+      if (localized) return translateCommonValue(localized);
+      if (fallbackKey && window.t) return window.t(fallbackKey);
+      return localized;
+    }
 
-function T(key, tokens) {
-  return (window.t ? window.t(key, tokens) : key);
-}
-// Translate common English "1 Day" / "5 Days" / "All Year" / "Flexible" etc.
-function translateCommonValue(str) {
-  if (!str || typeof str !== 'string') return str;
-  const tt = window.t;
-  if (!tt) return str;
-  const s = str.trim();
-  const map = { 'All Year': 'all_year', 'Flexible': 'flexible', '1 Day': 'one_day', 'One Day': 'one_day', 'On Request': 'on_request' };
-  if (map[s]) return tt(map[s]);
-  const mDays = s.match(/^(\d+)\s*[Dd]ays?$/);
-  if (mDays) return tt('n_days', { n: mDays[1] });
-  const mRange = s.match(/^(\d+)\s*[–-]\s*(\d+)\s*[Dd]ays?$/);
-  if (mRange) return tt('n_days', { n: `${mRange[1]}–${mRange[2]}` });
-  return s;
-}
-function Lt(val, fallbackKey) {
-  const localized = L(val, '');
-  if (localized) return translateCommonValue(localized);
-  if (fallbackKey && window.t) return window.t(fallbackKey);
-  return localized;
-}
-
-function renderTourCard(tour) {
-  const title = L(tour.title);
-  const duration = Lt(tour.duration, 'one_day');
-  const descFull = L(tour.desc);
-  const description = descFull.length > 200 ? descFull.substring(0, 200) + '...' : descFull;
-  const onRequestLabel = T('on_request');
-  return `
+    function renderTourCard(tour) {
+      const title = L(tour.title);
+      const duration = Lt(tour.duration, 'one_day');
+      const descFull = L(tour.desc);
+      const description = descFull.length > 200 ? descFull.substring(0, 200) + '...' : descFull;
+      const onRequestLabel = T('on_request');
+      return `
     <article class="tour-card tour-card--standard" data-id="${tour.id}">
       <div class="tour-card__img-wrap">
         <img src="${tour.img}" alt="${title}" loading="lazy" class="tour-card__img">
@@ -429,108 +516,108 @@ function renderTourCard(tour) {
         </button>
       </div>
     </article>`;
-}
+    }
 
-function renderEmptyState(categoryKey) {
-  // Resolve the translated category label (falls back to generic "tours").
-  const cat = TOUR_CATEGORIES.find(c => c.key === categoryKey);
-  const catLabel = cat ? T(cat.labelKey) : T('cat_tours_generic');
-  const title = T('empty_title');
-  const subtitle = T('empty_subtitle', { category: catLabel });
-  const cta = T('empty_cta');
-  return `
+    function renderEmptyState(categoryKey) {
+      // Resolve the translated category label (falls back to generic "tours").
+      const cat = TOUR_CATEGORIES.find(c => c.key === categoryKey);
+      const catLabel = cat ? T(cat.labelKey) : T('cat_tours_generic');
+      const title = T('empty_title');
+      const subtitle = T('empty_subtitle', { category: catLabel });
+      const cta = T('empty_cta');
+      return `
     <div class="tours-empty">
       <div class="tours-empty__icon">&#128506;</div>
       <h3>${title}</h3>
       <p>${subtitle}<br>${cta}</p>
     </div>`;
-}
-
-function getFilteredTours(categoryKey) {
-  return allTours.filter(t => 
-    (t.tourType === TOUR_TYPE || t.type === TOUR_TYPE) &&
-    (categoryKey === 'all' || t.category === categoryKey)
-  );
-}
-
-function getTourCount(categoryKey) {
-  return getFilteredTours(categoryKey).length;
-}
-
-function renderPagination(totalItems) {
-  const container = document.getElementById('pagination-container');
-  if (!container) return;
-  
-  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-  if (totalPages <= 1) {
-    container.innerHTML = '';
-    return;
-  }
-
-  let html = '';
-  for (let i = 1; i <= totalPages; i++) {
-    html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
-  }
-  container.innerHTML = html;
-}
-
-window.goToPage = function(page) {
-  currentPage = page;
-  renderToursGrid(activeCategory);
-  document.querySelector('.filter-section').scrollIntoView({ behavior: 'smooth' });
-};
-
-function renderToursGrid(categoryKey, opts = {}) {
-  const grid = document.getElementById('tours-filter-grid');
-  const countEl = document.getElementById('tours-result-count');
-  if (!grid) return;
-
-  const filteredTours = getFilteredTours(categoryKey);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedTours = filteredTours.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
-  if (countEl) {
-    countEl.textContent = filteredTours.length === 1
-      ? T('tour_count_one')
-      : T('tour_count_many', { n: filteredTours.length });
-  }
-
-  renderPagination(filteredTours.length);
-
-  const paint = () => {
-    if (filteredTours.length === 0) {
-      grid.innerHTML = renderEmptyState(categoryKey);
-      document.getElementById('pagination-container').innerHTML = '';
-    } else {
-      grid.innerHTML = paginatedTours.map(renderTourCard).join('');
     }
-    grid.classList.remove('grid--exit');
-    if (!opts.skipAnim) {
-      grid.classList.add('grid--enter');
-      const cards = grid.querySelectorAll('.tour-card');
-      cards.forEach((card, i) => { card.style.animationDelay = `${i * 40}ms`; });
-      setTimeout(() => grid.classList.remove('grid--enter'), 260 + cards.length * 40);
+
+    function getFilteredTours(categoryKey) {
+      return allTours.filter(t =>
+        (t.tourType === TOUR_TYPE || t.type === TOUR_TYPE) &&
+        (categoryKey === 'all' || t.category === categoryKey)
+      );
     }
-    if (window.syncSaveButtons) window.syncSaveButtons();
-  };
 
-  if (opts.skipAnim) {
-    // Instant paint — used for cache hydration and initial fresh paint.
-    paint();
-  } else {
-    grid.classList.add('grid--exit');
-    setTimeout(paint, 160);
-  }
-}
+    function getTourCount(categoryKey) {
+      return getFilteredTours(categoryKey).length;
+    }
 
-function buildFilterTabs() {
-  const container = document.getElementById('tours-filter-tabs');
-  if (!container) return;
+    function renderPagination(totalItems) {
+      const container = document.getElementById('pagination-container');
+      if (!container) return;
 
-  container.innerHTML = TOUR_CATEGORIES.map(cat => {
-    const count = getTourCount(cat.key);
-    const isActive = cat.key === activeCategory;
-    return `
+      const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+      if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+      }
+
+      let html = '';
+      for (let i = 1; i <= totalPages; i++) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+      }
+      container.innerHTML = html;
+    }
+
+    window.goToPage = function (page) {
+      currentPage = page;
+      renderToursGrid(activeCategory);
+      document.querySelector('.filter-section').scrollIntoView({ behavior: 'smooth' });
+    };
+
+    function renderToursGrid(categoryKey, opts = {}) {
+      const grid = document.getElementById('tours-filter-grid');
+      const countEl = document.getElementById('tours-result-count');
+      if (!grid) return;
+
+      const filteredTours = getFilteredTours(categoryKey);
+      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+      const paginatedTours = filteredTours.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+      if (countEl) {
+        countEl.textContent = filteredTours.length === 1
+          ? T('tour_count_one')
+          : T('tour_count_many', { n: filteredTours.length });
+      }
+
+      renderPagination(filteredTours.length);
+
+      const paint = () => {
+        if (filteredTours.length === 0) {
+          grid.innerHTML = renderEmptyState(categoryKey);
+          document.getElementById('pagination-container').innerHTML = '';
+        } else {
+          grid.innerHTML = paginatedTours.map(renderTourCard).join('');
+        }
+        grid.classList.remove('grid--exit');
+        if (!opts.skipAnim) {
+          grid.classList.add('grid--enter');
+          const cards = grid.querySelectorAll('.tour-card');
+          cards.forEach((card, i) => { card.style.animationDelay = `${i * 40}ms`; });
+          setTimeout(() => grid.classList.remove('grid--enter'), 260 + cards.length * 40);
+        }
+        if (window.syncSaveButtons) window.syncSaveButtons();
+      };
+
+      if (opts.skipAnim) {
+        // Instant paint — used for cache hydration and initial fresh paint.
+        paint();
+      } else {
+        grid.classList.add('grid--exit');
+        setTimeout(paint, 160);
+      }
+    }
+
+    function buildFilterTabs() {
+      const container = document.getElementById('tours-filter-tabs');
+      if (!container) return;
+
+      container.innerHTML = TOUR_CATEGORIES.map(cat => {
+        const count = getTourCount(cat.key);
+        const isActive = cat.key === activeCategory;
+        return `
       <button
         class="filter-tab${isActive ? ' filter-tab--active' : ''}"
         data-category="${cat.key}"
@@ -539,220 +626,222 @@ function buildFilterTabs() {
           <span class="filter-tab__label">${T(cat.labelKey)}</span>
         <span class="filter-tab__count">${count}</span>
       </button>`;
-  }).join('');
+      }).join('');
 
-  container.querySelectorAll('.filter-tab').forEach(btn => {
-    btn.addEventListener('click', () => handleTabClick(btn.dataset.category));
-  });
-}
-
-function handleTabClick(categoryKey) {
-  if (categoryKey === activeCategory) return;
-  activeCategory = categoryKey;
-  currentPage = 1; // კატეგორიის შეცვლისას პირველ გვერდზე დაბრუნება
-
-  document.querySelectorAll('.filter-tab').forEach(btn => {
-    const isActive = btn.dataset.category === categoryKey;
-    btn.classList.toggle('filter-tab--active', isActive);
-    btn.setAttribute('aria-pressed', isActive);
-  });
-
-  moveActiveIndicator(categoryKey);
-  renderToursGrid(categoryKey);
-}
-
-function moveActiveIndicator(categoryKey) {
-  const activeBtn = document.querySelector(`.filter-tab[data-category="${categoryKey}"]`);
-  const indicator = document.getElementById('tab-indicator');
-  if (!activeBtn || !indicator) return;
-
-  const btnRect = activeBtn.getBoundingClientRect();
-  const containerRect = activeBtn.closest('.filter-tabs-wrapper').getBoundingClientRect();
-
-  indicator.style.left = `${btnRect.left - containerRect.left}px`;
-  indicator.style.width = `${btnRect.width}px`;
-}
-
-// Book modal functions
-window.openBookModal = function(name, price) {
-  document.getElementById('modal-tour-name').textContent = name;
-  document.getElementById('modal-tour-price').textContent = price;
-  document.getElementById('book-modal').classList.add('open');
-};
-
-window.closeModal = function() {
-  document.getElementById('book-modal').classList.remove('open');
-};
-
-// ── CACHE HELPERS (shared with index.html via gt_data_cache_v1) ──
-const DATA_CACHE_KEY = 'gt_data_cache_v1';
-const DATA_CACHE_MAX_AGE = Infinity; // Never expire — stale data is better than empty screen
-
-function readToursFromCache() {
-  try {
-    const raw = localStorage.getItem(DATA_CACHE_KEY);
-    if (!raw) return null;
-    const cache = JSON.parse(raw);
-    if (!cache || !Array.isArray(cache.tours) || cache.tours.length === 0) return null;
-    // Cache never expires — background fetch silently replaces stale data
-    return cache.tours;
-  } catch (e) { return null; }
-}
-
-function writeToursToCache(tours) {
-  try {
-    const raw = localStorage.getItem(DATA_CACHE_KEY);
-    const cache = raw ? JSON.parse(raw) : {};
-    cache.tours = tours;
-    cache.timestamp = Date.now();
-    localStorage.setItem(DATA_CACHE_KEY, JSON.stringify(cache));
-  } catch (e) { /* quota — ignore */ }
-}
-
-// ── CONTENT WATCHDOG ────────────────────────────────────────
-// If the initial fetch is slow or fails, this keeps retrying every 1s
-// until the grid actually shows content (real cards OR a legitimate
-// "no tours" empty state). As soon as something is on screen, it stops.
-let _contentWatchdog = null;
-let _watchdogBusy = false;
-let _watchdogAttempts = 0;
-const WATCHDOG_MAX_ATTEMPTS = 60;   // ~60 s absolute cap for slow connections
-const WATCHDOG_INTERVAL_MS = 1000;
-
-function stopContentWatchdog() {
-  if (_contentWatchdog) { clearTimeout(_contentWatchdog); _contentWatchdog = null; }
-}
-
-function isContentVisible() {
-  const grid = document.getElementById('tours-filter-grid');
-  if (!grid) return false;
-  // A real card OR the translated empty-state both count as "loaded".
-  return !!(grid.querySelector('.tour-card') || grid.querySelector('.tours-empty'));
-}
-
-function scheduleContentWatchdog() {
-  stopContentWatchdog();
-  _contentWatchdog = setTimeout(tickContentWatchdog, WATCHDOG_INTERVAL_MS);
-}
-
-async function tickContentWatchdog() {
-  if (isContentVisible()) { stopContentWatchdog(); return; }
-  if (_watchdogBusy) { scheduleContentWatchdog(); return; }
-  if (_watchdogAttempts >= WATCHDOG_MAX_ATTEMPTS) { stopContentWatchdog(); return; }
-  _watchdogAttempts++;
-  _watchdogBusy = true;
-  try {
-    const config = await import('./firebase-config.js');
-    const fresh = await Promise.race([
-      config.getTours(),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Watchdog timeout')), 8000)
-      )
-    ]);
-
-    if (Array.isArray(fresh) && fresh.length > 0) {
-      allTours = fresh;
-      writeToursToCache(fresh);
-      buildFilterTabs();
-      renderToursGrid(activeCategory, { skipAnim: true });
-      requestAnimationFrame(() => moveActiveIndicator(activeCategory));
-      if (window.syncSaveButtons) window.syncSaveButtons();
+      container.querySelectorAll('.filter-tab').forEach(btn => {
+        btn.addEventListener('click', () => handleTabClick(btn.dataset.category));
+      });
     }
-  } catch (e) { /* will retry on next tick */ }
-  _watchdogBusy = false;
-  if (!isContentVisible()) scheduleContentWatchdog();
-  else stopContentWatchdog();
-}
 
-// Initialize — cache-first, then background refresh (matches index.html strategy).
-async function init() {
-  let renderedFromCache = false;
+    function handleTabClick(categoryKey) {
+      if (categoryKey === activeCategory) return;
+      activeCategory = categoryKey;
+      currentPage = 1; // Reset pagination when category changes
 
-  // Translate the initial "Loading tours..." placeholder immediately.
-  const countEl = document.getElementById('tours-result-count');
-  if (countEl) countEl.textContent = T('loading') + '…';
+      document.querySelectorAll('.filter-tab').forEach(btn => {
+        const isActive = btn.dataset.category === categoryKey;
+        btn.classList.toggle('filter-tab--active', isActive);
+        btn.setAttribute('aria-pressed', isActive);
+      });
 
-  // 1. Instant paint from localStorage cache.
-  const cached = readToursFromCache();
-  if (cached) {
-    allTours = cached;
-    buildFilterTabs();
-    renderToursGrid(activeCategory, { skipAnim: true });
-    requestAnimationFrame(() => moveActiveIndicator(activeCategory));
-    if (window.syncSaveButtons) window.syncSaveButtons();
-    renderedFromCache = true;
-  }
+      moveActiveIndicator(categoryKey);
+      renderToursGrid(categoryKey);
+    }
 
-  window.addEventListener('resize', () => moveActiveIndicator(activeCategory));
+    function moveActiveIndicator(categoryKey) {
+      const activeBtn = document.querySelector(`.filter-tab[data-category="${categoryKey}"]`);
+      const indicator = document.getElementById('tab-indicator');
+      if (!activeBtn || !indicator) return;
 
-  // 2. Kick off the watchdog: if content isn't on screen within 1 s,
-  //    it will retry fetching until it is.
-  scheduleContentWatchdog();
+      const btnRect = activeBtn.getBoundingClientRect();
+      const containerRect = activeBtn.closest('.filter-tabs-wrapper').getBoundingClientRect();
 
-  // The watchdog handles retries — no forced page reload needed.
-  // (Removed: 1.5s forced reload was causing infinite reload loops on slow connections)
+      indicator.style.left = `${btnRect.left - containerRect.left}px`;
+      indicator.style.width = `${btnRect.width}px`;
+    }
 
-  // 3. Background fresh fetch — dynamically import Firebase so the cache
-  //    paint above is never blocked by the SDK download.
-  try {
-    const fetchWithTimeout = async (timeoutMs = 8000) => {
-      const config = await import('./firebase-config.js');
-      return Promise.race([
-        config.getTours(),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Fetch timeout')), timeoutMs)
-        )
-      ]);
+    // Book modal functions
+    window.openBookModal = function (name, price) {
+      document.getElementById('modal-tour-name').textContent = name;
+      document.getElementById('modal-tour-price').textContent = price;
+      document.getElementById('book-modal').classList.add('open');
     };
 
-    const fresh = await fetchWithTimeout(8000);
+    window.closeModal = function () {
+      document.getElementById('book-modal').classList.remove('open');
+    };
 
-    if (Array.isArray(fresh)) {
-      allTours = fresh;
-      writeToursToCache(fresh);
-      buildFilterTabs();
-      renderToursGrid(activeCategory, { skipAnim: renderedFromCache });
-      if (window.syncSaveButtons) window.syncSaveButtons();
-      requestAnimationFrame(() => moveActiveIndicator(activeCategory));
-    } else if (!renderedFromCache) {
-      document.getElementById('tours-filter-grid').innerHTML = renderEmptyState(activeCategory);
+    // -- CACHE HELPERS (shared with index.html via gt_data_cache_v1) --
+    const DATA_CACHE_KEY = 'gt_data_cache_v1';
+    const DATA_CACHE_MAX_AGE = Infinity; // Never expire — stale data is better than empty screen
+
+    function readToursFromCache() {
+      try {
+        const raw = localStorage.getItem(DATA_CACHE_KEY);
+        if (!raw) return null;
+        const cache = JSON.parse(raw);
+        if (!cache || !Array.isArray(cache.tours) || cache.tours.length === 0) return null;
+        // Cache never expires — background fetch silently replaces stale data
+        return cache.tours;
+      } catch (e) { return null; }
     }
-    if (isContentVisible()) stopContentWatchdog();
-  } catch (error) {
-    console.error('Error loading tours:', error);
-    // Don't show the error card yet — let the watchdog keep retrying.
-  }
-}
 
-// Re-render filter tabs + grid when the user changes language so
-// the multilingual fields from Firestore are picked in the new lang.
-window.addEventListener('languageChanged', () => {
-  if (allTours && allTours.length) {
-    buildFilterTabs();
-    renderToursGrid(activeCategory, { skipAnim: true });
-    requestAnimationFrame(() => moveActiveIndicator(activeCategory));
-  }
-});
-
-// Re-fetch when user returns to tab (data may have disappeared)
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState !== 'visible') return;
-  if (!isContentVisible() && (!allTours || allTours.length === 0)) {
-    const cached = readToursFromCache();
-    if (cached) {
-      allTours = cached;
-      buildFilterTabs();
-      renderToursGrid(activeCategory, { skipAnim: true });
-      requestAnimationFrame(() => moveActiveIndicator(activeCategory));
+    function writeToursToCache(tours) {
+      try {
+        const raw = localStorage.getItem(DATA_CACHE_KEY);
+        const cache = raw ? JSON.parse(raw) : {};
+        cache.tours = tours;
+        cache.timestamp = Date.now();
+        localStorage.setItem(DATA_CACHE_KEY, JSON.stringify(cache));
+      } catch (e) { /* quota — ignore */ }
     }
-    _watchdogAttempts = 0;
-    scheduleContentWatchdog();
-  }
-});
 
-init();
-</script>
+    // -- CONTENT WATCHDOG ----------------------------------------
+    // If the initial fetch is slow or fails, this keeps retrying every 1s
+    // until the grid actually shows content (real cards OR a legitimate
+    // "no tours" empty state). As soon as something is on screen, it stops.
+    let _contentWatchdog = null;
+    let _watchdogBusy = false;
+    let _watchdogAttempts = 0;
+    const WATCHDOG_MAX_ATTEMPTS = 60;   // ~60 s absolute cap for slow connections
+    const WATCHDOG_INTERVAL_MS = 1000;
 
+    function stopContentWatchdog() {
+      if (_contentWatchdog) { clearTimeout(_contentWatchdog); _contentWatchdog = null; }
+    }
+
+    function isContentVisible() {
+      const grid = document.getElementById('tours-filter-grid');
+      if (!grid) return false;
+      // A real card OR the translated empty-state both count as "loaded".
+      return !!(grid.querySelector('.tour-card') || grid.querySelector('.tours-empty'));
+    }
+
+    function scheduleContentWatchdog() {
+      stopContentWatchdog();
+      _contentWatchdog = setTimeout(tickContentWatchdog, WATCHDOG_INTERVAL_MS);
+    }
+
+    async function tickContentWatchdog() {
+      if (isContentVisible()) { stopContentWatchdog(); return; }
+      if (_watchdogBusy) { scheduleContentWatchdog(); return; }
+      if (_watchdogAttempts >= WATCHDOG_MAX_ATTEMPTS) { stopContentWatchdog(); return; }
+      _watchdogAttempts++;
+      _watchdogBusy = true;
+      try {
+        const config = await import('./firebase-config.js');
+        const fresh = await Promise.race([
+          config.getTours(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Watchdog timeout')), 8000)
+          )
+        ]);
+
+        if (Array.isArray(fresh) && fresh.length > 0) {
+          allTours = fresh;
+          writeToursToCache(fresh);
+          buildFilterTabs();
+          renderToursGrid(activeCategory, { skipAnim: true });
+          requestAnimationFrame(() => moveActiveIndicator(activeCategory));
+          if (window.syncSaveButtons) window.syncSaveButtons();
+        }
+      } catch (e) { /* will retry on next tick */ }
+      _watchdogBusy = false;
+      if (!isContentVisible()) scheduleContentWatchdog();
+      else stopContentWatchdog();
+    }
+
+    // Initialize — cache-first, then background refresh (matches index.html strategy).
+    async function init() {
+      let renderedFromCache = false;
+
+      // Translate the initial "Loading tours..." placeholder immediately.
+      const countEl = document.getElementById('tours-result-count');
+      if (countEl) countEl.textContent = T('loading') + '…';
+
+      // 1. Instant paint from localStorage cache.
+      const cached = readToursFromCache();
+      if (cached) {
+        allTours = cached;
+        buildFilterTabs();
+        renderToursGrid(activeCategory, { skipAnim: true });
+        requestAnimationFrame(() => moveActiveIndicator(activeCategory));
+        if (window.syncSaveButtons) window.syncSaveButtons();
+        renderedFromCache = true;
+      }
+
+      window.addEventListener('resize', () => moveActiveIndicator(activeCategory));
+
+      // 2. Kick off the watchdog: if content isn't on screen within 1 s,
+      //    it will retry fetching until it is.
+      scheduleContentWatchdog();
+
+      // The watchdog handles retries — no forced page reload needed.
+      // (Removed: 1.5s forced reload was causing infinite reload loops on slow connections)
+
+      // 3. Background fresh fetch — dynamically import Firebase so the cache
+      //    paint above is never blocked by the SDK download.
+      try {
+        const fetchWithTimeout = async (timeoutMs = 8000) => {
+          const config = await import('./firebase-config.js');
+          return Promise.race([
+            config.getTours(),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Fetch timeout')), timeoutMs)
+            )
+          ]);
+        };
+
+        const fresh = await fetchWithTimeout(8000);
+
+        if (Array.isArray(fresh)) {
+          allTours = fresh;
+          writeToursToCache(fresh);
+          buildFilterTabs();
+          renderToursGrid(activeCategory, { skipAnim: renderedFromCache });
+          if (window.syncSaveButtons) window.syncSaveButtons();
+          requestAnimationFrame(() => moveActiveIndicator(activeCategory));
+        } else if (!renderedFromCache) {
+          document.getElementById('tours-filter-grid').innerHTML = renderEmptyState(activeCategory);
+        }
+        if (isContentVisible()) stopContentWatchdog();
+      } catch (error) {
+        console.error('Error loading tours:', error);
+        // Don't show the error card yet — let the watchdog keep retrying.
+      }
+    }
+
+    // Re-render filter tabs + grid when the user changes language so
+    // the multilingual fields from Firestore are picked in the new lang.
+    window.addEventListener('languageChanged', () => {
+      if (allTours && allTours.length) {
+        buildFilterTabs();
+        renderToursGrid(activeCategory, { skipAnim: true });
+        requestAnimationFrame(() => moveActiveIndicator(activeCategory));
+      }
+    });
+
+    // Re-fetch when user returns to tab (data may have disappeared)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible') return;
+      if (!isContentVisible() && (!allTours || allTours.length === 0)) {
+        const cached = readToursFromCache();
+        if (cached) {
+          allTours = cached;
+          buildFilterTabs();
+          renderToursGrid(activeCategory, { skipAnim: true });
+          requestAnimationFrame(() => moveActiveIndicator(activeCategory));
+        }
+        _watchdogAttempts = 0;
+        scheduleContentWatchdog();
+      }
+    });
+
+    init();
+  </script>
+
+<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "314352f1c1eb4623a31c466d4da285b8"}'></script><!-- End Cloudflare Web Analytics -->
 
 </body>
+
 </html>

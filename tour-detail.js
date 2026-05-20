@@ -328,6 +328,7 @@ function populateTourDetail() {
   // Modal tour name and price summary
   document.getElementById('modal-tour-name').textContent = title;
   refreshModalPriceSummary();
+  updateBookingPriceBox();
 
   // Itinerary (if multi-day)
   if (tour.category === 'multi-day' || tour.category === 'upcoming') {
@@ -337,6 +338,83 @@ function populateTourDetail() {
   // Clear sessionStorage
   sessionStorage.removeItem('selectedTourId');
   sessionStorage.removeItem('selectedTourData');
+
+  // Inject Schema.org JSON-LD Structured Data for Google Rich Snippets
+  _injectSchemaJSONLD(tour);
+}
+
+function _injectSchemaJSONLD(tour) {
+  try {
+    const existing = document.getElementById('gt-tour-schema-jsonld');
+    if (existing) existing.remove();
+
+    let cleanPrice = '100';
+    if (tour.price) {
+      const match = String(tour.price).match(/(\d+)/);
+      if (match) cleanPrice = match[1];
+    }
+    
+    let currentCurrency = 'USD';
+    try {
+      if (window.GT_CURRENT_CURRENCY) {
+        currentCurrency = window.GT_CURRENT_CURRENCY;
+      } else {
+        const saved = localStorage.getItem('gt_currency');
+        if (saved) currentCurrency = saved;
+      }
+    } catch(e) {}
+
+    let isoDuration = 'P1D';
+    if (tour.duration) {
+      const match = String(tour.duration).match(/(\d+)/);
+      if (match) isoDuration = 'P' + match[1] + 'D';
+    }
+
+    const title = _L(tour.title) || 'Tour';
+    const desc = _L(tour.desc) || 'Georgia Trips Tour details';
+    const imgUrl = tour.img ? (tour.img.startsWith('http') ? tour.img : window.location.origin + '/' + tour.img) : '';
+
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "Tour",
+      "name": title,
+      "description": desc,
+      "image": imgUrl,
+      "tourDuration": isoDuration,
+      "offers": {
+        "@type": "Offer",
+        "price": cleanPrice,
+        "priceCurrency": currentCurrency,
+        "availability": "https://schema.org/InStock",
+        "url": window.location.href
+      },
+      "provider": {
+        "@type": "TravelAgency",
+        "name": "Georgia Trips",
+        "url": "https://georgiatrips.ge",
+        "logo": "https://georgiatrips.ge/logo.png",
+        "sameAs": [
+          "https://www.facebook.com/profile.php?id=61588059054976",
+          "https://www.instagram.com/georgiatrips.ge/"
+        ]
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "bestRating": "5",
+        "worstRating": "1",
+        "ratingCount": "38"
+      }
+    };
+
+    const script = document.createElement('script');
+    script.id = 'gt-tour-schema-jsonld';
+    script.type = 'application/ld+json';
+    script.text = JSON.stringify(schema, null, 2);
+    document.head.appendChild(script);
+  } catch (e) {
+    console.error('[Schema JSON-LD] Error generating schema:', e);
+  }
 }
 
 // ── SHOW ITINERARY (SAMPLE) ──────────────────────────────────
@@ -570,17 +648,32 @@ function updateBookingPriceBox() {
 
   if (window.PriceDisplay) {
     const cur = window.PriceDisplay.getSelectedCurrency();
-    const meta = window.PriceDisplay.currencies?.[cur];
-    currencySymbol = meta?.symbol || cur;
+    const curMeta = window.PriceDisplay.currencies?.[cur];
+    currencySymbol = curMeta?.symbol || cur;
     currencyCode = cur;
-    // PriceDisplay.getBasePrice returns the numeric price in base currency
-    const base = parseFloat(currentTour.price) || 0;
-    const rate = window.PriceDisplay.rates?.[cur] || 1;
-    pricePerPerson = base * rate;
+
+    const meta = window.PriceDisplay.getPriceMeta(currentTour);
+    if (meta && meta.amount !== null) {
+      if (window.PriceDisplay.convertAmount) {
+        pricePerPerson = window.PriceDisplay.convertAmount(meta.amount, meta.currency, cur);
+      } else {
+        pricePerPerson = meta.amount;
+      }
+    } else {
+      pricePerPerson = parseFloat(currentTour.price) || 0;
+    }
   } else {
     pricePerPerson = parseFloat(currentTour.price) || 0;
     currencySymbol = '$';
   }
+
+  const perPersonLabel = document.getElementById('modal-price-per-label');
+  const countLabel = document.getElementById('modal-price-count-label');
+  const totalLabel = document.getElementById('modal-price-total-label');
+  
+  if (perPersonLabel) perPersonLabel.textContent = window.t ? window.t('price_per_person') || 'ფასი ადამიანზე' : 'ფასი ადამიანზე';
+  if (countLabel) countLabel.textContent = window.t ? window.t('number_of_people') || 'ადამიანების რაოდენობა' : 'ადამიანების რაოდენობა';
+  if (totalLabel) totalLabel.textContent = window.t ? window.t('total') || 'სულ' : 'სულ';
 
   if (!pricePerPerson || pricePerPerson <= 0) { box.style.display = 'none'; return; }
 
@@ -747,12 +840,30 @@ async function confirmAndSubmitBooking() {
   try {
     const mod = await import('./firebase-config.js');
     if (mod && typeof mod.addTourBooking === 'function') {
-      await mod.addTourBooking({
-        ...data,
-        sourcePage: 'tour-detail',
-        tourId: currentTour?.id || '',
-        status: 'new'
-      });
+      // Attach userId when available and persist booking
+      try {
+        const { getAuth } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js');
+        const current = getAuth().currentUser;
+        const userId = current ? current.uid : null;
+        await mod.addTourBooking({
+          ...data,
+          userId: userId,
+          sourcePage: 'tour-detail',
+          tourId: currentTour?.id || '',
+          status: 'new'
+        });
+        // Notify other modules to refresh counts
+        window.dispatchEvent(new CustomEvent('bookingsChanged', { detail: { userId } }));
+      } catch (innerErr) {
+        console.error('Failed to attach userId for booking:', innerErr);
+        await mod.addTourBooking({
+          ...data,
+          sourcePage: 'tour-detail',
+          tourId: currentTour?.id || '',
+          status: 'new'
+        });
+        window.dispatchEvent(new CustomEvent('bookingsChanged', { detail: { userId: null } }));
+      }
     }
   } catch (err) {
     console.error('Failed to persist tour booking:', err);

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="bg-background">
 <head>
 <meta charset="UTF-8">
@@ -18,9 +18,12 @@
 <script src="translate.js" defer></script>
 <script src="lang.js" defer></script>
 <script src="ui-translate.js" defer></script>
-<title>Transport & Cars – Georgia Trips</title>
-<meta name="description" content="Comfortable and safe transport across Georgia. Book a sedan, SUV or minivan with a professional driver.">
+<title>Transport & Cars | Georgia Trips Car Rental with Driver</title>
+<meta name="description" content="ტრანსპორტი და მანქანის გაქირავება მძღოლით საქართველოში. Comfortable and safe transport across Georgia — sedan, SUV, minivan with professional driver. Аренда авто с водителем в Грузии. استئجار سيارة في جورجيا.">
+<meta name="keywords" content="transport Georgia, ტრანსპორტი საქართველო, car rental Batumi, მანქანის გაქირავება ბათუმი, аренда авто Грузия, трансфер Батуми, araç kiralama Gürcistan, تأجير سيارات جورجيا, השכרת רכב גאורגיה, оренда авто Грузія, airport transfer Georgia, SUV rental Batumi">
+<script src="seo-head.js"></script>
 <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="mobile.css">
 <link rel="stylesheet" href="tours-page.css">
 <style>
   /* ======================================================
@@ -34,27 +37,25 @@
     min-height: 240px;
   }
 
+  /* === Minimal vehicle card === */
   .vehicle-card {
     position: relative;
-    display: flex;
-    flex-direction: column;
     background: var(--white);
-    border-radius: 18px;
+    border-radius: 16px;
     overflow: hidden;
-    border: 1px solid rgba(11, 60, 93, 0.08);
-    box-shadow: 0 4px 22px rgba(11, 60, 93, 0.08);
+    box-shadow: 0 2px 16px rgba(11, 60, 93, 0.09);
     transition: transform 0.28s cubic-bezier(0.4,0,0.2,1),
                 box-shadow 0.28s cubic-bezier(0.4,0,0.2,1);
-    height: 100%;
+    cursor: pointer;
   }
   .vehicle-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 18px 45px rgba(11, 60, 93, 0.18);
+    transform: translateY(-5px);
+    box-shadow: 0 14px 38px rgba(11, 60, 93, 0.16);
   }
 
   .vehicle-card__media {
     position: relative;
-    height: 210px;
+    height: 220px;
     overflow: hidden;
     background: var(--light-bg);
   }
@@ -64,59 +65,23 @@
     object-fit: cover;
     transition: transform 0.6s ease;
   }
-  .vehicle-card:hover .vehicle-card__media img { transform: scale(1.07); }
-
-  .vehicle-card__type {
-    position: absolute;
-    top: 0.9rem;
-    left: 0.9rem;
-    padding: 0.35rem 0.85rem;
-    background: rgba(11, 60, 93, 0.9);
-    color: var(--white);
-    font-size: 0.72rem;
-    font-weight: 700;
-    border-radius: 20px;
-    letter-spacing: 0.3px;
-    text-transform: uppercase;
-    backdrop-filter: blur(6px);
-  }
-
-  .vehicle-card__driver {
-    position: absolute;
-    top: 0.9rem;
-    right: 0.9rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 0.35rem 0.75rem;
-    background: rgba(46, 196, 182, 0.95);
-    color: var(--white);
-    font-size: 0.7rem;
-    font-weight: 700;
-    border-radius: 20px;
-    letter-spacing: 0.2px;
-  }
+  .vehicle-card:hover .vehicle-card__media img { transform: scale(1.06); }
 
   .vehicle-card__body {
-    padding: 1.25rem 1.35rem 1.4rem;
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    gap: 0.85rem;
+    padding: 1.1rem 1.25rem 1.3rem;
   }
 
   .vehicle-card__title {
     font-family: 'Montserrat', sans-serif;
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     font-weight: 800;
     color: var(--dark-blue);
-    line-height: 1.25;
-    letter-spacing: -0.2px;
-    margin: 0;
+    margin: 0 0 0.5rem;
+    line-height: 1.3;
   }
 
   .vehicle-card__desc {
-    font-size: 0.88rem;
+    font-size: 0.85rem;
     color: var(--text-mid);
     line-height: 1.6;
     margin: 0;
@@ -126,99 +91,6 @@
     line-clamp: 3;
     overflow: hidden;
   }
-
-  .vehicle-card__specs {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem;
-    padding: 0.85rem;
-    background: rgba(46, 196, 182, 0.06);
-    border: 1px solid rgba(46, 196, 182, 0.14);
-    border-radius: 12px;
-  }
-  .vehicle-spec {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.3rem;
-    text-align: center;
-  }
-  .vehicle-spec__icon {
-    width: 28px;
-    height: 28px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    background: var(--white);
-    color: var(--teal);
-    font-size: 0.95rem;
-  }
-  .vehicle-spec__label {
-    font-size: 0.68rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    color: var(--text-light);
-  }
-  .vehicle-spec__value {
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--dark-blue);
-    line-height: 1.15;
-    word-break: break-word;
-  }
-
-  .vehicle-card__footer {
-    margin-top: auto;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding-top: 1rem;
-    border-top: 1px solid rgba(11, 60, 93, 0.08);
-  }
-
-  .vehicle-card__price-wrap {
-    display: flex;
-    flex-direction: column;
-  }
-  .vehicle-card__price {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 1.35rem;
-    font-weight: 900;
-    color: var(--dark-blue);
-    line-height: 1;
-  }
-  .vehicle-card__price-sub {
-    font-size: 0.72rem;
-    color: var(--text-light);
-    font-weight: 600;
-    margin-top: 2px;
-  }
-
-  .vehicle-card__cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 0.6rem 1.05rem;
-    border: none;
-    background: var(--dark-blue);
-    color: var(--white);
-    border-radius: 10px;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 0.82rem;
-    cursor: pointer;
-    transition: background 0.22s ease, transform 0.18s ease, box-shadow 0.22s ease;
-    letter-spacing: 0.2px;
-  }
-  .vehicle-card__cta:hover {
-    background: #0a2e47;
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(11, 60, 93, 0.24);
-  }
-  .vehicle-card__cta svg { width: 14px; height: 14px; }
 
   /* Services strip */
   .cars-services-strip {
@@ -334,7 +206,7 @@
         <a href="international-tours.html">International Tours</a>
       </div>
     </div>
-    <a href="cars.html" class="active">Cars</a>
+    <a href="cars.html" class="active">Transport</a>
     <a href="posts.html">Posts</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
@@ -376,12 +248,12 @@
   <div class="breadcrumb">
     <a href="index.html">Home</a>
     <span class="sep">›</span>
-    <span class="current">Cars</span>
+    <span class="current">Transport</span>
   </div>
 </div>
 
 <!-- AVAILABLE VEHICLES -->
-<section class="cars-full-section" style="padding:5rem 2rem; background: #f4f7f9;">
+<section class="cars-full-section surface-panel" style="padding:5rem 2rem;">
   <div class="container">
     <div class="section-header">
       <span class="section-tag">Available Vehicles</span>
@@ -396,7 +268,7 @@
 </section>
 
 <!-- SERVICES -->
-<section style="background: linear-gradient(135deg, #fffaf0 0%, #ffffff 100%); padding:4.5rem 2rem; border-top: 1px solid rgba(11,60,93,0.05);">
+<section class="surface-panel" style="padding:4.5rem 2rem; border-top: 1px solid rgba(11,60,93,0.05);">
   <div class="container">
     <div class="section-header">
       <span class="section-tag">Our Services</span>
@@ -416,12 +288,12 @@
         <p>Discover Tbilisi and Batumi with a friendly driver who knows every street and story of the city.</p>
       </div>
       <div class="cars-service-card">
-        <div class="cars-service-card__icon">🏔️</div>
+        <div class="cars-service-card__icon">🌄</div>
         <h4>Mountain Trips</h4>
         <p>Strong 4WD cars for Kazbegi, Svaneti, Tusheti and any off-road destination you want to visit.</p>
       </div>
       <div class="cars-service-card">
-        <div class="cars-service-card__icon">👨‍👩‍👧</div>
+        <div class="cars-service-card__icon">👨‍👩‍👧‍👦</div>
         <h4>Groups and Families</h4>
         <p>Spacious minivans with safety features — perfect for families, students and travel groups.</p>
       </div>
@@ -430,7 +302,7 @@
 </section>
 
 <!-- WHY BOOK WITH US -->
-<section style="background:var(--dark-blue);padding:4.5rem 2rem;">
+<section class="surface-panel-dark" style="padding:4.5rem 2rem;">
   <div class="container">
     <div class="section-header">
       <span class="section-tag" style="color:var(--teal);">Why Us</span>
@@ -440,12 +312,12 @@
     </div>
     <div class="cars-why-grid">
       <div class="cars-why-item">
-        <div class="cars-why-item__icon">🧑‍✈️</div>
+        <div class="cars-why-item__icon">👨‍✈️</div>
         <h4>Licensed Drivers</h4>
         <p>Professional drivers with years of experience who know Georgia very well.</p>
       </div>
       <div class="cars-why-item">
-        <div class="cars-why-item__icon">🚗</div>
+        <div class="cars-why-item__icon">🚘</div>
         <h4>Modern Vehicles</h4>
         <p>Clean and comfortable cars with air-conditioning, checked before every trip.</p>
       </div>
@@ -455,7 +327,7 @@
         <p>Honest prices with no hidden fees. You only pay for what you book.</p>
       </div>
       <div class="cars-why-item">
-        <div class="cars-why-item__icon">🕐</div>
+        <div class="cars-why-item__icon">🕒</div>
         <h4>Available Every Day</h4>
         <p>We are here for you every day of the week, at any hour you need us.</p>
       </div>
@@ -471,7 +343,7 @@
         <div class="logo-icon"><img src="logo.png" alt="Georgia Trips Logo" class="logo-img"></div>
         Georgia<span>Trips</span>
       </div>
-      <p>Your trusted travel partner in Georgia. Crafting genuine experiences since 2017.</p>
+      <p>The best choice for a special journey.</p>
       <div class="footer-social">
         <a href="https://www.facebook.com/profile.php?id=61588059054976" class="social-btn" aria-label="Facebook" target="_blank"><svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
         <a href="https://www.instagram.com/georgiatrips.ge/" class="social-btn" aria-label="Instagram" target="_blank"><svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>
@@ -485,7 +357,7 @@
       <ul>
         <li><a href="index.html">Home</a></li>
         <li><a href="domestic-tours.html">Tours</a></li>
-        <li><a href="cars.html">Cars</a></li>
+        <li><a href="cars.html">Transport</a></li>
         <li><a href="posts.html">Posts</a></li>
         <li><a href="about.html">About</a></li>
       </ul>
@@ -503,12 +375,12 @@
       <div class="footer-contact-item"><span class="icon">📍</span><span>27 Kutaisi St, Batumi 6010</span></div>
       <div class="footer-contact-item"><span class="icon">📞</span><span>+995 504 22 00 20</span></div>
       <div class="footer-contact-item"><span class="icon">✉️</span><span>georgiatrips5@gmail.com</span></div>
-      <div class="footer-contact-item"><span class="icon">🕐</span><span>Mon – Sun: 10:00 – 19:00</span></div>
+      <div class="footer-contact-item"><span class="icon">⏰</span><span>Mon – Sun: 10:00 – 19:00</span></div>
     </div>
   </div>
   <div class="footer-bottom">
     <p>© 2026 Georgia Trips. All rights reserved.</p>
-    <p><a href="#">Privacy Policy</a> · <a href="#">Terms</a></p>
+    <p><a href="privacy-policy.html">Privacy Policy</a> • <a href="terms.html">Terms</a></p>
     <p>developed by <a href="https://www.instagram.com/lominadzee10/" target="_blank">lominadzee10</a></p>
   </div>
 </footer>
@@ -516,7 +388,7 @@
 <!-- BOOKING MODAL (inline quick inquiry, not used primarily) -->
 <div class="modal-backdrop" id="book-modal" role="dialog" aria-modal="true">
   <div class="modal">
-    <button class="modal-close" onclick="closeModal()">✕</button>
+    <button class="modal-close" onclick="closeModal()">×</button>
     <h3 id="modal-tour-name">Vehicle Inquiry</h3>
     <div class="price" id="modal-tour-price"></div>
     <p>Share your dates and we will reply within a few hours with availability and a final price.</p>
@@ -524,7 +396,7 @@
     <div class="form-group"><label>Email</label><input type="email" placeholder="your@email.com"></div>
     <div class="form-group"><label>Trip Dates</label><input type="text" placeholder="e.g. June 10–15, 2025"></div>
     <div class="form-group"><label>Number of Passengers</label><input type="number" min="1" placeholder="e.g. 6"></div>
-    <button class="btn-primary" style="width:100%;justify-content:center;" onclick="closeModal()">Send Inquiry ✦</button>
+    <button class="btn-primary" style="width:100%;justify-content:center;" onclick="closeModal()">Send Inquiry</button>
   </div>
 </div>
 
@@ -580,75 +452,20 @@ function escapeAttr(s) {
 function renderVehicleCard(car) {
   const title = L(car.title);
   const info = L(car.info || car.desc || '');
-  const type = translateCarType(car.type || '');
-  const seats = L(car.seats) || '—';
-  const color = translateSpecValue(car.color);
-  const transmission = translateSpecValue(car.transmission);
-  const fuel = translateSpecValue(car.fuel);
-  const onRequest = T('on_request');
-  const perDay = T('per_day');
-  const priceMarkup = window.PriceDisplay
-    ? window.PriceDisplay.renderPriceMarkup(car, { priceClass: 'vehicle-card__price', labelClass: 'vehicle-card__price-sub', defaultLabel: perDay })
-    : `<span class="vehicle-card__price">${car.priceOnRequest ? onRequest : (car.price || onRequest)}</span><span class="vehicle-card__price-sub">${car.priceOnRequest ? '' : perDay}</span>`;
 
   return `
     <article class="vehicle-card" data-id="${escapeAttr(car.id)}">
       <div class="vehicle-card__media">
         <img src="${car.img || ''}" alt="${escapeAttr(title)}" loading="lazy">
-        ${type ? `<span class="vehicle-card__type">${type}</span>` : ''}
-          <span class="vehicle-card__driver">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><path d="M20 6 9 17l-5-5"></path></svg>
-          <span>${T('driver_included') || 'Driver included'}</span>
-        </span>
       </div>
       <div class="vehicle-card__body">
         <h3 class="vehicle-card__title">${title}</h3>
         <p class="vehicle-card__desc">${info}</p>
-
-        <div class="vehicle-card__specs" aria-label="Vehicle specs">
-          <div class="vehicle-spec">
-            <span class="vehicle-spec__icon" aria-hidden="true">👥</span>
-            <span class="vehicle-spec__label">${T('spec_seats') || 'Seats'}</span>
-            <span class="vehicle-spec__value">${seats}</span>
-          </div>
-          <div class="vehicle-spec">
-            <span class="vehicle-spec__icon" aria-hidden="true">⚙️</span>
-            <span class="vehicle-spec__label">${T('spec_transmission') || 'Gearbox'}</span>
-            <span class="vehicle-spec__value">${transmission}</span>
-          </div>
-          <div class="vehicle-spec">
-            <span class="vehicle-spec__icon" aria-hidden="true">⛽</span>
-            <span class="vehicle-spec__label">${T('spec_fuel') || 'Fuel'}</span>
-            <span class="vehicle-spec__value">${fuel}</span>
-          </div>
-        </div>
-
-        <div class="vehicle-card__footer">
-          <div class="vehicle-card__price-wrap">
-            ${priceMarkup}
-          </div>
-          <button class="vehicle-card__cta" onclick="goToCarDetailPage('${escapeAttr(car.id)}')">
-            ${T('view_details') || 'View Details'}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
-          </button>
-        </div>
       </div>
     </article>`;
 }
 
-// Navigation (writes to sessionStorage, then redirects to cars-detail.html)
-window.goToCarDetailPage = function(carId) {
-  const car = allCars.find(c => c.id === carId);
-  if (car) {
-    try {
-      sessionStorage.setItem('selectedCarId', car.id);
-      sessionStorage.setItem('selectedCarData', JSON.stringify(car));
-    } catch (e) {}
-  } else {
-    try { sessionStorage.setItem('selectedCarId', carId); } catch (e) {}
-  }
-  window.location.href = `cars-detail.html?id=${encodeURIComponent(carId)}`;
-};
+
 
 function renderAllCars() {
   const grid = document.getElementById('cars-grid-page');
@@ -741,5 +558,8 @@ document.addEventListener('visibilitychange', () => {
 init();
 </script>
 
+<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "314352f1c1eb4623a31c466d4da285b8"}'></script><!-- End Cloudflare Web Analytics -->
+
 </body>
 </html>
+
