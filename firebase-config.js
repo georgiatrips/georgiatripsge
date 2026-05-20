@@ -1,7 +1,9 @@
 // Firebase Configuration Module
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
-  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   collection, 
   doc, 
   addDoc, 
@@ -11,9 +13,7 @@ import {
   getDoc,
   query, 
   orderBy,
-  serverTimestamp,
-  enableIndexedDbPersistence,
-  enableMultiTabIndexedDbPersistence
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
@@ -33,18 +33,11 @@ const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 // Firestore (compat-safe for v10.8.0). Enable persistence when available.
-const db = getFirestore(app);
-try {
-  // Prefer multi-tab persistence to avoid "exclusive access" errors when
-  // multiple pages/tabs of this site are open.
-  enableMultiTabIndexedDbPersistence(db)
-    .catch(async () => {
-      // Fallback: single-tab persistence (may still fail if another tab owns it)
-      try {
-        await enableIndexedDbPersistence(db);
-      } catch (e) { /* ignore */ }
-    });
-} catch (e) { /* ignore */ }
+const db = initializeFirestore(app, {
+  cache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager()
+  })
+});
 
 // ImgBB API Key
 const IMGBB_API_KEY = 'a5e4f8277be98927eb525c65da0615bf';
