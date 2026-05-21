@@ -502,16 +502,17 @@ ul {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(46, 196, 182, 0.18);
-  border: 1px solid rgba(46, 196, 182, 0.4);
-  color: red;
+  background: rgba(46, 196, 182, 0.12);
+  border: 1px solid rgba(46, 196, 182, 0.35);
+  color: var(--teal);
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 1px;
   text-transform: uppercase;
-  padding: 0.4rem 1rem;
+  padding: 0.4rem 1.1rem;
   border-radius: 30px;
   margin-bottom: 1.5rem;
+  box-shadow: 0 4px 15px rgba(46, 196, 182, 0.1);
 }
 
 .hero-badge::before {
@@ -529,9 +530,36 @@ ul {
   letter-spacing: -1.5px;
 }
 
-.hero h1 em {
-  color: red;
+.hero-highlight {
+  color: var(--yellow);
+  background: linear-gradient(135deg, #F4B400 0%, #FFE082 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
   font-style: normal;
+  text-shadow: 0 2px 12px rgba(244, 180, 0, 0.22);
+  position: relative;
+}
+
+.nav-currency-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.45rem 0.75rem !important;
+  border: 1px solid rgba(46, 196, 182, 0.3) !important;
+  background: rgba(46, 196, 182, 0.08) !important;
+  border-radius: 24px !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+}
+
+.nav-currency-btn:hover,
+.nav-currency-btn.active {
+  background: rgba(46, 196, 182, 0.18) !important;
+  border-color: rgba(46, 196, 182, 0.55) !important;
+  color: var(--white) !important;
 }
 
 .hero p {
@@ -2666,70 +2694,101 @@ section:not(.hero) {
 }
 
 .weather-widget {
-  max-width: 900px;
+  max-width: 1000px;
   margin: 0 auto;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+  align-items: stretch;
+}
+
+@media (max-width: 768px) {
+  .weather-widget {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 0 1rem;
+  }
+}
+
+.weather-card {
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  padding: 2.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 22px;
+  padding: 2.2rem;
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 2rem;
+  gap: 1.5rem;
   align-items: center;
+  transition: transform var(--transition), background var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+
+.weather-card:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(46, 196, 182, 0.3);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
 }
 
 .weather-left h3 {
   font-family: 'Montserrat', sans-serif;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 0.4rem;
+  color: rgba(255, 255, 255, 0.55);
+  margin-bottom: 0.3rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 .weather-left .city {
   font-family: 'Montserrat', sans-serif;
-  font-size: 1.8rem;
+  font-size: 1.7rem;
   font-weight: 800;
   color: var(--white);
+  letter-spacing: -0.5px;
 }
 
 .weather-temp {
   font-family: 'Montserrat', sans-serif;
-  font-size: 4rem;
+  font-size: 3.5rem;
   font-weight: 900;
   color: var(--teal);
   line-height: 1;
-  margin: 0.5rem 0;
+  margin: 0.4rem 0;
 }
 
 .weather-desc {
-  color: rgba(255, 255, 255, 0.65);
-  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+  font-weight: 500;
   text-transform: capitalize;
 }
 
 .weather-details {
   display: flex;
-  gap: 2rem;
-  margin-top: 1.25rem;
+  gap: 1.5rem;
+  margin-top: 1rem;
 }
 
 .weather-detail {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .weather-detail span {
-  font-size: 0.88rem;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.55);
   font-weight: 500;
 }
 
 .weather-icon-large {
-  font-size: 5rem;
+  font-size: 4.5rem;
   line-height: 1;
-  color: var(--white);
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.15));
 }
 
 .weather-loading {

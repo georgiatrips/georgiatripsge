@@ -941,36 +941,52 @@ async function fetchWeather() {
   const widget = document.getElementById('weather-widget');
   if (!widget) return;
 
-  // Using Open-Meteo (free, no key needed) for Tbilisi
-  const lat = 41.6938, lon = 44.8015, city = 'Tbilisi, Georgia';
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relativehumidity_2m,windspeed_10m&timezone=Asia%2FTbilisi`;
+  const locations = [
+    { city: 'Batumi, Georgia', lat: 41.6434, lon: 41.6397, label: 'Coastal Hub (HQ)' },
+    { city: 'Tbilisi, Georgia', lat: 41.6938, lon: 44.8015, label: 'Capital Hub' }
+  ];
 
-  const weatherIcons = { 0:'Clear', 1:'Mainly clear', 2:'Partly cloudy', 3:'Overcast', 45:'Foggy', 48:'Foggy', 51:'Light drizzle', 53:'Drizzle', 55:'Heavy drizzle', 61:'Slight rain', 63:'Moderate rain', 65:'Heavy rain', 71:'Light snow', 73:'Moderate snow', 75:'Heavy snow', 80:'Light showers', 81:'Moderate showers', 82:'Heavy showers', 95:'Thunderstorm', 96:'Thunderstorm', 99:'Thunderstorm' };
-  const weatherDescs = { 0:'Clear sky', 1:'Mainly clear', 2:'Partly cloudy', 3:'Overcast', 45:'Foggy', 48:'Foggy', 51:'Light drizzle', 53:'Drizzle', 55:'Heavy drizzle', 61:'Slight rain', 63:'Moderate rain', 65:'Heavy rain', 71:'Light snow', 73:'Moderate snow', 75:'Heavy snow', 80:'Light showers', 81:'Moderate showers', 82:'Heavy showers', 95:'Thunderstorm', 96:'Thunderstorm', 99:'Thunderstorm' };
+  const weatherDescs = { 
+    0:'Clear sky', 1:'Mainly clear', 2:'Partly cloudy', 3:'Overcast', 
+    45:'Foggy', 48:'Foggy', 51:'Light drizzle', 53:'Drizzle', 55:'Heavy drizzle', 
+    61:'Slight rain', 63:'Moderate rain', 65:'Heavy rain', 71:'Light snow', 
+    73:'Moderate snow', 75:'Heavy snow', 80:'Light showers', 81:'Moderate showers', 
+    82:'Heavy showers', 95:'Thunderstorm', 96:'Thunderstorm', 99:'Thunderstorm' 
+  };
 
   try {
-    const res = await fetch(url);
-    const data = await res.json();
-    const cw = data.current_weather;
-    const code = cw.weathercode;
-    const icon = getWeatherIcon(code);
-    const desc = weatherDescs[code] || 'Unknown';
-    const wind = Math.round(cw.windspeed);
+    const promises = locations.map(async (loc) => {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current_weather=true&timezone=Asia%2FTbilisi`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const cw = data.current_weather;
+      const code = cw.weathercode;
+      const icon = getWeatherIcon(code);
+      const desc = weatherDescs[code] || 'Clear';
+      const temp = Math.round(cw.temperature);
+      const wind = Math.round(cw.windspeed);
 
-    widget.innerHTML = `
-      <div class="weather-left">
-        <h3>Current Weather</h3>
-        <div class="city">${city}</div>
-        <div class="weather-temp">${Math.round(cw.temperature)}C</div>
-        <div class="weather-desc">${desc}</div>
-        <div class="weather-details">
-          <div class="weather-detail"><span>Wind: ${wind} km/h</span></div>
-          <div class="weather-detail"><span>Updated live</span></div>
-        </div>
-      </div>
-      <div class="weather-icon-large">${icon}</div>`;
-  } catch {
-    widget.innerHTML = `<p class="weather-error">Live weather temporarily unavailable. Tbilisi is typically warm and sunny - perfect for exploring!</p>`;
+      return `
+        <div class="weather-card">
+          <div class="weather-left">
+            <h3>${loc.label}</h3>
+            <div class="city">${loc.city}</div>
+            <div class="weather-temp">${temp}°C</div>
+            <div class="weather-desc">${desc}</div>
+            <div class="weather-details">
+              <div class="weather-detail"><span>💨 Wind: ${wind} km/h</span></div>
+              <div class="weather-detail"><span>✓ Live Update</span></div>
+            </div>
+          </div>
+          <div class="weather-icon-large">${icon}</div>
+        </div>`;
+    });
+
+    const cardsMarkup = await Promise.all(promises);
+    widget.innerHTML = cardsMarkup.join('');
+  } catch (error) {
+    console.error("Failed to load weather data:", error);
+    widget.innerHTML = `<p class="weather-error">Live weather temporarily unavailable. Georgia is warm and perfect for exploring!</p>`;
   }
 }
 

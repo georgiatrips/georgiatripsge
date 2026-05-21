@@ -304,34 +304,38 @@
 
   function insertCurrencySelector() {
     const navLinks = document.querySelector('.navbar .nav-links');
-    if (!navLinks || navLinks.querySelector('.nav-currency-dropdown')) return;
+    if (!navLinks) return;
 
-    const wrapper = document.createElement('div');
-    wrapper.className = 'nav-currency-dropdown';
-    wrapper.innerHTML = `
-      <button class="nav-dropdown-btn" type="button" data-currency-button>${state.selectedCurrency} ▼</button>
-      <div class="dropdown-menu">
-        ${Object.keys(CURRENCIES).map((code) => `
-          <a href="#" data-currency-option="${code}">${CURRENCIES[code].symbol} ${code}</a>
-        `).join('')}
-      </div>
-    `;
+    let dropdown = navLinks.querySelector('.nav-currency-dropdown');
 
-    const userDropdown = navLinks.querySelector('.nav-user-dropdown');
-    if (userDropdown) {
-      navLinks.insertBefore(wrapper, userDropdown);
-    } else {
-      navLinks.appendChild(wrapper);
+    // If dropdown does not exist statically, inject it dynamically (prevents breakage on other pages)
+    if (!dropdown) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'nav-dropdown nav-currency-dropdown';
+      wrapper.innerHTML = `
+        <button class="nav-dropdown-btn nav-currency-btn" type="button" data-currency-button>${state.selectedCurrency} ▼</button>
+        <div class="dropdown-menu">
+          ${Object.keys(CURRENCIES).map((code) => `
+            <a href="#" data-currency-option="${code}">${CURRENCIES[code].symbol} ${code}</a>
+          `).join('')}
+        </div>
+      `;
+
+      const userDropdown = navLinks.querySelector('.nav-user-dropdown');
+      if (userDropdown) {
+        navLinks.insertBefore(wrapper, userDropdown);
+      } else {
+        navLinks.appendChild(wrapper);
+      }
+      dropdown = wrapper;
     }
 
-    // კლიკის მოსმენა ვალუტის შეცვლისთვის. 
-    // გახსნა/დახურვას მართავს script.js (Event Delegation)
-    wrapper.addEventListener('click', (event) => {
+    // Bind event delegation for the currency selection (works for both static and dynamic instances)
+    dropdown.addEventListener('click', (event) => {
       const option = event.target.closest('[data-currency-option]');
       if (option) {
         event.preventDefault();
         setSelectedCurrency(option.dataset.currencyOption);
-        // script.js ავტომატურად დახურავს მენიუს, რადგან ეს არის 'A' თეგი
       }
     });
   }
