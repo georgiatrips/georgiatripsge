@@ -2200,11 +2200,16 @@ window.openTourModal = function(tourId = null) {
 
 window.closeTourModal = function() {
   document.getElementById('tour-modal').classList.remove('open');
+  const fileInput = document.getElementById('tour-image');
+  if (fileInput) fileInput.value = '';
 };
 
 window.editTour = function(id) {
   const tour = toursData.find(t => t.id === id);
   if (!tour) return;
+
+  const fileInput = document.getElementById('tour-image');
+  if (fileInput) fileInput.value = '';
 
   const I18n = window.AdminI18n;
   const gt = I18n ? I18n.extractGeorgian : (v) => (typeof v === 'string' ? v : (v && v.ka) || '');
@@ -2442,11 +2447,16 @@ window.openCarModal = function(carId = null) {
 
 window.closeCarModal = function() {
   document.getElementById('car-modal').classList.remove('open');
+  const fileInput = document.getElementById('car-image');
+  if (fileInput) fileInput.value = '';
 };
 
 window.editCar = function(id) {
   const car = carsData.find(c => c.id === id);
   if (!car) return;
+
+  const fileInput = document.getElementById('car-image');
+  if (fileInput) fileInput.value = '';
 
   const I18n = window.AdminI18n;
   const gt = I18n ? I18n.extractGeorgian : (v) => (typeof v === 'string' ? v : (v && v.ka) || '');
@@ -2601,11 +2611,16 @@ window.openPostModal = function(postId = null) {
 
 window.closePostModal = function() {
   document.getElementById('post-modal').classList.remove('open');
+  const fileInput = document.getElementById('post-image');
+  if (fileInput) fileInput.value = '';
 };
 
 window.editPost = function(id) {
   const post = postsData.find(p => p.id === id);
   if (!post) return;
+
+  const fileInput = document.getElementById('post-image');
+  if (fileInput) fileInput.value = '';
 
   const I18n = window.AdminI18n;
   const gt = I18n ? I18n.extractGeorgian : (v) => (typeof v === 'string' ? v : (v && v.ka) || '');
@@ -2740,11 +2755,16 @@ window.openFeaturedModal = function(featuredId = null) {
 
 window.closeFeaturedModal = function() {
   document.getElementById('featured-modal').classList.remove('open');
+  const fileInput = document.getElementById('featured-image');
+  if (fileInput) fileInput.value = '';
 };
 
 window.editFeatured = function(id) {
   const featured = featuredData.find(f => f.id === id);
   if (!featured) return;
+
+  const fileInput = document.getElementById('featured-image');
+  if (fileInput) fileInput.value = '';
 
   const I18n = window.AdminI18n;
   const gt = I18n ? I18n.extractGeorgian : (v) => (typeof v === 'string' ? v : (v && v.ka) || '');
