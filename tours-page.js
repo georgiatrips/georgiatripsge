@@ -50,7 +50,27 @@ function translateCommonValue(str) {
   const tt = window.t;
   if (!tt) return str;
   const s = str.trim();
-  const map = { 'All Year': 'all_year', 'Flexible': 'flexible', '1 Day': 'one_day', 'One Day': 'one_day', 'On Request': 'on_request' };
+  
+  if (s.includes(',')) {
+    return s.split(',').map(item => translateCommonValue(item.trim())).join(', ');
+  }
+
+  const map = { 
+    'All Year': 'all_year', 
+    'Flexible': 'flexible', 
+    '1 Day': 'one_day', 
+    'One Day': 'one_day', 
+    'On Request': 'on_request',
+    'Spring': 'spring',
+    'გაზაფხული': 'spring',
+    'Summer': 'summer',
+    'ზაფხული': 'summer',
+    'Autumn': 'autumn',
+    'Fall': 'autumn',
+    'შემოდგომა': 'autumn',
+    'Winter': 'winter',
+    'ზამთარი': 'winter'
+  };
   if (map[s]) return tt(map[s]);
   const mDays = s.match(/^(\d+)\s*[Dd]ays?$/);
   if (mDays) return tt('n_days', { n: mDays[1] });

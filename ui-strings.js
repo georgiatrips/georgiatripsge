@@ -184,6 +184,26 @@
       tr: 'Tüm Yıl', ar: 'طوال العام', he: 'כל השנה',
       uk: 'Цілий рік'
     },
+    spring: {
+      ka: 'გაზაფხული', en: 'Spring', ru: 'Весна',
+      tr: 'İlkbahar', ar: 'الربيع', he: 'אביב',
+      uk: 'Весна'
+    },
+    summer: {
+      ka: 'ზაფხული', en: 'Summer', ru: 'Лето',
+      tr: 'Yaz', ar: 'الصيف', he: 'קיץ',
+      uk: 'Літо'
+    },
+    autumn: {
+      ka: 'შემოდგომა', en: 'Autumn', ru: 'Осень',
+      tr: 'Sonbahar', ar: 'الخريف', he: 'סתיו',
+      uk: 'Осінь'
+    },
+    winter: {
+      ka: 'ზამთარი', en: 'Winter', ru: 'Зима',
+      tr: 'Kış', ar: 'الشتاء', he: 'חורף',
+      uk: 'Зима'
+    },
     flexible: {
       ka: 'მოქნილი', en: 'Flexible', ru: 'Гибкий',
       tr: 'Esnek', ar: 'مرن', he: 'גמיש',
