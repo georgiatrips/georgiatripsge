@@ -110,6 +110,11 @@ function populatePostDetail() {
     sessionStorage.removeItem('selectedPostId');
     sessionStorage.removeItem('selectedPostData');
   } catch (e) {}
+
+  // Signal that dynamic content has loaded to fade out the pretranslate overlay
+  if (typeof window.markContentAsLoaded === 'function') {
+    window.markContentAsLoaded();
+  }
 }
 
 function loadPostDetail() {

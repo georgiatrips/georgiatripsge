@@ -361,6 +361,11 @@ function populateTourDetail() {
 
   // Inject Schema.org JSON-LD Structured Data for Google Rich Snippets
   _injectSchemaJSONLD(tour);
+
+  // Signal that dynamic content has loaded to fade out the pretranslate overlay
+  if (typeof window.markContentAsLoaded === 'function') {
+    window.markContentAsLoaded();
+  }
 }
 
 function _injectSchemaJSONLD(tour) {

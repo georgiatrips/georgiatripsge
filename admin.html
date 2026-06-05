@@ -1601,49 +1601,6 @@
           <label>სათაური *</label>
           <input type="text" id="car-title" required placeholder="მაგ. Toyota Land Cruiser 200">
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>ტიპი *</label>
-            <select id="car-type" required>
-              <option value="">აირჩიეთ ტიპი</option>
-              <option value="SUV">SUV (ჯიპი)</option>
-              <option value="Minivan">მინივენი</option>
-              <option value="Sedan">სედანი</option>
-              <option value="Van">ფურგონი</option>
-              <option value="Jeep">ჯიპი</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>ფასი *</label>
-            <div style="display: flex; gap: 10px; align-items: center;">
-              <input type="text" id="car-price" required placeholder="მაგ. $180/დღე" style="flex: 1;">
-              <label style="display: flex; align-items: center; gap: 5px; white-space: nowrap; margin-bottom: 0; cursor: pointer;">
-                <input type="checkbox" id="car-on-request" onchange="document.getElementById('car-price').disabled = this.checked; document.getElementById('car-price').required = !this.checked"> 
-                მოთხოვნით
-              </label>
-            </div>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>ადგილები</label>
-            <input type="text" id="car-seats" placeholder="მაგ. 7 ადგილი">
-          </div>
-          <div class="form-group">
-            <label>საწვავის ტიპი *</label>
-            <input type="text" id="car-fuel" required placeholder="მაგ. დიზელი">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>გადაცემათა კოლოფი *</label>
-            <input type="text" id="car-transmission" required placeholder="მაგ. ავტომატიკა">
-          </div>
-          <div class="form-group">
-            <label>ფერი *</label>
-            <input type="text" id="car-color" required placeholder="მაგ. თეთრი">
-          </div>
-        </div>
         <div class="form-group">
           <label>აღწერა *</label>
           <textarea id="car-desc" required placeholder="აღწერეთ ტრანსპორტი..."></textarea>
@@ -1662,7 +1619,7 @@
         <!-- Translations -->
         <div class="translations-section">
           <div class="translations-header">
-            <label>თარგმანები (სათაური / აღწერა / ადგილები / საწვავის ტიპი / გადაცემათა კოლოფი / ფერი)</label>
+            <label>თარგმანები (სათაური / აღწერა)</label>
             <div style="display: flex; gap: 8px;">
               <button type="button" class="btn-translate car-translate-btn car-engine-btn" data-engine="mymemory" onclick="AdminI18n.generate('car', 'mymemory')">MyMemory</button>
               <button type="button" class="btn-translate car-translate-btn car-engine-btn" data-engine="google" onclick="AdminI18n.generate('car', 'google')">Google Translate</button>
@@ -2412,18 +2369,10 @@ function renderCars() {
     <div class="admin-card" data-id="${car.id}">
       <div class="admin-card-img">
         <img src="${car.img}" alt="${escapeHTML(gtc(car.title))}">
-        <span class="admin-card-badge">${carTypeMap[car.type] || car.type}</span>
       </div>
       <div class="admin-card-body">
         <h3 class="admin-card-title">${escapeHTML(gtc(car.title))}</h3>
         <p class="admin-card-desc">${escapeHTML(gtc(car.info || car.desc))}</p>
-        <div class="admin-card-meta">
-          <span>${car.priceOnRequest ? 'მოთხოვნით' : car.price}</span>
-          <span>${gtc(car.seats || '')}</span>
-          <span>${gtc(car.fuel || '')}</span>
-          <span>${gtc(car.transmission || '')}</span>
-          <span>${gtc(car.color || '')}</span>
-        </div>
         <div class="admin-card-actions">
           <button class="btn-edit" onclick="editCar('${car.id}')">რედაქტირება</button>
           <button class="btn-delete" onclick="confirmDeleteCar('${car.id}')">წაშლა</button>
@@ -2437,8 +2386,6 @@ window.openCarModal = function(carId = null) {
   document.getElementById('car-form').reset();
   document.getElementById('car-id').value = '';
   document.getElementById('car-image-url').value = '';
-  document.getElementById('car-on-request').checked = false;
-  document.getElementById('car-price').disabled = false;
   document.getElementById('car-image-preview').classList.remove('show');
   document.getElementById('car-modal-title').textContent = 'ახალი ტრანსპორტის დამატება';
   if (window.AdminI18n) window.AdminI18n.reset('car');
@@ -2463,24 +2410,12 @@ window.editCar = function(id) {
 
   document.getElementById('car-id').value = car.id;
   document.getElementById('car-title').value = gt(car.title);
-  document.getElementById('car-type').value = car.type;
-  document.getElementById('car-price').value = car.price;
-  document.getElementById('car-on-request').checked = car.priceOnRequest || false;
-  document.getElementById('car-price').disabled = car.priceOnRequest || false;
-  document.getElementById('car-seats').value = gt(car.seats || '');
-  document.getElementById('car-fuel').value = gt(car.fuel || '');
-  document.getElementById('car-transmission').value = gt(car.transmission || '');
-  document.getElementById('car-color').value = gt(car.color || '');
   document.getElementById('car-desc').value = gt(car.info || car.desc);
   document.getElementById('car-image-url').value = car.img;
 
   if (I18n) I18n.loadItem('car', {
     title:        car.title,
-    info:         car.info != null ? car.info : car.desc,
-    seats:        car.seats,
-    fuel:         car.fuel,
-    transmission: car.transmission,
-    color:        car.color
+    info:         car.info != null ? car.info : car.desc
   });
   
   const preview = document.getElementById('car-image-preview');
@@ -2511,13 +2446,13 @@ window.saveCar = async function() {
     const pack = window.AdminI18n ? window.AdminI18n.pack : (_e, _k, v) => v;
     const carData = {
       title: pack('car', 'title', document.getElementById('car-title').value),
-      type: document.getElementById('car-type').value,
-      price: document.getElementById('car-price').value,
-      priceOnRequest: document.getElementById('car-on-request').checked,
-      seats: pack('car', 'seats', document.getElementById('car-seats').value),
-      fuel: pack('car', 'fuel', document.getElementById('car-fuel').value),
-      transmission: pack('car', 'transmission', document.getElementById('car-transmission').value),
-      color: pack('car', 'color', document.getElementById('car-color').value),
+      type: 'Sedan',
+      price: '',
+      priceOnRequest: true,
+      seats: { en: '4', ka: '4', he: '4', ru: '4', uk: '4', ar: '4', tr: '4' },
+      fuel: { en: 'gasoline', ka: 'ბენზინი', he: 'בנזין', ru: 'бензин', uk: 'бензин', ar: 'بنزين', tr: 'benzin' },
+      transmission: { en: 'Automatic', ka: 'ავტომატიკა', he: 'אוטומטי', ru: 'автомат', uk: 'автомат', ar: 'تلقائي', tr: 'Otomatik' },
+      color: { en: 'black', ka: 'შავი', he: 'שחור', ru: 'черный', uk: 'чорний', ar: 'أسود', tr: 'siyah' },
       info: pack('car', 'info', document.getElementById('car-desc').value),
       img: imageUrl
     };

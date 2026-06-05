@@ -31,10 +31,6 @@
     car: [
       { key: 'title',        inputId: 'car-title',        label: 'სათაური',        type: 'input' },
       { key: 'info',         inputId: 'car-desc',         label: 'აღწერა',  type: 'textarea' },
-      { key: 'seats',        inputId: 'car-seats',        label: 'ადგილები',        type: 'input' },
-      { key: 'fuel',         inputId: 'car-fuel',         label: 'საწვავის ტიპი',    type: 'input' },
-      { key: 'transmission', inputId: 'car-transmission', label: 'გადაცემათა კოლოფი', type: 'input' },
-      { key: 'color',        inputId: 'car-color',        label: 'ფერი',        type: 'input' },
     ],
     post: [
       { key: 'title',    inputId: 'post-title',    label: 'სათაური',    type: 'input' },

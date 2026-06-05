@@ -12,9 +12,37 @@
   <link rel="stylesheet" href="mobile.css">
 <link rel="stylesheet" href="tour-detail.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="preload" href="lang-boot.js" as="script">
 <link rel="preload" href="ui-strings.js" as="script">
+<link rel="preload" href="translate.js" as="script">
+<link rel="preload" href="lang.js" as="script">
+<link rel="preload" href="ui-translate.js" as="script">
 <script src="lang-boot.js"></script>
+<script>
+  // Defer loading screen removal until Firebase data is fully populated
+  (function() {
+    if (window.GTLangBoot && window.GTLangBoot.done) {
+      const originalDone = window.GTLangBoot.done;
+      let translationDone = false;
+      let contentLoaded = false;
+
+      window.GTLangBoot.done = function() {
+        translationDone = true;
+        if (contentLoaded) {
+          originalDone();
+        }
+      };
+
+      window.markContentAsLoaded = function() {
+        contentLoaded = true;
+        if (translationDone || window.GTLangBoot.isDone) {
+          originalDone();
+        }
+      };
+    }
+  })();
+</script>
 <script src="ui-strings.js" defer></script>
 <script src="translate.js" defer></script>
 <script src="lang.js" defer></script>
