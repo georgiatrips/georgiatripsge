@@ -15,7 +15,8 @@ import {
   orderBy,
   limit,
   serverTimestamp,
-  onSnapshot
+  onSnapshot,
+  where
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
@@ -663,4 +664,43 @@ export function subscribeTrafficLogs(callback) {
     }
     console.error('Error subscribing to traffic_logs:', error);
   });
+}
+
+// Delete a traffic log document
+export async function deleteTrafficLog(id) {
+  try {
+    const logRef = doc(db, 'traffic_logs', id);
+    await deleteDoc(logRef);
+    console.log(`[Firebase Config] Deleted traffic log: ${id}`);
+  } catch (error) {
+    console.error(`Error deleting traffic log ${id}:`, error);
+    throw error;
+  }
+}
+
+// Clean up traffic logs older than N days (N defaults to 7)
+export async function cleanupOldTrafficLogs(days = 7) {
+  try {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    const cutoffISO = cutoffDate.toISOString();
+
+    const ref = collection(db, 'traffic_logs');
+    const q = query(ref, where('createdAt', '<', cutoffISO));
+    const snapshot = await getDocs(q);
+
+    if (snapshot.size === 0) {
+      console.log(`[Firebase Config] No traffic logs older than ${days} days found.`);
+      return 0;
+    }
+
+    console.log(`[Firebase Config] Found ${snapshot.size} logs older than ${days} days. Deleting...`);
+    const promises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+    await Promise.all(promises);
+    console.log(`[Firebase Config] Cleanup of ${snapshot.size} old logs completed.`);
+    return snapshot.size;
+  } catch (error) {
+    console.error('Error cleaning up old traffic logs:', error);
+    throw error;
+  }
 }

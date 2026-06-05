@@ -1853,7 +1853,8 @@ import {
   getTourBookings, getCarBookings, getSubscribers, getContactMessages, getTrafficLogs,
   auth, onAuthStateChanged, isAdmin,
   subscribeTours, subscribeCars, subscribePosts, subscribeFeatured, subscribeReviews,
-  subscribeTourBookings, subscribeCarBookings, subscribeSubscribers, subscribeContactMessages, subscribeTrafficLogs
+  subscribeTourBookings, subscribeCarBookings, subscribeSubscribers, subscribeContactMessages, subscribeTrafficLogs,
+  deleteTrafficLog, cleanupOldTrafficLogs
 } from './firebase-config.js';
 // NOTE: Admin panel is intentionally open (no auth gate).
 // Data access is controlled by your Firestore Security Rules.
@@ -2019,8 +2020,8 @@ async function waitForAuthThenLoadData() {
     if (!authStateInitialized) {
       authStateInitialized = true;
       await loadAllData();
-    } else {
-      await loadAllData();
+      // Auto-cleanup traffic logs older than 7 days
+      cleanupOldTrafficLogs(7).catch(err => console.error('Failed to auto-cleanup traffic logs:', err));
     }
   });
 }
@@ -2316,6 +2317,20 @@ window.syncTourDurationLabel = function() {
     return;
   }
   durationField.value = `${days} დღე / ${Math.max(nights, 0)} ღამე`;
+};
+
+window.deleteLogItem = async function(id) {
+  if (confirm('დარწმუნებული ხართ, რომ გსურთ ამ სესიის წაშლა?')) {
+    showLoading('სესია იშლება...');
+    try {
+      await deleteTrafficLog(id);
+      showToast('სესია წარმატებით წაიშალა', 'success');
+    } catch (error) {
+      console.error('Error deleting session log:', error);
+      showToast('წაშლა ვერ მოხერხდა: ' + (error.message || error), 'error');
+    }
+    hideLoading();
+  }
 };
 
 window.confirmDeleteTour = function(id) {
@@ -3296,7 +3311,15 @@ function renderAnalytics() {
         `;
       }).join('');
 
-      const startTimeStr = new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const createdDate = new Date(log.createdAt);
+      const day = createdDate.getDate();
+      const monthNamesKa = [
+        'იანვარი', 'თებერვალი', 'მარტი', 'აპრილი', 'მაისი', 'ივნისი',
+        'ივლისი', 'აგვისტო', 'სექტემბერი', 'ოქტომბერი', 'ნოემბერი', 'დეკემბერი'
+      ];
+      const monthName = monthNamesKa[createdDate.getMonth()];
+      const dateStr = `${day} ${monthName}`;
+      const startTimeStr = createdDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
       return `
         <div class="live-feed-item">
@@ -3307,13 +3330,16 @@ function renderAnalytics() {
                 📍 ${locationStr}
               </div>
               <div class="feed-user-subtitle">
-                სესია დაიწყო ${startTimeStr}-ზე
+                სესია დაიწყო ${dateStr}, ${startTimeStr}-ზე
               </div>
             </div>
-            <div class="feed-status-badges">
+            <div class="feed-status-badges" style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
               ${emailBadge}
               <span class="feed-badge device">${deviceIcon} ${mappedDevice}</span>
               <span class="feed-badge duration" title="საიტზე გატარებული დრო">⏱️ ${durationStr}</span>
+              <button class="feed-badge" onclick="deleteLogItem('${log.id}')" title="სესიის წაშლა" style="background: rgba(220,53,69,0.1); border: none; color: #dc3545; cursor: pointer; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: 4px; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 2px;">
+                🗑️ წაშლა
+              </button>
             </div>
           </div>
           
