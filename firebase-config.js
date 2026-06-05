@@ -527,56 +527,65 @@ export async function getCurrentUser() {
 
 export function subscribeTours(callback) {
   const ref = collection(db, 'tours');
-  const q = query(ref, orderBy('createdAt', 'desc'));
-  return onSnapshot(q, (snapshot) => {
+  return onSnapshot(ref, (snapshot) => {
     const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Sort client-side to avoid needing a Firestore composite index
+    data.sort((a, b) => {
+      const ta = a.createdAt?.seconds || 0;
+      const tb = b.createdAt?.seconds || 0;
+      return tb - ta;
+    });
     callback(data);
   }, (error) => {
     console.error('Error subscribing to tours:', error);
+    callback([]); // Always call back so UI can react
   });
 }
 
 export function subscribeCars(callback) {
   const ref = collection(db, 'cars');
-  const q = query(ref, orderBy('createdAt', 'desc'));
-  return onSnapshot(q, (snapshot) => {
+  return onSnapshot(ref, (snapshot) => {
     const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
     callback(data);
   }, (error) => {
     console.error('Error subscribing to cars:', error);
+    callback([]);
   });
 }
 
 export function subscribePosts(callback) {
   const ref = collection(db, 'posts');
-  const q = query(ref, orderBy('createdAt', 'desc'));
-  return onSnapshot(q, (snapshot) => {
+  return onSnapshot(ref, (snapshot) => {
     const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
     callback(data);
   }, (error) => {
     console.error('Error subscribing to posts:', error);
+    callback([]);
   });
 }
 
 export function subscribeFeatured(callback) {
   const ref = collection(db, 'featuredTours');
-  const q = query(ref, orderBy('order', 'asc'));
-  return onSnapshot(q, (snapshot) => {
+  return onSnapshot(ref, (snapshot) => {
     const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    data.sort((a, b) => (a.order || 0) - (b.order || 0));
     callback(data);
   }, (error) => {
     console.error('Error subscribing to featured:', error);
+    callback([]);
   });
 }
 
 export function subscribeReviews(callback) {
   const ref = collection(db, 'reviews');
-  const q = query(ref);
-  return onSnapshot(q, (snapshot) => {
+  return onSnapshot(ref, (snapshot) => {
     const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     callback(data);
   }, (error) => {
     console.error('Error subscribing to reviews:', error);
+    callback([]);
   });
 }
 
