@@ -825,7 +825,7 @@ function renderFeaturedSlider() {
           <div class="tag">${tag}</div>
           <div class="featured-price">
             <span class="price-label">${tFn('from_price')}</span>
-            <span class="price-value">${featured.price || tFn('on_request')}</span>
+            <span class="price-value">${window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(featured, { includeLabel: false, priceClass: 'price-value-inner' }) : (featured.price || tFn('on_request'))}</span>
           </div>
         </div>
 
@@ -904,7 +904,7 @@ function renderBatumiSlider() {
             <div class="batumi-footer">
               <div>
                 <div class="batumi-price-label">${tFn('from_price')}</div>
-                <div class="batumi-price-value">${tour.price || tFn('on_request')}</div>
+                <div class="batumi-price-value">${window.PriceDisplay ? window.PriceDisplay.renderPriceMarkup(tour, { includeLabel: false }) : (tour.price || tFn('on_request'))}</div>
               </div>
               <a href="tour-detail.html?id=${encodeURIComponent(tour.id || '')}" class="batumi-cta" onclick="goToTourDetail('${getSafeAttr(tour.id)}'); return false;">
                 ${tFn('explore_now')} →
