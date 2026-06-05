@@ -1991,39 +1991,80 @@ function setupRealTimeListeners() {
 }
 
 async function waitForAuthThenLoadData() {
-  // We no longer show a blocking full-screen loading spinner on start!
-  onAuthStateChanged(auth, async (user) => {
-    currentUser = user;
-    
-    let isUserAdmin = false;
-    if (user && user.email) {
-      isUserAdmin = await isAdmin(user.email);
+  // Hide loading overlay by default if it hangs, or show a fallback message after 8 seconds
+  const authTimeout = setTimeout(() => {
+    const loadingText = document.getElementById('loading-text');
+    const overlay = document.getElementById('loading-overlay');
+    if (loadingText && overlay && overlay.classList.contains('show')) {
+      loadingText.innerHTML = `ავტორიზაციის შემოწმება ძალიან გაიწელა. <br>
+      თუ არ გადაგამისამართათ, სცადეთ <a href="login.html" style="color:#2ec4b6;text-decoration:underline;">აქედან შესვლა</a>.<br>
+      <small style="color:red;display:block;margin-top:10px;">Error detail: Auth timeout. Check DevTools Console.</small>`;
     }
-    isAdminUser = isUserAdmin;
+  }, 8000);
 
-    if (!user || !isAdminUser) {
-      // If not logged in or not an administrator, redirect to login page immediately
-      window.location.href = 'login.html';
-      return;
-    }
+  // Show the loader immediately
+  const overlay = document.getElementById('loading-overlay');
+  if (overlay) {
+    overlay.classList.add('show');
+  }
 
-    // Admin authorized! Make the panel container visible
-    const panel = document.getElementById('admin-panel');
-    if (panel) {
-      panel.style.display = 'block';
-    }
+  try {
+    onAuthStateChanged(auth, async (user) => {
+      try {
+        currentUser = user;
+        
+        let isUserAdmin = false;
+        if (user && user.email) {
+          isUserAdmin = await isAdmin(user.email);
+        }
+        isAdminUser = isUserAdmin;
 
-    if (window.showToast) {
-      window.showToast('ადმინისტრატორის ავტორიზაცია დადასტურდა. სრული წვდომა ჩართულია.', 'success');
-    }
+        if (!user || !isAdminUser) {
+          clearTimeout(authTimeout);
+          // If not logged in or not an administrator, redirect to login page immediately
+          window.location.href = 'login.html';
+          return;
+        }
 
-    if (!authStateInitialized) {
-      authStateInitialized = true;
-      await loadAllData();
-      // Auto-cleanup traffic logs older than 7 days
-      cleanupOldTrafficLogs(7).catch(err => console.error('Failed to auto-cleanup traffic logs:', err));
+        // Admin authorized! Make the panel container visible
+        const panel = document.getElementById('admin-panel');
+        if (panel) {
+          panel.style.display = 'block';
+        }
+
+        // Hide loading overlay since auth is done
+        if (overlay) {
+          overlay.classList.remove('show');
+        }
+
+        if (window.showToast) {
+          window.showToast('ადმინისტრატორის ავტორიზაცია დადასტურდა. სრული წვდომა ჩართულია.', 'success');
+        }
+
+        if (!authStateInitialized) {
+          authStateInitialized = true;
+          await loadAllData();
+          // Auto-cleanup traffic logs older than 7 days
+          cleanupOldTrafficLogs(7).catch(err => console.error('Failed to auto-cleanup traffic logs:', err));
+        }
+        clearTimeout(authTimeout);
+      } catch (innerErr) {
+        clearTimeout(authTimeout);
+        console.error('Error during auth verification callback:', innerErr);
+        const loadingText = document.getElementById('loading-text');
+        if (loadingText) {
+          loadingText.innerHTML = `შეცდომა ავტორიზაციისას: ${innerErr.message || innerErr}<br><a href="login.html" style="color:#2ec4b6;">შესვლის გვერდზე დაბრუნება</a>`;
+        }
+      }
+    });
+  } catch (outerErr) {
+    clearTimeout(authTimeout);
+    console.error('Critical error in onAuthStateChanged registration:', outerErr);
+    const loadingText = document.getElementById('loading-text');
+    if (loadingText) {
+      loadingText.innerHTML = `კრიტიკული შეცდომა: ${outerErr.message || outerErr}`;
     }
-  });
+  }
 }
 
 // Load all data on page load (sets up real-time sync listeners)
@@ -3380,7 +3421,6 @@ document.addEventListener('click', (e) => {
   });
 });
 </script>
-<script type="module" src="auth.js"></script>
 </body>
 </html>
 

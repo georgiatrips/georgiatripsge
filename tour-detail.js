@@ -628,9 +628,30 @@ function setModalDateRange(startISO, endISO, daysCount) {
   const end = new Date(`${endISO}T00:00:00`);
   const startText = formatDateReadable(start);
   const endText = formatDateReadable(end);
-  displayDate.value = daysCount > 1 ? `${startText} – ${endText} (${daysCount} დღე)` : `${startText} (1 დღე)`;
+  
+  const lang = window.GT_CURRENT_LANG || document.documentElement.getAttribute('data-lang') || 'ka';
+  
+  // Translation mapping for day/days suffix
+  const daySuffixMap = {
+    ka: { day: 'დღე', days: 'დღე' },
+    en: { day: 'day', days: 'days' },
+    ru: { day: 'день', days: 'дней' },
+    tr: { day: 'gün', days: 'gün' },
+    ar: { day: 'يوم', days: 'أيام' },
+    he: { day: 'יום', days: 'ימים' },
+    uk: { day: 'день', days: 'днів' }
+  };
+  
+  const suffixes = daySuffixMap[lang] || daySuffixMap.ka;
+  const suffix = daysCount > 1 ? suffixes.days : suffixes.day;
+  
+  displayDate.value = daysCount > 1 ? `${startText} – ${endText} (${daysCount} ${suffix})` : `${startText} (1 ${suffixes.day})`;
   if (dateSummary) {
-    dateSummary.textContent = `ტური: ${daysCount} დღე (${startText} - ${endText})`;
+    // If there is a dateSummary element (used elsewhere or as a fallback)
+    const tourLabel = {
+      ka: 'ტური:', en: 'Tour:', ru: 'Тур:', tr: 'Tur:', ar: 'جولة:', he: 'סיור:', uk: 'Тур:'
+    }[lang] || 'ტური:';
+    dateSummary.textContent = `${tourLabel} ${daysCount} ${suffix} (${startText} - ${endText})`;
   }
 }
 

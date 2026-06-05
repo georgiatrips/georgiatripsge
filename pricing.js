@@ -29,6 +29,7 @@
   };
 
   let refreshTimer = null;
+  let isRefreshing = false;
 
   function escapeHtml(value) {
     return String(value ?? '')
@@ -196,6 +197,9 @@
   }
 
   function refreshVisiblePrices(root = document) {
+    if (isRefreshing) return;
+    isRefreshing = true;
+
     root.querySelectorAll('.js-price-value').forEach((node) => {
       const amount = parseAmount(node.dataset.priceValue);
       const currency = node.dataset.priceCurrency || DEFAULT_CURRENCY;
@@ -216,11 +220,14 @@
 
     renderRatesBoard();
     renderTourPricePreview();
+
+    isRefreshing = false;
   }
 
   function queueRefresh(root = document) {
+    if (isRefreshing) return;
     window.clearTimeout(refreshTimer);
-    refreshTimer = window.setTimeout(() => refreshVisiblePrices(root), 20);
+    refreshTimer = window.setTimeout(() => refreshVisiblePrices(root), 50);
   }
 
   function setSelectedCurrency(currency) {
@@ -364,9 +371,18 @@
 
   function initObservers() {
     if (!document.body) return;
+    // ადმინ პანელზე observer არ გვჭირდება — ბევრი DOM ცვლილება loop-ს გამოიწვევს
+    const isAdminPage = window.location.pathname.includes('admin.html');
+    if (isAdminPage) return;
 
-    const observer = new MutationObserver(() => {
-      queueRefresh();
+    const observer = new MutationObserver((mutations) => {
+      // მხოლოდ მაშინ, თუ price-თან დაკავშირებული node დაემატა
+      const hasPriceNode = mutations.some(m =>
+        Array.from(m.addedNodes).some(n =>
+          n.nodeType === 1 && (n.classList?.contains('js-price-value') || n.querySelector?.('.js-price-value'))
+        )
+      );
+      if (hasPriceNode) queueRefresh();
     });
 
     observer.observe(document.body, { childList: true, subtree: true });

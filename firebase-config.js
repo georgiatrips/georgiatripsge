@@ -1,9 +1,7 @@
 // Firebase Configuration Module
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
-  initializeFirestore,
-  persistentLocalCache,
-  persistentMultipleTabManager,
+  getFirestore,
   collection, 
   doc, 
   addDoc, 
@@ -35,12 +33,8 @@ const firebaseConfig = {
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// Firestore (compat-safe for v10.8.0). Enable persistence when available.
-const db = initializeFirestore(app, {
-  cache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager()
-  })
-});
+// Initialize Firestore
+const db = getFirestore(app);
 
 // ImgBB API Key
 const IMGBB_API_KEY = 'a5e4f8277be98927eb525c65da0615bf';
