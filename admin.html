@@ -1377,6 +1377,104 @@
       </div>
     </div>
 
+    <script>
+      function updateDeleteSelectedButton() {
+        const checked = document.querySelectorAll('#leads-list input[type="checkbox"]:checked');
+        const btn = document.getElementById('delete-selected-leads-btn');
+        if (btn) {
+          btn.style.display = checked.length > 0 ? 'inline-flex' : 'none';
+          if (checked.length > 0) {
+            btn.textContent = `მონიშნულების წაშლა (${checked.length})`;
+          }
+        }
+      }
+
+      function toggleSelectAllLeads(checked) {
+        document.querySelectorAll('#leads-list input[type="checkbox"]').forEach(cb => {
+          cb.checked = checked;
+        });
+        updateDeleteSelectedButton();
+      }
+
+      async function deleteLeadItem(type, id) {
+        if (!id || !type) {
+          showToast('არასწორი მონაცემები წასაშლელად.', 'error');
+          return;
+        }
+
+        const collectionMap = {
+          'tour': 'tourBookings',
+          'car': 'carBookings',
+          'subscriber': 'subscribers',
+          'contact': 'contactMessages'
+        };
+
+        const collectionName = collectionMap[type];
+        if (!collectionName) {
+          showToast('უცნობი ტიპის ჩანაწერი.', 'error');
+          return;
+        }
+
+        if (confirm(`დარწმუნებული ხართ, რომ გსურთ ამ ჩანაწერის წაშლა?`)) {
+          showLoading('მიმდინარეობს წაშლა...');
+          try {
+            await deleteDoc(doc(db, collectionName, id));
+            showToast('ჩანაწერი წარმატებით წაიშალა.', 'success');
+            // The real-time listener will automatically update the UI
+          } catch (error) {
+            console.error('Error deleting lead:', error);
+            showToast('წაშლა ვერ მოხერხდა: ' + (error.message || 'უცნობი შეცდომა'), 'error');
+          }
+          hideLoading();
+        }
+      }
+
+      async function deleteSelectedLeads() {
+        const checked = document.querySelectorAll('#leads-list input[type="checkbox"]:checked');
+        if (checked.length === 0) {
+          showToast('გთხოვთ, მონიშნოთ ჩანაწერები წასაშლელად.', 'info');
+          return;
+        }
+
+        if (confirm(`დარწმუნებული ხართ, რომ გსურთ ${checked.length} ჩანაწერის წაშლა?`)) {
+          showLoading('მიმდინარეობს წაშლა...');
+          const collectionMap = {
+            'tour': 'tourBookings',
+            'car': 'carBookings',
+            'subscriber': 'subscribers',
+            'contact': 'contactMessages'
+          };
+
+          try {
+            const batch = writeBatch(db);
+            let deletedCount = 0;
+
+            checked.forEach(cb => {
+              const row = cb.closest('tr');
+              const id = row.dataset.id;
+              const type = row.dataset.type;
+              const collectionName = collectionMap[type];
+
+              if (id && collectionName) {
+                const docRef = doc(db, collectionName, id);
+                batch.delete(docRef);
+                deletedCount++;
+              }
+            });
+
+            await batch.commit();
+            showToast(`${deletedCount} ჩანაწერი წარმატებით წაიშალა.`, 'success');
+            document.getElementById('select-all-leads').checked = false;
+            updateDeleteSelectedButton();
+          } catch (error) {
+            console.error('Error deleting selected leads:', error);
+            showToast('მონიშნულების წაშლა ვერ მოხერხდა: ' + (error.message || 'უცნობი შეცდომა'), 'error');
+          }
+          hideLoading();
+        }
+      }
+    </script>
+
     <!-- Tours Panel -->
     <div class="admin-panel active" id="panel-tours">
       <div class="panel-header">
@@ -1444,7 +1542,6 @@
               <th>ელ.ფოსტა</th>
               <th>ტელეფონი</th>
               <th>დეტალები</th>
-              <th>თარიღი</th>
             </tr>
           </thead>
           <tbody id="leads-list"></tbody>
@@ -2035,6 +2132,7 @@
     let contactMessagesData = [];
     let trafficLogsData = [];
 
+    let initialDataLoaded = false;
     let currentUser = null;
     let isAdminUser = false;
     let authStateInitialized = false;
@@ -2091,6 +2189,15 @@
 
     let unsubscribes = [];
 
+    function checkInitialDataLoaded() {
+      if (initialDataLoaded) return;
+      // Check if all essential data arrays have been populated
+      if (toursData.length > 0 && carsData.length > 0 && postsData.length > 0 && featuredData.length > 0 && reviewsData.length > 0) {
+        initialDataLoaded = true;
+        hideLoading();
+      }
+    }
+
     function setupRealTimeListeners() {
       // Clear any existing subscriptions first to avoid memory leaks or duplicate handlers
       unsubscribes.forEach(unsub => {
@@ -2120,42 +2227,50 @@
       safeSubscribe(subscribeTours, data => {
         toursData = data;
         renderTours();
+        checkInitialDataLoaded();
       }, 'Tours');
 
       safeSubscribe(subscribeCars, data => {
         carsData = data;
         renderCars();
+        checkInitialDataLoaded();
       }, 'Cars');
 
       safeSubscribe(subscribePosts, data => {
         postsData = data;
         renderPosts();
+        checkInitialDataLoaded();
       }, 'Posts');
 
       safeSubscribe(subscribeFeatured, data => {
         featuredData = data;
         renderFeatured();
+        checkInitialDataLoaded();
       }, 'Featured');
 
       safeSubscribe(subscribeReviews, data => {
         reviewsData = data;
         renderReviews();
+        checkInitialDataLoaded();
       }, 'Reviews');
 
       if (isAdminUser) {
         safeSubscribe(subscribeTourBookings, data => {
           tourBookingsData = data;
           renderLeads();
+          checkInitialDataLoaded();
         }, 'TourBookings');
 
         safeSubscribe(subscribeCarBookings, data => {
           carBookingsData = data;
           renderLeads();
+          checkInitialDataLoaded();
         }, 'CarBookings');
 
         safeSubscribe(subscribeSubscribers, data => {
           subscribersData = data;
           renderLeads();
+          checkInitialDataLoaded();
         }, 'Subscribers');
 
         safeSubscribe(subscribeContactMessages, data => {
@@ -2166,6 +2281,7 @@
         safeSubscribe(subscribeTrafficLogs, data => {
           trafficLogsData = data;
           renderAnalytics();
+          checkInitialDataLoaded();
         }, 'TrafficLogs');
       }
     }
@@ -2212,11 +2328,6 @@
               panel.style.display = 'block';
             }
 
-            // Hide loading overlay since auth is done
-            if (overlay) {
-              overlay.classList.remove('show');
-            }
-
             if (window.showToast) {
               window.showToast('ადმინისტრატორის ავტორიზაცია დადასტურდა. სრული წვდომა ჩართულია.', 'success');
             }
@@ -2227,6 +2338,11 @@
               // Auto-cleanup traffic logs older than 7 days
               cleanupOldTrafficLogs(7).catch(err => console.error('Failed to auto-cleanup traffic logs:', err));
             }
+            // Fallback to hide loader if initial data doesn't arrive
+            setTimeout(() => {
+              if (!initialDataLoaded) hideLoading();
+            }, 5000);
+
             clearTimeout(authTimeout);
           } catch (innerErr) {
             clearTimeout(authTimeout);
@@ -3227,7 +3343,7 @@
       });
 
       if (rows.length === 0) {
-        list.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-mid);padding:1.2rem;">ჯავშნები ან შეტყობინებები ჯერ არ არის.</td></tr>';
+        list.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-mid);padding:1.2rem;">ჯავშნები ან შეტყობინებები ჯერ არ არის.</td></tr>';
         return;
       }
 
@@ -3238,7 +3354,6 @@
       <td>${escapeHTML(String(row.email || '-'))}</td>
       <td>${escapeHTML(String(row.phone || '-'))}</td>
       <td>${escapeHTML(String(row.details || '-'))}</td>
-      <td>${escapeHTML(formatLeadDate(row.createdAt))}</td>
     </tr>
   `).join('');
     }
