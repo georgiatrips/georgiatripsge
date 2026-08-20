@@ -23002,5 +23002,184 @@ html {
 .action-tag.orange { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
 .action-tag.purple { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
 
+/* CLEAR BUTTON */
+.gt-clear-btn {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
+  padding: 0.5rem 0.9rem;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gt-clear-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
+/* IP BOXES CONTAINER */
+.gt-ip-groups-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 100%;
+}
+
+.gt-ip-box {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.gt-ip-box:hover {
+  border-color: rgba(41, 178, 183, 0.4);
+}
+
+.gt-ip-box.is-online {
+  border-color: rgba(37, 211, 102, 0.45);
+  background: linear-gradient(180deg, rgba(37, 211, 102, 0.05) 0%, #0f172a 100%);
+}
+
+.gt-ip-box-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 1rem 1.4rem;
+  gap: 1rem;
+  cursor: pointer;
+}
+
+.gt-ip-box-header:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.gt-ip-box-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 240px;
+}
+
+.gt-ip-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.gt-ip-flag {
+  font-size: 1.6rem;
+}
+
+.gt-ip-title strong {
+  display: block;
+  font-size: 0.95rem;
+  color: #ffffff;
+}
+
+.gt-ip-box-mid {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.gt-ip-devices-pill,
+.gt-ip-sources-pill {
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.3rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gt-ip-box-right {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+}
+
+.gt-expand-btn {
+  background: rgba(41, 178, 183, 0.15);
+  border: 1px solid rgba(41, 178, 183, 0.35);
+  color: #29b2b7;
+  padding: 0.45rem 0.95rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gt-expand-btn:hover {
+  background: #29b2b7;
+  color: #0b192c;
+}
+
+.gt-expand-btn.open {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* EXPANDED HISTORY TABLE */
+.gt-ip-box-history {
+  background: rgba(15, 23, 42, 0.85);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1.2rem 1.4rem;
+  animation: gtFadeIn 0.2s ease;
+}
+
+.history-head {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #38bdf8;
+  margin-bottom: 0.85rem;
+}
+
+.gt-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.gt-history-table th {
+  background: rgba(30, 41, 59, 0.7);
+  color: #94a3b8;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  font-weight: 800;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gt-history-table td {
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: middle;
+}
+
+.gt-history-table tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.gt-empty-box {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 3rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.95rem;
+}
+
 
 

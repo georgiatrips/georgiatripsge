@@ -1,11 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import {
-  subscribeToLiveSessions,
-  subscribeToRecentEvents,
-  clearAllAnalyticsData,
-} from "../lib/analytics";
+import { subscribeToLiveSessions, subscribeToRecentEvents } from "../lib/analytics";
+import { db } from "../lib/firebase";
+import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
 
 // წამების გარდაქმნა მარტივ ტექსტად (მაგ. "2 წუთი 15 წამი")
 function formatDuration(seconds) {
@@ -24,16 +22,16 @@ function formatRelativeTime(millis) {
   if (!millis) return "—";
   const diffSec = Math.floor((Date.now() - millis) / 1000);
   if (diffSec < 45) return "ახლახანს";
-  if (diffSec < 60) return `${diffSec} წამის წინ`;
+  if (diffSec < 60) return `${diffSec} წმ წინ`;
   const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin} წუთის წინ`;
+  if (diffMin < 60) return `${diffMin} წთ წინ`;
   const diffHour = Math.floor(diffMin / 60);
-  if (diffHour < 24) return `${diffHour} საათის წინ`;
+  if (diffHour < 24) return `${diffHour} სთ წინ`;
   const diffDay = Math.floor(diffHour / 24);
   return `${diffDay} დღის წინ`;
 }
 
-// მოწყობილობის მოდელისა და ტრაფიკის მიხედვით სარეკლამო ასაკობრივი სეგმენტის დადგენა
+// სარეკლამო ასაკობრივი სეგმენტის დადგენა
 function getDemographicSegment(session) {
   const os = (session.os || "").toLowerCase();
   const device = (session.deviceType || "").toLowerCase();
@@ -60,7 +58,7 @@ export default function AnalyticsManager() {
   const [loading, setLoading] = useState(true);
   const [timeFilter, setTimeFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [expandedIp, setExpandedIp] = useState(null);
+  const [expandedIps, setExpandedIps] = useState({});
   const [clearing, setClearing] = useState(false);
 
   // რეალურ დროში მოსმენა Firestore-დან
@@ -84,73 +82,63 @@ export default function AnalyticsManager() {
   const LIVE_THRESHOLD_MS = 4 * 60 * 1000; // 4 წუთი
   const TODAY_START_MS = new Date().setHours(0, 0, 0, 0);
 
-  // 1 IP-ის მიხედვით სესიების დაჯგუფება 1 Box-ში
-  const ipGroups = useMemo(() => {
-    const groups = {};
+  // 1. IP-ით დაჯგუფება
+  const groupedByIp = useMemo(() => {
+    const map = {};
 
     sessions.forEach((s) => {
-      const ip = s.ip || "127.0.0.1";
-      if (!groups[ip]) {
-        groups[ip] = {
-          ip,
-          country: s.country || "უცნობი",
-          city: s.city || "—",
+      const ipKey = s.ip || "127.0.0.1";
+      if (!map[ipKey]) {
+        map[ipKey] = {
+          ip: ipKey,
+          country: s.country || "Georgia",
+          city: s.city || "Batumi",
           flag: s.flag || "🌐",
           sessions: [],
+          totalDuration: 0,
+          latestActive: 0,
+          hasOnline: false,
           devices: new Set(),
           sources: new Set(),
-          actionsCount: { whatsapp: 0, call: 0, book: 0, tour: 0 },
-          maxLastActive: 0,
-          totalDuration: 0,
-          isOnline: false,
-          demo: getDemographicSegment(s),
+          actions: new Set(),
         };
       }
 
-      const grp = groups[ip];
-      grp.sessions.push(s);
+      map[ipKey].sessions.push(s);
+      map[ipKey].totalDuration += (s.totalDurationSeconds || 0);
 
       const activeTime = s.lastActiveMillis || 0;
-      if (activeTime > grp.maxLastActive) {
-        grp.maxLastActive = activeTime;
-        grp.demo = getDemographicSegment(s);
-        grp.latestPage = s.currentPage;
-        grp.latestPageTitle = s.currentPageTitle;
+      if (activeTime > map[ipKey].latestActive) {
+        map[ipKey].latestActive = activeTime;
       }
 
       if (now - activeTime <= LIVE_THRESHOLD_MS) {
-        grp.isOnline = true;
+        map[ipKey].hasOnline = true;
       }
 
-      grp.totalDuration += Math.round(s.totalDurationSeconds || 0);
-
-      if (s.os) grp.devices.add(`${s.deviceType === "Mobile" ? "📱" : "💻"} ${s.os}`);
-      if (s.source) grp.sources.add(s.source);
-
-      if (s.lastAction === "click_whatsapp") grp.actionsCount.whatsapp++;
-      else if (s.lastAction === "click_call") grp.actionsCount.call++;
-      else if (s.lastAction === "click_book_button") grp.actionsCount.book++;
-      else if (s.lastAction === "view_tour_click") grp.actionsCount.tour++;
+      if (s.deviceType || s.os) {
+        map[ipKey].devices.add(`${s.deviceType === "Mobile" ? "📱" : "💻"} ${s.os || ""}`.trim());
+      }
+      if (s.source) map[ipKey].sources.add(s.source);
+      if (s.lastAction) map[ipKey].actions.add(s.lastAction);
     });
 
-    // სესიების დალაგება თითოეულ IP-ში უახლესიდან ძველისკენ
-    Object.values(groups).forEach((g) => {
-      g.sessions.sort((a, b) => (b.lastActiveMillis || 0) - (a.lastActiveMillis || 0));
+    // სესიების დალაგება უახლესის მიხედვით
+    const list = Object.values(map).map((group) => {
+      group.sessions.sort((a, b) => (b.lastActiveMillis || 0) - (a.lastActiveMillis || 0));
+      return group;
     });
 
-    // IP ჯგუფების დალაგება: ონლაინები თავში, შემდეგ უახლესი აქტივობით
-    return Object.values(groups).sort((a, b) => {
-      if (a.isOnline && !b.isOnline) return -1;
-      if (!a.isOnline && b.isOnline) return 1;
-      return (b.maxLastActive || 0) - (a.maxLastActive || 0);
-    });
+    // ჯგუფების დალაგება უახლესი აქტივობით
+    list.sort((a, b) => b.latestActive - a.latestActive);
+    return list;
   }, [sessions, now]);
 
   // გაფილტვრა
-  const filteredIpGroups = useMemo(() => {
-    return ipGroups.filter((g) => {
-      if (timeFilter === "live" && !g.isOnline) return false;
-      if (timeFilter === "today" && g.maxLastActive < TODAY_START_MS) return false;
+  const filteredGroups = useMemo(() => {
+    return groupedByIp.filter((g) => {
+      if (timeFilter === "live" && !g.hasOnline) return false;
+      if (timeFilter === "today" && g.latestActive < TODAY_START_MS) return false;
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -159,41 +147,60 @@ export default function AnalyticsManager() {
           g.country.toLowerCase().includes(q) ||
           g.city.toLowerCase().includes(q) ||
           Array.from(g.sources).some((src) => src.toLowerCase().includes(q)) ||
-          Array.from(g.devices).some((dev) => dev.toLowerCase().includes(q));
+          g.sessions.some(
+            (s) =>
+              s.currentPage?.toLowerCase().includes(q) ||
+              s.currentPageTitle?.toLowerCase().includes(q)
+          );
         if (!match) return false;
       }
       return true;
     });
-  }, [ipGroups, timeFilter, searchQuery, TODAY_START_MS]);
+  }, [groupedByIp, timeFilter, searchQuery, TODAY_START_MS]);
 
+  // სტატისტიკა
   const liveCount = useMemo(() => {
-    return ipGroups.filter((g) => g.isOnline).length;
-  }, [ipGroups]);
+    return sessions.filter((s) => now - (s.lastActiveMillis || 0) <= LIVE_THRESHOLD_MS).length;
+  }, [sessions, now]);
 
   const todayCount = useMemo(() => {
-    return ipGroups.filter((g) => g.maxLastActive >= TODAY_START_MS).length;
-  }, [ipGroups, TODAY_START_MS]);
+    return sessions.filter((s) => (s.lastActiveMillis || 0) >= TODAY_START_MS).length;
+  }, [sessions, TODAY_START_MS]);
 
-  // მოწყობილობები
   const mobileCount = sessions.filter((s) => s.deviceType?.toLowerCase() === "mobile").length;
   const desktopCount = sessions.filter((s) => s.deviceType?.toLowerCase() !== "mobile").length;
 
-  // კლიკები
   const waClicks = events.filter((e) => e.eventName === "click_whatsapp").length;
   const callClicks = events.filter((e) => e.eventName === "click_call").length;
 
-  const handleClearHistory = async () => {
-    const ok = window.confirm(
-      "დარწმუნებული ხართ, რომ გსურთ მთელი სატესტო ანალიტიკის ისტორიის წაშლა? მონაცემები გასუფთავდება და დაიწყება თავიდან."
-    );
-    if (!ok) return;
-    setClearing(true);
-    await clearAllAnalyticsData();
-    setClearing(false);
+  const toggleExpand = (ip) => {
+    setExpandedIps((prev) => ({ ...prev, [ip]: !prev[ip] }));
   };
 
-  const toggleExpand = (ip) => {
-    setExpandedIp((prev) => (prev === ip ? null : ip));
+  // სატესტო ისტორიის გასუფთავება
+  const handleClearHistory = async () => {
+    if (!window.confirm("დარწმუნებული ხართ, რომ გსურთ ყველა ძველი ანალიტიკის ისტორიის გასუფთავება?")) {
+      return;
+    }
+    try {
+      setClearing(true);
+      const snap = await getDocs(collection(db, "visitor_sessions"));
+      const deletes = snap.docs.map((d) => deleteDoc(doc(db, "visitor_sessions", d.id)));
+      await Promise.all(deletes);
+
+      const evSnap = await getDocs(collection(db, "analytics_events"));
+      const evDeletes = evSnap.docs.map((d) => deleteDoc(doc(db, "analytics_events", d.id)));
+      await Promise.all(evDeletes);
+
+      setSessions([]);
+      setEvents([]);
+      alert("ისტორია წარმატებით გასუფთავდა!");
+    } catch (err) {
+      console.error(err);
+      alert("შეცდომა გასუფთავებისას: " + err.message);
+    } finally {
+      setClearing(false);
+    }
   };
 
   return (
@@ -201,91 +208,77 @@ export default function AnalyticsManager() {
       {/* ── 1. მთავარი სათაური ────────────────────────────────── */}
       <div className="gt-clean-header">
         <div>
-          <h2>📊 საიტის Live ანალიტიკა (IP ჯგუფები)</h2>
-          <p>
-            თითოეული IP წარმოდგენილია <strong>1 კომპაქტურ ბარათად</strong> — გახსენით მისი ისტორია ყველა ვიზიტისა და ქმედების სანახავად
-          </p>
+          <h2>📊 საიტის Live ანალიტიკა (IP დაჯგუფებით)</h2>
+          <p>თითოეული მომხმარებლის/IP-ის ისტორია დაჯგუფებულია 1 ბარათში — დააჭირეთ და ნახეთ მისი ყველა ნაბიჯი</p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
           <div className="gt-clean-live-pill">
             <span className="gt-clean-dot" />
-            <strong>{liveCount} IP საიტზეა</strong>
+            <strong>{liveCount} ონლაინ</strong>
           </div>
           <button
             type="button"
             className="gt-clear-btn"
             onClick={handleClearHistory}
-            disabled={clearing || sessions.length === 0}
-            title="სატესტო ისტორიის გასუფთავება"
+            disabled={clearing}
+            title="სატესტო ისტორიის წაშლა"
           >
             {clearing ? "იშლება..." : "🗑️ ისტორიის გასუფთავება"}
           </button>
         </div>
       </div>
 
-      {/* ── 2. მარტივი 4 ბარათი (ძირითადი ციფრები) ─────────────── */}
+      {/* ── 2. მარტივი 4 ბარათი ────────────────────────────────── */}
       <div className="gt-clean-cards-grid">
         <div className="gt-clean-card card-green">
-          <span className="card-lbl">🟢 Live ონლაინ IP</span>
+          <span className="card-lbl">🟢 Live ონლაინ</span>
           <strong className="card-val">{liveCount}</strong>
-          <span className="card-desc">უნიკალური IP საიტზეა</span>
+          <span className="card-desc">ამ წამს საიტზეა</span>
         </div>
 
         <div className="gt-clean-card card-blue">
-          <span className="card-lbl">👥 უნიკალური IP (ვიზიტორები)</span>
-          <strong className="card-val">{ipGroups.length}</strong>
+          <span className="card-lbl">👥 უნიკალური IP / ვიზიტორი</span>
+          <strong className="card-val">{groupedByIp.length}</strong>
           <span className="card-desc">სულ {sessions.length} ვიზიტი</span>
         </div>
 
         <div className="gt-clean-card card-purple">
-          <span className="card-lbl">📱 ტელეფონი vs კომპიუტერი</span>
+          <span className="card-lbl">📱 მოწყობილობები</span>
           <strong className="card-val" style={{ fontSize: "1.4rem" }}>
             📱 {mobileCount} / 💻 {desktopCount}
           </strong>
-          <span className="card-desc">მოწყობილობების განაწილება</span>
+          <span className="card-desc">მობილური და დესკტოპი</span>
         </div>
 
         <div className="gt-clean-card card-orange">
-          <span className="card-lbl">🎯 დაინტერესება (ლიდები)</span>
+          <span className="card-lbl">🎯 ლიდები & კლიკები</span>
           <strong className="card-val" style={{ fontSize: "1.4rem" }}>
             💬 {waClicks} / 📞 {callClicks}
           </strong>
-          <span className="card-desc">WhatsApp და ზარის კლიკები</span>
+          <span className="card-desc">WhatsApp და ზარები</span>
         </div>
       </div>
 
-      {/* ── 3. ასაკის & Meta/Google ADS განმარტების ბლოკი ─────── */}
-      <div className="gt-clean-age-box">
-        <div className="age-box-icon">👤</div>
-        <div className="age-box-text">
-          <strong>როგორ მუშაობს მომხმარებლის ასაკი და Meta / Google Ads?</strong>
-          <p>
-            ბრაუზერები უსაფრთხოების გამო პირად ასაკს არ გასცემენ, მაგრამ ჩვენი სისტემა <strong>Meta Pixel (Facebook/Instagram)</strong>-ს და <strong>Google Ads</strong>-ს პირდაპირ უგზავნის თითოეულ ვიზიტორს.
-            Facebook-მა და Google-მა <strong>ზუსტად იციან ამ ადამიანების ასაკი (მაგ. 25-45 წელი), სქესი და ინტერესები</strong> თავიანთი აპლიკაციებიდან.
-          </p>
-        </div>
-      </div>
-
-      {/* ── 4. ფილტრები & ძებნა ──────────────────────────────── */}
+      {/* ── 3. ფილტრები & ძებნა ──────────────────────────────── */}
       <div className="gt-clean-filter-bar">
         <div className="gt-clean-tabs">
           <button
             className={`tab-btn ${timeFilter === "all" ? "active" : ""}`}
             onClick={() => setTimeFilter("all")}
           >
-            ყველა IP ({ipGroups.length})
+            ყველა IP ({groupedByIp.length})
           </button>
           <button
             className={`tab-btn ${timeFilter === "live" ? "active" : ""}`}
             onClick={() => setTimeFilter("live")}
           >
-            🟢 Live ონლაინ ({liveCount})
+            🟢 Live ონლაინ ({groupedByIp.filter((g) => g.hasOnline).length})
           </button>
           <button
             className={`tab-btn ${timeFilter === "today" ? "active" : ""}`}
             onClick={() => setTimeFilter("today")}
           >
-            📅 დღევანდელი ({todayCount})
+            📅 დღევანდელი ({groupedByIp.filter((g) => g.latestActive >= TODAY_START_MS).length})
           </button>
         </div>
 
@@ -293,196 +286,164 @@ export default function AnalyticsManager() {
           <span>🔍</span>
           <input
             type="text"
-            placeholder="ძებნა IP-ით, ქვეყნით, ქალაქით..."
+            placeholder="ძებნა IP-ით, ქალაქით, ტურით..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
       </div>
 
-      {/* ── 5. დაჯგუფებული IP BOX-ების სია ───────────────────── */}
-      <div className="gt-ip-boxes-container">
+      {/* ── 4. IP-ით დაჯგუფებული BOX-ები (აკორდეონი) ─────────── */}
+      <div className="gt-ip-groups-wrap">
         {loading ? (
-          <div className="gt-empty-state">მონაცემები იტვირთება...</div>
-        ) : filteredIpGroups.length === 0 ? (
-          <div className="gt-empty-state">ვიზიტორები არ მოიძებნა</div>
+          <div className="gt-empty-box">მონაცემები იტვირთება...</div>
+        ) : filteredGroups.length === 0 ? (
+          <div className="gt-empty-box">ვიზიტორები არ მოიძებნა</div>
         ) : (
-          filteredIpGroups.map((grp) => {
-            const isExpanded = expandedIp === grp.ip;
+          filteredGroups.map((group) => {
+            const isExpanded = expandedIps[group.ip];
+            const topSession = group.sessions[0] || {};
+            const demo = getDemographicSegment(topSession);
 
             return (
               <div
-                key={grp.ip}
-                className={`gt-ip-card ${grp.isOnline ? "is-online" : ""}`}
+                key={group.ip}
+                className={`gt-ip-box ${group.hasOnline ? "is-online" : ""}`}
               >
-                {/* ── IP CARD HEADER ── */}
-                <div className="gt-ip-card-header" onClick={() => toggleExpand(grp.ip)}>
-                  {/* ლოკაცია & სტატუსი */}
-                  <div className="gt-ip-col loc">
-                    <span className="gt-ip-flag">{grp.flag}</span>
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <strong className="gt-ip-country">{grp.country}</strong>
-                        {grp.isOnline ? (
-                          <span className="badge-online">🟢 ონლაინ</span>
-                        ) : (
-                          <span className="badge-offline">⚪ {formatRelativeTime(grp.maxLastActive)}</span>
-                        )}
+                {/* ── BOX HEADER (მთავარი ხაზი 1 IP-ზე) ─────────────── */}
+                <div
+                  className="gt-ip-box-header"
+                  onClick={() => toggleExpand(group.ip)}
+                >
+                  <div className="gt-ip-box-left">
+                    {/* სტატუსი */}
+                    {group.hasOnline ? (
+                      <span className="badge-online">🟢 ონლაინ</span>
+                    ) : (
+                      <span className="badge-offline">⚪ {formatRelativeTime(group.latestActive)}</span>
+                    )}
+
+                    {/* ქვეყანა & IP */}
+                    <div className="gt-ip-title">
+                      <span className="gt-ip-flag">{group.flag || "🌐"}</span>
+                      <div>
+                        <strong>
+                          {group.country}, {group.city}
+                        </strong>
+                        <code className="ip-pill">{group.ip}</code>
                       </div>
-                      <span className="gt-ip-city">{grp.city}</span>
                     </div>
                   </div>
 
-                  {/* IP MISAMARTI */}
-                  <div className="gt-ip-col">
-                    <span className="gt-col-lbl">IP მისამართი:</span>
-                    <code className="ip-pill">{grp.ip}</code>
-                  </div>
-
-                  {/* MOYQOBILOBEBI */}
-                  <div className="gt-ip-col">
-                    <span className="gt-col-lbl">მოწყობილობები ({grp.devices.size}):</span>
-                    <span className="gt-val-text">
-                      {Array.from(grp.devices).join(", ") || "მოწყობილობა"}
+                  <div className="gt-ip-box-mid">
+                    {/* ასაკობრივი ჯგუფი */}
+                    <span className={`age-pill ${demo.tag}`}>
+                      <strong>{demo.group}</strong>
+                      <small>{demo.desc}</small>
                     </span>
-                  </div>
 
-                  {/* ASAKOBRIVI GROUP */}
-                  <div className="gt-ip-col">
-                    <span className="gt-col-lbl">ასაკობრივი ჯგუფი:</span>
-                    <span className={`age-pill ${grp.demo.tag}`}>
-                      <strong>{grp.demo.group}</strong>
-                      <small>{grp.demo.desc}</small>
-                    </span>
-                  </div>
+                    {/* მოწყობილობები */}
+                    <div className="gt-ip-devices-pill">
+                      {Array.from(group.devices).join(" • ") || "💻 მოწყობილობა"}
+                    </div>
 
-                  {/* AQTIURIBIS JAMI */}
-                  <div className="gt-ip-col">
-                    <span className="gt-col-lbl">საიტზე დრო:</span>
-                    <strong style={{ color: "#cbd5e1", fontSize: "0.9rem" }}>
-                      ⏱️ {formatDuration(grp.totalDuration)}
-                    </strong>
-                    <span style={{ fontSize: "0.72rem", color: "#64748b" }}>
-                      {grp.sessions.length} ვიზიტი
-                    </span>
-                  </div>
-
-                  {/* KVEDEBEBI */}
-                  <div className="gt-ip-col actions">
-                    <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
-                      {grp.actionsCount.whatsapp > 0 && (
-                        <span className="action-tag green">
-                          💬 WA ({grp.actionsCount.whatsapp})
-                        </span>
-                      )}
-                      {grp.actionsCount.call > 0 && (
-                        <span className="action-tag blue">
-                          📞 ზარი ({grp.actionsCount.call})
-                        </span>
-                      )}
-                      {grp.actionsCount.book > 0 && (
-                        <span className="action-tag orange">
-                          📝 ჯავშანი ({grp.actionsCount.book})
-                        </span>
-                      )}
-                      {grp.actionsCount.tour > 0 && (
-                        <span className="action-tag purple">
-                          🏔️ ტური ({grp.actionsCount.tour})
-                        </span>
-                      )}
+                    {/* წყაროები */}
+                    <div className="gt-ip-sources-pill">
+                      {Array.from(group.sources).join(", ") || "Direct"}
                     </div>
                   </div>
 
-                  {/* DROPDOWN TOGGLE BUTTON */}
-                  <button
-                    type="button"
-                    className={`gt-expand-btn ${isExpanded ? "open" : ""}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleExpand(grp.ip);
-                    }}
-                  >
-                    {isExpanded
-                      ? "▲ ისტორიის დახურვა"
-                      : `▼ ისტორია (${grp.sessions.length} ვიზიტი)`}
-                  </button>
-                </div>
-
-                {/* ── EXPANDED HISTORY SUB-TABLE ── */}
-                {isExpanded && (
-                  <div className="gt-ip-history-wrap">
-                    <div className="history-head">
-                      <strong>📜 ამ IP-ის ყველა ვიზიტი და გვერდი ({grp.sessions.length}):</strong>
+                  <div className="gt-ip-box-right">
+                    {/* დრო & ისტორიის რაოდენობა */}
+                    <div style={{ textAlign: "right" }}>
+                      <strong style={{ color: "#38bdf8", display: "block" }}>
+                        ⏱️ {formatDuration(group.totalDuration)}
+                      </strong>
                       <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
-                        წყაროები: {Array.from(grp.sources).join(", ") || "Direct"}
+                        {group.sessions.length} ვიზიტი / გვერდი
                       </span>
                     </div>
 
-                    <table className="gt-sub-table">
+                    {/* ღილაკი */}
+                    <button
+                      type="button"
+                      className={`gt-expand-btn ${isExpanded ? "open" : ""}`}
+                    >
+                      {isExpanded ? "დახურვა ▲" : `ისტორია (${group.sessions.length}) ▼`}
+                    </button>
+                  </div>
+                </div>
+
+                {/* ── EXPANDED HISTORY (გაშლილი ისტორია ამ IP-ზე) ────── */}
+                {isExpanded && (
+                  <div className="gt-ip-box-history">
+                    <div className="history-head">
+                      <span>🕒 ამ IP-ის ყველა შემოსვლა და აქტივობა ({group.sessions.length}):</span>
+                    </div>
+
+                    <table className="gt-history-table">
                       <thead>
                         <tr>
                           <th>დრო</th>
-                          <th>მოწყობილობა / OS</th>
+                          <th>მოწყობილობა & OS</th>
                           <th>საიდან შემოვიდა</th>
-                          <th>რომელი გვერდი / ტური ნახა</th>
-                          <th>დაყოვნება</th>
+                          <th>ნანახი გვერდი / ტური</th>
+                          <th>დაყოვნების დრო</th>
                           <th>ქმედება</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {grp.sessions.map((sess, idx) => (
-                          <tr key={sess.id || idx}>
-                            <td>
-                              <span style={{ color: "#94a3b8", fontSize: "0.78rem" }}>
-                                {formatRelativeTime(sess.lastActiveMillis)}
-                              </span>
-                            </td>
-                            <td>
-                              <span style={{ fontSize: "0.82rem", color: "#e2e8f0" }}>
-                                {sess.deviceType === "Mobile" ? "📱 " : "💻 "}
-                                {sess.os || "უცნობი"}
-                              </span>
-                            </td>
-                            <td>
-                              <span className="src-pill">{sess.source || "Direct"}</span>
-                            </td>
-                            <td style={{ maxWidth: "260px" }}>
-                              <a
-                                href={sess.currentPage || "/"}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="tour-link"
-                                title={sess.currentPageTitle || sess.currentPage}
-                              >
-                                {sess.currentPageTitle || sess.currentPage || "/"}
-                              </a>
-                            </td>
-                            <td>
-                              <span style={{ fontWeight: 600, color: "#cbd5e1", fontSize: "0.8rem" }}>
-                                ⏱️ {formatDuration(sess.totalDurationSeconds)}
-                              </span>
-                            </td>
-                            <td>
-                              {sess.lastAction === "click_whatsapp" && (
-                                <span className="action-tag green">💬 WhatsApp</span>
-                              )}
-                              {sess.lastAction === "click_call" && (
-                                <span className="action-tag blue">📞 დარეკვა</span>
-                              )}
-                              {sess.lastAction === "click_book_button" && (
-                                <span className="action-tag orange">📝 ჯავშანი</span>
-                              )}
-                              {sess.lastAction === "view_tour_click" && (
-                                <span className="action-tag purple">🏔️ ტური</span>
-                              )}
-                              {!sess.lastAction && (
-                                <span style={{ color: "#64748b", fontSize: "0.78rem" }}>
-                                  დათვალიერება
+                        {group.sessions.map((s, idx) => {
+                          const sOnline = now - (s.lastActiveMillis || 0) <= LIVE_THRESHOLD_MS;
+                          return (
+                            <tr key={s.id || idx}>
+                              <td>
+                                {sOnline ? (
+                                  <span style={{ color: "#25d366", fontWeight: 800 }}>🟢 ახლა</span>
+                                ) : (
+                                  <span style={{ color: "#94a3b8" }}>{formatRelativeTime(s.lastActiveMillis)}</span>
+                                )}
+                              </td>
+
+                              <td>
+                                <span style={{ color: "#e2e8f0" }}>
+                                  {s.deviceType === "Mobile" ? "📱 " : "💻 "}
+                                  {s.os || "მოწყობილობა"} {s.browser ? `(${s.browser})` : ""}
                                 </span>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
+                              </td>
+
+                              <td>
+                                <span className="src-pill">{s.source || "Direct"}</span>
+                              </td>
+
+                              <td style={{ maxWidth: "300px" }}>
+                                <a
+                                  href={s.currentPage || "/"}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="tour-link"
+                                  title={s.currentPageTitle || s.currentPage}
+                                >
+                                  {s.currentPageTitle || s.currentPage || "/"}
+                                </a>
+                              </td>
+
+                              <td>
+                                <span style={{ color: "#38bdf8", fontWeight: 700 }}>
+                                  ⏱️ {formatDuration(s.totalDurationSeconds)}
+                                </span>
+                              </td>
+
+                              <td>
+                                {s.lastAction === "click_whatsapp" && <span className="action-tag green">💬 WhatsApp</span>}
+                                {s.lastAction === "click_call" && <span className="action-tag blue">📞 დარეკვა</span>}
+                                {s.lastAction === "click_book_button" && <span className="action-tag orange">📝 ჯავშანი</span>}
+                                {s.lastAction === "view_tour_click" && <span className="action-tag purple">🏔️ ტური</span>}
+                                {!s.lastAction && <span style={{ color: "#64748b", fontSize: "0.8rem" }}>დათვალიერება</span>}
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>

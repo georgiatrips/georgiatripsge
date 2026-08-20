@@ -194,9 +194,11 @@ export default function PlaceManager({ onPlacesCountChange }) {
           </div>
           {form.gallery.length > 0 ? (
             <div className="admin-gallery-grid">
-              {form.gallery.map((url, index) => (
-                <div className="admin-gallery-item" key={url}>
-                  <Image src={url} alt="" fill sizes="120px" style={{ objectFit: "cover" }} />
+              {form.gallery
+                .filter((url) => Boolean(url && url.trim()))
+                .map((url, index) => (
+                  <div className="admin-gallery-item" key={url || index}>
+                    <Image src={url || "/hero.png"} alt="" fill sizes="120px" style={{ objectFit: "cover" }} />
                   <button
                     type="button"
                     className="admin-gallery-remove"

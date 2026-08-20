@@ -1117,28 +1117,33 @@ export default function AdminPage() {
                     marginTop: "0.5rem"
                   }}
                 >
-                  {gallery.map((item, idx) => {
-                    const url = typeof item === "string" ? item : item?.url;
-                    const locTitle = typeof item === "string" ? "" : item?.locationTitle;
-                    const isCover = idx === 0;
+                  {gallery
+                    .filter((item) => {
+                      const u = typeof item === "string" ? item : item?.url;
+                      return Boolean(u && u.trim());
+                    })
+                    .map((item, idx) => {
+                      const url = (typeof item === "string" ? item : item?.url) || "/hero.png";
+                      const locTitle = typeof item === "string" ? "" : item?.locationTitle;
+                      const isCover = idx === 0;
 
-                    return (
-                      <div
-                        key={`${url}-${idx}`}
-                        className="admin-gallery-item"
-                        style={{
-                          position: "relative",
-                          aspectRatio: "1",
-                          borderRadius: "12px",
-                          overflow: "hidden",
-                          border: isCover ? "2.5px solid #fab418" : "1px solid rgba(255, 255, 255, 0.15)",
-                          boxShadow: isCover ? "0 0 16px rgba(250, 180, 24, 0.45)" : "none",
-                          background: "rgba(13, 35, 58, 0.5)",
-                          display: "flex",
-                          flexDirection: "column"
-                        }}
-                      >
-                        <Image src={url} alt="" fill sizes="180px" style={{ objectFit: "cover" }} />
+                      return (
+                        <div
+                          key={`${url}-${idx}`}
+                          className="admin-gallery-item"
+                          style={{
+                            position: "relative",
+                            aspectRatio: "1",
+                            borderRadius: "12px",
+                            overflow: "hidden",
+                            border: isCover ? "2.5px solid #fab418" : "1px solid rgba(255, 255, 255, 0.15)",
+                            boxShadow: isCover ? "0 0 16px rgba(250, 180, 24, 0.45)" : "none",
+                            background: "rgba(13, 35, 58, 0.5)",
+                            display: "flex",
+                            flexDirection: "column"
+                          }}
+                        >
+                          <Image src={url} alt="" fill sizes="180px" style={{ objectFit: "cover" }} />
                         
                         {/* Top Location Badge */}
                         <div
