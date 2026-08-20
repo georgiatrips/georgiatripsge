@@ -10,39 +10,164 @@ export const TELEGRAM_HANDLE = "+995504220020";
 export const TELEGRAM_LINK = `https://t.me/${TELEGRAM_HANDLE}`;
 export const INSTAGRAM_HANDLE = "georgiatrips.ge";
 export const INSTAGRAM_LINK = `https://instagram.com/${INSTAGRAM_HANDLE}`;
+export const FACEBOOK_LINK = "https://www.facebook.com/profile.php?id=61588059054976";
+export const TIKTOK_LINK = "https://www.tiktok.com/@travell_company";
+export const YOUTUBE_LINK = "https://www.youtube.com/@GeorgiaTrips";
+export const LINKEDIN_LINK = "https://www.linkedin.com/in/georgia-trips-6652b942b/";
 
-export const FAQS = [
-  {
-    q: "როგორ დავჯავშნო ტური?",
-    a: "აირჩიეთ სასურველი ტური და დააჭირეთ ღილაკს „დაჯავშნეთ“ — ავტომატურად გადახვალთ WhatsApp-ზე, სადაც ჩვენი კონსულტანტი 30 წუთში გიპასუხებთ. ასევე შეგიძლიათ საიტზე შეავსოთ დაჯავშნის ფორმა.",
-  },
-  {
-    q: "შესაძლებელია თუ არა ინდივიდუალური მარშრუტის შედგენა?",
-    a: "რა თქმა უნდა! ჩვენი გუნდი შეადგენს სრულად პერსონალიზებულ მარშრუტს თქვენი ინტერესების, ბიუჯეტისა და დროის მიხედვით — მთის თავგადასავლებიდან ღვინის ტურებამდე.",
-  },
-  {
-    q: "რა შედის ტურის ფასში?",
-    a: "სტანდარტულად ფასში შედის ტრანსპორტი კომფორტული ავტომობილით, პროფესიონალი გიდი და დაზღვევა. VIP პაკეტებში ემატება სასტუმრო, კვება და დამატებითი სერვისები — დეტალები დაზუსტდება ჯავშნისას.",
-  },
-  {
-    q: "ხელმისაწვდომია თუ არა ჰალალ კვება?",
-    a: "დიახ, ჩვენ ვთანამშრომლობთ ჰალალ სერტიფიცირებულ რესტორნებთან თბილისში, ბათუმსა და მთავარ ტურისტულ მიმართულებებზე. წინასწარ გვაცნობეთ და ყველაფერს მოვამზადებთ.",
-  },
-  {
-    q: "რომელ ენებზე საუბრობენ გიდები?",
-    a: "ჩვენი გიდები საუბრობენ ქართულ, ინგლისურ, რუსულ და არაბულ ენებზე. სხვა ენის საჭიროების შემთხვევაში წინასწარ შეგვატყობინეთ.",
-  },
-  {
-    q: "შესაძლებელია თუ არა ჯავშნის გაუქმება?",
-    a: "დიახ, ჯავშნის უფასო გაუქმება შესაძლებელია ტურის დაწყებამდე 48 საათით ადრე. დეტალური პირობები დამოკიდებულია ტურის ტიპზე და დაზუსტდება დაჯავშნისას.",
-  },
+export const SOCIAL_PROFILES = [
+  FACEBOOK_LINK,
+  INSTAGRAM_LINK,
+  YOUTUBE_LINK,
+  TIKTOK_LINK,
+  LINKEDIN_LINK,
+  TELEGRAM_LINK,
 ];
+
+export const FAQS_BY_LANG = {
+  ka: [
+    {
+      q: "როგორ დავჯავშნო ტური?",
+      a: "აირჩიეთ სასურველი ტური და დააჭირეთ ღილაკს „დაჯავშნეთ“ — ავტომატურად გადახვალთ WhatsApp-ზე, სადაც ჩვენი კონსულტანტი 30 წუთში გიპასუხებთ. ასევე შეგიძლიათ საიტზე შეავსოთ დაჯავშნის ფორმა.",
+    },
+    {
+      q: "შესაძლებელია თუ არა ინდივიდუალური მარშრუტის შედგენა?",
+      a: "რა თქმა უნდა! ჩვენი გუნდი შეადგენს სრულად პერსონალიზებულ მარშრუტს თქვენი ინტერესების, ბიუჯეტისა და დროის მიხედვით — მთის თავგადასავლებიდან ღვინის ტურებამდე.",
+    },
+    {
+      q: "რა შედის ტურის ფასში?",
+      a: "სტანდარტულად ფასში შედის ტრანსპორტი კომფორტული ავტომობილით, პროფესიონალი გიდი და დაზღვევა. VIP პაკეტებში ემატება სასტუმრო, კვება და დამატებითი სერვისები — დეტალები დაზუსტდება ჯავშნისას.",
+    },
+    {
+      q: "ხელმისაწვდომია თუ არა ჰალალ კვება?",
+      a: "დიახ, ჩვენ ვთანამშრომლობთ ჰალალ სერტიფიცირებულ რესტორნებთან თბილისში, ბათუმსა და მთავარ ტურისტულ მიმართულებებზე. წინასწარ გვაცნობეთ და ყველაფერს მოვამზადებთ.",
+    },
+    {
+      q: "რომელ ენებზე საუბრობენ გიდები?",
+      a: "ჩვენი გიდები საუბრობენ ქართულ, ინგლისურ, რუსულ, თურქულ და არაბულ ენებზე. სხვა ენის საჭიროების შემთხვევაში წინასწარ შეგვატყობინეთ.",
+    },
+    {
+      q: "შესაძლებელია თუ არა ჯავშნის გაუქმება?",
+      a: "დიახ, ჯავშნის უფასო გაუქმება შესაძლებელია ტურის დაწყებამდე 48 საათით ადრე. დეტალური პირობები დამოკიდებულია ტურის ტიპზე და დაზუსტდება დაჯავშნისას.",
+    },
+  ],
+  en: [
+    {
+      q: "How can I book a tour?",
+      a: "Choose your desired tour and click 'Book Now' — you'll be connected directly to WhatsApp where our team responds within minutes. You can also fill out the online reservation form on the website.",
+    },
+    {
+      q: "Can I request a custom private itinerary?",
+      a: "Absolutely! We create fully customized itineraries tailored to your schedule, preferences, and budget — from mountain 4x4 adventures to exclusive wine tours.",
+    },
+    {
+      q: "What is included in the tour price?",
+      a: "Standard tours include private transport in a modern air-conditioned vehicle, experienced driver and multilingual guide. VIP packages can include accommodation, meals, and entry tickets.",
+    },
+    {
+      q: "Is Halal food available during tours?",
+      a: "Yes, we partner with certified Halal restaurants across Tbilisi, Batumi, and key tourist destinations. Just inform us during booking.",
+    },
+    {
+      q: "What languages do your guides speak?",
+      a: "Our professional guides speak English, Russian, Turkish, Arabic, and Georgian.",
+    },
+    {
+      q: "What is your cancellation policy?",
+      a: "Free cancellation is available up to 48 hours before the tour departure time. Terms may vary slightly for multi-day custom tours.",
+    },
+  ],
+  ru: [
+    {
+      q: "Как забронировать тур?",
+      a: "Выберите тур и нажмите кнопку «Забронировать» — вы перейдете в WhatsApp, где наш менеджер ответит в течение нескольких минут. Также можно заполнить форму на сайте.",
+    },
+    {
+      q: "Можно ли составить индивидуальный маршрут?",
+      a: "Конечно! Мы с радостью составим индивидуальную программу по вашим пожеланиям и бюджету — от горных джип-туров до винных экскурсий в Кахетию.",
+    },
+    {
+      q: "Что входит в стоимость тура?",
+      a: "В стоимость входит комфортабельный транспорт, опытный водитель, услуги гида и бесплатный Wi-Fi. В VIP-пакеты могут быть включены отели, питание и дегустации.",
+    },
+    {
+      q: "Доступно ли халяльное питание?",
+      a: "Да, мы сотрудничаем с сертифицированными халяль ресторанами в Тбилиси, Батуми и по всей Грузии. Просто предупредите нас при бронировании.",
+    },
+    {
+      q: "На каких языках говорят гиды?",
+      a: "Наши гиды говорят на русском, английском, грузинском, турецком и арабском языках.",
+    },
+    {
+      q: "Можно ли отменить бронирование?",
+      a: "Бесплатная отмена доступна за 48 часов до начала тура. Подробные условия уточняются при бронировании.",
+    },
+  ],
+  tr: [
+    {
+      q: "Nasıl tur rezervasyonu yapabilirim?",
+      a: "İstediğiniz turu seçin ve 'Rezervasyon Yap' butonuna tıklayın — WhatsApp üzerinden danışmanımız dakikalar içinde sizinle iletişime geçecektir.",
+    },
+    {
+      q: "Özel bir rota oluşturabilir miyiz?",
+      a: "Kesinlikle! İlgi alanlarınıza, bütçenize ve zamanınıza göre tamamen size özel turlar planlıyoruz.",
+    },
+    {
+      q: "Tur fiyatına neler dahildir?",
+      a: "Konforlu klimalı araçlarla ulaşım, deneyimli sürücü ve profesyonel rehberlik hizmeti fiyata dahildir.",
+    },
+    {
+      q: "Helal yemek seçenekleri mevcut mu?",
+      a: "Evet, Tiflis, Batum ve tüm turistik bölgelerde helal sertifikalı restoranlarla çalışıyoruz.",
+    },
+    {
+      q: "Rehberler hangi dilleri konuşuyor?",
+      a: "Rehberlerimiz Türkçe, İngilizce, Rusça, Gürcüce ve Arapça bilmektedir.",
+    },
+    {
+      q: "İptal politikası nedir?",
+      a: "Tur başlangıcından 48 saat öncesine kadar yapılan iptallerde tam ücret iadesi yapılır.",
+    },
+  ],
+  ar: [
+    {
+      q: "كيف يمكنني حجز جولة سياحية؟",
+      a: "اختر الجولة المطلوبة واضغط على زر 'احجز الآن' — سيتم تحويلك مباشرة إلى واتساب حيث سيجيبك فريقنا خلال دقائق معدودة.",
+    },
+    {
+      q: "هل يمكن تنظيم برنامج سياحي مخصص؟",
+      a: "بالتأكيد! نصمم برامج سياحية خاصة بالكامل تناسب رغباتكم وعدد أفراد عائلتكم وميزانيتكم.",
+    },
+    {
+      q: "ماذا يشمل سعر الجولة؟",
+      a: "يشمل السعر سيارة حديثة مريحة ومكيفة مع سائق خاص ومرشد يتحدث لغتكم وخدمة واي فاي مجانية وماء بارد.",
+    },
+    {
+      q: "هل يتوفر طعام حلال أثناء الجولات؟",
+      a: "نعم، نتعامل مع أفضل المطاعم الحلال المعتمدة في تبليسي وباتومي وكافة المدن السياحية.",
+    },
+    {
+      q: "ما هي اللغات التي يتحدث بها المرشدون؟",
+      a: "يتحدث مرشدونا وسائقونا العربية، الإنجليزية، الروسية، التركية والجورجية.",
+    },
+    {
+      q: "ما هي سياسة إلغاء الحجز؟",
+      a: "يمكن إلغاء الحجز مجاناً قبل موعد انطلاق الجولة بـ 48 ساعة.",
+    },
+  ],
+};
+
+export const FAQS = FAQS_BY_LANG.ka;
+
+export function getFaqs(lang = "ka") {
+  return FAQS_BY_LANG[lang] || FAQS_BY_LANG.ka;
+}
 
 // Brand logo — uses the uploaded logo.png asset
 export const BrandLogo = ({ width = 48, height = 48, priority = false }) => (
   <Image
     src="/logo.png"
-    alt="GeorgiaTrips ლოგო"
+    alt="GeorgiaTrips"
     width={width}
     height={height}
     priority={priority}
@@ -60,7 +185,14 @@ export const WhatsAppIcon = () => (
 );
 
 // Send a WhatsApp booking message for a specific tour
-export const bookTourOnWhatsApp = (tourTitle, tourPrice) => {
-  const msg = `გამარჯობა! მინდა დავაჯავშნო ტური: *${tourTitle}*${tourPrice ? ` (${tourPrice})` : ""}`;
+export const bookTourOnWhatsApp = (tourTitle, tourPrice, lang = "ka") => {
+  const greetings = {
+    ka: `გამარჯობა! მინდა დავაჯავშნო ტური: *${tourTitle}*${tourPrice ? ` (${tourPrice})` : ""}`,
+    en: `Hello! I would like to book the tour: *${tourTitle}*${tourPrice ? ` (${tourPrice})` : ""}`,
+    ru: `Здравствуйте! Я хочу забронировать тур: *${tourTitle}*${tourPrice ? ` (${tourPrice})` : ""}`,
+    tr: `Merhaba! Tur rezervasyonu yapmak istiyorum: *${tourTitle}*${tourPrice ? ` (${tourPrice})` : ""}`,
+    ar: `مرحباً! أود حجز الجولة السياحية: *${tourTitle}*${tourPrice ? ` (${tourPrice})` : ""}`,
+  };
+  const msg = greetings[lang] || greetings.ka;
   window.open(`${WA_LINK}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
 };

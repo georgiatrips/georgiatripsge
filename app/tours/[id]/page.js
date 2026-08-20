@@ -8,10 +8,12 @@ import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import DatePicker from "../../components/DatePicker";
 import { getFirestoreTourById, normalizeFirestoreTour, groupDepartureDates, listFirestoreTours, asLocalizedText, translateDuration, translateLocation, translateMonthName } from "../../lib/toursFirestore";
-import { WA_LINK, WA_NUMBER, PHONE_DISPLAY, TELEGRAM_HANDLE, TELEGRAM_LINK, INSTAGRAM_HANDLE, INSTAGRAM_LINK, FAQS } from "../../lib/shared";
+import { WA_LINK, WA_NUMBER, PHONE_DISPLAY, TELEGRAM_HANDLE, TELEGRAM_LINK, INSTAGRAM_HANDLE, INSTAGRAM_LINK, SOCIAL_PROFILES, FAQS } from "../../lib/shared";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { useCurrency } from "../../lib/currency/CurrencyContext";
-import { formatPriceStr } from "../../lib/i18n/translations";
+import { formatPriceStr } from "../../lib/i18n/formatPriceStr";
+import { createBooking } from "../../lib/bookingsFirestore";
+import { ClockIcon, LocationIcon } from "../../components/Icons";
 
 export default function TourDetailPage() {
   const params = useParams();
@@ -19,7 +21,7 @@ export default function TourDetailPage() {
   const { format } = useCurrency();
   const tourId = params?.id || "promethe-martvili";
 
-const [fsTour, setFsTour] = useState(null);
+  const [fsTour, setFsTour] = useState(null);
   const [fsLoading, setFsLoading] = useState(true);
   const [allFsTours, setAllFsTours] = useState([]);
   const [selectedDate, setSelectedDate] = useState("");
@@ -69,28 +71,65 @@ useEffect(() => {
     return () => { cancelled = true; };
   }, []);
 
-const isFirestoreTour = !!fsTour;
+  const TOUR_DEFAULTS = {
+    ka: {
+      meetingPoint: "სასტუმროდან ან მითითებული მისამართიდან გაყვანა",
+      dressCode: "კომფორტული ტანსაცმელი და მოსახერხებელი ფეხსაცმელი",
+      includes: ["კომფორტული ტრანსპორტირება", "გამოცდილი მძღოლისა და გიდის მომსახურება", "უფასო Wi-Fi და სასმელი წყალი"],
+      excludes: ["ლოკაციების შესასვლელი ბილეთები", "პირადი ხარჯები და კვება"],
+      payment: "გადახდა გამგზავრების დღეს (ნაღდი ანგარიშსწორებით)",
+    },
+    en: {
+      meetingPoint: "Pickup from your hotel or specified address",
+      dressCode: "Comfortable casual clothes and walking shoes",
+      includes: ["Comfortable transportation", "Professional driver and guide service", "Free Wi-Fi & Bottled Water"],
+      excludes: ["Entrance tickets to attractions", "Personal expenses and meals"],
+      payment: "Payment on the day of departure (Cash or Transfer)",
+    },
+    ru: {
+      meetingPoint: "Трансфер из отеля или по указанному адресу",
+      dressCode: "Удобная одежда и комфортная обувь",
+      includes: ["Комфортабельный транспорт", "Услуги опытного водителя и гида", "Бесплатный Wi-Fi и питьевая вода"],
+      excludes: ["Входные билеты на локации", "Личные расходы и питание"],
+      payment: "Оплата в день выезда (наличными или переводом)",
+    },
+    tr: {
+      meetingPoint: "Otelinizden veya belirtilen adresten karşılama",
+      dressCode: "Rahat kıyafetler ve yürüyüş ayakkabısı",
+      includes: ["Konforlu ulaşım", "Deneyimli sürücü ve rehber hizmeti", "Ücretsiz Wi-Fi ve şişe su"],
+      excludes: ["Giriş biletleri", "Kişisel harcamalar ve yemekler"],
+      payment: "Tur günü kalkışta ödeme (Nakit veya Havale)",
+    },
+    ar: {
+      meetingPoint: "الاستقبال من الفندق أو العنوان المحدد",
+      dressCode: "ملابس مريحة وأحذية مناسبة للمشي",
+      includes: ["مواصلات مريحة ومكيفة", "سائق ومرشد ذو خبرة", "واي فاي مجاني ومياه شرب"],
+      excludes: ["تذاكر دخول المعالم السياحية", "المصاريف الشخصية والوجبات"],
+      payment: "الدفع يوم الانطلاق (نقداً)",
+    },
+  };
+
+  const currDefaults = TOUR_DEFAULTS[lang] || TOUR_DEFAULTS.ka;
+
+  const isFirestoreTour = !!fsTour;
   const rawTour = fsTour;
 
   const tour = !rawTour
     ? null
     : {
         ...rawTour,
-        departure: rawTour.destinationLabel || rawTour.destination || "ბათუმი",
-        meetingPoint: "სასტუმროდან ან მითითებული მისამართიდან გაყვანა",
-        dressCode: "კომფორტული ტანსაცმელი და მოსახერხებელი ფეხსაცმელი",
-        includes: ["კომფორტული ტრანსპორტირება", "გამოცდილი მძღოლისა და გიდის მომსახურება"],
-        excludes: ["ლოკაციების შესასვლელი ბილეთები", "პირადი ხარჯები და კვება"],
-        payment: "გადახდა გამგზავრების დღეს (ნაღდი ანგარიშსწორებით)",
-        highlights: [rawTour.desc],
+        departure: translateLocation(rawTour.destinationLabel || rawTour.destination || "ბათუმი", lang),
+        meetingPoint: currDefaults.meetingPoint,
+        dressCode: currDefaults.dressCode,
+        includes: Array.isArray(rawTour.includes) && rawTour.includes.length ? rawTour.includes.map(i => asLocalizedText(i, lang)) : currDefaults.includes,
+        excludes: Array.isArray(rawTour.excludes) && rawTour.excludes.length ? rawTour.excludes.map(i => asLocalizedText(i, lang)) : currDefaults.excludes,
+        payment: currDefaults.payment,
+        highlights: [asLocalizedText(rawTour.desc, lang)],
         gallery: rawTour.gallery?.length ? rawTour.gallery : [rawTour.img].filter(Boolean),
         itinerary: rawTour.itinerary?.length
           ? rawTour.itinerary
-          : [{ title: "ლოკაცია", desc: rawTour.desc, img: rawTour.img }],
+          : [{ title: asLocalizedText(rawTour.title, lang), desc: asLocalizedText(rawTour.desc, lang), img: rawTour.img }],
         tourSectionLabel: rawTour.tourSectionLabel,
-        reviews: [
-          { name: "მარიამ ც.", date: "2026 წლის ივლისი", rating: 5, comment: "ძალიან კარგად ორგანიზებული ტური!" },
-        ],
       };
 
   const firestoreSchedule = rawTour
@@ -322,26 +361,55 @@ const isFirestoreTour = !!fsTour;
   const handleBookingSubmit = (e) => {
     e.preventDefault();
 
+    const headers = {
+      ka: "✈️ *GeorgiaTrips — ტურის ჯავშანი*",
+      en: "✈️ *GeorgiaTrips — Tour Booking*",
+      ru: "✈️ *GeorgiaTrips — Бронирование тура*",
+      tr: "✈️ *GeorgiaTrips — Tur Rezervasyonu*",
+      ar: "✈️ *GeorgiaTrips — حجز جولة سياحية*",
+    };
+    const labels = {
+      ka: { tour: "ტური", type: "ტიპი", date: "თარიღი", name: "სახელი", phone: "ტელეფონი", people: "მგზავრები", price: "ფასი", notes: "შენიშვნები", group: "ჯგუფური", private: "ინდივიდუალური", agreement: "შეთანხმებით", unprovided: "არ არის მითითებული" },
+      en: { tour: "Tour", type: "Type", date: "Date", name: "Name", phone: "Phone", people: "Passengers", price: "Price", notes: "Notes", group: "Group Tour", private: "Private Tour", agreement: "By Agreement", unprovided: "Not specified" },
+      ru: { tour: "Тур", type: "Тип", date: "Дата", name: "Имя", phone: "Телефон", people: "Пассажиры", price: "Цена", notes: "Примечания", group: "Групповой тур", private: "Индивидуальный тур", agreement: "По договоренности", unprovided: "Не указано" },
+      tr: { tour: "Tur", type: "Tür", date: "Tarih", name: "İsim", phone: "Telefon", people: "Yolcu Sayısı", price: "Fiyat", notes: "Notlar", group: "Grup Turu", private: "Özel Tur", agreement: "Anlaşmaya Göre", unprovided: "Belirtilmedi" },
+      ar: { tour: "الجولة", type: "النوع", date: "التاريخ", name: "الاسم", phone: "الهاتف", people: "عدد الركاب", price: "السعر", notes: "ملاحظات", group: "جولة جماعية", private: "جولة خاصة", agreement: "حسب الاتفاق", unprovided: "غير محدد" },
+    };
+    const l = labels[lang] || labels.ka;
+
+    // Save online booking to Firestore
+    createBooking({
+      type: "tour",
+      tourId: tour?.id || tourId,
+      tourTitle: asLocalizedText(tour.title, lang),
+      tourType: tourType,
+      date: selectedDate || "by_agreement",
+      name: bookingName.trim(),
+      phone: bookingPhone.trim(),
+      people: Number(bookingPeople) || 1,
+      channel: messengerPref,
+      price: totalPrice,
+      notes: bookingNotes.trim(),
+      language: lang,
+    });
+
     const msgLines = [
-      `✈️ *GeorgiaTrips — ტურის ჯავშანი*`,
+      headers[lang] || headers.ka,
       `━━━━━━━━━━━━━━━━━━`,
-      `📍 *ტური:* ${asLocalizedText(tour.title, lang)}`,
-      `🎫 *ტურის ტიპი:* ${tourType === "group" ? "ჯგუფური ტური" : "ინდივიდუალური ტური"}`,
-      `📅 *თარიღი:* ${selectedDate || "შეთანხმებით"}`,
-      `📍 *${t("booking.tour")}:* ${asLocalizedText(tour.title, lang)}`,
-      `🎫 *${t("booking.type")}:* ${tourType === "group" ? t("booking.groupType") : t("booking.privateType")}`,
-      `📅 *${t("booking.date")}:* ${selectedDate || t("booking.agreement")}`,
-      `👤 *${t("booking.name")}:* ${bookingName.trim() || t("booking.notProvided")}`,
-      `📞 *${t("booking.phone")}:* ${bookingPhone.trim() || t("booking.notProvided")}`,
-      `👥 *${t("booking.people")}:* ${bookingPeople} ${t("booking.peopleSuffix")}`,
-      `💬 *${t("booking.channel")}:* ${messengerPref}`,
+      `📍 *${l.tour}:* ${asLocalizedText(tour.title, lang)}`,
+      `🎫 *${l.type}:* ${tourType === "group" ? l.group : l.private}`,
+      `📅 *${l.date}:* ${selectedDate || l.agreement}`,
+      `👤 *${l.name}:* ${bookingName.trim() || l.unprovided}`,
+      `📞 *${l.phone}:* ${bookingPhone.trim() || l.unprovided}`,
+      `👥 *${l.people}:* ${bookingPeople}`,
+      `💬 *Messenger:* ${messengerPref}`,
       tourType === "group" && groupUnitPrice
-        ? `💰 *${t("booking.price")}:* ₾${groupUnitPrice} × ${peopleCount} = *₾${totalPrice}*`
+        ? `💰 *${l.price}:* ₾${groupUnitPrice} × ${peopleCount} = *₾${totalPrice}*`
         : "",
       tourType === "private" && privateTotalPrice
-        ? `💰 *${t("booking.price")}:* *₾${totalPrice}* (${t("booking.perGroup")})`
+        ? `💰 *${l.price}:* *₾${totalPrice}*`
         : "",
-      bookingNotes.trim() ? `📝 *${t("booking.notes")}:* ${bookingNotes.trim()}` : ""
+      bookingNotes.trim() ? `📝 *${l.notes}:* ${bookingNotes.trim()}` : "",
     ].filter(Boolean);
 
     const fullMessage = msgLines.join("\n");
@@ -375,7 +443,7 @@ if (fsLoading) {
       <div className="tour-page-wrapper">
         <Navbar active="tours" />
         <div className="container" style={{ padding: "8rem 1.5rem", textAlign: "center" }}>
-          <p style={{ color: "var(--text-mute)" }}>იტვირთება...</p>
+          <p style={{ color: "var(--text-mute)" }}>{t("common.loading")}</p>
         </div>
         <Footer />
       </div>
@@ -398,6 +466,91 @@ if (fsLoading) {
   return (
     <div className="tour-page-wrapper">
       <Navbar active="tours" />
+
+      {tour && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": ["TouristTrip", "Product"],
+                  "@id": `https://georgiatrips.ge/tours/${tourId}#tour`,
+                  "name": asLocalizedText(tour.title, lang),
+                  "description": asLocalizedText(tour.desc, lang),
+                  "image": tour.img ? (tour.img.startsWith("http") ? tour.img : `https://georgiatrips.ge${tour.img.startsWith("/") ? "" : "/"}${tour.img}`) : "https://georgiatrips.ge/hero.png",
+                  "offers": {
+                    "@type": "AggregateOffer",
+                    "lowPrice": tour.priceNumber || (typeof tour.price === "number" ? tour.price : 80),
+                    "highPrice": (tour.priceNumber || 100) * 4,
+                    "priceCurrency": "GEL",
+                    "offerCount": 2,
+                    "availability": "https://schema.org/InStock",
+                    "url": `https://georgiatrips.ge/tours/${tourId}`,
+                  },
+                  "aggregateRating": {
+                    "@type": "AggregateRating",
+                    "ratingValue": "4.9",
+                    "reviewCount": "18",
+                    "bestRating": "5",
+                    "worstRating": "1",
+                  },
+                  "provider": {
+                    "@type": "TravelAgency",
+                    "name": "GeorgiaTrips",
+                    "url": "https://georgiatrips.ge",
+                    "telephone": "+995504220020",
+                    "sameAs": SOCIAL_PROFILES,
+                  },
+                  "touristType": ["Adventure", "Cultural", "Sightseeing", "Nature"],
+                  "itinerary": tour.itinerary?.map((item) => ({
+                    "@type": "TouristDestination",
+                    "name": asLocalizedText(item.title, lang),
+                    "description": asLocalizedText(item.desc, lang),
+                  })),
+                },
+                {
+                  "@type": "BreadcrumbList",
+                  "@id": `https://georgiatrips.ge/tours/${tourId}#breadcrumbs`,
+                  "itemListElement": [
+                    {
+                      "@type": "ListItem",
+                      "position": 1,
+                      "name": lang === "ka" ? "მთავარი" : "Home",
+                      "item": "https://georgiatrips.ge",
+                    },
+                    {
+                      "@type": "ListItem",
+                      "position": 2,
+                      "name": lang === "ka" ? "ტურები" : "Tours",
+                      "item": "https://georgiatrips.ge/tours",
+                    },
+                    {
+                      "@type": "ListItem",
+                      "position": 3,
+                      "name": asLocalizedText(tour.title, lang),
+                      "item": `https://georgiatrips.ge/tours/${tourId}`,
+                    },
+                  ],
+                },
+                {
+                  "@type": "FAQPage",
+                  "@id": `https://georgiatrips.ge/tours/${tourId}#faq`,
+                  "mainEntity": tourFaqs.map((faq) => ({
+                    "@type": "Question",
+                    "name": faq.q,
+                    "acceptedAnswer": {
+                      "@type": "Answer",
+                      "text": faq.a,
+                    },
+                  })),
+                },
+              ],
+            }),
+          }}
+        />
+      )}
 
       {/* 1. HERO SHOWCASE SECTION — editorial media + overlapping info panel */}
       <section className="tdp-hero2">
@@ -748,24 +901,51 @@ if (fsLoading) {
 
                 <div className="tdp-card-body">
                   <div className="tdp-gallery-grid">
-                    {tour.gallery.map((gImg, idx) => (
-                      <div
-                        key={idx}
-                        className="tdp-gallery-item"
-                        onClick={() => openLightbox(idx)}
-                      >
-                        <Image
-                          src={gImg}
-                          alt={`${asLocalizedText(tour.title, lang)} ${idx + 1}`}
-                          fill
-                          sizes="(max-width: 768px) 100vw, 33vw"
-                          style={{ objectFit: "cover" }}
-                        />
-                        <div className="gallery-zoom-badge">
-                          <span>{t("tourDetail.enlarge")}</span>
+                    {tour.gallery.map((gImg, idx) => {
+                      const item = tour.galleryItems?.[idx];
+                      const locTitle = item?.locationTitle;
+                      return (
+                        <div
+                          key={idx}
+                          className="tdp-gallery-item"
+                          onClick={() => openLightbox(idx)}
+                          style={{ position: "relative" }}
+                        >
+                          <Image
+                            src={gImg}
+                            alt={`${asLocalizedText(tour.title, lang)} ${idx + 1}`}
+                            fill
+                            sizes="(max-width: 768px) 100vw, 33vw"
+                            style={{ objectFit: "cover" }}
+                          />
+                          {locTitle && (
+                            <div style={{ position: "absolute", top: "10px", left: "10px", zIndex: 2, pointerEvents: "none", maxWidth: "calc(100% - 20px)" }}>
+                              <span style={{ 
+                                background: "rgba(13, 35, 58, 0.8)", 
+                                backdropFilter: "blur(6px)", 
+                                color: "#ffffff", 
+                                fontSize: "0.78rem", 
+                                fontWeight: 700, 
+                                padding: "4px 10px", 
+                                borderRadius: "6px",
+                                border: "1px solid rgba(255,255,255,0.2)",
+                                display: "inline-block",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                maxWidth: "100%",
+                                boxShadow: "0 2px 8px rgba(0,0,0,0.3)"
+                              }}>
+                                📍 {locTitle}
+                              </span>
+                            </div>
+                          )}
+                          <div className="gallery-zoom-badge">
+                            <span>{t("tourDetail.enlarge")}</span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </article>
@@ -1008,6 +1188,7 @@ if (fsLoading) {
                       alt={asLocalizedText(item.title, lang)}
                       className="tb-card-img"
                       fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       style={{ objectFit: "cover" }}
                       loading="lazy"
                     />
@@ -1033,8 +1214,18 @@ if (fsLoading) {
                     <p className="tb-card-annotation">{asLocalizedText(item.desc, lang)}</p>
                     <div className="tb-card-line"></div>
                     <div className="tb-card-facilities">
-                      {item.duration && <span className="tb-facility-item">⏱ {asLocalizedText(item.duration, lang)}</span>}
-                      {item.location && <span className="tb-facility-item">{asLocalizedText(item.location, lang)}</span>}
+                      {item.duration && (
+                        <span className="tb-facility-item" style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                          <ClockIcon size={14} color="var(--teal)" />
+                          <span>{translateDuration(item.duration, lang)}</span>
+                        </span>
+                      )}
+                      {item.location && (
+                        <span className="tb-facility-item" style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                          <LocationIcon size={14} color="var(--teal)" />
+                          <span>{(translateLocation(item.location, lang) || "").replace(/^📍\s*/, "")}</span>
+                        </span>
+                      )}
                     </div>
                   </div>
                 </Link>
@@ -1066,6 +1257,7 @@ if (fsLoading) {
                       alt={asLocalizedText(item.title, lang)}
                       className="tb-card-img"
                       fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       style={{ objectFit: "cover" }}
                       loading="lazy"
                     />
@@ -1091,8 +1283,18 @@ if (fsLoading) {
                     <p className="tb-card-annotation">{asLocalizedText(item.desc, lang)}</p>
                     <div className="tb-card-line"></div>
                     <div className="tb-card-facilities">
-                      {item.duration && <span className="tb-facility-item">⏱ {asLocalizedText(item.duration, lang)}</span>}
-                      {item.location && <span className="tb-facility-item">{asLocalizedText(item.location, lang)}</span>}
+                      {item.duration && (
+                        <span className="tb-facility-item" style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                          <ClockIcon size={14} color="var(--teal)" />
+                          <span>{translateDuration(item.duration, lang)}</span>
+                        </span>
+                      )}
+                      {item.location && (
+                        <span className="tb-facility-item" style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                          <LocationIcon size={14} color="var(--teal)" />
+                          <span>{(translateLocation(item.location, lang) || "").replace(/^📍\s*/, "")}</span>
+                        </span>
+                      )}
                     </div>
                   </div>
                 </Link>
@@ -1229,8 +1431,13 @@ if (fsLoading) {
               />
             </div>
             <button type="button" className="lb-nav lb-next" onClick={nextLightboxImg}>›</button>
-            <div className="lb-counter">
-              {lightboxImgIndex + 1} / {tour.gallery.length}
+            <div className="lb-counter" style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "center" }}>
+              {tour.galleryItems?.[lightboxImgIndex]?.locationTitle && (
+                <span style={{ color: "var(--teal, #29b2b7)", fontWeight: 700, fontSize: "0.95rem" }}>
+                  📍 {tour.galleryItems[lightboxImgIndex].locationTitle}
+                </span>
+              )}
+              <span>{lightboxImgIndex + 1} / {tour.gallery.length}</span>
             </div>
           </div>
         </div>

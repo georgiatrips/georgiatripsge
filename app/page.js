@@ -9,13 +9,14 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import DatePicker from "./components/DatePicker";
 import { useAllTours } from "./lib/useAllTours";
-import { groupDepartureDates, asLocalizedText, translateDuration, translateLocation, translateMonthName } from "./lib/toursFirestore";
+import { groupDepartureDates, asLocalizedText, translateDuration, translateLocation, translateMonthName, formatLocationTag } from "./lib/toursFirestore";
 import { listPlaces } from "./lib/placesFirestore";
 import { GEORGIA_REGIONS, formatRegionName } from "./lib/placesMeta";
 import { listPosts } from "./lib/postsFirestore";
 import { useLanguage } from "./lib/i18n/LanguageContext";
 import { useCurrency } from "./lib/currency/CurrencyContext";
-import { formatPriceStr } from "./lib/i18n/translations";
+import { formatPriceStr } from "./lib/i18n/formatPriceStr";
+import { LocationIcon, CalendarIcon, UsersIcon, SearchIcon, ClockIcon } from "./components/Icons";
 
 const fetcher = (url) => fetch(url).then((r) => r.json());
 
@@ -24,11 +25,9 @@ const truncateText = (value, maxLength = 100) => {
   return text.length > maxLength ? `${text.slice(0, maxLength).trimEnd()}...` : text;
 };
 
-// ============================================================
-// CONFIG & STATIC DATA
-// ============================================================
-const WA_NUMBER = "995504220020";
-const WA_LINK = `https://wa.me/${WA_NUMBER}`;
+import { BrandLogo, WA_LINK, WA_NUMBER, bookTourOnWhatsApp, getFaqs } from "./lib/shared";
+import { createBooking } from "./lib/bookingsFirestore";
+import { DEFAULT_WEATHER_DATA as WEATHER_DATA } from "./lib/weatherFallback";
 
 const HERO_SLIDES = [
   { image: "/hero.png", label: "Kazbegi, Georgia" },
@@ -36,26 +35,6 @@ const HERO_SLIDES = [
   { image: "/gudauri.png", label: "Gudauri, Georgia" },
   { image: "/mestia.png", label: "Svaneti, Georgia" },
   { image: "/batumi.png", label: "Batumi, Georgia" }
-];
-
-// Brand logo — uses the uploaded logo.png asset
-const BrandLogo = ({ width = 48, height = 48, priority = false }) => (
-  <Image
-    src="/logo.png"
-    alt="GeorgiaTrips ლოგო"
-    width={width}
-    height={height}
-    priority={priority}
-    className="brand-logo-img"
-    style={{ width, height, objectFit: "contain" }}
-  />
-);
-
-const STATS = [
-  { value: 500, suffix: "+", label: "კმაყოფილი ტურისტი" },
-  { value: 45, suffix: "+", label: "უნიკალური მარშრუტი" },
-  { value: 12, suffix: "", label: "რეგიონი საქართველოში" },
-  { value: 24, suffix: "/7", label: "მხარდაჭერა ნებისმიერ დროს" },
 ];
 
 // Animated counter that starts when it scrolls into view
@@ -179,84 +158,6 @@ const SOCIAL_POSTS = [
   }
 ];
 
-const WEATHER_DATA = {
-  tbilisi: {
-    name: "თბილისი",
-    temp: "28°C",
-    condition: "მზიანი",
-    desc: "იდეალური ამინდია ძველ თბილისში სასეირნოდ და მყუდრო კაფეებში დროის გასატარებლად.",
-    humidity: "42%",
-    wind: "12 კმ/სთ",
-    uv: "საშუალო (5)",
-    forecast: [
-      { day: "ხვალ", temp: "29°C", condition: "sun" },
-      { day: "ზეგ", temp: "27°C", condition: "cloud-sun" },
-      { day: "შემდეგ", temp: "28°C", condition: "sun" }
-    ],
-    icon: "sun"
-  },
-  batumi: {
-    name: "ბათუმი",
-    temp: "26°C",
-    condition: "ნაწილობრივ ღრუბლიანი",
-    desc: "ზღვის ნიავი და სასიამოვნო ტემპერატურა ბულვარში სასეირნოდ.",
-    humidity: "75%",
-    wind: "18 კმ/სთ",
-    uv: "საშუალო (4)",
-    forecast: [
-      { day: "ხვალ", temp: "25°C", condition: "rain" },
-      { day: "ზეგ", temp: "27°C", condition: "sun" },
-      { day: "შემდეგ", temp: "28°C", condition: "sun" }
-    ],
-    icon: "cloud-sun"
-  },
-  kazbegi: {
-    name: "ყაზბეგი",
-    temp: "17°C",
-    condition: "მზიანი",
-    desc: "გრილი და სუფთა მთის ჰაერი, იდეალური პირობებია გერგეთის სამების მოსანახულებლად.",
-    humidity: "35%",
-    wind: "15 კმ/სთ",
-    uv: "მაღალი (7)",
-    forecast: [
-      { day: "ხვალ", temp: "18°C", condition: "sun" },
-      { day: "ზეგ", temp: "16°C", condition: "cloud-sun" },
-      { day: "შემდეგ", temp: "15°C", condition: "storm" }
-    ],
-    icon: "sun"
-  },
-  mestia: {
-    name: "მესტია",
-    temp: "19°C",
-    condition: "მცირე ღრუბელი",
-    desc: "საუკეთესო დრო სვანეთის კოშკების დასათვალიერებლად და ლაშქრობებისთვის.",
-    humidity: "50%",
-    wind: "8 კმ/სთ",
-    uv: "საშუალო (5)",
-    forecast: [
-      { day: "ხვალ", temp: "20°C", condition: "sun" },
-      { day: "ზეგ", temp: "18°C", condition: "rain" },
-      { day: "შემდეგ", temp: "17°C", condition: "sun" }
-    ],
-    icon: "cloud-sun"
-  },
-  gudauri: {
-    name: "გუდაური",
-    temp: "15°C",
-    condition: "მზიანი",
-    desc: "შესანიშნავი ამინდია პარაპლანით ფრენისა და ალპური ხედებით ტკბობისთვის.",
-    humidity: "40%",
-    wind: "22 კმ/სთ",
-    uv: "ძალიან მაღალი (8)",
-    forecast: [
-      { day: "ხვალ", temp: "16°C", condition: "sun" },
-      { day: "ზეგ", temp: "14°C", condition: "cloud-sun" },
-      { day: "შემდეგ", temp: "13°C", condition: "rain" }
-    ],
-    icon: "sun"
-  }
-};
-
 const ICONS = {
   wa: (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -326,67 +227,7 @@ export default function Home() {
   const [activeWeatherTab, setActiveWeatherTab] = useState("tbilisi");
   const [openFaq, setOpenFaq] = useState(0);
 
-  const formatLocationTag = (loc) => {
-    if (!loc) return "";
-    if (lang === "ru" || isRussian) {
-      return loc
-        .replace("ყაზბეგი", "Казбеги")
-        .replace("თბილისი", "Тбилиси")
-        .replace("ბათუმი", "Батуми")
-        .replace("კახეთი", "Кахети")
-        .replace("სვანეთი", "Сванети")
-        .replace("მესტია", "Местиа")
-        .replace("გუდაური", "Гудаури")
-        .replace("აჭარა", "Аджария")
-        .replace("საქართველო", "Грузия");
-    }
-    if (lang === "tr") {
-      return loc
-        .replace("ყაზბეგი", "Kazbegi")
-        .replace("თბილისი", "Tiflis")
-        .replace("ბათუმი", "Batum")
-        .replace("კახეთი", "Kaheti")
-        .replace("სვანეთი", "Svaneti")
-        .replace("მესტია", "Mestia")
-        .replace("გუდაური", "Gudauri")
-        .replace("აჭარა", "Acara")
-        .replace("საქართველო", "Gürcistan");
-    }
-    if (lang === "ar") {
-      return loc
-        .replace("ყაზბეგი", "كازبيجي")
-        .replace("თბილისი", "تبليسي")
-        .replace("ბათუმი", "باتومي")
-        .replace("კახეთი", "كاخيتي")
-        .replace("სვანეთი", "سفانيتي")
-        .replace("მესტია", "ميستيا")
-        .replace("გუდაური", "غودوري")
-        .replace("აჭარა", "أدجارا")
-        .replace("საქართველო", "جورجيا");
-    }
-    if (lang === "en" || isEnglish) {
-      return loc
-        .replace("ყაზბეგი", "Kazbegi")
-        .replace("თბილისი", "Tbilisi")
-        .replace("ბათუმი", "Batumi")
-        .replace("კახეთი", "Kakheti")
-        .replace("სვანეთი", "Svaneti")
-        .replace("მესტია", "Mestia")
-        .replace("გუდაური", "Gudauri")
-        .replace("აჭარა", "Adjara")
-        .replace("საქართველო", "Georgia");
-    }
-    return loc;
-  };
-
-  const faqs = [
-    { q: t("faq.q1"), a: t("faq.a1") },
-    { q: t("faq.q2"), a: t("faq.a2") },
-    { q: t("faq.q3"), a: t("faq.a3") },
-    { q: t("faq.q4"), a: t("faq.a4") },
-    { q: t("faq.q5"), a: t("faq.a5") },
-    { q: t("faq.q6"), a: t("faq.a6") },
-  ];
+  const faqs = useMemo(() => getFaqs(lang), [lang]);
 
   const [popTourSlide, setPopTourSlide] = useState(0);
   const [places, setPlaces] = useState([]);
@@ -484,9 +325,9 @@ export default function Home() {
         id: tour.id,
         title: tour.title,
         priceGroup: tour.priceGroup || tour.pricePrivate || "",
-        priceNote: tour.hasPrivate ? "ინდივიდუალური ტურის ვარიანტიც ხელმისაწვდომია" : "",
-        locationShort: tour.destinationLabel || tour.destination || "",
-        desc: tour.desc,
+        priceNote: tour.hasPrivate ? t("tourDetail.otherDatesNote") : "",
+        locationShort: translateLocation(tour.destinationLabel || tour.destination, lang),
+        desc: asLocalizedText(tour.desc, lang),
         months: groupDepartureDates(tour.departureDates).map((month) => ({
           ...month,
           dates: month.dates.map((date) => date.chip),
@@ -495,7 +336,7 @@ export default function Home() {
       .filter((tour) => tour.months.length > 0);
 
     return firestoreScheduleTours;
-  }, [firestoreTours]);
+  }, [firestoreTours, lang, t]);
 
   useEffect(() => {
     if (popularTourPairs.length < 2) return undefined;
@@ -594,8 +435,7 @@ export default function Home() {
   }, []);
 
   const handleBookNow = (tourTitle, tourPrice) => {
-    const msg = `გამარჯობა! მინდა დავაჯავშნო ტური: *${tourTitle}* (${tourPrice})`;
-    window.open(`${WA_LINK}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
+    bookTourOnWhatsApp(tourTitle, tourPrice, lang);
   };
 
   const handleTourClick = (tour) => {
@@ -606,16 +446,45 @@ export default function Home() {
   const handleFormSubmit = (e) => {
     e.preventDefault();
     const { name, country, dateFrom, dateTo, people, budget, notes } = formData;
+    const headers = {
+      ka: "✈️ *GeorgiaTrips — ახალი ჯავშანი*",
+      en: "✈️ *GeorgiaTrips — New Reservation Request*",
+      ru: "✈️ *GeorgiaTrips — Новая заявка на бронирование*",
+      tr: "✈️ *GeorgiaTrips — Yeni Rezervasyon Talebi*",
+      ar: "✈️ *GeorgiaTrips — طلب حجز جديد*",
+    };
+    const labels = {
+      ka: { name: "სახელი", country: "ქვეყანა", from: "გამგზავრება", to: "დაბრუნება", people: "მოგზაურები", budget: "ბიუჯეტი", notes: "შენიშვნა" },
+      en: { name: "Name", country: "Country", from: "Departure", to: "Return", people: "Travelers", budget: "Budget", notes: "Notes" },
+      ru: { name: "Имя", country: "Страна", from: "Отправление", to: "Возвращение", people: "Туристы", budget: "Бюджет", notes: "Примечание" },
+      tr: { name: "İsim", country: "Ülke", from: "Gidiş", to: "Dönüş", people: "Kişi Sayısı", budget: "Bütçe", notes: "Not" },
+      ar: { name: "الاسم", country: "الدولة", from: "المغادرة", to: "العودة", people: "عدد المسافرين", budget: "الميزانية", notes: "ملاحظات" },
+    };
+    const l = labels[lang] || labels.ka;
+
+    // Save online booking request to Firestore
+    createBooking({
+      type: "custom_request",
+      name: name.trim(),
+      country: country.trim(),
+      dateFrom,
+      dateTo,
+      people,
+      budget,
+      notes: notes.trim(),
+      language: lang,
+    });
+
     const msg = [
-      "✈️ *GeorgiaTrips — ახალი ჯავშანი*",
+      headers[lang] || headers.ka,
       "",
-      `👤 სახელი: ${name}`,
-      country ? `🌍 ქვეყანა: ${country}` : "",
-      dateFrom ? `📅 გამგზავრება: ${dateFrom}` : "",
-      dateTo ? `📅 დაბრუნება: ${dateTo}` : "",
-      `👥 მოგზაურები: ${people}`,
-      `💰 ბიუჯეტი: ${budget}`,
-      notes ? `📝 შენიშვნა: ${notes}` : ""
+      `👤 ${l.name}: ${name}`,
+      country ? `🌍 ${l.country}: ${country}` : "",
+      dateFrom ? `📅 ${l.from}: ${dateFrom}` : "",
+      dateTo ? `📅 ${l.to}: ${dateTo}` : "",
+      `👥 ${l.people}: ${people}`,
+      budget ? `💰 ${l.budget}: ${budget}` : "",
+      notes ? `📝 ${l.notes}: ${notes}` : "",
     ].filter(Boolean).join("\n");
 
     window.open(`${WA_LINK}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
@@ -662,9 +531,7 @@ export default function Home() {
           <div className="hero-search-bar">
             <div className="hero-search-field">
               <span className="hero-search-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
-                </svg>
+                <LocationIcon size={16} color="var(--teal)" />
               </span>
               <div className="hero-search-input-wrap">
                 <label>{t("hero.destination")}</label>
@@ -685,9 +552,7 @@ export default function Home() {
 
             <div className="hero-search-field">
               <span className="hero-search-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
+                <CalendarIcon size={16} color="var(--teal)" />
               </span>
               <div className="hero-search-input-wrap">
                 <label>{t("hero.date")}</label>
@@ -704,9 +569,7 @@ export default function Home() {
 
             <div className="hero-search-field">
               <span className="hero-search-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
+                <UsersIcon size={16} color="var(--teal)" />
               </span>
               <div className="hero-search-input-wrap">
                 <label>{t("hero.tourFormat")}</label>
@@ -723,9 +586,7 @@ export default function Home() {
             </div>
 
             <button type="button" onClick={handleHeroSearch} className="hero-search-btn">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
-              </svg>
+              <SearchIcon size={16} color="currentColor" strokeWidth={2.5} />
               <span>{t("hero.search")}</span>
             </button>
           </div>
@@ -882,7 +743,7 @@ export default function Home() {
                             <div className="pop-card-gradient"></div>
                             <div className="pop-card-footer-info">
                               <h4 className="pop-card-title">{asLocalizedText(place.title, lang)}</h4>
-                              <span className="pop-card-sub">{asLocalizedText(place.region, lang) || t("common.georgia")}</span>
+                              <span className="pop-card-sub">{translateLocation(place.region, lang) || t("common.georgia")}</span>
                             </div>
                           </div>
                         </a>
@@ -942,7 +803,7 @@ export default function Home() {
                     >
                       {popularTourPairs.map((pair, pIdx) => (
                         <div key={pIdx} className="mini-cards-pair-slide">
-                          {pair.map((tour) => (
+                          {pair.map((tour, index) => (
                             <article
                               key={tour.id}
                               className="pop-fc"
@@ -955,7 +816,7 @@ export default function Home() {
                                 fill
                                 style={{ objectFit: "cover" }}
                                 sizes="(max-width: 768px) 100vw, 50vw"
-                                loading="lazy"
+                                loading={pIdx === 0 && index === 0 ? "eager" : "lazy"}
                                 className="pop-fc-img"
                               />
 
@@ -964,7 +825,11 @@ export default function Home() {
 
                               {/* Top row: badge + dates */}
                               <div className="pop-fc-top">
-                                <span className="pop-fc-badge">{asLocalizedText(tour.badge, lang)}</span>
+                                <span className="pop-fc-badge">
+                                  {(t("tourBadges") || {})[asLocalizedText(tour.badge, lang)] ||
+                                    (t("tourBadges") || {})[asLocalizedText(tour.badge, "ka")] ||
+                                    asLocalizedText(tour.badge, lang)}
+                                </span>
                                 <div className="pop-fc-dates">
                                   {tour.dates?.slice(0, 3).map((d, i) => (
                                     <span key={i} className="pop-fc-date">{d}</span>
@@ -975,9 +840,19 @@ export default function Home() {
                               {/* Bottom overlay body */}
                               <div className="pop-fc-body">
                                 <div className="pop-fc-meta">
-                                  <span>⏱ {translateDuration(tour.duration, lang)}</span>
-                                  <span className="pop-fc-dot">•</span>
-                                  <span>{translateLocation(tour.location, lang)}</span>
+                                  <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                                    <ClockIcon size={13} color="var(--yellow)" />
+                                    {translateDuration(tour.duration, lang)}
+                                  </span>
+                                  {((translateLocation(tour.destinationLabel || tour.destination || tour.location || tour.region, lang) || "").replace(/^📍\s*/, "")) && (
+                                    <>
+                                      <span className="pop-fc-dot">•</span>
+                                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                                        <LocationIcon size={13} color="var(--yellow)" />
+                                        {(translateLocation(tour.destinationLabel || tour.destination || tour.location || tour.region, lang) || "").replace(/^📍\s*/, "")}
+                                      </span>
+                                    </>
+                                  )}
                                 </div>
                                 <h3 className="pop-fc-title">{asLocalizedText(tour.title, lang)}</h3>
                                 <p className="pop-fc-desc">{asLocalizedText(tour.desc, lang)}</p>
@@ -1027,6 +902,7 @@ export default function Home() {
                         alt={asLocalizedText(tour.title, lang)}
                         className="tb-card-img"
                         fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         style={{ objectFit: "cover" }}
                         loading="lazy"
                       />
@@ -1059,8 +935,14 @@ export default function Home() {
                               <p className="tb-card-annotation">{asLocalizedText(tour.desc, lang)}</p>
                               <div className="tb-card-line"></div>
                               <div className="tb-card-facilities">
-                                <span className="tb-facility-item">{t("common.duration").replace("{duration}", asLocalizedText(tour.duration, lang))}</span>
-                                <span className="tb-facility-item">{asLocalizedText(tour.location, lang) || t("popular.fromBatumiShort")}</span>
+                                <span className="tb-facility-item" style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                                  <ClockIcon size={14} color="var(--teal)" />
+                                  <span>{translateDuration(tour.duration, lang)}</span>
+                                </span>
+                                <span className="tb-facility-item" style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                                  <LocationIcon size={14} color="var(--teal)" />
+                                  <span>{(translateLocation(tour.destinationLabel || tour.destination || tour.location || tour.region, lang) || t("popular.fromBatumiShort")).replace(/^📍\s*/, "")}</span>
+                                </span>
                               </div>
                             </div>
                   </article>
@@ -1135,17 +1017,17 @@ export default function Home() {
               </svg>
             </button>
             <div className="transport-photos-row" id="transport-photos-grid">
-              <a href="#booking" onClick={() => handleBookNow(t("popular.transportLabel").replace("{num}", "1"), format("₾50-დან", lang))} className="transport-photo transport-photo-1">
-                <img src="1car.webp" onError={(e) => { e.currentTarget.src = "/car1.png"; }} alt="GeorgiaTrips Transport 1" />
+              <a href="#booking" onClick={() => handleBookNow(t("popular.transportLabel").replace("{num}", "1"), format("₾50-დან", lang))} className="transport-photo transport-photo-1" style={{ position: "relative", minHeight: "220px", display: "block" }}>
+                <Image src="/1car.webp" fill sizes="(max-width: 768px) 100vw, 25vw" style={{ objectFit: "cover" }} alt="GeorgiaTrips Transport 1" />
               </a>
-              <a href="#booking" onClick={() => handleBookNow(t("popular.transportLabel").replace("{num}", "2"), format("₾90-დან", lang))} className="transport-photo transport-photo-2">
-                <img src="2car.webp" onError={(e) => { e.currentTarget.src = "/car2.png"; }} alt="GeorgiaTrips Transport 2" />
+              <a href="#booking" onClick={() => handleBookNow(t("popular.transportLabel").replace("{num}", "2"), format("₾90-დან", lang))} className="transport-photo transport-photo-2" style={{ position: "relative", minHeight: "220px", display: "block" }}>
+                <Image src="/2car.webp" fill sizes="(max-width: 768px) 100vw, 25vw" style={{ objectFit: "cover" }} alt="GeorgiaTrips Transport 2" />
               </a>
-              <a href="#booking" onClick={() => handleBookNow(t("popular.transportLabel").replace("{num}", "3"), format("₾180-დან", lang))} className="transport-photo transport-photo-3">
-                <img src="3car.webp" onError={(e) => { e.currentTarget.src = "/car3.png"; }} alt="GeorgiaTrips Transport 3" />
+              <a href="#booking" onClick={() => handleBookNow(t("popular.transportLabel").replace("{num}", "3"), format("₾180-დან", lang))} className="transport-photo transport-photo-3" style={{ position: "relative", minHeight: "220px", display: "block" }}>
+                <Image src="/3car.webp" fill sizes="(max-width: 768px) 100vw, 25vw" style={{ objectFit: "cover" }} alt="GeorgiaTrips Transport 3" />
               </a>
-              <a href="#booking" onClick={() => handleBookNow(t("popular.transportLabel").replace("{num}", "4"), format("₾220-დან", lang))} className="transport-photo transport-photo-4">
-                <img src="4car.webp" onError={(e) => { e.currentTarget.src = "/car4.png"; }} alt="GeorgiaTrips Transport 4" />
+              <a href="#booking" onClick={() => handleBookNow(t("popular.transportLabel").replace("{num}", "4"), format("₾220-დან", lang))} className="transport-photo transport-photo-4" style={{ position: "relative", minHeight: "220px", display: "block" }}>
+                <Image src="/4car.webp" fill sizes="(max-width: 768px) 100vw, 25vw" style={{ objectFit: "cover" }} alt="GeorgiaTrips Transport 4" />
               </a>
             </div>
             <button

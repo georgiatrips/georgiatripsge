@@ -8,23 +8,7 @@ import {
   deleteReview,
   upsertGoogleReviews,
 } from "../lib/reviewsFirestore";
-
-const formatRelativeTime = (date) => {
-  if (!date) return "ახლახან";
-  const diff = Date.now() - date.getTime();
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-  const weeks = Math.floor(days / 7);
-  const months = Math.floor(days / 30);
-  if (minutes < 1) return "ახლახან";
-  if (minutes < 60) return `${minutes} წუთის წინ`;
-  if (hours < 24) return `${hours} საათის წინ`;
-  if (days < 7) return `${days} დღის წინ`;
-  if (weeks < 5) return `${weeks} კვირის წინ`;
-  if (months < 12) return `${months} თვის წინ`;
-  return `${Math.floor(days / 365)} წლის წინ`;
-};
+import { useLanguage } from "../lib/i18n/LanguageContext";
 
 const emptyForm = () => ({
   name: "",
@@ -36,7 +20,8 @@ const emptyForm = () => ({
   googleReviewId: "",
 });
 
-export default function ReviewManager() {
+export default function ReviewManager({ onReviewsCountChange }) {
+  const { t } = useLanguage();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -44,12 +29,15 @@ export default function ReviewManager() {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm());
   const [message, setMessage] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [ratingFilter, setRatingFilter] = useState("all");
 
   const refresh = async () => {
     try {
       setLoading(true);
       const items = await listReviews();
       setReviews(items);
+      if (onReviewsCountChange) onReviewsCountChange(items.length);
     } catch (err) {
       console.error(err);
       setMessage({ type: "error", text: "მიმოხილვების ჩატვირთვა ვერ მოხერხდა" });
@@ -105,9 +93,13 @@ export default function ReviewManager() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("წავშალოთ ეს მიმოხილვა?")) return;
+    if (!confirm("დარწმუნებული ხართ, რომ გსურთ მიმოხილვის წაშლა?")) return;
     try {
       await deleteReview(id);
+      if (editingId === id) {
+        setEditingId(null);
+        setForm(emptyForm());
+      }
       await refresh();
     } catch (err) {
       console.error(err);
@@ -140,101 +132,116 @@ export default function ReviewManager() {
     }
   };
 
+  const filteredReviews = reviews.filter((r) => {
+    const nameMatch = !searchQuery || (r.name && r.name.toLowerCase().includes(searchQuery.toLowerCase())) || (r.text && r.text.toLowerCase().includes(searchQuery.toLowerCase()));
+    const ratingMatch = ratingFilter === "all" || String(r.rating) === ratingFilter;
+    return nameMatch && ratingMatch;
+  });
+
   return (
-    <div className="admin-reviews-manager">
-      <div className="admin-reviews-header">
-        <h2>მიმოხილვების მართვა</h2>
-        <p>დაამატეთ, დაარედაქტირეთ ან წაშალეთ მიმოხილვები. Google Maps-დან ავტომატური სინქრონიზაციისთვის დააჭირეთ ღილაკს.</p>
-      </div>
-
-      {message && (
-        <div className={`admin-alert ${message.type}`} role="status">
-          {message.text}
-        </div>
-      )}
-
-      <div className="admin-reviews-actions">
-        <button
-          type="button"
-          className="admin-btn-primary"
-          onClick={handleSyncGoogle}
-          disabled={syncing}
-        >
-          {syncing ? "სინქრონიზაცია..." : "🔄 Google Maps-დან სინქრონიზაცია"}
-        </button>
-      </div>
-
-      <form className="admin-form admin-reviews-form" onSubmit={handleSubmit}>
+    <div className="admin-layout">
+      {/* FORM CARD */}
+      <form className="admin-form" onSubmit={handleSubmit}>
         <header className="admin-form-header">
-          <h3>{editingId ? "მიმოხილვის რედაქტირება" : "ახალი მიმოხილვის დამატება"}</h3>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h2>{editingId ? "⭐ მიმოხილვის რედაქტირება" : "⭐ ახალი მიმოხილვის დამატება"}</h2>
+            <button
+              type="button"
+              className="admin-btn-ghost"
+              onClick={handleSyncGoogle}
+              disabled={syncing}
+              style={{
+                background: "rgba(56, 189, 248, 0.12)",
+                color: "#38bdf8",
+                border: "1px solid rgba(56, 189, 248, 0.3)",
+                borderRadius: "8px",
+                padding: "0.4rem 0.8rem",
+                fontSize: "0.82rem",
+              }}
+            >
+              {syncing ? "სინქრონიზაცია..." : "🔄 Google Maps სინქრონიზაცია"}
+            </button>
+          </div>
+          <p>მიმოხილვები ავტომატურად გამოჩნდება მთავარ გვერდზე და ტურების დეტალებში.</p>
         </header>
 
-        <div className="admin-grid-2">
+        {message && (
+          <div className={`admin-alert ${message.type}`} role="status">
+            {message.text}
+          </div>
+        )}
+
+        <fieldset className="admin-fieldset">
+          <legend>მიმოხილვის მონაცემები</legend>
+          <div className="admin-grid-2">
+            <div className="admin-field">
+              <label htmlFor="review-name">ავტორის სახელი *</label>
+              <input
+                id="review-name"
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                placeholder="მაგ: Ahmed Al-Rashid, John Doe"
+                required
+              />
+            </div>
+            <div className="admin-field">
+              <label htmlFor="review-rating">შეფასება (რეიტინგი)</label>
+              <select
+                id="review-rating"
+                name="rating"
+                value={form.rating}
+                onChange={handleChange}
+              >
+                <option value={5}>★★★★★ (5 ვარსკვლავი)</option>
+                <option value={4}>★★★★☆ (4 ვარსკვლავი)</option>
+                <option value={3}>★★★☆☆ (3 ვარსკვლავი)</option>
+                <option value={2}>★★☆☆☆ (2 ვარსკვლავი)</option>
+                <option value={1}>★☆☆☆☆ (1 ვარსკვლავი)</option>
+              </select>
+            </div>
+          </div>
+
           <div className="admin-field">
-            <label htmlFor="review-name">სახელი *</label>
-            <input
-              id="review-name"
-              name="name"
-              value={form.name}
+            <label htmlFor="review-text">მიმოხილვის ტექსტი *</label>
+            <textarea
+              id="review-text"
+              name="text"
+              rows={4}
+              value={form.text}
               onChange={handleChange}
-              placeholder="მაგ: Ahmed Al-Rashid"
+              placeholder="მოგზაურის შეფასების ტექსტი..."
               required
             />
           </div>
-          <div className="admin-field">
-            <label htmlFor="review-rating">რეიტინგი (1-5)</label>
-            <select
-              id="review-rating"
-              name="rating"
-              value={form.rating}
-              onChange={handleChange}
-            >
-              {[5, 4, 3, 2, 1].map((r) => (
-                <option key={r} value={r}>{r} ★</option>
-              ))}
-            </select>
-          </div>
-        </div>
 
-        <div className="admin-field">
-          <label htmlFor="review-text">მიმოხილვის ტექსტი *</label>
-          <textarea
-            id="review-text"
-            name="text"
-            rows={4}
-            value={form.text}
-            onChange={handleChange}
-            placeholder="მიმოხილვის ტექსტი..."
-            required
-          />
-        </div>
-
-        <div className="admin-grid-2">
-          <div className="admin-field">
-            <label htmlFor="review-time">დრო</label>
-            <input
-              id="review-time"
-              name="time"
-              value={form.time}
-              onChange={handleChange}
-              placeholder="მაგ: 2 თვის წინ"
-            />
+          <div className="admin-grid-2">
+            <div className="admin-field">
+              <label htmlFor="review-time">თარიღი / დრო</label>
+              <input
+                id="review-time"
+                name="time"
+                value={form.time}
+                onChange={handleChange}
+                placeholder="მაგ: 2 თვის წინ, 1 კვირის წინ"
+              />
+            </div>
+            <div className="admin-field">
+              <label htmlFor="review-avatar">ავატარის ფოტოს URL</label>
+              <input
+                id="review-avatar"
+                name="avatar"
+                value={form.avatar}
+                onChange={handleChange}
+                placeholder="https://lh3.googleusercontent.com/..."
+              />
+            </div>
           </div>
-          <div className="admin-field">
-            <label htmlFor="review-avatar">ავატარის URL</label>
-            <input
-              id="review-avatar"
-              name="avatar"
-              value={form.avatar}
-              onChange={handleChange}
-              placeholder="https://..."
-            />
-          </div>
-        </div>
+        </fieldset>
 
         <div className="admin-form-actions">
           <button type="submit" className="admin-btn-primary" disabled={saving}>
-            {saving ? "ინახება..." : editingId ? "ცვლილებების შენახვა" : "მიმოხილვის დამატება"}
+            {saving ? "ინახება..." : editingId ? "ცვლილებების შენახვა" : "მიმოხილვის შენახვა"}
           </button>
           {editingId && (
             <button
@@ -251,31 +258,93 @@ export default function ReviewManager() {
         </div>
       </form>
 
-      <div className="admin-reviews-list">
-        <h3>არსებული მიმოხილვები ({reviews.length})</h3>
+      {/* CATALOG CARDS LIST */}
+      <aside className="admin-sidebar" style={{ width: "100%" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+          <h2>მიმოხილვების სია</h2>
+          <span className="admin-tab-count">{reviews.length}</span>
+        </div>
+
+        {/* Search & Filter */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginBottom: "1.25rem" }}>
+          <input
+            type="text"
+            placeholder="🔍 მოძებნეთ სახელით ან ტექსტით..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              padding: "0.55rem 0.8rem",
+              borderRadius: "8px",
+              border: "1px solid rgba(255,255,255,0.15)",
+              background: "rgba(255,255,255,0.06)",
+              color: "#fff",
+              fontSize: "0.88rem",
+            }}
+          />
+          <select
+            value={ratingFilter}
+            onChange={(e) => setRatingFilter(e.target.value)}
+            style={{
+              padding: "0.5rem 0.8rem",
+              borderRadius: "8px",
+              border: "1px solid rgba(255,255,255,0.15)",
+              background: "rgba(15,23,42,0.8)",
+              color: "#fff",
+              fontSize: "0.85rem",
+            }}
+          >
+            <option value="all">ყველა რეიტინგი ({reviews.length})</option>
+            <option value="5">5 ★★★★★</option>
+            <option value="4">4 ★★★★☆</option>
+            <option value="3">3 ★★★☆☆</option>
+            <option value="2">2 ★★☆☆☆</option>
+            <option value="1">1 ★☆☆☆☆</option>
+          </select>
+        </div>
+
         {loading ? (
-          <p className="admin-hint">იტვირთება...</p>
-        ) : reviews.length === 0 ? (
-          <p className="admin-hint">მიმოხილვები ჯერ არ არის დამატებული.</p>
+          <p className="admin-hint">{t("common.loading")}</p>
+        ) : filteredReviews.length === 0 ? (
+          <p className="admin-hint">მიმოხილვები ვერ მოიძებნა.</p>
         ) : (
-          <ul className="admin-tour-list">
-            {reviews.map((review) => (
-              <li key={review.id}>
-                <div>
-                  <strong>{review.name}</strong>
-                  <small>
-                    {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)} • {review.time}
-                    {review.source === "google" && " • Google"}
-                  </small>
-                  <p className="admin-review-text">{review.text.slice(0, 120)}{review.text.length > 120 ? "..." : ""}</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", maxHeight: "800px", overflowY: "auto", paddingRight: "4px" }}>
+            {filteredReviews.map((review) => (
+              <div key={review.id} className="admin-entry-card">
+                <div style={{ padding: "0.85rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.35rem" }}>
+                    <strong style={{ color: "#fff", fontSize: "0.95rem" }}>{review.name}</strong>
+                    <span style={{ color: "#fab418", fontSize: "0.85rem" }}>
+                      {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", marginBottom: "0.4rem" }}>
+                    <span className="admin-tag-pill">{review.time || "ახლახან"}</span>
+                    {review.source === "google" && (
+                      <span className="admin-tag-pill" style={{ background: "rgba(66, 133, 244, 0.15)", color: "#60a5fa" }}>
+                        🌐 Google
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ margin: 0, color: "#cbd5e1", fontSize: "0.84rem", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                    {review.text}
+                  </p>
                 </div>
-                <button type="button" className="admin-btn-ghost" onClick={() => startEdit(review)}>რედაქტირება</button>
-                <button type="button" className="admin-btn-ghost" onClick={() => handleDelete(review.id)}>წაშლა</button>
-              </li>
+                <div className="admin-entry-actions">
+                  <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>ID: {review.id.slice(0, 8)}...</span>
+                  <div style={{ display: "flex", gap: "0.4rem" }}>
+                    <button type="button" className="admin-action-btn edit" onClick={() => startEdit(review)}>
+                      რედაქტირება
+                    </button>
+                    <button type="button" className="admin-action-btn delete" onClick={() => handleDelete(review.id)}>
+                      წაშლა
+                    </button>
+                  </div>
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
-      </div>
+      </aside>
     </div>
   );
 }

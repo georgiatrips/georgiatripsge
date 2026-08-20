@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { BrandLogo } from "../lib/shared";
 import { useAuth } from "../lib/AuthContext";
 import { useLanguage } from "../lib/i18n/LanguageContext";
-import { useCurrency } from "../lib/currency/CurrencyContext";
+import { useCurrency, CURRENCY_RATES } from "../lib/currency/CurrencyContext";
 import { FlagGeorgia, FlagUK, FlagRussia, FlagTurkey, FlagArabic } from "./Flags";
 
 // Shared site navigation. `active` highlights the current top-level item.
@@ -73,7 +73,7 @@ export default function Navbar({ active = "home" }) {
     { code: "en", label: "English", flag: <FlagUK width={22} height={15} /> },
     { code: "ru", label: "Русский", flag: <FlagRussia width={22} height={15} /> },
     { code: "tr", label: "Türkçe", flag: <FlagTurkey width={22} height={15} /> },
-    { code: "ar", label: "العربية (السعودية)", flag: <FlagArabic width={22} height={15} /> },
+    { code: "ar", label: "العربية", flag: <FlagArabic width={22} height={15} /> },
   ];
 
   const currentLang = languages.find((l) => l.code === lang) || languages[0];
@@ -81,7 +81,7 @@ export default function Navbar({ active = "home" }) {
   return (
     <nav className={`nav ${navScrolled || mobileMenuOpen ? "scrolled" : ""} ${isTransparent ? "transparent" : ""}`}>
       {/* Logo */}
-      <Link href="/" className="nav-logo" aria-label="GeorgiaTrips — მთავარი">
+      <Link href="/" className="nav-logo" aria-label={`GeorgiaTrips — ${t("nav.home")}`}>
         <BrandLogo priority />
         <span className="nav-wordmark">
           <span className="nav-wordmark-georgia">Georgia</span>
@@ -142,9 +142,9 @@ export default function Navbar({ active = "home" }) {
           </button>
           {currencyDropdownOpen && (
             <div className="nav-dropdown nav-dropdown-sm">
-              {["GEL", "USD", "EUR"].map((cur) => (
+              {Object.keys(CURRENCY_RATES).map((cur) => (
                 <button key={cur} className={`nav-dropdown-item ${currency === cur ? "active" : ""}`} onClick={() => { setCurrency(cur); setCurrencyDropdownOpen(false); }}>
-                  {cur}
+                  {CURRENCY_RATES[cur].symbol !== cur ? `${CURRENCY_RATES[cur].symbol} ${cur}` : cur}
                 </button>
               ))}
             </div>
@@ -206,7 +206,7 @@ export default function Navbar({ active = "home" }) {
       <button
         className="nav-hamburger"
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        aria-label="მენიუ"
+        aria-label="Menu"
         aria-expanded={mobileMenuOpen}
       >
         <span></span>
@@ -242,8 +242,10 @@ export default function Navbar({ active = "home" }) {
           </div>
           <div className="nav-mobile-ctrl-row">
             <span>{t("nav.currency")}:</span>
-            {["GEL", "USD", "EUR"].map((cur) => (
-              <button key={cur} className={`nav-mobile-ctrl-btn ${currency === cur ? "active" : ""}`} onClick={() => setCurrency(cur)}>{cur}</button>
+            {Object.keys(CURRENCY_RATES).map((cur) => (
+              <button key={cur} className={`nav-mobile-ctrl-btn ${currency === cur ? "active" : ""}`} onClick={() => setCurrency(cur)}>
+                {CURRENCY_RATES[cur].symbol !== cur ? `${CURRENCY_RATES[cur].symbol} ${cur}` : cur}
+              </button>
             ))}
           </div>
         </div>

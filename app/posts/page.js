@@ -11,6 +11,7 @@ import { useAllTours } from "../lib/useAllTours";
 import { useAuth } from "../lib/AuthContext";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 import { addPostComment, createPost, deletePost, listPosts, togglePostLike, updatePost, voteOnPoll } from "../lib/postsFirestore";
+import { formatLocationTag, asLocalizedText, translateDuration, translateLocation } from "../lib/toursFirestore";
 
 const asText = (value, fallback = "") => {
   if (typeof value === "string" || typeof value === "number") return String(value);
@@ -38,59 +39,6 @@ export default function PostsPage() {
   const [deletePostTarget, setDeletePostTarget] = useState(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth() ?? {};
-
-  const formatLocationTag = (loc) => {
-    if (!loc) return "";
-    if (lang === "ru") {
-      return loc
-        .replace("ყაზბეგი", "Казбеги")
-        .replace("თბილისი", "Тбилиси")
-        .replace("ბათუმი", "Батуми")
-        .replace("კახეთი", "Кахети")
-        .replace("სვანეთი", "Сванети")
-        .replace("მესტია", "Местиа")
-        .replace("გუდაური", "Гудаури")
-        .replace("აჭარა", "Аджария")
-        .replace("საქართველო", "Грузия");
-    }
-    if (lang === "tr") {
-      return loc
-        .replace("ყაზბეგი", "Kazbegi")
-        .replace("თბილისი", "Tiflis")
-        .replace("ბათუმი", "Batum")
-        .replace("კახეთი", "Kaheti")
-        .replace("სვანეთი", "Svaneti")
-        .replace("მესტია", "Mestia")
-        .replace("გუდაური", "Gudauri")
-        .replace("აჭარა", "Acara")
-        .replace("საქართველო", "Gürcistan");
-    }
-    if (lang === "ar") {
-      return loc
-        .replace("ყაზბეგი", "كازبيجي")
-        .replace("თბილისი", "تبليسي")
-        .replace("ბათუმი", "باتومي")
-        .replace("კახეთი", "كاخيتي")
-        .replace("სვანეთი", "سفانيتي")
-        .replace("მესტია", "ميستيا")
-        .replace("გუდაური", "غودوري")
-        .replace("აჭარა", "أدجارا")
-        .replace("საქართველო", "جورجيا");
-    }
-    if (lang === "en") {
-      return loc
-        .replace("ყაზბეგი", "Kazbegi")
-        .replace("თბილისი", "Tbilisi")
-        .replace("ბათუმი", "Batumi")
-        .replace("კახეთი", "Kakheti")
-        .replace("სვანეთი", "Svaneti")
-        .replace("მესტია", "Mestia")
-        .replace("გუდაური", "Gudauri")
-        .replace("აჭარა", "Adjara")
-        .replace("საქართველო", "Georgia");
-    }
-    return loc;
-  };
 
   const formatFeelingStr = (feelingStr) => {
     if (!feelingStr) return "";
@@ -523,10 +471,10 @@ export default function PostsPage() {
             <div className="posts-sidebar-tour-list">
               {sidebarTours.map((tour) => (
                 <Link key={tour.id} href={"/tours/" + tour.id} className="posts-sidebar-tour">
-                  <span className="posts-sidebar-tour-image"><Image src={tour.img || "/hero.png"} alt={asText(tour.title)} fill sizes="96px" style={{ objectFit: "cover" }} /></span>
+                  <span className="posts-sidebar-tour-image"><Image src={tour.img || "/hero.png"} alt={asLocalizedText(tour.title, lang)} fill sizes="96px" style={{ objectFit: "cover" }} /></span>
                   <span className="posts-sidebar-tour-info">
-                    <strong>{formatTourTitleStr(tour.title)}</strong>
-                    <small>{formatDurationStr(tour.duration)} · {formatDestinationStr(tour.destinationLabel, tour.destination)}</small>
+                    <strong>{asLocalizedText(tour.title, lang)}</strong>
+                    <small>{translateDuration(tour.duration, lang)} · {translateLocation(tour.destinationLabel || tour.destination || tour.location, lang)}</small>
                   </span>
                 </Link>
               ))}
@@ -651,8 +599,14 @@ export default function PostsPage() {
 
                 {/* 3. POST MEDIA SHOWCASE */}
                 {post.img && (
-                  <div className="fb-post-media">
-                    <img src={post.img} alt={post.title} className="fb-media-img" />
+                  <div className="fb-post-media" style={{ position: "relative", minHeight: "300px", width: "100%" }}>
+                    <Image
+                      src={post.img}
+                      alt={post.title || "Post image"}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 680px"
+                      style={{ objectFit: "cover" }}
+                    />
                   </div>
                 )}
 

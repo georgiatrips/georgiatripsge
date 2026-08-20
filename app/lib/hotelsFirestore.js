@@ -62,16 +62,16 @@ export function normalizeHotel(hotel) {
   return {
     ...hotel,
     id: hotel.id,
-    name: typeof hotel.name === "string" ? hotel.name : "",
-    desc: typeof hotel.desc === "string" ? hotel.desc : "",
-    city: typeof hotel.city === "string" ? hotel.city : "",
+    name: hotel.name,
+    desc: hotel.desc,
+    city: hotel.city,
     priceFrom: typeof hotel.priceFrom === "string" ? hotel.priceFrom : "",
     rating: Number.isFinite(rating) && rating > 0 ? Math.min(rating, 10) : null,
     bookingUrl: normalizeBookingUrl(hotel.bookingUrl),
     gallery,
     img: gallery[0] || "/hero.png",
     isFeatured: Boolean(hotel.isFeatured),
-    priceLabel: typeof hotel.priceLabel === "string" ? hotel.priceLabel : "",
-    buttonText: typeof hotel.buttonText === "string" ? hotel.buttonText : "",
+    priceLabel: hotel.priceLabel,
+    buttonText: hotel.buttonText,
   };
 }

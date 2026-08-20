@@ -437,11 +437,7 @@ export function getTourDetails(tour) {
         { title: "ნოკალაქევის ციხე & არქეოპოლისი", desc: "ადგილობრივი გიდის თანხლებით ლეგენდარული ნოკალაქევის ციხე-ქალაქის მონახულება.", img: "https://images.unsplash.com/photo-1565008576549-57569a49371d?w=800&q=80" },
         { title: "სალხინოს დადიანების სასახლე", desc: "სამეგრელოს მთავრების ისტორიული რეზიდენცია და ულამაზესი ფრანგული პარკი.", img: "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80" }
       ],
-      reviews: [
-        { name: "გიორგი მ.", date: "2026 წლის ივლისი", rating: 5, comment: "საოცარი ტური იყო! გიდი ძალიან ყურადღებიანი, მარტვილის კანიონი და პრომეთეს მღვიმე უბრალოდ ჯადოსნურია." },
-        { name: "ანა კ.", date: "2026 წლის ივნისი", rating: 5, comment: "თერმული წყაროები იყო საუკეთესო დასასრული დამღლელი დღის შემდეგ. ტრანსპორტი ძალიან კომფორტული." },
-        { name: "Dmitry S.", date: "2026 წლის ივნისი", rating: 5, comment: "Отличный тур! Организация на высшем уровне, водитель профессионал. Рекомендую всем!" }
-      ]
+      reviews: []
     },
     "adjara-mountains": {
       departure: "ბათუმი",
@@ -474,10 +470,7 @@ export function getTourDetails(tour) {
         { title: "თამარ მეფის ხიდი & მახუნცეთის ჩანჩქერი", desc: "XII საუკუნის თაღოვანი ხიდი და 50მ ჩანჩქერი.", img: "/villa.png" },
         { title: "აჭარული ტრადიციული სუფრა", desc: "საოჯახო მარანი, ფოლკლორი, აჭარული ხინკალი და ღვინის დეგუსტაცია.", img: "/batumi.png" }
       ],
-      reviews: [
-        { name: "ნინო ბ.", date: "2026 წლის ივლისი", rating: 5, comment: "სუფრა და ფოლკლორი იყო უმაღლეს დონეზე! ნამდვილი ქართული სტუმართმოყვარეობა." },
-        { name: "Levan K.", date: "2026 წლის ივნისი", rating: 5, comment: "მახუნცეთი და მირვეთი უპირობოდ სანახავია აჭარაში ჩამოსვლისას." }
-      ]
+      reviews: []
     },
     "kazbegi-gergeti": {
       departure: "თბილისი / ბათუმი",
@@ -508,9 +501,7 @@ export function getTourDetails(tour) {
         { title: "გერგეთის სამების ტაძარი", desc: "4x4 დელიკებით ასვლა 2170მ-ზე მყინვარწვერის ხედით.", img: "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80" },
         { title: "სადილი ფასანაურში", desc: "ნამდვილი მთის ხინკლის დაგემოვნება.", img: "https://images.unsplash.com/photo-1540202404-d0c7fe46a087?w=800&q=80" }
       ],
-      reviews: [
-        { name: "Alex R.", date: "2026 წლის ივლისი", rating: 5, comment: "Unbelievable view of Mount Kazbek! The 4x4 ride up to Gergeti was super exciting." }
-      ]
+      reviews: []
     }
   };
 
@@ -551,10 +542,7 @@ export function getTourDetails(tour) {
   }
 
   if (!base.reviews) {
-    base.reviews = [
-      { name: "მარიამ ც.", date: "2026 წლის ივლისი", rating: 5, comment: "ძალიან კარგად ორგანიზებული ტური. დიდი მადლობა გიდსა და მძღოლს!" },
-      { name: "Irakli T.", date: "2026 წლის ივნისი", rating: 5, comment: "საუკეთესო შთაბეჭდილებები! აუცილებლად კიდევ წავალთ თქვენთან ერთად." }
-    ];
+    base.reviews = [];
   }
 
   return base;

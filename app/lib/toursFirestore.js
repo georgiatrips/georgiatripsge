@@ -42,52 +42,123 @@ export function translateMonthName(strOrIdx, lang = "ka") {
   return str;
 }
 
+export const SIGHT_AND_TOUR_DICTIONARY = {
+  "გვარის ციხე": { ka: "გვარის ციხე", en: "Gvari Fortress", ru: "Крепость Гвари", tr: "Gvari Kalesi", ar: "قلعة غفاري" },
+  "პეტრას ციხე": { ka: "პეტრას ციხე", en: "Petra Fortress", ru: "Крепость Петра", tr: "Petra Kalesi", ar: "قلعة بيترا" },
+  "გონიოს ციხე": { ka: "გონიოს ციხე", en: "Gonio Fortress", ru: "Крепость Гонио", tr: "Gonio Kalesi", ar: "قلعة غونيو" },
+  "მაჭახელას ხეობა": { ka: "მაჭახელას ხეობა", en: "Machakhela Gorge", ru: "Мачахельское ущелье", tr: "Maçahela Vadisi", ar: "وادي ماتشاخيلا" },
+  "მტირალას ეროვნული პარკი": { ka: "მტირალას ეროვნული პარკი", en: "Mtirala National Park", ru: "Национальный парк Мтирала", tr: "Mtirala Milli Parkı", ar: "حديقة متيرالا الوطنية" },
+  "ბათუმის ბოტანიკური ბაღი": { ka: "ბათუმის ბოტანიკური ბაღი", en: "Batumi Botanical Garden", ru: "Батумский ботанический сад", tr: "Batum Botanik Bahçesi", ar: "حديقة باتومي النباتية" },
+  "მარტვილის კანიონი": { ka: "მარტვილის კანიონი", en: "Martvili Canyon", ru: "Каньон Мартвили", tr: "Martvili Kanyonu", ar: "وادي مارتفيلي" },
+  "პრომეთეს მღვიმე": { ka: "პრომეთეს მღვიმე", en: "Prometheus Cave", ru: "Пещера Прометея", tr: "Prometheus Mağarası", ar: "كهف بروميثيوس" },
+  "პრომეთე და მარტვილი": { ka: "პრომეთე და მარტვილი", en: "Prometheus & Martvili", ru: "Прометей и Мартвили", tr: "Prometheus ve Martvili", ar: "بروميثيوس ومارتفيلي" },
+  "ოკაცეს კანიონი": { ka: "ოკაცეს კანიონი", en: "Okatse Canyon", ru: "Каньон Окаце", tr: "Okatse Kanyonu", ar: "وادي أوكاتسي" },
+  "სათაფლია": { ka: "სათაფლია", en: "Sataplia Cave", ru: "Сатаплиа", tr: "Sataplia Mağarası", ar: "كهف ساطابليا" },
+  "ყაზბეგი - გერგეტის სამება": { ka: "ყაზბეგი - გერგეტის სამება", en: "Kazbegi - Gergeti Trinity", ru: "Казбеги - Гергети", tr: "Kazbegi - Gergeti Kilisesi", ar: "كازبيجي - كنيسة جيرجيتي" },
+  "ყაზბეგი და გუდაური": { ka: "ყაზბეგი და გუდაური", en: "Kazbegi & Gudauri", ru: "Казбеги и Гудаури", tr: "Kazbegi ve Gudauri", ar: "كازبيجي وقوداوري" },
+  "ანანური - გუდაური": { ka: "ანანური - გუდაური", en: "Ananuri - Gudauri", ru: "Ананури - Гудаури", tr: "Ananuri - Gudauri", ar: "أنانوري - قوداوري" },
+  "სიღნაღი - ბოდბე": { ka: "სიღნაღი - ბოდბე", en: "Sighnaghi - Bodbe", ru: "Сигнахи - Бодбе", tr: "Sighnaghi - Bodbe", ar: "سيغناغي - بودبي" },
+  "კახეთის ღვინის ტური": { ka: "კახეთის ღვინის ტური", en: "Kakheti Wine Tour", ru: "Винный тур в Кахетию", tr: "Kaheti Şarap Turu", ar: "جولة نبيذ كاخيتي" },
+  "უფლისციხე": { ka: "უფლისციხე", en: "Uplistsikhe Cave Town", ru: "Уплисцихе", tr: "Uplistsikhe Mağara Şehri", ar: "أوبليستسيخي" },
+  "ვარძიის სამონასტრო კომპლექსი": { ka: "ვარძიის სამონასტრო კომპლექსი", en: "Vardzia Cave Monastery", ru: "Вардзия", tr: "Vardzia Mağara Manastırı", ar: "دير فاردزيا" },
+  "რაბათის ციხე": { ka: "რაბათის ციხე", en: "Rabati Castle", ru: "Крепость Рабат", tr: "Rabati Kalesi", ar: "قلعة رباطي" },
+  "დაშბაშის კანიონი": { ka: "დაშბაშის კანიონი", en: "Dashbashi Canyon", ru: "Каньон Дашбаши", tr: "Dashbashi Kanyonu", ar: "وادي داشباشي" },
+  "დენდროლოგიური პარკი": { ka: "დენდროლოგიური პარკი", en: "Shekvetili Dendrological Park", ru: "Дендрологический парк", tr: "Dendroloji Parkı", ar: "حديقة الأشجار شيكفيتيلي" },
+  "მირვეთის ჩანჩქერი": { ka: "მირვეთის ჩანჩქერი", en: "Mirveti Waterfall", ru: "Водопад Мирвети", tr: "Mirveti Şelalesi", ar: "شلال ميرفيتي" },
+  "მახუნცეთის ჩანჩქერი და თამარის ხიდი": { ka: "მახუნცეთის ჩანჩქერი და თამარის ხიდი", en: "Makhuntseti Waterfall & Queen Tamar Bridge", ru: "Водопад Махунцети и мост Царицы Тамары", tr: "Mahuntseti Şelalesi ve Tamar Köprüsü", ar: "شلال ماخونتسيتي وجسر الملكة تامار" },
+  "სვანეთის კოშკები (მესტია-უშგული)": { ka: "სვანეთის კოშკები (მესტია-უშგული)", en: "Svaneti Towers (Mestia-Ushguli)", ru: "Сванские башни (Местиа-Ушгули)", tr: "Svan Kuleleri (Mestia-Uşguli)", ar: "أبراج سفانيتي (ميستيا-أوشغولي)" },
+  "ბორჯომის ცენტრალური პარკი": { ka: "ბორჯომის ცენტრალური პარკი", en: "Borjomi Central Park", ru: "Центральный парк Боржоми", tr: "Borjomi Merkez Parkı", ar: "حديقة بورجومي المركزية" },
+};
+
 export function translateDuration(value, lang = "ka") {
-  let text = asLocalizedText(value, lang);
-  if (!text) return "";
-  if (lang === "ka") return text;
+  let raw = asLocalizedText(value, lang);
+  if (!raw) return "";
+  if (lang === "ka") return String(raw);
+
+  let text = String(raw).trim();
 
   if (lang === "en") {
     return text
+      .replace(/(\d+)\s*საათიანი/g, "$1 Hours")
+      .replace(/(\d+)\s*საათი/g, "$1 Hours")
+      .replace(/1\s*Hours/g, "1 Hour")
+      .replace(/საათიანი/g, "Hours")
+      .replace(/საათი/g, "Hours")
+      .replace(/(\d+)\s*დღეები/g, "$1 Days")
+      .replace(/(\d+)\s*დღე/g, "$1 Days")
+      .replace(/1\s*Days/g, "1 Day")
       .replace(/დღეები/g, "Days")
       .replace(/დღე/g, "Day")
+      .replace(/(\d+)\s*ღამეები/g, "$1 Nights")
+      .replace(/(\d+)\s*ღამე/g, "$1 Nights")
+      .replace(/1\s*Nights/g, "1 Night")
+      .replace(/0\s*Nights/g, "0 Nights")
       .replace(/ღამეები/g, "Nights")
       .replace(/ღამე/g, "Night")
-      .replace(/საათიანი/g, "Hours")
-      .replace(/საათი/g, "Hours");
+      .replace(/მრავალდღიანი/g, "Multi-day")
+      .replace(/ერთდღიანი/g, "One-day");
   }
   if (lang === "ru") {
     return text
-      .replace(/0 ღამე/g, "0 ночей")
-      .replace(/1 ღამე/g, "1 ночь")
+      .replace(/(\d+)\s*საათიანი/g, "$1 часов")
+      .replace(/1\s*საათი/g, "1 час")
+      .replace(/2\s*საათი/g, "2 часа")
+      .replace(/3\s*საათი/g, "3 часа")
+      .replace(/4\s*საათი/g, "4 часа")
+      .replace(/(\d+)\s*საათი/g, "$1 часов")
+      .replace(/საათიანი/g, "часов")
+      .replace(/საათი/g, "часов")
+      .replace(/0\s*ღამე/g, "0 ночей")
+      .replace(/1\s*ღამე/g, "1 ночь")
+      .replace(/2\s*ღამე/g, "2 ночи")
+      .replace(/3\s*ღამე/g, "3 ночи")
+      .replace(/4\s*ღამე/g, "4 ночи")
+      .replace(/(\d+)\s*ღამე/g, "$1 ночей")
       .replace(/ღამეები/g, "ночей")
       .replace(/ღამე/g, "ночей")
-      .replace(/1 დღე/g, "1 день")
+      .replace(/1\s*დღე/g, "1 день")
+      .replace(/2\s*დღე/g, "2 дня")
+      .replace(/3\s*დღე/g, "3 дня")
+      .replace(/4\s*დღე/g, "4 дня")
+      .replace(/(\d+)\s*დღე/g, "$1 дней")
       .replace(/დღეები/g, "дней")
       .replace(/დღე/g, "дней")
-      .replace(/საათიანი/g, "часов")
-      .replace(/საათი/g, "часов");
+      .replace(/მრავალდღიანი/g, "Многодневный")
+      .replace(/ერთდღიანი/g, "Однодневный");
   }
   if (lang === "tr") {
     return text
+      .replace(/(\d+)\s*საათიანი/g, "$1 Saatlik")
+      .replace(/(\d+)\s*საათი/g, "$1 Saat")
+      .replace(/საათიანი/g, "Saatlik")
+      .replace(/საათი/g, "Saat")
+      .replace(/(\d+)\s*დღე/g, "$1 Gün")
       .replace(/დღეები/g, "Gün")
       .replace(/დღე/g, "Gün")
+      .replace(/(\d+)\s*ღამე/g, "$1 Gece")
       .replace(/ღამეები/g, "Gece")
       .replace(/ღამე/g, "Gece")
-      .replace(/საათიანი/g, "Saatlik")
-      .replace(/საათი/g, "Saat");
+      .replace(/მრავალდღიანი/g, "Çok Günlük")
+      .replace(/ერთდღიანი/g, "Günübirlik");
   }
   if (lang === "ar") {
     return text
-      .replace(/0 ღამე/g, "0 ليالي")
-      .replace(/1 ღამე/g, "1 ليلة")
+      .replace(/(\d+)\s*საათიანი/g, "$1 ساعات")
+      .replace(/1\s*საათი/g, "1 ساعة")
+      .replace(/(\d+)\s*საათი/g, "$1 ساعات")
+      .replace(/საათიანი/g, "ساعات")
+      .replace(/საათი/g, "ساعات")
+      .replace(/0\s*ღამე/g, "0 ليالي")
+      .replace(/1\s*ღამე/g, "1 ليلة")
+      .replace(/(\d+)\s*ღამე/g, "$1 ليالي")
       .replace(/ღამეები/g, "ليالي")
       .replace(/ღამე/g, "ليالي")
-      .replace(/1 დღე/g, "1 يوم")
+      .replace(/1\s*დღე/g, "1 يوم")
+      .replace(/(\d+)\s*დღე/g, "$1 أيام")
       .replace(/დღეები/g, "أيام")
       .replace(/დღე/g, "أيام")
-      .replace(/საათიანი/g, "ساعات")
-      .replace(/საათი/g, "ساعات");
+      .replace(/მრავალდღიანი/g, "متعدد الأيام")
+      .replace(/ერთდღიანი/g, "يومي");
   }
 
   return text;
@@ -123,11 +194,13 @@ export function translateLocation(value, lang = "ka") {
   let text = asLocalizedText(value, lang);
   if (!text) return "";
 
+  const hasPin = text.startsWith("📍");
   const clean = text.replace(/^📍\s*/, "").trim();
 
   // Direct key lookup
   if (LOCATION_DICTIONARY[clean] && LOCATION_DICTIONARY[clean][lang]) {
-    return LOCATION_DICTIONARY[clean][lang];
+    const loc = LOCATION_DICTIONARY[clean][lang];
+    return hasPin ? `📍 ${loc}` : loc;
   }
 
   // Reverse / cross-language lookup
@@ -137,12 +210,16 @@ export function translateLocation(value, lang = "ka") {
         (val) => typeof val === "string" && val.toLowerCase() === clean.toLowerCase()
       )
     ) {
-      return info[lang] || info.ka || text;
+      const loc = info[lang] || info.ka || text;
+      return hasPin ? `📍 ${loc}` : loc;
     }
   }
 
   return text;
 }
+
+export const formatLocationTag = translateLocation;
+export const formatLocationStr = translateLocation;
 
 export function matchesMultiLang(value, query) {
   if (!value || !query) return false;
@@ -152,12 +229,18 @@ export function matchesMultiLang(value, query) {
   if (typeof value === "string" || typeof value === "number") {
     const str = String(value).toLowerCase();
     if (str.includes(q)) return true;
-    const clean = str.replace(/^📍\s*/, "").trim();
-    if (LOCATION_DICTIONARY[clean]) {
-      return Object.values(LOCATION_DICTIONARY[clean]).some(
-        (v) => typeof v === "string" && v.toLowerCase().includes(q)
-      );
+
+    // Check if query is in any dictionary entry corresponding to this value
+    for (const dict of [LOCATION_DICTIONARY, SIGHT_AND_TOUR_DICTIONARY]) {
+      for (const info of Object.values(dict)) {
+        const allAliases = Object.values(info).map((v) => String(v).toLowerCase());
+        const valueMatchesAlias = allAliases.some((alias) => str.includes(alias));
+        const queryMatchesAlias = allAliases.some((alias) => alias.includes(q) || q.includes(alias));
+
+        if (valueMatchesAlias && queryMatchesAlias) return true;
+      }
     }
+
     return false;
   }
 
@@ -172,23 +255,43 @@ export function matchesMultiLang(value, query) {
   return false;
 }
 
-/** Plain Georgian text for display; old Firestore docs may still use { ka: "..." } */
+/** Plain Georgian or multilingual text for display */
 export function asLocalizedText(value, lang = "ka") {
   if (value == null) return "";
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-    return String(value);
-  }
+  
+  // Object with language keys
   if (typeof value === "object" && !Array.isArray(value)) {
     if (value[lang] && typeof value[lang] === "string" && value[lang].trim() !== "") {
       return String(value[lang]);
     }
     if (value.ka && typeof value.ka === "string" && value.ka.trim() !== "") {
-      return String(value.ka);
+      const kaText = String(value.ka);
+      if (lang !== "ka" && SIGHT_AND_TOUR_DICTIONARY[kaText] && SIGHT_AND_TOUR_DICTIONARY[kaText][lang]) {
+        return SIGHT_AND_TOUR_DICTIONARY[kaText][lang];
+      }
+      if (lang !== "ka" && LOCATION_DICTIONARY[kaText] && LOCATION_DICTIONARY[kaText][lang]) {
+        return LOCATION_DICTIONARY[kaText][lang];
+      }
+      return kaText;
     }
     const first = Object.values(value).find((v) => typeof v === "string" && v.trim() !== "");
     return first != null ? String(first) : "";
   }
-  return "";
+
+  const str = String(value).trim();
+  if (!str) return "";
+
+  // If not Georgian, check if the string matches any dictionary entry
+  if (lang !== "ka") {
+    if (SIGHT_AND_TOUR_DICTIONARY[str] && SIGHT_AND_TOUR_DICTIONARY[str][lang]) {
+      return SIGHT_AND_TOUR_DICTIONARY[str][lang];
+    }
+    if (LOCATION_DICTIONARY[str] && LOCATION_DICTIONARY[str][lang]) {
+      return LOCATION_DICTIONARY[str][lang];
+    }
+  }
+
+  return str;
 }
 
 export function firestoreErrorMessage(err) {
@@ -243,12 +346,14 @@ export async function listFirestoreTours() {
 }
 
 export async function updateFirestoreTour(id, data) {
-  await updateDoc(doc(doc(db, TOURS_COLLECTION), id), {
+  if (!id) throw new Error("Tour ID is required for update");
+  await updateDoc(doc(db, TOURS_COLLECTION, id), {
     ...data,
     updatedAt: serverTimestamp(),
   });
 }
 export async function deleteFirestoreTour(id) {
+  if (!id) return;
   await deleteDoc(doc(db, TOURS_COLLECTION, id));
 }
 
@@ -310,7 +415,25 @@ export function normalizeFirestoreTour(tour, lang = "ka") {
   }));
 
   const gallery = (Array.isArray(tour.gallery) ? tour.gallery : [])
-    .map((g) => (typeof g === "string" ? g : asLocalizedText(g, lang)))
+    .map((g) => {
+      if (typeof g === "string") return g;
+      if (g && typeof g === "object" && g.url) return g.url;
+      return "";
+    })
+    .filter(Boolean);
+
+  const galleryItems = (Array.isArray(tour.gallery) ? tour.gallery : [])
+    .map((g) => {
+      if (typeof g === "string") return { url: g, locationTitle: "" };
+      if (g && typeof g === "object" && g.url) {
+        return {
+          url: g.url,
+          locationTitle: typeof g.locationTitle === "string" ? g.locationTitle : asLocalizedText(g.locationTitle, lang) || "",
+          placeId: g.placeId || "",
+        };
+      }
+      return null;
+    })
     .filter(Boolean);
 
   return {
@@ -341,6 +464,7 @@ export function normalizeFirestoreTour(tour, lang = "ka") {
     tourSectionLabel,
     img: (typeof tour.img === "string" && tour.img) || gallery[0] || "/hero.png",
     gallery,
+    galleryItems,
     itinerary,
     departureDates: Array.isArray(tour.departureDates) ? tour.departureDates : [],
     dates: (tour.departureDates || []).map((e) => {

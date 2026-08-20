@@ -128,13 +128,10 @@ export function FlagArabic({ width = 22, height = 15, className = "" }) {
         flexShrink: 0,
       }}
     >
-      <rect width="640" height="480" fill="#006C35" />
-      {/* Representing the script pattern */}
-      <path d="M180,180 C240,140 280,210 340,180 C400,150 420,200 480,180" fill="none" stroke="#ffffff" strokeWidth="14" strokeLinecap="round" />
-      <path d="M200,215 C260,180 290,240 360,215 C410,190 430,230 460,215" fill="none" stroke="#ffffff" strokeWidth="10" strokeLinecap="round" />
-      {/* White sword pointing to the left */}
-      <path d="M180,260 L440,260" stroke="#ffffff" strokeWidth="12" strokeLinecap="round" />
-      <path d="M425,240 L425,280" stroke="#ffffff" strokeWidth="10" strokeLinecap="round" />
+      <rect width="640" height="160" fill="#000000" />
+      <rect y="160" width="640" height="160" fill="#ffffff" />
+      <rect y="320" width="640" height="160" fill="#007a3d" />
+      <polygon points="0,0 240,240 0,480" fill="#ce1126" />
     </svg>
   );
 }

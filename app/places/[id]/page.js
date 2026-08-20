@@ -65,7 +65,9 @@ export default function PlaceDetailPage() {
               <div className="place-detail-copy">
                 <span className="places-kicker">{t("placeDetail.aboutTitle")}</span>
                 <h2>{t("placeDetail.aboutSubtitle")}</h2>
-                <p>{asLocalizedText(place.desc, lang)}</p>
+                <p style={{ whiteSpace: "pre-line", lineHeight: 1.75 }}>
+                  {asLocalizedText(place.desc, lang)}
+                </p>
               </div>
               {place.gallery?.length > 0 && (
                 <div className="place-gallery">

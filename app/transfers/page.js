@@ -6,11 +6,12 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import PageHero from "../components/PageHero";
 import DatePicker from "../components/DatePicker";
-import { WA_LINK, WhatsAppIcon } from "../lib/shared";
+import { WA_LINK, WhatsAppIcon, SOCIAL_PROFILES } from "../lib/shared";
 import { useLanguage } from "../lib/i18n/LanguageContext";
+import { createBooking } from "../lib/bookingsFirestore";
 
 export default function TransfersPage() {
-  const { t, isEnglish } = useLanguage();
+  const { t, lang, isEnglish } = useLanguage();
 
   const [selectedVehicleKey, setSelectedVehicleKey] = useState("minivan");
   const [pickupLoc, setPickupLoc] = useState("");
@@ -20,8 +21,6 @@ export default function TransfersPage() {
   const [passengerCount, setPassengerCount] = useState("2");
   const [contactPhone, setContactPhone] = useState("");
   const [notes, setNotes] = useState("");
-
-
 
   const fleetKeys = ["sedan", "minivan", "jeep", "sprinter"];
   const fleetData = {
@@ -57,29 +56,40 @@ export default function TransfersPage() {
 
   const perks = [
     { icon: "🪧", title: t("transfersPage.p1Title"), desc: t("transfersPage.p1Desc") },
-    { icon: "⏱️", title: t("transfersPage.p2Title"), desc: t("transfersPage.p2Desc") },
-    { icon: "🏷️", title: t("transfersPage.p3Title"), desc: t("transfersPage.p3Desc") },
-    { icon: "👶", title: t("transfersPage.p4Title"), desc: t("transfersPage.p4Desc") },
-    { icon: "📶", title: t("transfersPage.p5Title"), desc: t("transfersPage.p5Desc") },
-    { icon: "👔", title: t("transfersPage.p6Title"), desc: t("transfersPage.p6Desc") },
+    { icon: "🛡️", title: t("transfersPage.p2Title"), desc: t("transfersPage.p2Desc") },
+    { icon: "✈️", title: t("transfersPage.p3Title"), desc: t("transfersPage.p3Desc") },
+    { icon: "💬", title: t("transfersPage.p4Title"), desc: t("transfersPage.p4Desc") },
   ];
 
+  const popularRoutes = [
+    { from: "თბილისის აეროპორტი (TBS)", to: "თბილისის ცენტრი", price: "₾50 / $18", time: "25-30 წთ" },
+    { from: "ბათუმის აეროპორტი (BUS)", to: "ბათუმის ცენტრი / ბულვარი", price: "₾35 / $13", time: "15-20 წთ" },
+    { from: "ქუთაისის აეროპორტი (KUT)", to: "გუდაური (სათხილამურო)", price: "₾320 / $118", time: "3.5 სთ" },
+    { from: "ქუთაისის აეროპორტი (KUT)", to: "თბილისი", price: "₾220 / $80", time: "3.5 სთ" },
+    { from: "ქუთაისის აეროპორტი (KUT)", to: "ბათუმი", price: "₾180 / $65", time: "2 სთ" },
+    { from: "თბილისი", to: "სტეფანწმინდა / ყაზბეგი / გერგეტი", price: "₾250 / $92", time: "3 სთ" },
+    { from: "თბილისი", to: "სიღნაღი / კახეთის ღვინის რეგიონი", price: "₾200 / $74", time: "2 სთ" },
+    { from: "ბათუმი", to: "სარფის საზღვარი (თურქეთი)", price: "₾40 / $15", time: "25 წთ" },
+  ];
 
-
-  const handleSelectVehicle = (vKey) => {
-    setSelectedVehicleKey(vKey);
-    scrollToBooking();
-  };
-
-  const scrollToBooking = () => {
-    const elem = document.getElementById("transfer-booking-form");
-    if (elem) elem.scrollIntoView({ behavior: "smooth" });
-  };
+  const selectedVehicleName = t(`transfersPage.vehicles.${selectedVehicleKey}.name`) || selectedVehicleKey;
 
   const handleTransferSubmit = (e) => {
     e.preventDefault();
 
-    const selectedVehicleName = t(`transfersPage.vehicles.${selectedVehicleKey}.name`);
+    createBooking({
+      type: "transfer",
+      vehicle: selectedVehicleKey,
+      vehicleName: selectedVehicleName,
+      pickup: pickupLoc,
+      dropoff: dropoffLoc,
+      date: transferDate,
+      time: transferTime,
+      passengers: passengerCount,
+      phone: contactPhone,
+      notes: notes,
+      language: lang,
+    });
 
     const lines = isEnglish || lang === "en"
       ? [
@@ -124,34 +134,90 @@ export default function TransfersPage() {
       ? [
           `🚗 *GeorgiaTrips — طلب حجز توصيلة*`,
           `━━━━━━━━━━━━━━━━━━`,
-          `🚘 *السيارة:* ${selectedVehicleName}`,
+          `🚘 *نوع السيارة:* ${selectedVehicleName}`,
           `📍 *مكان الانطلاق:* ${pickupLoc.trim() || "غير محدد"}`,
-          `🏁 *مكان الوصول:* ${dropoffLoc.trim() || "غير محدد"}`,
-          `📅 *التاريخ:* ${transferDate || "حسب الاتفاق"}`,
-          `⏰ *الوقت:* ${transferTime.trim() || "حسب الاتفاق"}`,
-          `👥 *عدد الركاب:* ${passengerCount} شخص`,
-          `📞 *الهاتف / واتساب:* ${contactPhone.trim() || "غير محدد"}`,
-          notes.trim() ? `📝 *الطائرة / ملاحظات:* ${notes.trim()}` : "",
+          `🏁 *الوجهة:* ${dropoffLoc.trim() || "غير محدد"}`,
+          `📅 *التاريخ:* ${transferDate || "بالاتفاق"}`,
+          `⏰ *الوقت:* ${transferTime.trim() || "بالاتفاق"}`,
+          `👥 *عدد الركاب:* ${passengerCount} أشخاص`,
+          `📞 *رقم الهاتف / واتساب:* ${contactPhone.trim() || "غير محدد"}`,
+          notes.trim() ? `📝 *رقم الرحلة / ملاحظات:* ${notes.trim()}` : "",
         ]
       : [
-          `🚗 *GeorgiaTrips — ტრანსპორტის & ტრანსფერის ჯავშანი*`,
+          `🚗 *GeorgiaTrips — ტრანსფერის მოთხოვნა*`,
           `━━━━━━━━━━━━━━━━━━`,
           `🚘 *ავტომობილი:* ${selectedVehicleName}`,
-          `📍 *საიდან:* ${pickupLoc.trim() || "მითითებული არ არის"}`,
-          `🏁 *სად:* ${dropoffLoc.trim() || "მითითებული არ არის"}`,
+          `📍 *საიდან:* ${pickupLoc.trim() || "არ არის მითითებული"}`,
+          `🏁 *სად:* ${dropoffLoc.trim() || "არ არის მითითებული"}`,
           `📅 *თარიღი:* ${transferDate || "შეთანხმებით"}`,
           `⏰ *დრო:* ${transferTime.trim() || "შეთანხმებით"}`,
-          `👥 *მგზავრები:* ${passengerCount} კაცი`,
-          `📞 *ტელეფონი:* ${contactPhone.trim() || "მითითებული არ არის"}`,
-          notes.trim() ? `📝 *შენიშვნა / ფრენა:* ${notes.trim()}` : "",
+          `👥 *მგზავრები:* ${passengerCount} ადამიანი`,
+          `📞 *ტელეფონი / WhatsApp:* ${contactPhone.trim() || "არ არის მითითებული"}`,
+          notes.trim() ? `📝 *შენიშვნა:* ${notes.trim()}` : "",
         ];
 
     window.open(`${WA_LINK}?text=${encodeURIComponent(lines.filter(Boolean).join("\n"))}`, "_blank");
   };
 
+  const transferJsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": ["TaxiService", "Service"],
+        "@id": "https://georgiatrips.ge/transfers#service",
+        "name": "GeorgiaTrips — Airport Transfers & Private Drivers in Georgia",
+        "description": "Private airport transfers from Tbilisi (TBS), Kutaisi (KUT), and Batumi (BUS) airports to Gudauri, Kazbegi, Mestia, and all regions of Georgia.",
+        "provider": {
+          "@type": "TravelAgency",
+          "name": "GeorgiaTrips",
+          "url": "https://georgiatrips.ge",
+          "telephone": "+995504220020",
+          "sameAs": SOCIAL_PROFILES,
+        },
+        "areaServed": [
+          { "@type": "Country", name: "Georgia" },
+          { "@type": "City", name: "Tbilisi" },
+          { "@type": "City", name: "Batumi" },
+          { "@type": "City", name: "Kutaisi" },
+          { "@type": "City", name: "Gudauri" },
+          { "@type": "City", name: "Kazbegi" },
+        ],
+        "offers": {
+          "@type": "AggregateOffer",
+          "lowPrice": 35,
+          "highPrice": 350,
+          "priceCurrency": "GEL",
+        },
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://georgiatrips.ge/transfers#breadcrumbs",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": lang === "ka" ? "მთავარი" : "Home",
+            "item": "https://georgiatrips.ge",
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": lang === "ka" ? "ტრანსფერები" : "Transfers",
+            "item": "https://georgiatrips.ge/transfers",
+          },
+        ],
+      },
+    ],
+  };
+
   return (
     <div className="transfers-page-wrapper">
       <Navbar active="transfers" />
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(transferJsonLd) }}
+      />
 
       {/* HERO SECTION */}
       <PageHero
@@ -182,12 +248,13 @@ export default function TransfersPage() {
 
               return (
                 <div key={key} className={`transfers-fleet-card${isSelected ? " is-selected" : ""}`}>
-                  <div className="transfers-fleet-media">
-                    <img
+                  <div className="transfers-fleet-media" style={{ position: "relative", minHeight: "180px" }}>
+                    <Image
                       src={data.img}
-                      onError={(e) => { e.currentTarget.src = data.fallbackImg; }}
-                      alt={vMeta.name}
-                      className="transfers-fleet-img"
+                      alt={vMeta.name || "Transfer vehicle"}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 25vw"
+                      style={{ objectFit: "cover" }}
                     />
                     <span className="transfers-fleet-badge">{vMeta.badge}</span>
                   </div>

@@ -2,18 +2,15 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useLanguage } from "../lib/i18n/LanguageContext";
+import { MONTH_NAMES as MONTHS_MAP } from "../lib/toursFirestore";
 
-const GEO_MONTHS = [
-  "იანვარი", "თებერვალი", "მარტი", "აპრილი", "მაისი", "ივნისი",
-  "ივლისი", "აგვისტო", "სექტემბერი", "ოქტომბერი", "ნოემბერი", "დეკემბერი"
-];
-const ENG_MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
-];
-
-const GEO_DAYS_SHORT = ["ორ", "სამ", "ოთ", "ხუთ", "პარ", "შაბ", "კვ"];
-const ENG_DAYS_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAYS_SHORT_MAP = {
+  ka: ["ორ", "სამ", "ოთ", "ხუთ", "პარ", "შაბ", "კვ"],
+  en: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+  ru: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
+  tr: ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"],
+  ar: ["أحد", "إثن", "ثلا", "أرب", "خمي", "جمع", "سبت"],
+};
 
 export default function DatePicker({
   value,
@@ -23,7 +20,11 @@ export default function DatePicker({
   availableDates = null,
   variant = "form"
 }) {
-  const { t, isEnglish } = useLanguage() || { t: (k) => k, isEnglish: false };
+  const { t, lang } = useLanguage() || { t: (k) => k, lang: "ka" };
+  const currentLang = lang || "ka";
+  const fallbackMonths = MONTHS_MAP[currentLang] || MONTHS_MAP.ka;
+  const fallbackDays = DAYS_SHORT_MAP[currentLang] || DAYS_SHORT_MAP.ka;
+
   const today = new Date();
   const [selected, setSelected] = useState(value ? new Date(value) : null);
   const [viewYear, setViewYear] = useState(today.getFullYear());
@@ -37,8 +38,11 @@ export default function DatePicker({
   const gridRef = useRef(null);
   const pageJumpRef = useRef(null);
 
-  const months = Array.isArray(t("datePicker.months")) ? t("datePicker.months") : (isEnglish ? ENG_MONTHS : GEO_MONTHS);
-  const daysShort = Array.isArray(t("datePicker.daysShort")) ? t("datePicker.daysShort") : (isEnglish ? ENG_DAYS_SHORT : GEO_DAYS_SHORT);
+  const translatedMonths = t("datePicker.months");
+  const translatedDays = t("datePicker.daysShort");
+
+  const months = Array.isArray(translatedMonths) ? translatedMonths : fallbackMonths;
+  const daysShort = Array.isArray(translatedDays) ? translatedDays : fallbackDays;
 
   const getTranslatedPlaceholder = () => {
     if (!placeholder || placeholder === "თარიღი") {

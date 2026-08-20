@@ -7,6 +7,7 @@ import Image from "next/image";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { useAuth } from "../lib/AuthContext";
+import { useLanguage } from "../lib/i18n/LanguageContext";
 import {
   signInWithGoogle,
   signInWithFacebook,
@@ -31,26 +32,27 @@ const FacebookIcon = () => (
   </svg>
 );
 
-// ── Error codes → Georgian messages ──────────────────────────
-function getErrorMessage(code) {
+// ── Error codes → Localized messages ──────────────────────────
+function getErrorMessage(code, t) {
   const map = {
-    "auth/email-already-in-use": "ეს ელ-ფოსტა უკვე რეგისტრირებულია. გთხოვთ შეხვიდეთ.",
-    "auth/invalid-email": "გთხოვთ შეიყვანოთ სწორი ელ-ფოსტის მისამართი.",
-    "auth/weak-password": "პაროლი უნდა შეიცავდეს მინიმუმ 6 სიმბოლოს.",
-    "auth/user-not-found": "ამ ელ-ფოსტით ანგარიში ვერ მოიძებნა.",
-    "auth/wrong-password": "არასწორი პაროლი. გთხოვთ სცადოთ თავიდან.",
-    "auth/too-many-requests": "ძალიან ბევრი მცდელობა. გთხოვთ სცადოთ მოგვიანებით.",
-    "auth/popup-closed-by-user": "შესვლა გაუქმდა.",
-    "auth/popup-blocked": "პოპ-აფი დაიბლოკა. გთხოვთ დაუშვათ პოპ-აფები.",
-    "auth/account-exists-with-different-credential": "ამ ელ-ფოსტით ანგარიში უკვე არსებობს. სცადეთ სხვა მეთოდი.",
-    "auth/email-not-verified": "გთხოვთ დაადასტუროთ ელ-ფოსტა შესვლამდე. შეამოწმეთ თქვენი inbox.",
-    "auth/invalid-credential": "ელ-ფოსტა ან პაროლი არასწორია.",
+    "auth/email-already-in-use": t("loginPage.authErrors.alreadyInUse"),
+    "auth/invalid-email": t("loginPage.authErrors.invalidEmail"),
+    "auth/weak-password": t("loginPage.authErrors.weakPassword"),
+    "auth/user-not-found": t("loginPage.authErrors.userNotFound"),
+    "auth/wrong-password": t("loginPage.authErrors.wrongPassword"),
+    "auth/too-many-requests": t("loginPage.authErrors.tooManyRequests"),
+    "auth/popup-closed-by-user": t("loginPage.authErrors.popupClosed"),
+    "auth/popup-blocked": t("loginPage.authErrors.popupBlocked"),
+    "auth/account-exists-with-different-credential": t("loginPage.authErrors.accountDifferentCredential"),
+    "auth/email-not-verified": t("loginPage.authErrors.emailNotVerified"),
+    "auth/invalid-credential": t("loginPage.authErrors.invalidCredential"),
   };
-  return map[code] || "შეცდომა. გთხოვთ სცადოთ თავიდან.";
+  return map[code] || t("loginPage.authErrors.defaultError");
 }
 
 // ── Main Component ────────────────────────────────────────────
 export default function LoginPage() {
+  const { t } = useLanguage();
   const [tab, setTab] = useState("signin"); // "signin" | "signup"
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -80,10 +82,10 @@ export default function LoginPage() {
     setError("");
     try {
       await signInWithGoogle();
-      showSuccess("კეთილი იყოს თქვენი მობრძანება! გადამისამართება...");
+      showSuccess(t("loginPage.welcomeRedirect"));
       setTimeout(() => router.push("/"), 900);
     } catch (e) {
-      showError(getErrorMessage(e.code));
+      showError(getErrorMessage(e.code, t));
     } finally {
       setLoading(false);
     }
@@ -94,10 +96,10 @@ export default function LoginPage() {
     setError("");
     try {
       await signInWithFacebook();
-      showSuccess("კეთილი იყოს თქვენი მობრძანება! გადამისამართება...");
+      showSuccess(t("loginPage.welcomeRedirect"));
       setTimeout(() => router.push("/"), 900);
     } catch (e) {
-      showError(getErrorMessage(e.code));
+      showError(getErrorMessage(e.code, t));
     } finally {
       setLoading(false);
     }
@@ -110,10 +112,10 @@ export default function LoginPage() {
     setError("");
     try {
       await signInWithEmail(siEmail, siPassword);
-      showSuccess("კეთილი იყოს თქვენი მობრძანება! გადამისამართება...");
+      showSuccess(t("loginPage.welcomeRedirect"));
       setTimeout(() => router.push("/"), 900);
     } catch (e) {
-      showError(getErrorMessage(e.code));
+      showError(getErrorMessage(e.code, t));
     } finally {
       setLoading(false);
     }
@@ -126,10 +128,10 @@ export default function LoginPage() {
     setError("");
     try {
       await signUpWithEmail(suEmail, suPassword, suName);
-      showSuccess("ანგარიში შეიქმნა! გთხოვთ შეამოწმოთ ელ-ფოსტა და დაადასტუროთ.");
+      showSuccess(t("loginPage.accountCreatedVerify"));
       setTimeout(() => setTab("signin"), 3000);
     } catch (e) {
-      showError(getErrorMessage(e.code));
+      showError(getErrorMessage(e.code, t));
     } finally {
       setLoading(false);
     }
@@ -138,13 +140,13 @@ export default function LoginPage() {
   // ── Password Reset ──────────────────────────────────────────
   async function handleForgot(e) {
     e.preventDefault();
-    if (!siEmail.trim()) { showError("გთხოვთ ჯერ შეიყვანოთ ელ-ფოსტა."); return; }
+    if (!siEmail.trim()) { showError(t("loginPage.enterEmailFirst")); return; }
     setLoading(true);
     try {
       await resetPassword(siEmail);
-      showSuccess("პაროლის აღდგენის ბმული გაიგზავნა ელ-ფოსტაზე!");
+      showSuccess(t("loginPage.resetEmailSent"));
     } catch (e) {
-      showError("ვერ მოხერხდა გაგზავნა. დარწმუნდით, რომ ელ-ფოსტა რეგისტრირებულია.");
+      showError(t("loginPage.resetEmailFailed"));
     } finally {
       setLoading(false);
     }
@@ -159,13 +161,13 @@ export default function LoginPage() {
           {/* ── Logged-in profile view ── */}
           {isLoggedIn ? (
             <div className="lp-profile">
-              <div className="lp-signed-badge">შესული</div>
+              <div className="lp-signed-badge">{t("loginPage.signedInBadge")}</div>
               <img
                 src={
                   user.photoURL ||
                   `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || "User")}&background=29b2b7&color=fff&size=80`
                 }
-                alt="პროფილი"
+                alt={t("loginPage.profile")}
                 className="lp-avatar"
                 width={80}
                 height={80}
@@ -176,7 +178,7 @@ export default function LoginPage() {
               <div className="lp-username">{user.displayName || user.email?.split("@")[0]}</div>
               <div className="lp-useremail">{user.email}</div>
               <Link href="/" className="lp-btn-primary" style={{ marginTop: "1.25rem", display: "inline-flex", justifyContent: "center" }}>
-                ტურების დათვალიერება
+                {t("loginPage.exploreTours")}
               </Link>
             </div>
           ) : (
@@ -185,8 +187,8 @@ export default function LoginPage() {
               <div className="lp-logo">
                 <Image src="/logo.png" alt="GeorgiaTrips" width={64} height={64} style={{ objectFit: "contain" }} />
               </div>
-              <h1 className="lp-title">კეთილი იყოს თქვენი მობრძანება</h1>
-              <p className="lp-subtitle">შეხვედით ან შექმენით ანგარიში ჯავშნის მართვისა და ექსკლუზიური შეთავაზებების სანახავად.</p>
+              <h1 className="lp-title">{t("loginPage.welcomeTitle")}</h1>
+              <p className="lp-subtitle">{t("loginPage.welcomeSubtitle")}</p>
 
               {/* ── Alerts ── */}
               {error && <div className="lp-alert lp-alert-error" role="alert">{error}</div>}
@@ -200,7 +202,7 @@ export default function LoginPage() {
                   className={`lp-tab ${tab === "signin" ? "active" : ""}`}
                   onClick={() => { setTab("signin"); setError(""); setSuccess(""); }}
                 >
-                  შესვლა
+                  {t("loginPage.tabSignIn")}
                 </button>
                 <button
                   role="tab"
@@ -208,7 +210,7 @@ export default function LoginPage() {
                   className={`lp-tab ${tab === "signup" ? "active" : ""}`}
                   onClick={() => { setTab("signup"); setError(""); setSuccess(""); }}
                 >
-                  რეგისტრაცია
+                  {t("loginPage.tabSignUp")}
                 </button>
               </div>
 
@@ -216,21 +218,21 @@ export default function LoginPage() {
               {tab === "signin" && (
                 <div className="lp-panel">
                   <button className="lp-social-btn" onClick={handleGoogle} disabled={loading}>
-                    <GoogleIcon /> Google-ით შესვლა
+                    <GoogleIcon /> {t("loginPage.googleSignIn")}
                   </button>
                   <button className="lp-social-btn lp-social-fb" onClick={handleFacebook} disabled={loading}>
-                    <FacebookIcon /> Facebook-ით შესვლა
+                    <FacebookIcon /> {t("loginPage.facebookSignIn")}
                   </button>
 
-                  <div className="lp-divider"><span>ან ელ-ფოსტით</span></div>
+                  <div className="lp-divider"><span>{t("loginPage.orWithEmail")}</span></div>
 
                   <form onSubmit={handleSignIn} className="lp-form">
                     <div className="lp-field">
-                      <label htmlFor="si-email">ელ-ფოსტა</label>
+                      <label htmlFor="si-email">{t("loginPage.emailLabel")}</label>
                       <input
                         id="si-email"
                         type="email"
-                        placeholder="you@example.com"
+                        placeholder={t("loginPage.emailPlaceholder")}
                         value={siEmail}
                         onChange={(e) => setSiEmail(e.target.value)}
                         required
@@ -238,11 +240,11 @@ export default function LoginPage() {
                       />
                     </div>
                     <div className="lp-field">
-                      <label htmlFor="si-password">პაროლი</label>
+                      <label htmlFor="si-password">{t("loginPage.passwordLabel")}</label>
                       <input
                         id="si-password"
                         type="password"
-                        placeholder="შეიყვანეთ პაროლი"
+                        placeholder={t("loginPage.passwordPlaceholder")}
                         value={siPassword}
                         onChange={(e) => setSiPassword(e.target.value)}
                         required
@@ -250,13 +252,13 @@ export default function LoginPage() {
                       />
                     </div>
                     <button type="submit" className="lp-btn-primary" disabled={loading}>
-                      {loading ? "იტვირთება..." : "შესვლა"}
+                      {loading ? t("common.loading") : t("loginPage.signInBtn")}
                     </button>
                   </form>
 
                   <div className="lp-forgot">
                     <button onClick={handleForgot} disabled={loading} type="button">
-                      დაგავიწყდათ პაროლი?
+                      {t("loginPage.forgotPassword")}
                     </button>
                   </div>
                 </div>
@@ -266,21 +268,21 @@ export default function LoginPage() {
               {tab === "signup" && (
                 <div className="lp-panel">
                   <button className="lp-social-btn" onClick={handleGoogle} disabled={loading}>
-                    <GoogleIcon /> Google-ით რეგისტრაცია
+                    <GoogleIcon /> {t("loginPage.googleSignUp")}
                   </button>
                   <button className="lp-social-btn lp-social-fb" onClick={handleFacebook} disabled={loading}>
-                    <FacebookIcon /> Facebook-ით რეგისტრაცია
+                    <FacebookIcon /> {t("loginPage.facebookSignUp")}
                   </button>
 
-                  <div className="lp-divider"><span>ან ელ-ფოსტით</span></div>
+                  <div className="lp-divider"><span>{t("loginPage.orWithEmail")}</span></div>
 
                   <form onSubmit={handleSignUp} className="lp-form">
                     <div className="lp-field">
-                      <label htmlFor="su-name">სახელი და გვარი</label>
+                      <label htmlFor="su-name">{t("loginPage.fullNameLabel")}</label>
                       <input
                         id="su-name"
                         type="text"
-                        placeholder="თქვენი სახელი"
+                        placeholder={t("loginPage.fullNamePlaceholder")}
                         value={suName}
                         onChange={(e) => setSuName(e.target.value)}
                         required
@@ -288,11 +290,11 @@ export default function LoginPage() {
                       />
                     </div>
                     <div className="lp-field">
-                      <label htmlFor="su-email">ელ-ფოსტა</label>
+                      <label htmlFor="su-email">{t("loginPage.emailLabel")}</label>
                       <input
                         id="su-email"
                         type="email"
-                        placeholder="you@example.com"
+                        placeholder={t("loginPage.emailPlaceholder")}
                         value={suEmail}
                         onChange={(e) => setSuEmail(e.target.value)}
                         required
@@ -300,11 +302,11 @@ export default function LoginPage() {
                       />
                     </div>
                     <div className="lp-field">
-                      <label htmlFor="su-password">პაროლი</label>
+                      <label htmlFor="su-password">{t("loginPage.passwordLabel")}</label>
                       <input
                         id="su-password"
                         type="password"
-                        placeholder="მინიმუმ 6 სიმბოლო"
+                        placeholder={t("loginPage.passwordMinPlaceholder")}
                         value={suPassword}
                         onChange={(e) => setSuPassword(e.target.value)}
                         required
@@ -313,7 +315,7 @@ export default function LoginPage() {
                       />
                     </div>
                     <button type="submit" className="lp-btn-primary" disabled={loading}>
-                      {loading ? "იტვირთება..." : "ანგარიშის შექმნა"}
+                      {loading ? t("common.loading") : t("loginPage.signUpBtn")}
                     </button>
                   </form>
                 </div>
@@ -321,9 +323,10 @@ export default function LoginPage() {
 
               {/* ── Footer note ── */}
               <p className="lp-footer-note">
-                შესვლით ეთანხმებით ჩვენს{" "}
-                <Link href="/terms">წესებსა</Link> და{" "}
-                <Link href="/privacy-policy">კონფიდენციალობის პოლიტიკას</Link>.
+                {t("loginPage.termsNoticePre")}
+                <Link href="/terms">{t("loginPage.terms")}</Link>
+                {t("loginPage.termsAnd")}
+                <Link href="/privacy-policy">{t("loginPage.privacy")}</Link>.
               </p>
             </>
           )}

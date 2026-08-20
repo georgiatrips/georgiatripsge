@@ -1,0 +1,21 @@
+{
+  "name": "GeorgiaTrips — Premium Tours in Georgia",
+  "short_name": "GeorgiaTrips",
+  "description": "Premium tours, private excursions, and VIP transfers across Georgia.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0d233a",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

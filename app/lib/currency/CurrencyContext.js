@@ -7,16 +7,18 @@ const CurrencyContext = createContext(null);
 const STORAGE_KEY = "gt_currency";
 
 export const CURRENCY_RATES = {
-  GEL: { code: "GEL", symbol: "₾", rate: 1.0, label: "GEL (₾)", name: "ლარი" },
+  GEL: { code: "GEL", symbol: "₾", rate: 1.0, label: "GEL (₾)", name: "₾ ლარი" },
   USD: { code: "USD", symbol: "$", rate: 0.37, label: "USD ($)", name: "USD" },
   EUR: { code: "EUR", symbol: "€", rate: 0.34, label: "EUR (€)", name: "EUR" },
   AED: { code: "AED", symbol: "AED", rate: 1.36, label: "AED", name: "AED" },
+  TRY: { code: "TRY", symbol: "₺", rate: 19.5, label: "TRY (₺)", name: "₺ Lira" },
+  SAR: { code: "SAR", symbol: "SAR", rate: 1.39, label: "SAR", name: "SAR" },
 };
 
 /**
  * Intelligent Price Formatter & Converter
- * Converts numeric amounts or raw price strings (e.g. "₾100/კაცი", "50 GEL", "₾50-დან")
- * according to target currency and language.
+ * Converts numeric amounts or genuine price strings (e.g. "₾100/კაცი", "50 GEL", "₾50-დან")
+ * according to target currency and language, while never modifying dates, phone numbers or times.
  */
 export function formatPrice(priceVal, targetCurrency = "GEL", lang = "ka") {
   if (priceVal === null || priceVal === undefined || priceVal === "") return "";
@@ -36,69 +38,69 @@ export function formatPrice(priceVal, targetCurrency = "GEL", lang = "ka") {
     if (curr.code === "GEL") return `₾${converted}`;
     if (curr.code === "USD") return `$${converted}`;
     if (curr.code === "EUR") return `€${converted}`;
-    return `${converted} AED`;
+    if (curr.code === "TRY") return `₺${converted}`;
+    if (curr.code === "SAR") return `${converted} SAR`;
+    if (curr.code === "AED") return `${converted} AED`;
+    return `${converted} ${curr.code}`;
   }
 
   const str = String(priceVal).trim();
   if (!str) return "";
 
-  // Check if string contains numbers
-  const numberRegex = /(\d+)/g;
-  const matches = str.match(numberRegex);
-
-  if (!matches || matches.length === 0) {
+  // Guard against non-price strings: Dates, Phone numbers, Times, UUIDs
+  if (
+    /^\+?\d{2,4}[\s\d-]{6,}$/.test(str) || // Phone number
+    /^\d{4}-\d{2}-\d{2}/.test(str) || // ISO date
+    /^\d{1,2}\.\d{1,2}(\.\d{2,4})?$/.test(str) || // Date dot format
+    /^\d{1,2}:\d{2}/.test(str) // Time format
+  ) {
     return str;
   }
 
-  let result = str;
+  // Check if string contains currency indicator or is a plain price number string
+  const isExplicitPrice =
+    /[₾$€₺]|GEL|USD|EUR|TRY|AED|SAR|ლარი|კაცი|person|чел|kişi|شخص|-დან|from|от|من/i.test(str) ||
+    /^\d+(\.\d+)?$/.test(str);
 
-  // Clean out GEL symbol or words before replacing converted numbers
-  result = result.replace(/₾/g, "").replace(/GEL/gi, "").replace(/ლარი/g, "");
-
-  // Convert numbers
-  matches.forEach((numStr) => {
-    const num = parseInt(numStr, 10);
-    if (!isNaN(num)) {
-      const convertedNum = Math.round(num * rate);
-      result = result.replace(numStr, String(convertedNum));
-    }
-  });
-
-  result = result.trim();
-
-  // Handle /კაცი, /person, /чел, /kişi, /شخص replacement
-  result = result
-    .replace(/\/კაცი/g, personSuffix)
-    .replace(/ \/ კაცი/g, ` ${personSuffix}`)
-    .replace(/კაცი/g, personSuffix.replace("/", "").trim())
-    .replace(/person/gi, personSuffix.replace("/", "").trim())
-    .replace(/чел/gi, personSuffix.replace("/", "").trim())
-    .replace(/kişi/gi, personSuffix.replace("/", "").trim())
-    .replace(/شخص/gi, personSuffix.replace("/", "").trim());
-
-  // Handle "-დან", "From", "от", "من"
-  if (result.includes("-დან")) {
-    if (lang === "en") {
-      result = "From " + result.replace("-დან", "").trim();
-    } else if (lang === "ru") {
-      result = "от " + result.replace("-დან", "").trim();
-    } else if (lang === "ar") {
-      result = "من " + result.replace("-დან", "").trim();
-    }
+  if (!isExplicitPrice) {
+    return str;
   }
 
-  // Prepend symbol if not already present
-  if (curr.code === "GEL") {
-    if (!result.includes("₾")) result = `₾${result}`;
-  } else if (curr.code === "USD") {
-    if (!result.includes("$")) result = `$${result}`;
-  } else if (curr.code === "EUR") {
-    if (!result.includes("€")) result = `€${result}`;
-  } else if (curr.code === "AED") {
-    if (!result.includes("AED")) result = `${result} AED`;
+  // Extract the primary numeric price value
+  const numMatch = str.match(/(\d+(?:\.\d+)?)/);
+  if (!numMatch) return str;
+
+  const rawNum = parseFloat(numMatch[0]);
+  if (isNaN(rawNum)) return str;
+
+  const convertedNum = Math.round(rawNum * rate);
+
+  // Check for person / per group / from modifiers
+  const isPerPerson = /კაცი|person|чел|kişi|شخص/i.test(str);
+  const isFrom = /-დან|from|от|من/i.test(str);
+
+  let formatted = "";
+  if (curr.code === "GEL") formatted = `₾${convertedNum}`;
+  else if (curr.code === "USD") formatted = `$${convertedNum}`;
+  else if (curr.code === "EUR") formatted = `€${convertedNum}`;
+  else if (curr.code === "TRY") formatted = `₺${convertedNum}`;
+  else if (curr.code === "SAR") formatted = `${convertedNum} SAR`;
+  else if (curr.code === "AED") formatted = `${convertedNum} AED`;
+  else formatted = `${convertedNum} ${curr.code}`;
+
+  if (isFrom) {
+    if (lang === "en") formatted = `From ${formatted}`;
+    else if (lang === "ru") formatted = `от ${formatted}`;
+    else if (lang === "tr") formatted = `${formatted}'den başlayan`;
+    else if (lang === "ar") formatted = `من ${formatted}`;
+    else formatted = `${formatted}-დან`;
   }
 
-  return result;
+  if (isPerPerson) {
+    formatted += personSuffix;
+  }
+
+  return formatted;
 }
 
 export function CurrencyProvider({ children }) {

@@ -8,7 +8,8 @@ import PageHero from "../components/PageHero";
 import { listHotels } from "../lib/hotelsFirestore";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 import { useCurrency } from "../lib/currency/CurrencyContext";
-import { asLocalizedText } from "../lib/toursFirestore";
+import { asLocalizedText, matchesMultiLang } from "../lib/toursFirestore";
+import { SearchIcon } from "../components/Icons";
 
 function HotelCard({ hotel, t, lang }) {
   const { format } = useCurrency();
@@ -80,13 +81,13 @@ export default function HotelsPage() {
   }, []);
 
   const filtered = useMemo(() => {
-    const term = query.trim().toLowerCase();
+    const term = query.trim();
     if (!term) return hotels;
     return hotels.filter(
       (hotel) =>
-        hotel.name.toLowerCase().includes(term) ||
-        hotel.city.toLowerCase().includes(term) ||
-        hotel.desc.toLowerCase().includes(term)
+        matchesMultiLang(hotel.name, term) ||
+        matchesMultiLang(hotel.city, term) ||
+        matchesMultiLang(hotel.desc, term)
     );
   }, [hotels, query]);
 
@@ -102,10 +103,7 @@ export default function HotelsPage() {
         alt={t("hotelsPage.title")}
       >
         <div className="hm-search">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="11" cy="11" r="8" />
-            <path d="M21 21l-4.35-4.35" />
-          </svg>
+          <SearchIcon size={16} />
           <input
             type="search"
             value={query}

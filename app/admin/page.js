@@ -11,8 +11,13 @@ import { listPlaces } from "../lib/placesFirestore";
 import { TOUR_BADGE_OPTIONS, TOUR_SECTIONS } from "../lib/tourMeta";
 import PlaceManager from "./PlaceManager";
 import HotelManager from "./HotelManager";
+import ReviewManager from "./ReviewManager";
+import LocalizedInputGroup, { emptyLangObj, parseLocal } from "./LocalizedInputGroup";
+import { listHotels } from "../lib/hotelsFirestore";
+import { listReviews } from "../lib/reviewsFirestore";
 import { useAuth } from "../lib/AuthContext";
 import { useCurrency } from "../lib/currency/CurrencyContext";
+import { useLanguage } from "../lib/i18n/LanguageContext";
 import {
   createTour,
   listFirestoreTours,
@@ -24,67 +29,7 @@ import {
   firestoreErrorMessage,
 } from "../lib/toursFirestore";
 
-const emptyLangObj = () => ({ ka: "", en: "", ru: "", tr: "", ar: "" });
 const emptyLocation = () => ({ placeId: "", search: "", title: emptyLangObj(), desc: emptyLangObj(), img: "" });
-
-const LocalizedInputGroup = ({ label, type = "input", value, onChange, placeholder, required }) => {
-  const [translating, setTranslating] = React.useState(false);
-  const safeValue = typeof value === "object" && value !== null ? value : { ka: typeof value === "string" ? value : "", en: "", ru: "", tr: "", ar: "" };
-
-  const getValueForLang = (l) => {
-    const val = safeValue[l];
-    if (typeof val === "string") return val;
-    if (typeof val === "number") return String(val);
-    return "";
-  };
-
-  const handleTranslate = async () => {
-    const kaText = getValueForLang("ka");
-    if (!kaText) return;
-    setTranslating(true);
-    const newValues = { ...safeValue };
-    const targets = ["en", "ru", "tr", "ar"];
-    try {
-      for (const target of targets) {
-        if (!getValueForLang(target)) {
-          const res = await fetch("/api/translate", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: kaText, target })
-          });
-          if (res.ok) {
-            const data = await res.json();
-            newValues[target] = data.translatedText || "";
-          }
-        }
-      }
-      onChange(newValues);
-    } catch (err) { console.error(err); } finally { setTranslating(false); }
-  };
-  return (
-    <div className="admin-field" style={{ marginBottom: "1.5rem", padding: "1rem", backgroundColor: "#0f172a", borderRadius: "8px", border: "1px solid #1e293b" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-        <label style={{ margin: 0, color: "#e2e8f0", fontSize: "1.05rem" }}>{label}</label>
-        <button type="button" onClick={handleTranslate} disabled={translating} className="admin-btn-ghost" style={{ padding: "0.25rem 0.5rem", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.25rem" }}>
-          {translating ? "⏳ ითარგმნება..." : "🌐 ავტო-თარგმნა"}
-        </button>
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-        {["ka", "en", "ru", "tr", "ar"].map((lang) => (
-          <div key={lang} style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem" }}>
-            <span style={{ backgroundColor: "#1e293b", color: "#cbd5e1", padding: "0.35rem", borderRadius: "4px", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", width: "40px", textAlign: "center", marginTop: type === "textarea" ? "0.25rem" : "0" }}>
-              {lang}
-            </span>
-            {type === "textarea" ? (
-              <textarea value={getValueForLang(lang)} onChange={(e) => onChange({ ...safeValue, [lang]: e.target.value })} placeholder={lang === "ka" ? placeholder : `${lang.toUpperCase()} თარგმანი...`} required={required && lang === "ka"} rows={3} style={{ flex: 1 }} />
-            ) : (
-              <input value={getValueForLang(lang)} onChange={(e) => onChange({ ...safeValue, [lang]: e.target.value })} placeholder={lang === "ka" ? placeholder : `${lang.toUpperCase()} თარგმანი...`} required={required && lang === "ka"} style={{ flex: 1 }} />
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
 
 async function uploadToCloudinary(file) {
   const fd = new FormData();
@@ -97,11 +42,6 @@ async function uploadToCloudinary(file) {
 
 export default function AdminPage() {
   const { format } = useCurrency();
-  const parseLocal = (val) => {
-    if (!val) return emptyLangObj();
-    if (typeof val === "string") return { ...emptyLangObj(), ka: val };
-    return { ...emptyLangObj(), ...val };
-  };
   const [title, setTitle] = useState(emptyLangObj());
   const [desc, setDesc] = useState(emptyLangObj());
   const [type, setType] = useState("oneday");
@@ -132,16 +72,39 @@ export default function AdminPage() {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState(null);
   const { user } = useAuth() ?? {};
+  const { t } = useLanguage();
   const [existingTours, setExistingTours] = useState([]);
   const [loadingList, setLoadingList] = useState(true);
 
   const destinationLabel = destination;
 
+  const [activeTab, setActiveTab] = useState("tours");
+  const [tourSearchQuery, setTourSearchQuery] = useState("");
+  const [tourRegionFilter, setTourRegionFilter] = useState("all");
+  const [hotelsCount, setHotelsCount] = useState(0);
+  const [placesCount, setPlacesCount] = useState(0);
+  const [reviewsCount, setReviewsCount] = useState(0);
+
   useEffect(() => {
     let active = true;
     listPlaces()
-      .then((items) => { if (active) setAvailablePlaces(items); })
+      .then((items) => {
+        if (active) {
+          setAvailablePlaces(items);
+          setPlacesCount(items.length);
+        }
+      })
       .catch((error) => console.error("Places ვერ ჩაიტვირთა", error));
+    listHotels()
+      .then((items) => {
+        if (active) setHotelsCount(items.length);
+      })
+      .catch(() => {});
+    listReviews()
+      .then((items) => {
+        if (active) setReviewsCount(items.length);
+      })
+      .catch(() => {});
     return () => { active = false; };
   }, []);
 
@@ -187,17 +150,57 @@ export default function AdminPage() {
   const addLocation = () => setLocations((prev) => [...prev, emptyLocation()]);
 
   const selectPlaceForLocation = (idx, place) => {
-    setLocations((prev) => prev.map((loc, i) => i === idx
-      ? {
-          ...loc,
-          placeId: place.id,
-          search: asLocalizedText(place.title, "ka"),
-          title: parseLocal(place.title),
-          desc: parseLocal(place.desc),
-          img: place.img || place.gallery?.[0] || "",
+    const placeTitle = asLocalizedText(place.title, "ka") || "ადგილი";
+    const mainImg = place.img || place.gallery?.[0] || "";
+
+    setLocations((prev) =>
+      prev.map((loc, i) =>
+        i === idx
+          ? {
+              ...loc,
+              placeId: place.id,
+              search: placeTitle,
+              title: parseLocal(place.title),
+              desc: parseLocal(place.desc),
+              img: mainImg,
+            }
+          : loc
+      )
+    );
+
+    // Extract all photos of this location (place.img and place.gallery) without re-uploading to Cloudinary
+    const placePhotos = [];
+    if (place.img && typeof place.img === "string" && place.img.trim()) {
+      placePhotos.push(place.img.trim());
+    }
+    if (Array.isArray(place.gallery)) {
+      place.gallery.forEach((g) => {
+        const u = typeof g === "string" ? g.trim() : g?.url?.trim();
+        if (u && !placePhotos.includes(u)) {
+          placePhotos.push(u);
         }
-      : loc
-    ));
+      });
+    }
+
+    if (placePhotos.length > 0) {
+      setGallery((prev) => {
+        const existingUrls = new Set(
+          prev.map((item) => (typeof item === "string" ? item : item?.url))
+        );
+        const toAdd = [];
+        for (const pUrl of placePhotos) {
+          if (!existingUrls.has(pUrl)) {
+            toAdd.push({
+              url: pUrl,
+              locationTitle: placeTitle,
+              placeId: place.id,
+            });
+            existingUrls.add(pUrl);
+          }
+        }
+        return [...prev, ...toAdd];
+      });
+    }
   };
 
   const removeLocation = (idx) => {
@@ -222,11 +225,17 @@ export default function AdminPage() {
     if (!files.length) return;
     try {
       setUploading(true);
-      const urls = [];
+      const newItems = [];
       for (const file of files) {
-        urls.push(await uploadToCloudinary(file));
+        const url = await uploadToCloudinary(file);
+        newItems.push({
+          url,
+          locationTitle: "დამატებითი ფოტო",
+          placeId: "",
+        });
       }
-      setGallery((prev) => [...prev, ...urls]);
+      setGallery((prev) => [...prev, ...newItems]);
+      setMessage({ type: "success", text: `${newItems.length} ფოტო წარმატებით აიტვირთა!` });
     } catch (err) {
       setMessage({ type: "error", text: err.message });
     } finally {
@@ -237,6 +246,28 @@ export default function AdminPage() {
 
   const removeGalleryImage = (idx) => {
     setGallery((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const setCoverImage = (idx) => {
+    if (idx === 0) return;
+    setGallery((prev) => {
+      const item = prev[idx];
+      const rest = prev.filter((_, i) => i !== idx);
+      return [item, ...rest];
+    });
+    setMessage({ type: "success", text: "მთავარი ფოტო არჩეულია!" });
+  };
+
+  const moveGalleryImage = (idx, direction) => {
+    const targetIdx = idx + direction;
+    if (targetIdx < 0 || targetIdx >= gallery.length) return;
+    setGallery((prev) => {
+      const updated = [...prev];
+      const temp = updated[idx];
+      updated[idx] = updated[targetIdx];
+      updated[targetIdx] = temp;
+      return updated;
+    });
   };
 
   const addDepartureDate = () => {
@@ -348,7 +379,6 @@ export default function AdminPage() {
       setMessage({ type: "error", text: "აირჩიეთ badge ტურისთვის" });
       return;
     }
-
     const sectionLabel =
       TOUR_SECTIONS.find((s) => s.value === tourSection)?.label || "";
 
@@ -360,20 +390,37 @@ export default function AdminPage() {
       ? `${Math.max(1, parseInt(durationHours, 10) || 1)} საათი`
       : `${Math.max(1, parseInt(durationDays, 10) || 1)} დღე / ${Math.max(0, parseInt(durationNights, 10) || 0)} ღამე`;
 
+    const cleanedGallery = gallery
+      .map((item) => {
+        if (typeof item === "string") return { url: item, locationTitle: "", placeId: "" };
+        if (item && item.url) {
+          return {
+            url: item.url,
+            locationTitle: item.locationTitle || "",
+            placeId: item.placeId || "",
+          };
+        }
+        return null;
+      })
+      .filter((i) => i && i.url);
+
     const payload = {
-      title: {
-        ka: title.ka.trim(),
-        en: title.en.trim(),
-        ru: title.ru.trim(),
-        tr: title.tr.trim(),
-        ar: title.ar.trim(),
-      },
-      desc: {
-        ka: desc.ka.trim(),
-        en: desc.en.trim(),
-        ru: desc.ru.trim(),
-        tr: desc.tr.trim(),
-        ar: desc.ar.trim(),
+      title,
+      desc,
+      itinerary: locations
+        .filter((l) => l.title?.ka || l.title?.en || l.placeId)
+        .map((l) => ({
+          placeId: l.placeId || "",
+          title: l.title,
+          desc: l.desc,
+          img: l.img || "",
+        })),
+      departure: {
+        ka: destinationLabel,
+        en: destinationLabel,
+        ru: destinationLabel,
+        tr: destinationLabel,
+        ar: destinationLabel,
       },
       type,
       duration: durationValue,
@@ -455,7 +502,21 @@ export default function AdminPage() {
       title: parseLocal(location.title),
       desc: parseLocal(location.desc)
     })) : [emptyLocation()]);
-    setGallery(Array.isArray(tour.gallery) ? tour.gallery : []);
+    setGallery(
+      (Array.isArray(tour.gallery) ? tour.gallery : [])
+        .map((item) => {
+          if (typeof item === "string") return { url: item, locationTitle: "", placeId: "" };
+          if (item && typeof item === "object" && item.url) {
+            return {
+              url: item.url,
+              locationTitle: typeof item.locationTitle === "string" ? item.locationTitle : asLocalizedText(item.locationTitle, "ka") || "",
+              placeId: item.placeId || "",
+            };
+          }
+          return null;
+        })
+        .filter(Boolean)
+    );
     setDepartureDates(Array.isArray(tour.departureDates) ? tour.departureDates : []);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -526,19 +587,113 @@ export default function AdminPage() {
         </div>
         <div className="admin-hero-scrim" />
         <div className="admin-hero-content">
-          <span className="admin-hero-eyebrow">მართვა</span>
+          <span className="admin-hero-eyebrow">მართვის პანელი</span>
           <h1 className="admin-hero-title">ადმინ პანელი</h1>
-          <p className="admin-hero-sub">დაამატეთ ახალი ტურები — ინახება Firebase Firestore-ში</p>
+          <p className="admin-hero-sub">მართეთ ტურები, სასტუმროები, ადგილები და მიმოხილვები მარტივად</p>
         </div>
       </section>
 
       <section className="admin-section">
-        <div className="container admin-layout">
-          <form className="admin-form" onSubmit={handleSubmit}>
-            <header className="admin-form-header">
-              <h2>{editingTourId ? "ტურის რედაქტირება" : "ტურის დამატება"}</h2>
-              <p>შეავსეთ ველები და შეინახეთ. ფოტოები ინახება Cloudinary-ში.</p>
-            </header>
+        <div className="container">
+          {/* CATEGORY TABS SWITCHER */}
+          <div className="admin-tabs-container">
+            <button
+              type="button"
+              className={`admin-nav-tab ${activeTab === "tours" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("tours")}
+            >
+              <span style={{ fontSize: "1.2rem" }}>🏔️</span>
+              <span>ტურები</span>
+              <span className="admin-tab-count">{existingTours.length}</span>
+            </button>
+            <button
+              type="button"
+              className={`admin-nav-tab ${activeTab === "hotels" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("hotels")}
+            >
+              <span style={{ fontSize: "1.2rem" }}>🏨</span>
+              <span>სასტუმროები</span>
+              <span className="admin-tab-count">{hotelsCount}</span>
+            </button>
+            <button
+              type="button"
+              className={`admin-nav-tab ${activeTab === "places" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("places")}
+            >
+              <span style={{ fontSize: "1.2rem" }}>📍</span>
+              <span>ადგილები</span>
+              <span className="admin-tab-count">{placesCount}</span>
+            </button>
+            <button
+              type="button"
+              className={`admin-nav-tab ${activeTab === "reviews" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("reviews")}
+            >
+              <span style={{ fontSize: "1.2rem" }}>⭐</span>
+              <span>მიმოხილვები</span>
+              <span className="admin-tab-count">{reviewsCount}</span>
+            </button>
+          </div>
+
+          {/* DASHBOARD STATS ROW */}
+          <div className="admin-stats-row">
+            <div
+              className={`admin-stat-card ${activeTab === "tours" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("tours")}
+            >
+              <div className="admin-stat-icon">🏔️</div>
+              <div className="admin-stat-info">
+                <strong>{existingTours.length}</strong>
+                <span>ტურები კატალოგში</span>
+              </div>
+            </div>
+            <div
+              className={`admin-stat-card ${activeTab === "hotels" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("hotels")}
+            >
+              <div className="admin-stat-icon">🏨</div>
+              <div className="admin-stat-info">
+                <strong>{hotelsCount}</strong>
+                <span>სასტუმროები</span>
+              </div>
+            </div>
+            <div
+              className={`admin-stat-card ${activeTab === "places" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("places")}
+            >
+              <div className="admin-stat-icon">📍</div>
+              <div className="admin-stat-info">
+                <strong>{placesCount}</strong>
+                <span>ტურისტული ადგილები</span>
+              </div>
+            </div>
+            <div
+              className={`admin-stat-card ${activeTab === "reviews" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("reviews")}
+            >
+              <div className="admin-stat-icon">⭐</div>
+              <div className="admin-stat-info">
+                <strong>{reviewsCount}</strong>
+                <span>მიმოხილვები</span>
+              </div>
+            </div>
+          </div>
+
+          {/* TAB 1: TOURS MANAGEMENT */}
+          {activeTab === "tours" && (
+            <div className="admin-layout">
+              <form className="admin-form" onSubmit={handleSubmit}>
+                <header className="admin-form-header">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <h2>{editingTourId ? "🏔️ ტურის რედაქტირება" : "🏔️ ახალი ტურის დამატება"}</h2>
+                    {editingTourId && (
+                      <span className="admin-tag-pill" style={{ background: "rgba(41,178,183,0.2)", color: "#29b2b7" }}>
+                        რედაქტირების რეჟიმი
+                      </span>
+                    )}
+                  </div>
+                  <p>შეავსეთ ველები და შეინახეთ. ფოტოები ინახება Cloudinary-ში.</p>
+                </header>
 
             {message && (
               <div className={`admin-alert ${message.type}`} role="status">
@@ -812,27 +967,60 @@ export default function AdminPage() {
                       </div>
                     )}
                   </div>
-                  {loc.placeId && (
-                    <div className="admin-selected-place" style={{ marginTop: "1rem", backgroundColor: "transparent", border: "none", padding: 0, display: "block" }}>
-                      <div className="admin-selected-place-thumb" style={{ marginBottom: "1rem", display: "inline-block" }}>
-                        <Image src={loc.img || "/hero.png"} alt="" fill sizes="72px" style={{ objectFit: "cover", borderRadius: "4px" }} />
+                  {loc.placeId ? (
+                    <div
+                      className="admin-location-selected-card"
+                      style={{
+                        marginTop: "0.75rem",
+                        padding: "0.75rem 1rem",
+                        borderRadius: "10px",
+                        background: "rgba(41, 178, 183, 0.08)",
+                        border: "1px solid rgba(41, 178, 183, 0.3)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "1rem"
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.85rem", minWidth: 0 }}>
+                        <div style={{ position: "relative", width: "52px", height: "52px", borderRadius: "8px", overflow: "hidden", flexShrink: 0, border: "1px solid rgba(255,255,255,0.2)" }}>
+                          <Image src={loc.img || "/hero.png"} alt="" fill sizes="52px" style={{ objectFit: "cover" }} />
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                            <strong style={{ fontSize: "0.95rem", color: "#ffffff" }}>
+                              {asLocalizedText(loc.title, "ka") || "დამატებული ადგილი"}
+                            </strong>
+                            <span style={{ fontSize: "0.72rem", background: "rgba(16, 185, 129, 0.25)", color: "#34d399", padding: "1px 6px", borderRadius: "4px", fontWeight: 600 }}>
+                              ✓ მრავალენოვანი
+                            </span>
+                          </div>
+                          <p style={{ margin: "2px 0 0", fontSize: "0.8rem", color: "rgba(255,255,255,0.65)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "420px" }}>
+                            {asLocalizedText(loc.desc, "ka") || "აღწერა შენახულია ბაზაში"}
+                          </p>
+                        </div>
                       </div>
-                      <div style={{ flex: 1, width: "100%" }}>
-                        <LocalizedInputGroup
-                          label={`ლოკაცია #${idx + 1} - სახელი`}
-                          value={loc.title}
-                          onChange={(newVal) => updateLocation(idx, "title", newVal)}
-                          required
-                        />
-                        <LocalizedInputGroup
-                          label={`ლოკაცია #${idx + 1} - აღწერა`}
-                          type="textarea"
-                          value={loc.desc}
-                          onChange={(newVal) => updateLocation(idx, "desc", newVal)}
-                        />
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateLocation(idx, "placeId", "");
+                          updateLocation(idx, "search", "");
+                        }}
+                        style={{
+                          background: "rgba(255,255,255,0.08)",
+                          border: "1px solid rgba(255,255,255,0.2)",
+                          color: "#ffffff",
+                          padding: "5px 12px",
+                          borderRadius: "6px",
+                          fontSize: "0.78rem",
+                          cursor: "pointer",
+                          flexShrink: 0
+                        }}
+                      >
+                        შეცვლა
+                      </button>
                     </div>
-                  )}
+                  ) : null}
                 </div>
               ))}
               <button type="button" className="admin-btn-add" onClick={addLocation}>
@@ -842,35 +1030,244 @@ export default function AdminPage() {
 
             {/* Gallery */}
             <fieldset className="admin-fieldset">
-              <legend>ფოტოგალერეა (Cloudinary)</legend>
-              <div className="admin-field">
-                <label htmlFor="gallery-upload">ფოტოების ატვირთვა</label>
-                <input
-                  id="gallery-upload"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleGalleryUpload}
-                  disabled={uploading}
-                />
+              <legend>📸 ფოტოგალერეა (Cloudinary & ლოკაციების ფოტოები)</legend>
+              <p className="admin-hint" style={{ marginBottom: "1rem" }}>
+                💡 ლოკაციის არჩევისას მისი ყველა ფოტო ავტომატურად გადმოყვება აქ (ხელახლა ატვირთვის გარეშე). ასევე შეგიძლიათ დაამატოთ ნებისმიერი სხვა ფოტო.
+              </p>
+              
+              <div className="admin-gallery-controls" style={{ display: "flex", gap: "1rem", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap" }}>
+                <label
+                  htmlFor="gallery-upload"
+                  className="admin-btn-add"
+                  style={{
+                    margin: 0,
+                    cursor: uploading ? "not-allowed" : "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    background: "rgba(41, 178, 183, 0.2)",
+                    border: "1px solid rgba(41, 178, 183, 0.4)",
+                    color: "#fff",
+                    padding: "0.55rem 1.1rem",
+                    borderRadius: "8px",
+                    fontWeight: 600
+                  }}
+                >
+                  <span>+ დამატებითი ფოტოების ატვირთვა</span>
+                  <input
+                    id="gallery-upload"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleGalleryUpload}
+                    disabled={uploading}
+                    style={{ display: "none" }}
+                  />
+                </label>
+                {uploading && <span className="admin-hint" style={{ margin: 0, color: "#fab418" }}>⏳ იტვირთება Cloudinary-ზე...</span>}
+                {gallery.length > 0 && <span className="admin-hint" style={{ margin: 0 }}>სულ: {gallery.length} ფოტო</span>}
               </div>
-              {uploading && <p className="admin-hint">იტვირთება...</p>}
-              {gallery.length > 0 && (
-                <div className="admin-gallery-grid">
-                  {gallery.map((url, idx) => (
-                    <div key={url} className="admin-gallery-item">
-                      <Image src={url} alt="" fill sizes="120px" style={{ objectFit: "cover" }} />
-                      <button
-                        type="button"
-                        className="admin-gallery-remove"
-                        onClick={() => removeGalleryImage(idx)}
-                        aria-label="წაშლა"
+
+              {gallery.length > 0 ? (
+                <div
+                  className="admin-gallery-grid"
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+                    gap: "1rem",
+                    marginTop: "0.5rem"
+                  }}
+                >
+                  {gallery.map((item, idx) => {
+                    const url = typeof item === "string" ? item : item?.url;
+                    const locTitle = typeof item === "string" ? "" : item?.locationTitle;
+                    const isCover = idx === 0;
+
+                    return (
+                      <div
+                        key={`${url}-${idx}`}
+                        className="admin-gallery-item"
+                        style={{
+                          position: "relative",
+                          aspectRatio: "1",
+                          borderRadius: "12px",
+                          overflow: "hidden",
+                          border: isCover ? "2.5px solid #fab418" : "1px solid rgba(255, 255, 255, 0.15)",
+                          boxShadow: isCover ? "0 0 16px rgba(250, 180, 24, 0.45)" : "none",
+                          background: "rgba(13, 35, 58, 0.5)",
+                          display: "flex",
+                          flexDirection: "column"
+                        }}
                       >
-                        ×
-                      </button>
-                    </div>
-                  ))}
+                        <Image src={url} alt="" fill sizes="180px" style={{ objectFit: "cover" }} />
+                        
+                        {/* Top Location Badge */}
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "6px",
+                            left: "6px",
+                            right: "32px",
+                            zIndex: 2,
+                            pointerEvents: "none"
+                          }}
+                        >
+                          <span
+                            title={locTitle || "ტურის ფოტო"}
+                            style={{
+                              display: "inline-block",
+                              maxWidth: "100%",
+                              whiteSpace: "nowrap",
+                              textOverflow: "ellipsis",
+                              overflow: "hidden",
+                              background: locTitle && locTitle !== "დამატებითი ფოტო"
+                                ? "rgba(41, 178, 183, 0.9)"
+                                : "rgba(0, 0, 0, 0.65)",
+                              color: "#ffffff",
+                              fontSize: "0.7rem",
+                              fontWeight: 700,
+                              padding: "2px 6px",
+                              borderRadius: "4px",
+                              backdropFilter: "blur(4px)"
+                            }}
+                          >
+                            {locTitle ? (locTitle === "დამატებითი ფოტო" ? "✨ დამატებითი" : `📍 ${locTitle}`) : "✨ ტურის ფოტო"}
+                          </span>
+                        </div>
+
+                        {/* Remove button */}
+                        <button
+                          type="button"
+                          className="admin-gallery-remove"
+                          onClick={() => removeGalleryImage(idx)}
+                          aria-label="წაშლა"
+                          style={{
+                            position: "absolute",
+                            top: "5px",
+                            right: "5px",
+                            width: "24px",
+                            height: "24px",
+                            borderRadius: "50%",
+                            background: "rgba(220, 38, 38, 0.9)",
+                            color: "#ffffff",
+                            border: "none",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "14px",
+                            fontWeight: "bold",
+                            zIndex: 3
+                          }}
+                        >
+                          ×
+                        </button>
+
+                        {/* Bottom Actions Bar (Cover & Reorder) */}
+                        <div
+                          style={{
+                            position: "absolute",
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            padding: "6px 8px",
+                            background: "linear-gradient(to top, rgba(13,35,58,0.95), rgba(13,35,58,0.4))",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: "4px",
+                            zIndex: 2
+                          }}
+                        >
+                          {isCover ? (
+                            <span
+                              style={{
+                                fontSize: "0.72rem",
+                                fontWeight: 800,
+                                color: "#fab418",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "3px"
+                              }}
+                            >
+                              ⭐ მთავარი
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setCoverImage(idx)}
+                              style={{
+                                background: "rgba(250, 180, 24, 0.2)",
+                                border: "1px solid rgba(250, 180, 24, 0.6)",
+                                color: "#fab418",
+                                fontSize: "0.68rem",
+                                fontWeight: 700,
+                                padding: "2px 6px",
+                                borderRadius: "4px",
+                                cursor: "pointer"
+                              }}
+                              title="დააყენეთ მთავარ ფოტოდ (გამოჩნდება ბარათებზე და მთავარ გვერდზე)"
+                            >
+                              ⭐ მთავარად
+                            </button>
+                          )}
+
+                          {/* Reorder arrows */}
+                          <div style={{ display: "flex", gap: "3px" }}>
+                            {idx > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => moveGalleryImage(idx, -1)}
+                                title="გადატანა მარცხნივ"
+                                style={{
+                                  background: "rgba(255,255,255,0.15)",
+                                  border: "none",
+                                  color: "#fff",
+                                  width: "20px",
+                                  height: "20px",
+                                  borderRadius: "4px",
+                                  fontSize: "11px",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center"
+                                }}
+                              >
+                                ◀
+                              </button>
+                            )}
+                            {idx < gallery.length - 1 && (
+                              <button
+                                type="button"
+                                onClick={() => moveGalleryImage(idx, 1)}
+                                title="გადატანა მარჯვნივ"
+                                style={{
+                                  background: "rgba(255,255,255,0.15)",
+                                  border: "none",
+                                  color: "#fff",
+                                  width: "20px",
+                                  height: "20px",
+                                  borderRadius: "4px",
+                                  fontSize: "11px",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center"
+                                }}
+                              >
+                                ▶
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
+              ) : (
+                <p className="admin-hint" style={{ textAlign: "center", padding: "1.5rem", border: "1px dashed rgba(255,255,255,0.15)", borderRadius: "10px" }}>
+                  გალერეაში ფოტოები ჯერ არ არის. აირჩიეთ ლოკაცია ზემოთ ან დააჭირეთ „+ დამატებითი ფოტოების ატვირთვა“-ს.
+                </p>
               )}
             </fieldset>
 
@@ -945,47 +1342,136 @@ export default function AdminPage() {
             </div>
           </form>
 
-          <aside className="admin-sidebar">
-            <h2>დამატებული ტურები</h2>
+          {/* TOURS CATALOG SIDEBAR CARDS */}
+          <aside className="admin-sidebar" style={{ width: "100%" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+              <h2>ტურების კატალოგი</h2>
+              <span className="admin-tab-count">{existingTours.length}</span>
+            </div>
+
+            {/* Search & Filter */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginBottom: "1.25rem" }}>
+              <input
+                type="text"
+                placeholder="🔍 მოძებნეთ ტური..."
+                value={tourSearchQuery}
+                onChange={(e) => setTourSearchQuery(e.target.value)}
+                style={{
+                  padding: "0.55rem 0.8rem",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  background: "rgba(255,255,255,0.06)",
+                  color: "#fff",
+                  fontSize: "0.88rem",
+                }}
+              />
+              <select
+                value={tourRegionFilter}
+                onChange={(e) => setTourRegionFilter(e.target.value)}
+                style={{
+                  padding: "0.5rem 0.8rem",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  background: "rgba(15,23,42,0.8)",
+                  color: "#fff",
+                  fontSize: "0.85rem",
+                }}
+              >
+                <option value="all">ყველა რეგიონი ({existingTours.length})</option>
+                {GEORGIA_REGIONS.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {loadingList ? (
-              <p className="admin-hint">იტვირთება...</p>
+              <p className="admin-hint">{t("common.loading")}</p>
             ) : existingTours.length === 0 ? (
               <p className="admin-hint">ჯერ ტურები არ არის დამატებული.</p>
             ) : (
-              <ul className="admin-tour-list">
-                {existingTours.map((t) => (
-                  <li key={t.id}>
-                    <div>
-                      <strong>{asLocalizedText(t.title)}</strong>
-                      <small>{asLocalizedText(t.destinationLabel) || asLocalizedText(t.destination)}</small>
-                      {(t.priceGroup || t.pricePrivate) && (
-                        <small style={{ display: "block", color: "#38bdf8", fontWeight: 600, marginTop: 2 }}>
-                          💰 {format(t.priceGroup || t.pricePrivate)}
-                        </small>
-                      )}
-                      <Link href={`/tours/${t.id}`}>ნახვა →</Link>
-                    </div>
-                    <button type="button" className="admin-btn-ghost" onClick={() => startTourEdit(t)}>რედაქტირება</button>
-                    <button type="button" className="admin-btn-ghost" onClick={() => handleDelete(t.id)}>
-                      წაშლა
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", maxHeight: "850px", overflowY: "auto", paddingRight: "4px" }}>
+                {existingTours
+                  .filter((tour) => {
+                    const titleKa = asLocalizedText(tour.title, "ka").toLowerCase();
+                    const titleEn = asLocalizedText(tour.title, "en").toLowerCase();
+                    const dest = asLocalizedText(tour.destination || tour.destinationLabel);
+                    const q = tourSearchQuery.toLowerCase();
+                    const matchesSearch = !q || titleKa.includes(q) || titleEn.includes(q) || dest.toLowerCase().includes(q);
+                    const matchesRegion = tourRegionFilter === "all" || dest === tourRegionFilter;
+                    return matchesSearch && matchesRegion;
+                  })
+                  .map((tItem) => {
+                    const mainImg = tItem.gallery?.[0] || "/hero.png";
+                    return (
+                      <div key={tItem.id} className="admin-entry-card">
+                        <div style={{ display: "flex", gap: "0.8rem", padding: "0.8rem" }}>
+                          <div
+                            style={{
+                              position: "relative",
+                              width: "72px",
+                              height: "72px",
+                              borderRadius: "8px",
+                              overflow: "hidden",
+                              flexShrink: 0,
+                            }}
+                          >
+                            <Image src={mainImg} alt="" fill sizes="72px" style={{ objectFit: "cover" }} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <h4 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                              {asLocalizedText(tItem.title)}
+                            </h4>
+                            <div className="admin-entry-tags">
+                              <span className="admin-tag-pill">
+                                {asLocalizedText(tItem.destinationLabel) || asLocalizedText(tItem.destination)}
+                              </span>
+                              {(tItem.priceGroup || tItem.pricePrivate) && (
+                                <span className="admin-tag-pill price">
+                                  💰 {format(tItem.priceGroup || tItem.pricePrivate)}
+                                </span>
+                              )}
+                              {tItem.badge && <span className="admin-tag-pill badge">{asLocalizedText(tItem.badge)}</span>}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="admin-entry-actions">
+                          <Link href={`/tours/${tItem.id}`} className="admin-action-btn link" target="_blank">
+                            საიტზე ნახვა →
+                          </Link>
+                          <div style={{ display: "flex", gap: "0.4rem" }}>
+                            <button type="button" className="admin-action-btn edit" onClick={() => startTourEdit(tItem)}>
+                              რედაქტირება
+                            </button>
+                            <button type="button" className="admin-action-btn delete" onClick={() => handleDelete(tItem.id)}>
+                              წაშლა
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
             )}
           </aside>
         </div>
-      </section>
+          )}
 
-      <section className="admin-section">
-        <div className="container">
-          <PlaceManager />
-        </div>
-      </section>
+          {/* TAB 2: HOTELS MANAGEMENT */}
+          {activeTab === "hotels" && (
+            <HotelManager onHotelsCountChange={setHotelsCount} />
+          )}
 
-      <section className="admin-section">
-        <div className="container">
-          <HotelManager />
+          {/* TAB 3: PLACES MANAGEMENT */}
+          {activeTab === "places" && (
+            <PlaceManager onPlacesCountChange={setPlacesCount} />
+          )}
+
+          {/* TAB 4: REVIEWS MANAGEMENT */}
+          {activeTab === "reviews" && (
+            <ReviewManager onReviewsCountChange={setReviewsCount} />
+          )}
         </div>
       </section>
 
@@ -993,4 +1479,3 @@ export default function AdminPage() {
     </div>
   );
 }
-

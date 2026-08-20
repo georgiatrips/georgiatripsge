@@ -10,6 +10,7 @@ import { GEORGIA_REGIONS, formatRegionName } from "../lib/placesMeta";
 import { listPlaces } from "../lib/placesFirestore";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 import { asLocalizedText, matchesMultiLang } from "../lib/toursFirestore";
+import { SearchIcon } from "../components/Icons";
 
 function PlaceCard({ place, lang }) {
   return (
@@ -70,9 +71,48 @@ export default function PlacesPage() {
     { value: "popular", label: t("placesPage.popular") },
   ];
 
+  const placesJsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://georgiatrips.ge/places#breadcrumbs",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": lang === "ka" ? "მთავარი" : "Home",
+            "item": "https://georgiatrips.ge",
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": lang === "ka" ? "ღირსშესანიშნაობები" : "Places & Sights",
+            "item": "https://georgiatrips.ge/places",
+          },
+        ],
+      },
+      {
+        "@type": "ItemList",
+        "@id": "https://georgiatrips.ge/places#list",
+        "name": "Top Attractions and Places to Visit in Georgia",
+        "itemListElement": visiblePlaces.map((p, idx) => ({
+          "@type": "ListItem",
+          "position": idx + 1,
+          "name": asLocalizedText(p.title, lang),
+          "url": `https://georgiatrips.ge/places/${p.id}`,
+        })),
+      },
+    ],
+  };
+
   return (
     <div className="places-page">
       <Navbar active="places" />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(placesJsonLd) }}
+      />
       <main>
         <PageHero
           kicker={t("placesPage.kicker")}
@@ -91,14 +131,15 @@ export default function PlacesPage() {
                 ))}
               </div>
               
-              <div className="places-search-box" style={{ display: "flex", gap: "10px", alignItems: "center", flex: "1", maxWidth: "320px" }}>
+              <div className="places-search-box" style={{ position: "relative", display: "flex", alignItems: "center", flex: "1", maxWidth: "320px" }}>
+                <SearchIcon size={16} color="var(--teal)" style={{ position: "absolute", left: "12px", pointerEvents: "none" }} />
                 <input
                   type="text"
-                  placeholder="🔍 ძებნა / Search..."
+                  placeholder={t("common.search")}
                   value={searchQuery}
                   onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
                   className="admin-input"
-                  style={{ width: "100%", padding: "0.5rem 0.8rem", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.05)", color: "#fff", fontSize: "0.9rem" }}
+                  style={{ width: "100%", padding: "0.55rem 0.8rem 0.55rem 2.3rem", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.08)", color: "#fff", fontSize: "0.9rem" }}
                 />
               </div>
 

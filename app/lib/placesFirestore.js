@@ -1,6 +1,5 @@
 import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "./firebase";
-import { asLocalizedText } from "./toursFirestore";
 
 const COLLECTION = "places";
 
@@ -27,9 +26,9 @@ export function normalizePlace(place) {
   return {
     ...place,
     id: place.id,
-    title: asLocalizedText(place.title),
-    desc: asLocalizedText(place.desc),
-    region: asLocalizedText(place.region),
+    title: place.title,
+    desc: place.desc,
+    region: place.region,
     gallery,
     img: typeof place.img === "string" && place.img ? place.img : gallery[0] || "/hero.png",
     isPopular: Boolean(place.isPopular),

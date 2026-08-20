@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+Sitemap: https://georgiatrips.ge/sitemap.xml
+Host: https://georgiatrips.ge
