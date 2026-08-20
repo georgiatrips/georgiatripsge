@@ -398,3 +398,18 @@ export function subscribeToRecentEvents(callback) {
     return () => {};
   }
 }
+
+export async function clearAllAnalyticsData() {
+  if (!db) return false;
+  try {
+    const sSnap = await getDocs(collection(db, "visitor_sessions"));
+    const delSessions = sSnap.docs.map((d) => deleteDoc(d.ref));
+    const eSnap = await getDocs(collection(db, "analytics_events"));
+    const delEvents = eSnap.docs.map((d) => deleteDoc(d.ref));
+    await Promise.all([...delSessions, ...delEvents]);
+    return true;
+  } catch (err) {
+    console.error("Failed to clear analytics:", err);
+    return false;
+  }
+}
