@@ -12,6 +12,8 @@ import { TOUR_BADGE_OPTIONS, TOUR_SECTIONS } from "../lib/tourMeta";
 import PlaceManager from "./PlaceManager";
 import HotelManager from "./HotelManager";
 import ReviewManager from "./ReviewManager";
+import AnalyticsManager from "./AnalyticsManager";
+import { subscribeToLiveSessions } from "../lib/analytics";
 import LocalizedInputGroup, { emptyLangObj, parseLocal } from "./LocalizedInputGroup";
 import { listHotels } from "../lib/hotelsFirestore";
 import { listReviews } from "../lib/reviewsFirestore";
@@ -84,6 +86,7 @@ export default function AdminPage() {
   const [hotelsCount, setHotelsCount] = useState(0);
   const [placesCount, setPlacesCount] = useState(0);
   const [reviewsCount, setReviewsCount] = useState(0);
+  const [liveVisitorsCount, setLiveVisitorsCount] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -105,7 +108,19 @@ export default function AdminPage() {
         if (active) setReviewsCount(items.length);
       })
       .catch(() => {});
-    return () => { active = false; };
+
+    // Live Analytics real-time listener for badge
+    const unsubSessions = subscribeToLiveSessions((sessions) => {
+      if (!active) return;
+      const now = Date.now();
+      const online = sessions.filter((s) => now - (s.lastActiveMillis || 0) <= 4 * 60 * 1000).length;
+      setLiveVisitorsCount(online);
+    });
+
+    return () => {
+      active = false;
+      unsubSessions();
+    };
   }, []);
 
 
@@ -633,6 +648,18 @@ export default function AdminPage() {
               <span>მიმოხილვები</span>
               <span className="admin-tab-count">{reviewsCount}</span>
             </button>
+            <button
+              type="button"
+              className={`admin-nav-tab admin-nav-tab-analytics ${activeTab === "analytics" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("analytics")}
+            >
+              <span style={{ fontSize: "1.2rem" }}>📊</span>
+              <span>Live ანალიტიკა</span>
+              <span className="admin-tab-count live-pill">
+                <span className="admin-live-dot" />
+                {liveVisitorsCount}
+              </span>
+            </button>
           </div>
 
           {/* DASHBOARD STATS ROW */}
@@ -675,6 +702,18 @@ export default function AdminPage() {
               <div className="admin-stat-info">
                 <strong>{reviewsCount}</strong>
                 <span>მიმოხილვები</span>
+              </div>
+            </div>
+            <div
+              className={`admin-stat-card ${activeTab === "analytics" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("analytics")}
+            >
+              <div className="admin-stat-icon">📊</div>
+              <div className="admin-stat-info">
+                <strong style={{ color: "#25d366" }}>
+                  🟢 {liveVisitorsCount} Online
+                </strong>
+                <span>Live ანალიტიკა</span>
               </div>
             </div>
           </div>
@@ -1471,6 +1510,11 @@ export default function AdminPage() {
           {/* TAB 4: REVIEWS MANAGEMENT */}
           {activeTab === "reviews" && (
             <ReviewManager onReviewsCountChange={setReviewsCount} />
+          )}
+
+          {/* TAB 5: LIVE ANALYTICS */}
+          {activeTab === "analytics" && (
+            <AnalyticsManager />
           )}
         </div>
       </section>

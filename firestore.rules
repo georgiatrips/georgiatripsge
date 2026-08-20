@@ -28,10 +28,17 @@ service cloud.firestore {
         allow read: if true;
         allow create, update, delete: if request.auth != null && request.auth.uid == userId;
       }
-    }    match /places/{placeId} {
+    }
+    match /places/{placeId} {
       allow read, write: if true;
     }
     match /hotels/{hotelId} {
+      allow read, write: if true;
+    }
+    match /visitor_sessions/{sessionId} {
+      allow read, write: if true;
+    }
+    match /analytics_events/{eventId} {
       allow read, write: if true;
     }
   }
