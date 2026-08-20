@@ -25243,22 +25243,8 @@ html {
    MOBILE RESPONSIVE & TOUCH STABILIZATION (ALL BREAKPOINTS)
    ============================================================ */
 
-/* 1. Root Touch Scrolling Stabilization */
+/* 1. Mobile GPU Optimization */
 @media (max-width: 768px) {
-  html {
-    scroll-behavior: auto !important;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  body {
-    overscroll-behavior-y: none;
-    -webkit-overflow-scrolling: touch;
-    width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;
-  }
-
-  /* Optimize hero photo reveal animation on mobile GPUs */
   .hero-mosaic-grid {
     display: none !important;
   }

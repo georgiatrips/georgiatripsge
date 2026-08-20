@@ -174,13 +174,10 @@ export default function DatePicker({
 
   useEffect(() => {
     if (!open || window.innerWidth > 768) return;
-    const previousOverflow = document.body.style.overflow;
-    const previousTouchAction = document.body.style.touchAction;
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    document.body.style.touchAction = "none";
     return () => {
-      document.body.style.overflow = previousOverflow;
-      document.body.style.touchAction = previousTouchAction;
+      document.body.style.overflow = prevOverflow;
     };
   }, [open]);
 
