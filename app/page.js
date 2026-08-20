@@ -296,20 +296,28 @@ export default function Home() {
   });
 
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      setNavScrolled(window.scrollY > 50);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const isScrolled = window.scrollY > 50;
+          setNavScrolled((prev) => (prev !== isScrolled ? isScrolled : prev));
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
+  useEffect(() => {
     // Hero Background Slider Auto Play (7s)
     const heroInterval = setInterval(() => {
       goToHeroSlide((currentHeroSlide + 1) % HERO_SLIDES.length);
     }, 7000);
 
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      clearInterval(heroInterval);
-    };
+    return () => clearInterval(heroInterval);
   }, [currentHeroSlide, goToHeroSlide]);
 
   // Scroll-reveal animation for all sections
