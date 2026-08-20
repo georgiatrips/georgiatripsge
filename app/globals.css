@@ -8530,20 +8530,6 @@ body {
   border-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Mobile: shift popover to stay visible */
-@media (max-width: 640px) {
-  .dp-popover {
-    width: 280px;
-    left: 0;
-    transform: none;
-    right: auto;
-  }
-
-  .dp-day {
-    font-size: 0.72rem;
-  }
-}
-
 
 /* ============================================================
    DATEPICKER POPOVER — ALWAYS ON TOP (PORTAL FIX)
@@ -8557,8 +8543,6 @@ body {
   border-radius: 18px !important;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(46, 196, 182, 0.12) !important;
   padding: 16px !important;
-  overflow: hidden !important;
-  width: 300px !important;
 }
 
 /* make sure about-section does NOT create a new stacking context that blocks fixed children */
@@ -8584,11 +8568,8 @@ body {
 body>.dp-popover,
 .dp-popover {
   z-index: 2147483647 !important;
-  /* max possible z-index */
   position: fixed !important;
   isolation: isolate !important;
-  transform: none !important;
-  /* no transform on popover itself */
   filter: none !important;
   -webkit-filter: none !important;
 }
@@ -8660,19 +8641,6 @@ body>.dp-popover,
 @keyframes dpFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
-}
-
-/* Responsive width adjustments (positioning stays controlled by the component) */
-@media (max-width: 768px) {
-  .dp-popover {
-    max-width: 320px !important;
-  }
-}
-
-@media (max-width: 360px) {
-  .dp-popover {
-    width: calc(100vw - 20px) !important;
-  }
 }
 
 
@@ -10170,17 +10138,6 @@ body>.dp-popover,
    ============================================================ */
 
 @media (max-width: 768px) {
-
-  .dp-popover,
-  .dp-popover--up {
-    left: 50% !important;
-    right: auto !important;
-    transform: translateX(-50%) !important;
-    width: min(280px, 92vw) !important;
-    max-width: 280px !important;
-    padding: 10px 12px !important;
-    box-sizing: border-box !important;
-  }
 
   .dp-header {
     margin-bottom: 8px !important;
@@ -14619,7 +14576,6 @@ body>.dp-popover,
 
 /* hero popover: deep navy glass with teal accents */
 .dp-popover--hero {
-  width: 296px !important;
   background: linear-gradient(160deg, rgba(11, 31, 53, 0.98) 0%, rgba(8, 22, 38, 0.98) 100%) !important;
   border: 1px solid rgba(41, 178, 183, 0.35) !important;
   border-radius: 18px !important;
@@ -14686,7 +14642,6 @@ body>.dp-popover,
 
 /* filter popover: light theme so it separates from the dark sidebar */
 .dp-popover--filter {
-  width: 296px !important;
   background: #ffffff !important;
   border: 1px solid #e2e8f0 !important;
   border-radius: 16px !important;
