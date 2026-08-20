@@ -35,6 +35,9 @@ service cloud.firestore {
     match /hotels/{hotelId} {
       allow read, write: if true;
     }
+    match /reviews/{reviewId} {
+      allow read, write: if true;
+    }
     match /visitor_sessions/{sessionId} {
       allow read, write: if true;
     }

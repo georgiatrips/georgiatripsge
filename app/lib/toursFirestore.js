@@ -391,6 +391,37 @@ export function groupDepartureDates(departureDates = [], lang = "ka") {
     .filter((g) => g.dates.length > 0);
 }
 
+export function extractImageUrl(val) {
+  if (!val) return "";
+  let url = "";
+  if (typeof val === "string") {
+    url = val.trim();
+  } else if (typeof val === "object") {
+    if (typeof val.url === "string" && val.url.trim()) url = val.url.trim();
+    else if (typeof val.src === "string" && val.src.trim()) url = val.src.trim();
+    else if (typeof val.ka === "string" && val.ka.trim()) url = val.ka.trim();
+    else if (typeof val.en === "string" && val.en.trim()) url = val.en.trim();
+    else if (typeof val.ru === "string" && val.ru.trim()) url = val.ru.trim();
+    else {
+      for (const k in val) {
+        if (typeof val[k] === "string" && val[k].startsWith("http")) {
+          url = val[k].trim();
+          break;
+        }
+      }
+    }
+  }
+
+  if (!url) return "";
+
+  // Auto-optimize Cloudinary delivery with intelligent AVIF/WebP conversion & compression
+  if (url.includes("res.cloudinary.com") && url.includes("/upload/") && !url.includes("/f_auto")) {
+    return url.replace("/upload/", "/upload/f_auto,q_auto/");
+  }
+
+  return url;
+}
+
 /** Normalize Firestore tour into the shape used by tour detail / cards */
 export function normalizeFirestoreTour(tour, lang = "ka") {
   if (!tour) return null;
@@ -411,30 +442,32 @@ export function normalizeFirestoreTour(tour, lang = "ka") {
     placeId: typeof item?.placeId === "string" ? item.placeId : "",
     title: asLocalizedText(item?.title, lang),
     desc: asLocalizedText(item?.desc, lang),
-    img: typeof item?.img === "string" ? item.img : asLocalizedText(item?.img, lang),
+    img: extractImageUrl(item?.img) || extractImageUrl(item?.image) || "/hero.png",
   }));
 
   const gallery = (Array.isArray(tour.gallery) ? tour.gallery : [])
-    .map((g) => {
-      if (typeof g === "string") return g;
-      if (g && typeof g === "object" && g.url) return g.url;
-      return "";
-    })
-    .filter(Boolean);
+    .map((g) => extractImageUrl(g))
+    .filter((u) => Boolean(u && u.trim()));
 
   const galleryItems = (Array.isArray(tour.gallery) ? tour.gallery : [])
     .map((g) => {
-      if (typeof g === "string") return { url: g, locationTitle: "" };
-      if (g && typeof g === "object" && g.url) {
-        return {
-          url: g.url,
-          locationTitle: typeof g.locationTitle === "string" ? g.locationTitle : asLocalizedText(g.locationTitle, lang) || "",
-          placeId: g.placeId || "",
-        };
-      }
-      return null;
+      const u = extractImageUrl(g);
+      if (!u) return null;
+      return {
+        url: u,
+        locationTitle: typeof g === "object" && g?.locationTitle ? (asLocalizedText(g.locationTitle, lang) || "") : "",
+        placeId: typeof g === "object" ? g?.placeId || "" : "",
+      };
     })
     .filter(Boolean);
+
+  const mainTourImg =
+    extractImageUrl(tour.img) ||
+    extractImageUrl(tour.image) ||
+    extractImageUrl(tour.coverImage) ||
+    gallery[0] ||
+    (itinerary[0] && itinerary[0].img) ||
+    "/hero.png";
 
   return {
     ...tour,
@@ -462,9 +495,9 @@ export function normalizeFirestoreTour(tour, lang = "ka") {
     badge: badgeRaw || "ახალი ტური",
     tourSection,
     tourSectionLabel,
-    img: (typeof tour.img === "string" && tour.img) || gallery[0] || "/hero.png",
-    gallery,
-    galleryItems,
+    img: mainTourImg,
+    gallery: gallery.length > 0 ? gallery : [mainTourImg],
+    galleryItems: galleryItems.length > 0 ? galleryItems : [{ url: mainTourImg, locationTitle: "" }],
     itinerary,
     departureDates: Array.isArray(tour.departureDates) ? tour.departureDates : [],
     dates: (tour.departureDates || []).map((e) => {

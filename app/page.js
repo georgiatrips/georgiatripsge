@@ -1,22 +1,27 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { MAP_PATHS } from "./mapPaths";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import DatePicker from "./components/DatePicker";
+import HeroMosaicGrid from "./components/HeroMosaicGrid";
 import { useAllTours } from "./lib/useAllTours";
 import { groupDepartureDates, asLocalizedText, translateDuration, translateLocation, translateMonthName, formatLocationTag } from "./lib/toursFirestore";
 import { listPlaces } from "./lib/placesFirestore";
 import { GEORGIA_REGIONS, formatRegionName } from "./lib/placesMeta";
-import { listPosts } from "./lib/postsFirestore";
+import { listPostSummaries } from "./lib/postsFirestore";
 import { useLanguage } from "./lib/i18n/LanguageContext";
 import { useCurrency } from "./lib/currency/CurrencyContext";
 import { formatPriceStr } from "./lib/i18n/formatPriceStr";
 import { LocationIcon, CalendarIcon, UsersIcon, SearchIcon, ClockIcon } from "./components/Icons";
+import { BrandLogo, WA_LINK, WA_NUMBER, bookTourOnWhatsApp, getFaqs } from "./lib/shared";
+import { createBooking } from "./lib/bookingsFirestore";
+import { DEFAULT_WEATHER_DATA as WEATHER_DATA } from "./lib/weatherFallback";
 
 const fetcher = (url) => fetch(url).then((r) => r.json());
 
@@ -25,10 +30,6 @@ const truncateText = (value, maxLength = 100) => {
   return text.length > maxLength ? `${text.slice(0, maxLength).trimEnd()}...` : text;
 };
 
-import { BrandLogo, WA_LINK, WA_NUMBER, bookTourOnWhatsApp, getFaqs } from "./lib/shared";
-import { createBooking } from "./lib/bookingsFirestore";
-import { DEFAULT_WEATHER_DATA as WEATHER_DATA } from "./lib/weatherFallback";
-
 const HERO_SLIDES = [
   { image: "/hero.png", label: "Kazbegi, Georgia" },
   { image: "/tbilisi.png", label: "Tbilisi, Georgia" },
@@ -36,6 +37,13 @@ const HERO_SLIDES = [
   { image: "/mestia.png", label: "Svaneti, Georgia" },
   { image: "/batumi.png", label: "Batumi, Georgia" }
 ];
+
+const ICONS = {
+  sun: <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fab418" strokeWidth="2" strokeLinecap="round" className="weather-svg-sun" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="#fab418" fillOpacity="0.1" /><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" /></svg>,
+  "cloud-sun": <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5" stroke="#fab418" /><path d="M5.5 8.5 4 7M12.5 8.5 14 7M9 3v2" stroke="#fab418" /><path d="M20 17.5A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25" fill="var(--blue)" fillOpacity="0.1" stroke="var(--blue)" /></svg>,
+  rain: <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" fill="var(--blue)" fillOpacity="0.1" /><path d="m8 18-1 3m6-3-1 3m6-3-1 3" /></svg>,
+  storm: <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" fill="var(--text-mute)" fillOpacity="0.1" stroke="var(--text-mute)" /><path d="m13 12-4 5h3l-2 5 5-7h-3z" fill="#fab418" stroke="#fab418" /></svg>,
+};
 
 // Animated counter that starts when it scrolls into view
 const CountUp = ({ end, suffix = "", duration = 1800 }) => {
@@ -86,142 +94,27 @@ const FIREBASE_SECTION_TO_HOME = {
   "seasonal": "seasons",
 };
 
-
-const SOCIAL_POSTS = [
-
-  {
-    platform: "instagram",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop",
-    username: "georgia_trips",
-    location: "ყაზბეგი, საქართველო",
-    img: "/hero.png",
-    text: "Mountain magic at Gergeti Trinity Church. 🏔️✨ კავკასიონის მყინვარების ხედი ყოველთვის განსაკუთრებულია. #Kazbegi #GeorgiaTrips #TravelGeorgia",
-    likes: "1,245",
-    comments: "42",
-    time: "2h ago"
-  },
-  {
-    platform: "twitter",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
-    username: "Georgia Trips 🇬🇪",
-    handle: "@GeorgiaTrips",
-    img: "/tbilisi.png",
-    text: "თბილისი ღამით — ისტორიისა და თანამედროვეობის საოცარი სინთეზი. ძველი ქალაქის ვიწრო ქუჩები, შუქები და დაუვიწყარი განწყობა! 🌌🍷",
-    likes: "892",
-    reposts: "124",
-    replies: "18",
-    time: "4h"
-  },
-  {
-    platform: "threads",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
-    username: "georgia_trips",
-    img: "/batumi.png",
-    text: "დილა ბათუმის ბულვარში. შავი ზღვის სანაპირო, პალმები და დილის მზე. აჭარა ყოველთვის გველოდება! 🌊🌴☀️",
-    likes: "512",
-    replies: "29",
-    time: "6h"
-  },
-  {
-    platform: "bluesky",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop",
-    username: "Georgia Trips",
-    handle: "@georgiatrips.bsky.social",
-    img: "/kakheti.png",
-    text: "კახეთის ვენახები და ტრადიციული ქვევრის ღვინის საიდუმლოებები. მოემზადეთ ნამდვილი ქართული სტუმართმოყვარეობისთვის! 🍇🍷🍂",
-    likes: "420",
-    reposts: "67",
-    replies: "12",
-    time: "1d ago"
-  },
-  {
-    platform: "mastodon",
-    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
-    username: "Georgia Trips",
-    handle: "@georgiatrips@mastodon.travel",
-    img: "/mestia.png",
-    text: "სვანური კოშკები მესტიაში — საუკუნეების ისტორია და კავკასიის უმაღლესი მწვერვალები. ადგილი, სადაც დრო ჩერდება. 🏔️🛡️",
-    likes: "310",
-    boosts: "88",
-    replies: "15",
-    time: "2d"
-  },
-  {
-    platform: "spill",
-    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop",
-    username: "georgia_trips",
-    img: "/villa.png",
-    text: "ექსკლუზიური VIP ვილა ყაზბეგში. გაიღვიძე მთების პანორამული ხედით და ისიამოვნე სრული კომფორტით. 💎🏔️☕",
-    spills: "189",
-    comments: "22",
-    time: "3d"
-  }
-];
-
-const ICONS = {
-  wa: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-      <path d="M12.003 2C6.477 2 2 6.477 2 12c0 1.989.574 3.842 1.563 5.406L2 22l4.682-1.528A9.956 9.956 0 0012.003 22C17.529 22 22 17.523 22 12S17.529 2 12.003 2zm0 18c-1.676 0-3.26-.455-4.627-1.247l-.331-.198-3.454 1.128 1.156-3.366-.215-.348A7.957 7.957 0 014.003 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8z" />
-    </svg>
-  ),
-  plane: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 16l-5-5 2-8-6 4-3-3-3 3-3-4 2 8-5 5 8 1z" />
-    </svg>
-  ),
-  clock: (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-    </svg>
-  ),
-  people: (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  ),
-  arrow: (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  ),
-  sun: (
-    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fab418" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="weather-svg-sun">
-      <circle cx="12" cy="12" r="5" fill="#fab418" fillOpacity="0.1" />
-      <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
-      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-      <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
-      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-    </svg>
-  ),
-  "cloud-sun": (
-    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 2v2M4.93 4.93l1.41 1.41M20 12h2M19.07 4.93l-1.41 1.41" stroke="#fab418" />
-      <circle cx="12" cy="12" r="4" stroke="#fab418" />
-      <path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25" fill="var(--blue)" fillOpacity="0.1" stroke="var(--blue)" />
-      <path d="M8 16a3 3 0 0 0 3-3H6.5A3 3 0 0 0 8 16z" fill="var(--blue)" />
-    </svg>
-  ),
-  rain: (
-    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="12" y1="15" x2="12" y2="23" /><line x1="8" y1="17" x2="8" y2="21" /><line x1="16" y1="17" x2="16" y2="21" />
-      <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" fill="var(--blue)" fillOpacity="0.1" />
-    </svg>
-  ),
-  storm: (
-    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" fill="var(--text-mute)" fillOpacity="0.1" stroke="var(--text-mute)" />
-      <polyline points="13 12 9 17 12 17 10 22" stroke="#fab418" strokeWidth="2.5" fill="#fab418" />
-    </svg>
-  )
-};
-
 export default function Home() {
   const { t, lang, isEnglish, isRussian } = useLanguage();
   const { format } = useCurrency();
   const [navScrolled, setNavScrolled] = useState(false);
   const [lightboxImage, setLightboxImage] = useState(null);
   const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
+  const [previousHeroSlide, setPreviousHeroSlide] = useState(0);
+  const [isHeroTransitioning, setIsHeroTransitioning] = useState(false);
+  const heroTransitionTimeout = useRef(null);
+
+  const goToHeroSlide = useCallback((nextIdx) => {
+    if (isHeroTransitioning || nextIdx === currentHeroSlide) return;
+    setPreviousHeroSlide(currentHeroSlide);
+    setIsHeroTransitioning(true);
+    setCurrentHeroSlide(nextIdx);
+    if (heroTransitionTimeout.current) clearTimeout(heroTransitionTimeout.current);
+    heroTransitionTimeout.current = setTimeout(() => {
+      setIsHeroTransitioning(false);
+    }, 1600);
+  }, [currentHeroSlide, isHeroTransitioning]);
+
   const [showAllSocial, setShowAllSocial] = useState(false);
   const [activeMapRegion, setActiveMapRegion] = useState(null);
   const [activeWeatherTab, setActiveWeatherTab] = useState("tbilisi");
@@ -243,23 +136,33 @@ export default function Home() {
 
   useEffect(() => {
     let active = true;
-    listPosts()
-      .then((items) => { if (active) setPosts(items.slice(0, 6)); })
+    listPostSummaries(6)
+      .then((items) => { if (active) setPosts(items); })
       .catch((error) => console.error("Failed to load posts for homepage", error));
     return () => { active = false; };
   }, []);
 
-  const popularPlaces = useMemo(() => places.filter((place) => place.isPopular).slice(0, 2), [places]);
-  const latestPlaces = useMemo(() => [...places].sort((a, b) => {
-    const aTime = a.createdAt?.toMillis?.() || (a.createdAt ? new Date(a.createdAt).getTime() : 0);
-    const bTime = b.createdAt?.toMillis?.() || (b.createdAt ? new Date(b.createdAt).getTime() : 0);
-    return bTime - aTime;
-  }).slice(0, 6), [places]);
+  const popularPlaces = useMemo(
+    () => places.filter((place) => place.isPopular).slice(0, 2),
+    [places]
+  );
+  const latestPlaces = useMemo(() => {
+    return [...places]
+      .sort((a, b) => {
+        const aTime = a.createdAt?.toMillis?.() || (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+        const bTime = b.createdAt?.toMillis?.() || (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+        return bTime - aTime;
+      })
+      .slice(0, 6);
+  }, [places]);
 
   // Static tours + Firestore tours added from Admin panel
   const { allTours, firestoreTours } = useAllTours();
 
-  const popularTours = useMemo(() => firestoreTours.filter((tour) => tour.isPopular), [firestoreTours]);
+  // Use the normalized version here. Admin-created tours store gallery entries
+  // with metadata objects ({ url, locationTitle }); passing those raw values to
+  // next/image can result in an empty img src and prevent the photo from loading.
+  const popularTours = useMemo(() => allTours.filter((tour) => tour.isPopular), [allTours]);
   const popularTourPairs = useMemo(() => {
     const pairs = [];
     for (let i = 0; i < popularTours.length; i += 2) {
@@ -301,19 +204,20 @@ export default function Home() {
     { id: "seasons", title: t("home.sectionSeasons"), tours: [] },
   ], [t]);
 
-  // Build themed sections ONLY from Admin-added (Firestore) tours.
-  // Sections with no matching Firestore tours are hidden.
+  // Build the themed sections from the same normalized data used by every
+  // public tour card. This keeps image URLs, localized fields and IDs valid
+  // regardless of whether the Firestore record is old or newly created.
   const dynamicSections = useMemo(() => {
-    if (firestoreTours.length === 0) return sectionsData;
+    if (allTours.length === 0) return sectionsData;
     return sectionsData.map((sec) => {
       if (sec.id === "popular") return sec;
-      const dynamicTours = firestoreTours.filter(
-        (t) => FIREBASE_SECTION_TO_HOME[t.category] === sec.id
+      const dynamicTours = allTours.filter(
+        (tour) => FIREBASE_SECTION_TO_HOME[tour.tourSection || tour.category] === sec.id
       );
       if (dynamicTours.length === 0) return null;
       return { ...sec, tours: dynamicTours };
     }).filter(Boolean);
-  }, [firestoreTours, sectionsData]);
+  }, [allTours, sectionsData]);
 
   // Group tours created in the admin panel into the public schedule.
   // Their departure dates are stored as ISO dates in Firestore, so convert
@@ -391,31 +295,28 @@ export default function Home() {
     notes: ""
   });
 
-
   useEffect(() => {
     const handleScroll = () => {
       setNavScrolled(window.scrollY > 50);
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
 
-    // Hero Background Slider Auto Play (10s)
+    // Hero Background Slider Auto Play (7s)
     const heroInterval = setInterval(() => {
-      setCurrentHeroSlide((prev) => (prev + 1) % HERO_SLIDES.length);
-    }, 10000);
+      goToHeroSlide((currentHeroSlide + 1) % HERO_SLIDES.length);
+    }, 7000);
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
       clearInterval(heroInterval);
     };
-  }, []);
-
+  }, [currentHeroSlide, goToHeroSlide]);
 
   // Scroll-reveal animation for all sections
   useEffect(() => {
     const targets = document.querySelectorAll(
       ".section-header, .categories-grid, .why-wrap, .booking-wrap, .weather-wrap, .map-wrap, .social-feed-grid, .stats-grid, .faq-list, .batumi-section-header, .intl-header"
     );
-
     targets.forEach((el) => el.classList.add("reveal"));
 
     const observer = new IntersectionObserver(
@@ -423,7 +324,6 @@ export default function Home() {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add("in-view");
-
             observer.unobserve(entry.target);
           }
         });
@@ -505,6 +405,13 @@ export default function Home() {
           ></div>
         ))}
 
+        {/* 252-Box Blur & Opacity Mosaic Matrix Transition */}
+        <HeroMosaicGrid
+          isTransitioning={isHeroTransitioning}
+          currentSlide={currentHeroSlide}
+          outgoingImage={HERO_SLIDES[previousHeroSlide].image}
+        />
+
         <div className="hero-content">
           <div className="hero-badge">
             <span>{t("hero.badge")}</span>
@@ -550,80 +457,23 @@ export default function Home() {
 
             <div className="hero-search-divider" />
 
-            <div className="hero-search-field">
-              <span className="hero-search-icon">
-                <CalendarIcon size={16} color="var(--teal)" />
-              </span>
-              <div className="hero-search-input-wrap">
-                <label>{t("hero.date")}</label>
-                <DatePicker
-                  value={heroDate}
-                  onChange={(d) => setHeroDate(d)}
-                  availableDates={allAvailableDates}
-                  variant="hero"
-                />
-              </div>
-            </div>
-
+            <div className="hero-search-field"><span className="hero-search-icon"><CalendarIcon size={16} color="var(--teal)" /></span><div className="hero-search-input-wrap"><label>{t("hero.date")}</label><DatePicker value={heroDate} onChange={setHeroDate} availableDates={allAvailableDates} variant="hero" /></div></div>
             <div className="hero-search-divider" />
-
-            <div className="hero-search-field">
-              <span className="hero-search-icon">
-                <UsersIcon size={16} color="var(--teal)" />
-              </span>
-              <div className="hero-search-input-wrap">
-                <label>{t("hero.tourFormat")}</label>
-                <select
-                  className="hero-search-select"
-                  value={heroFormat}
-                  onChange={(e) => setHeroFormat(e.target.value)}
-                >
-                  <option value="all">{t("hero.allFormats")}</option>
-                  <option value="individual">{t("hero.individual")}</option>
-                  <option value="group">{t("hero.group")}</option>
-                </select>
-              </div>
-            </div>
-
-            <button type="button" onClick={handleHeroSearch} className="hero-search-btn">
-              <SearchIcon size={16} color="currentColor" strokeWidth={2.5} />
-              <span>{t("hero.search")}</span>
-            </button>
+            <div className="hero-search-field"><span className="hero-search-icon"><UsersIcon size={16} color="var(--teal)" /></span><div className="hero-search-input-wrap"><label>{t("hero.tourFormat")}</label><select className="hero-search-select" value={heroFormat} onChange={(e) => setHeroFormat(e.target.value)}><option value="all">{t("hero.allFormats")}</option><option value="individual">{t("hero.individual")}</option><option value="group">{t("hero.group")}</option></select></div></div>
+            <button type="button" onClick={handleHeroSearch} className="hero-search-btn"><SearchIcon size={16} color="currentColor" strokeWidth={2.5} /><span>{t("hero.search")}</span></button>
           </div>
         </div>
-
         <div className="hero-location-badge">
-          <span className="loc-pin">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
-            </svg>
+          <span className="loc-pin" aria-hidden="true">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
           </span>
           <span className="loc-text">{HERO_SLIDES[currentHeroSlide].label}</span>
         </div>
-
-        <div className="hero-dots" role="tablist" aria-label="სლაიდები">
-          {HERO_SLIDES.map((slide, idx) => (
-            <button
-              key={idx}
-              className={`hero-dot ${idx === currentHeroSlide ? "active" : ""}`}
-              onClick={() => setCurrentHeroSlide(idx)}
-              aria-label={slide.label}
-              aria-selected={idx === currentHeroSlide}
-              role="tab"
-            />
-          ))}
-        </div>
+        <div className="hero-dots" role="tablist" aria-label="slides">{HERO_SLIDES.map((slide, idx) => <button key={idx} className={`hero-dot ${idx === currentHeroSlide ? "active" : ""}`} onClick={() => goToHeroSlide(idx)} aria-label={slide.label} aria-selected={idx === currentHeroSlide} role="tab" />)}</div>
       </section>
+      <section className="about-section" id="about" aria-label="about"><div className="about-inner"><div className="about-photo-wrap"><div className="about-photo-frame"><Image src="/profile.png" alt="GeorgiaTrips travel company" fill style={{ objectFit: "cover", objectPosition: "center 35%" }} sizes="(max-width: 768px) 100vw, 50vw" priority /></div><div className="about-photo-accent" aria-hidden="true">GeorgiaTrips</div></div>
+          {/*
 
-      {/* ==================== ABOUT / INTRO SECTION ==================== */}
-      <section className="about-section" id="about" aria-label="ჩვენ შესახებ">
-        <div className="about-inner">
-
-          {/* Left — Photo */}
-          <div className="about-photo-wrap">
-            <div className="about-photo-frame">
-              <Image
-                src="/profile.png"
                 alt="GeorgiaTrips — პროფესიონალი სამოგზაურო კომპანია საქართველოში"
                 fill
                 style={{ objectFit: "cover", objectPosition: "center 35%" }}
@@ -890,15 +740,16 @@ export default function Home() {
               </div>
 
               <div className="themed-tours-grid">
-                {sec.tours.map((tour, idx) => (
-                  <article
-                    key={idx}
+                {sec.tours.map((tour) => (
+                  <Link
+                    key={tour.id}
+                    href={`/tours/${encodeURIComponent(tour.id)}`}
                     className="tb-card"
-                    onClick={() => handleTourClick(tour)}
+                    style={{ textDecoration: "none" }}
                   >
                     <div className="tb-card-img-wrap">
                       <Image
-                        src={tour.img}
+                        src={tour.img || "/hero.png"}
                         alt={asLocalizedText(tour.title, lang)}
                         className="tb-card-img"
                         fill
@@ -945,7 +796,7 @@ export default function Home() {
                                 </span>
                               </div>
                             </div>
-                  </article>
+                  </Link>
                 ))}
               </div>
             </section>
@@ -1419,7 +1270,10 @@ export default function Home() {
       <div className="floating-wa">
         <span className="floating-wa-tooltip">{t("popular.whatsappTooltip")}</span>
         <a href={WA_LINK} target="_blank" rel="noopener noreferrer" className="floating-wa-btn">
-          {ICONS.wa}
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+            <path d="M12.003 2C6.477 2 2 6.477 2 12c0 1.989.574 3.842 1.563 5.406L2 22l4.682-1.528A9.956 9.956 0 0012.003 22C17.529 22 22 17.523 22 12S17.529 2 12.003 2zm0 18c-1.676 0-3.26-.455-4.627-1.247l-.331-.198-3.454 1.128 1.156-3.366-.215-.348A7.957 7.957 0 014.003 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8z" />
+          </svg>
         </a>
       </div>
 

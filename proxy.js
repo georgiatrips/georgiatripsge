@@ -57,6 +57,7 @@ export function proxy(request) {
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-georgiatrips-locale", locale);
+  requestHeaders.set("x-georgiatrips-path", pathname);
   const rewriteUrl = request.nextUrl.clone();
   rewriteUrl.pathname = `/${pathParts.slice(2).join("/")}`.replace(/\/$/, "") || "/";
   const response = NextResponse.rewrite(rewriteUrl, {

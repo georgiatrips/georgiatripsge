@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { Noto_Sans_Georgian, Noto_Serif_Georgian, Playfair_Display, Noto_Sans_Arabic } from "next/font/google";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import Script from "next/script";
 import "./globals.css";
 import { AuthProvider } from "./lib/AuthContext";
@@ -56,9 +56,12 @@ export const viewport = {
 };
 
 export async function generateMetadata() {
-  const cookieStore = await cookies();
+  const [cookieStore, requestHeaders] = await Promise.all([cookies(), headers()]);
   const storedLang = cookieStore.get("gt_language")?.value || "ka";
   const lang = ["ka", "en", "ru", "tr", "ar"].includes(storedLang) ? storedLang : "ka";
+  const currentPath = requestHeaders.get("x-georgiatrips-path") || `/${lang}`;
+  const pathWithoutLocale = currentPath.replace(/^\/(?:ka|en|ru|tr|ar)(?=\/|$)/, "") || "/";
+  const localizedUrl = (locale) => `https://georgiatrips.ge/${locale}${pathWithoutLocale === "/" ? "" : pathWithoutLocale}`;
 
   const metaByLang = {
     ka: {
@@ -139,19 +142,19 @@ export async function generateMetadata() {
     description: curr.description,
     keywords: curr.keywords,
     alternates: {
-      canonical: "https://georgiatrips.ge",
+      canonical: localizedUrl(lang),
       languages: {
-        "ka-GE": "https://georgiatrips.ge",
-        "en-US": "https://georgiatrips.ge?lang=en",
-        "ru-RU": "https://georgiatrips.ge?lang=ru",
-        "tr-TR": "https://georgiatrips.ge?lang=tr",
-        "ar-SA": "https://georgiatrips.ge?lang=ar",
+        "ka-GE": localizedUrl("ka"),
+        "en-US": localizedUrl("en"),
+        "ru-RU": localizedUrl("ru"),
+        "tr-TR": localizedUrl("tr"),
+        "ar-SA": localizedUrl("ar"),
       },
     },
     openGraph: {
       title: curr.ogTitle,
       description: curr.ogDesc,
-      url: "https://georgiatrips.ge",
+      url: localizedUrl(lang),
       siteName: "GeorgiaTrips",
       locale: curr.locale,
       type: "website",
@@ -284,6 +287,14 @@ export default async function RootLayout({ children }) {
       dir={htmlDir}
       className={`${notoGeorgian.variable} ${notoSerifGeorgian.variable} ${playfair.variable} ${notoArabic.variable}`}
     >
+      <head>
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://firestore.googleapis.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://connect.facebook.net" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+        <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
+        <link rel="dns-prefetch" href="https://connect.facebook.net" />
+      </head>
       <body>
         <script
           type="application/ld+json"

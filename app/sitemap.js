@@ -1,10 +1,11 @@
 import { listFirestoreTours } from "./lib/toursFirestore";
 import { ALL_TOURS } from "./lib/toursData";
 import { listPlaces } from "./lib/placesFirestore";
-import { listPosts } from "./lib/postsFirestore";
+import { listPostSummaries } from "./lib/postsFirestore";
 
 const BASE_URL = "https://georgiatrips.ge";
 const LANGUAGES = ["ka", "en", "ru", "tr", "ar"];
+const localizedUrl = (lang, route = "") => `${BASE_URL}/${lang}${route || ""}`;
 
 const STATIC_ROUTES = [
   { path: "", priority: 1.0, changeFrequency: "daily" },
@@ -23,17 +24,13 @@ export default async function sitemap() {
 
   // 1. Static Pages
   for (const { path: route, priority, changeFrequency } of STATIC_ROUTES) {
-    const defaultUrl = `${BASE_URL}${route}`;
-
     const languageAlternates = {};
     for (const lang of LANGUAGES) {
-      languageAlternates[lang] = lang === "ka"
-        ? defaultUrl
-        : `${defaultUrl}${defaultUrl.includes("?") ? "&" : "?"}lang=${lang}`;
+      languageAlternates[lang] = localizedUrl(lang, route);
     }
 
     entries.push({
-      url: defaultUrl,
+      url: localizedUrl("ka", route),
       lastModified,
       changeFrequency,
       priority,
@@ -42,14 +39,6 @@ export default async function sitemap() {
       },
     });
 
-    for (const lang of ["en", "ru", "tr", "ar"]) {
-      entries.push({
-        url: `${defaultUrl}${defaultUrl.includes("?") ? "&" : "?"}lang=${lang}`,
-        lastModified,
-        changeFrequency,
-        priority: Math.max(0.2, priority - 0.1),
-      });
-    }
   }
 
   // 2. Dynamic Tours (Firestore + Fallback)
@@ -64,17 +53,13 @@ export default async function sitemap() {
 
     for (const id of tourIds) {
       const tourRoute = `/tours/${id}`;
-      const defaultUrl = `${BASE_URL}${tourRoute}`;
-
       const languageAlternates = {};
       for (const lang of LANGUAGES) {
-        languageAlternates[lang] = lang === "ka"
-          ? defaultUrl
-          : `${defaultUrl}?lang=${lang}`;
+        languageAlternates[lang] = localizedUrl(lang, tourRoute);
       }
 
       entries.push({
-        url: defaultUrl,
+        url: localizedUrl("ka", tourRoute),
         lastModified,
         changeFrequency: "daily",
         priority: 0.9,
@@ -83,14 +68,6 @@ export default async function sitemap() {
         },
       });
 
-      for (const lang of ["en", "ru", "tr", "ar"]) {
-        entries.push({
-          url: `${defaultUrl}?lang=${lang}`,
-          lastModified,
-          changeFrequency: "daily",
-          priority: 0.85,
-        });
-      }
     }
   } catch (err) {
     console.error("Sitemap tours error:", err);
@@ -101,7 +78,7 @@ export default async function sitemap() {
     const places = await listPlaces().catch(() => []);
     for (const place of places) {
       if (!place?.id) continue;
-      const placeUrl = `${BASE_URL}/places/${place.id}`;
+      const placeUrl = localizedUrl("ka", `/places/${place.id}`);
       entries.push({
         url: placeUrl,
         lastModified,
@@ -112,10 +89,10 @@ export default async function sitemap() {
   } catch (_) {}
 
   try {
-    const posts = await listPosts().catch(() => []);
+    const posts = await listPostSummaries().catch(() => []);
     for (const post of posts) {
       if (!post?.id) continue;
-      const postUrl = `${BASE_URL}/posts/${post.id}`;
+      const postUrl = localizedUrl("ka", `/posts/${post.id}`);
       entries.push({
         url: postUrl,
         lastModified,

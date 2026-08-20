@@ -20,17 +20,22 @@ export async function updatePlace(id, data) {
   await updateDoc(doc(db, COLLECTION, id), { ...data, updatedAt: serverTimestamp() });
 }
 export async function deletePlace(id) { await deleteDoc(doc(db, COLLECTION, id)); }
+import { extractImageUrl } from "./toursFirestore";
+
 export function normalizePlace(place) {
   if (!place) return null;
-  const gallery = Array.isArray(place.gallery) ? place.gallery.filter((image) => typeof image === "string" && image) : [];
+  const gallery = Array.isArray(place.gallery)
+    ? place.gallery.map(extractImageUrl).filter(Boolean)
+    : [];
+  const mainImg = extractImageUrl(place.img) || gallery[0] || "/hero.png";
   return {
     ...place,
     id: place.id,
     title: place.title,
     desc: place.desc,
     region: place.region,
-    gallery,
-    img: typeof place.img === "string" && place.img ? place.img : gallery[0] || "/hero.png",
+    gallery: gallery.length > 0 ? gallery : [mainImg],
+    img: mainImg,
     isPopular: Boolean(place.isPopular),
   };
 }

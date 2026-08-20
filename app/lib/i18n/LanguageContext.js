@@ -28,21 +28,20 @@ function detectBrowserLanguage() {
   return "en";
 }
 
-function getInitialLanguage() {
-  if (typeof window === "undefined") return "ka";
+function getInitialLanguage(fallback = "ka") {
+  if (typeof window === "undefined") return fallback;
 
-  // 1. Read the language prefix from the canonical URL.
+  // 1. Check URL query param ?lang=ru
   try {
-    const pathLang = window.location.pathname.split("/")[1];
-    if (SUPPORTED_LANGUAGES.includes(pathLang)) return pathLang;
+    const params = new URLSearchParams(window.location.search);
+    const qLang = params.get("lang");
+    if (qLang && SUPPORTED_LANGUAGES.includes(qLang)) return qLang;
   } catch (_) {}
 
-  // 2. Check localStorage
+  // 2. Check path segment e.g. /ru/...
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved && SUPPORTED_LANGUAGES.includes(saved)) {
-      return saved;
-    }
+    const pathLang = window.location.pathname.split("/").filter(Boolean)[0];
+    if (pathLang && SUPPORTED_LANGUAGES.includes(pathLang)) return pathLang;
   } catch (_) {}
 
   // 3. Check document.cookie
@@ -53,8 +52,15 @@ function getInitialLanguage() {
     }
   } catch (_) {}
 
-  // 4. Fallback to browser language
-  return detectBrowserLanguage();
+  // 4. Check localStorage
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved && SUPPORTED_LANGUAGES.includes(saved)) {
+      return saved;
+    }
+  } catch (_) {}
+
+  return fallback;
 }
 
 /**
@@ -72,23 +78,22 @@ function getNestedValue(obj, path) {
 }
 
 export function LanguageProvider({ children, initialLang = "ka" }) {
-  const [lang, setLang] = useState(initialLang);
+  const [lang, setLangState] = useState(initialLang);
   const [hydrated, setHydrated] = useState(false);
 
-  // Initialize and auto-detect on mount
   useEffect(() => {
-    const initLang = getInitialLanguage() || initialLang;
-    if (initLang && initLang !== lang) {
-      setLang(initLang);
+    const detected = getInitialLanguage(initialLang);
+    if (detected && detected !== lang) {
+      setLangState(detected);
     }
     try {
-      localStorage.setItem(STORAGE_KEY, initLang || initialLang);
-      document.cookie = `gt_language=${initLang || initialLang};path=/;max-age=31536000;samesite=lax`;
+      localStorage.setItem(STORAGE_KEY, detected || initialLang);
+      document.cookie = `gt_language=${detected || initialLang};path=/;max-age=31536000;samesite=lax`;
     } catch (_) {}
     setHydrated(true);
   }, [initialLang]);
 
-  // Sync DOM attributes (<html lang> and <html dir>) and RTL classes whenever lang changes
+  // Sync DOM attributes (<html lang> and <html dir>) whenever lang changes
   useEffect(() => {
     if (typeof document !== "undefined") {
       const isRtl = isRtlLanguage(lang);
@@ -107,51 +112,32 @@ export function LanguageProvider({ children, initialLang = "ka" }) {
     }
   }, [lang]);
 
-  // Keep back/forward navigation synchronized with the locale path.
-  useEffect(() => {
-    const handlePopState = () => {
-      try {
-        const pathLang = window.location.pathname.split("/")[1];
-        if (SUPPORTED_LANGUAGES.includes(pathLang) && pathLang !== lang) {
-          setLang(pathLang);
-          localStorage.setItem(STORAGE_KEY, pathLang);
-          document.cookie = `gt_language=${pathLang};path=/;max-age=31536000;samesite=lax`;
-        }
-      } catch (_) {}
-    };
-
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, [lang]);
-
-  // A language switch changes the canonical path so server-rendered metadata,
-  // html lang/dir and client content all use the same locale.
   const changeLanguage = useCallback((newLang) => {
     if (!SUPPORTED_LANGUAGES.includes(newLang)) return;
-    setLang(newLang);
+    setLangState(newLang);
 
     try {
       localStorage.setItem(STORAGE_KEY, newLang);
       document.cookie = `gt_language=${newLang};path=/;max-age=31536000;samesite=lax`;
     } catch (_) {}
 
-    if (typeof window !== "undefined") {
-      try {
-        const url = new URL(window.location.href);
-        const segments = url.pathname.split("/");
-        if (SUPPORTED_LANGUAGES.includes(segments[1])) segments[1] = newLang;
-        else segments.splice(1, 0, newLang);
-        url.pathname = segments.join("/").replace(/\/{2,}/g, "/");
-        url.searchParams.delete("lang");
-        window.location.assign(url.toString());
-      } catch (_) {}
+    if (typeof document !== "undefined") {
+      const isRtl = isRtlLanguage(newLang);
+      document.documentElement.lang = newLang;
+      document.documentElement.dir = isRtl ? "rtl" : "ltr";
+      if (isRtl) {
+        document.documentElement.classList.add("rtl");
+        document.body?.classList.add("rtl");
+      } else {
+        document.documentElement.classList.remove("rtl");
+        document.body?.classList.remove("rtl");
+      }
     }
   }, []);
 
   /**
    * Translation function.
    * Usage: t("nav.home") => "Home" (if lang is "en")
-   * Synchronously resolves current dictionary with fallback to Georgian dictionary.
    */
   const t = useCallback(
     (key, fallback) => {

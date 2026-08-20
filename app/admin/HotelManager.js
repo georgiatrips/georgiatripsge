@@ -10,7 +10,7 @@ import {
   updateHotel,
 } from "../lib/hotelsFirestore";
 import { normalizeBookingUrl } from "../lib/hotelsFirestore";
-import { asLocalizedText } from "../lib/toursFirestore";
+import { asLocalizedText, extractImageUrl } from "../lib/toursFirestore";
 import { useCurrency } from "../lib/currency/CurrencyContext";
 import LocalizedInputGroup, { emptyLangObj, parseLocal } from "./LocalizedInputGroup";
 
@@ -371,7 +371,10 @@ export default function HotelManager({ onHotelsCountChange }) {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", maxHeight: "800px", overflowY: "auto", paddingRight: "4px" }}>
             {filteredHotels.map((hotel) => {
-              const mainImg = hotel.gallery?.[0] || "/hero.png";
+              const mainImg =
+                extractImageUrl(hotel.img) ||
+                (hotel.gallery && extractImageUrl(hotel.gallery[0])) ||
+                "/hero.png";
               return (
                 <div key={hotel.id} className="admin-entry-card">
                   <div style={{ display: "flex", gap: "0.8rem", padding: "0.8rem" }}>
@@ -401,14 +404,22 @@ export default function HotelManager({ onHotelsCountChange }) {
                   </div>
                   <div className="admin-entry-actions">
                     <a href={hotel.bookingUrl} target="_blank" rel="noopener noreferrer" className="admin-action-btn link">
-                      Booking.com ↗
+                      🏨 Booking ↗
                     </a>
-                    <div style={{ display: "flex", gap: "0.4rem" }}>
-                      <button type="button" className="admin-action-btn edit" onClick={() => edit(hotel)}>
-                        რედაქტირება
+                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                      <button
+                        type="button"
+                        className={`admin-action-btn edit ${editingId === hotel.id ? "is-editing" : ""}`}
+                        onClick={() => edit(hotel)}
+                      >
+                        ✏️ რედაქტირება
                       </button>
-                      <button type="button" className="admin-action-btn delete" onClick={() => remove(hotel.id)}>
-                        წაშლა
+                      <button
+                        type="button"
+                        className="admin-action-btn delete"
+                        onClick={() => remove(hotel.id)}
+                      >
+                        🗑️ წაშლა
                       </button>
                     </div>
                   </div>

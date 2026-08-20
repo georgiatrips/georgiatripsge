@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit,
   orderBy,
   query,
   serverTimestamp,
@@ -34,8 +35,10 @@ const normalizeComment = (snapshot) => {
   };
 };
 
-export async function listPosts(userId = "") {
-  const snapshot = await getDocs(query(postsCollection, orderBy("createdAt", "desc")));
+export async function listPosts(userId = "", maxPosts = 0) {
+  const constraints = [orderBy("createdAt", "desc")];
+  if (Number.isInteger(maxPosts) && maxPosts > 0) constraints.push(limit(maxPosts));
+  const snapshot = await getDocs(query(postsCollection, ...constraints));
 
   return Promise.all(snapshot.docs.map(async (postDoc) => {
     const data = postDoc.data();
@@ -90,6 +93,34 @@ export async function listPosts(userId = "") {
       authorId: data.authorId,
     };
   }));
+}
+
+// Lightweight feed for pages that only need to render post cards or generate
+// sitemap URLs. It deliberately avoids one Firestore subcollection read per
+// post (likes, comments and poll votes), which keeps the homepage fast.
+export async function listPostSummaries(maxPosts = 0) {
+  const constraints = [orderBy("createdAt", "desc")];
+  if (Number.isInteger(maxPosts) && maxPosts > 0) constraints.push(limit(maxPosts));
+  const snapshot = await getDocs(query(postsCollection, ...constraints));
+
+  return snapshot.docs.map((postDoc) => {
+    const data = postDoc.data();
+    return {
+      id: postDoc.id,
+      author: asText(data.authorName, "User"),
+      avatar: data.authorPhoto || "",
+      timeTag: data.createdAt?.toDate?.()?.toLocaleDateString("ka-GE") || "ახლახან",
+      location: data.location ? `📍 ${asText(data.location)}` : "📍 საქართველო",
+      title: asText(data.title, asText(data.text).slice(0, 80) || "ახალი პოსტი"),
+      content: asText(data.text),
+      hashtags: data.activity ? `#${asText(data.activity).replace(/\s+/g, "")}` : "",
+      img: typeof data.image === "string" ? data.image : "",
+      initialLikes: Number(data.likesCount) || 0,
+      comments: [],
+      sharesCount: Number(data.sharesCount) || 0,
+      feeling: asText(data.feeling),
+    };
+  });
 }
 
 export async function createPost({ user, text, feeling, image, poll }) {

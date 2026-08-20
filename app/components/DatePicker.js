@@ -88,9 +88,25 @@ export default function DatePicker({
     const calcPos = () => {
       if (!triggerRef.current) return null;
       const rect = triggerRef.current.getBoundingClientRect();
-      const popoverWidth = 300;
-      const windowW = window.innerWidth;
+      const windowW = typeof window !== "undefined" ? window.innerWidth : 1200;
+      const isMobile = windowW <= 768;
 
+      if (isMobile) {
+        return {
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          zIndex: 9999999,
+          width: "min(360px, calc(100vw - 24px))",
+          maxWidth: "calc(100vw - 24px)",
+          maxHeight: "calc(100dvh - 24px)",
+          overflowY: "auto",
+          boxSizing: "border-box",
+        };
+      }
+
+      const popoverWidth = 300;
       let left = rect.left + rect.width / 2 - popoverWidth / 2;
       if (left < 8) left = 8;
       if (left + popoverWidth > windowW - 8) left = windowW - 8 - popoverWidth;
@@ -125,11 +141,18 @@ export default function DatePicker({
     const updateDOMPos = () => {
       const p = calcPos();
       if (p && popoverRef.current) {
-        popoverRef.current.style.left = `${p.left}px`;
-        if (p.top !== "auto") popoverRef.current.style.top = `${p.top}px`;
+        popoverRef.current.style.position = p.position;
+        popoverRef.current.style.left = typeof p.left === "number" ? `${p.left}px` : p.left;
+        popoverRef.current.style.width = typeof p.width === "number" ? `${p.width}px` : p.width;
+        if (p.transform) popoverRef.current.style.transform = p.transform;
+        else popoverRef.current.style.transform = "none";
+        if (p.top !== "auto") popoverRef.current.style.top = typeof p.top === "number" ? `${p.top}px` : p.top;
         else popoverRef.current.style.top = "auto";
-        if (p.bottom !== "auto") popoverRef.current.style.bottom = `${p.bottom}px`;
+        if (p.bottom !== "auto") popoverRef.current.style.bottom = typeof p.bottom === "number" ? `${p.bottom}px` : p.bottom;
         else popoverRef.current.style.bottom = "auto";
+        popoverRef.current.style.maxHeight = p.maxHeight || "";
+        popoverRef.current.style.overflowY = p.overflowY || "";
+        popoverRef.current.style.boxSizing = p.boxSizing || "";
       }
       ticking = false;
     };
@@ -148,6 +171,18 @@ export default function DatePicker({
       window.removeEventListener("resize", handleScrollOrResize);
     };
   }, [open, direction]);
+
+  useEffect(() => {
+    if (!open || window.innerWidth > 768) return;
+    const previousOverflow = document.body.style.overflow;
+    const previousTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.touchAction = previousTouchAction;
+    };
+  }, [open]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -411,11 +446,13 @@ export default function DatePicker({
   };
 
   const popoverContent = (
-    <div
-      ref={popoverRef}
-      className={`dp-popover dp-popover--${variant} ${direction === "up" ? "dp-popover--up" : ""}`}
-      style={popoverStyle}
-    >
+    <>
+      <div className="dp-backdrop" onClick={() => setOpen(false)} aria-hidden="true" />
+      <div
+        ref={popoverRef}
+        className={`dp-popover dp-popover--${variant} ${direction === "up" ? "dp-popover--up" : ""}`}
+        style={popoverStyle}
+      >
       <div className="dp-header">
         <button type="button" className="dp-nav-btn" onClick={prevMonth} aria-label={t("datePicker.prevMonth")}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -494,6 +531,7 @@ export default function DatePicker({
         </button>
       </div>
     </div>
+    </>
   );
 
   return (

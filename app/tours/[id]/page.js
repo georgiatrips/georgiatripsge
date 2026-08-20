@@ -19,7 +19,8 @@ export default function TourDetailPage() {
   const params = useParams();
   const { t, lang, isEnglish, isRussian } = useLanguage();
   const { format } = useCurrency();
-  const tourId = params?.id || "promethe-martvili";
+  const routeId = Array.isArray(params?.id) ? params.id[0] : params?.id;
+  const tourId = typeof routeId === "string" ? routeId : "";
 
   const [fsTour, setFsTour] = useState(null);
   const [fsLoading, setFsLoading] = useState(true);
@@ -44,10 +45,25 @@ useEffect(() => {
     setFsLoading(true);
     (async () => {
       try {
-        const raw = await getFirestoreTourById(tourId);
+        // A direct document read is the fast path. If an old/deployed rule or
+        // a transient client read fails, fall back to the collection already
+        // used successfully by the public lists, so a valid card never leads
+        // to a false “tour not found” page.
+        let raw = await getFirestoreTourById(tourId);
+        if (!raw) {
+          const tours = await listFirestoreTours();
+          raw = tours.find((item) => item.id === tourId) || null;
+        }
         if (!cancelled) setFsTour(raw ? normalizeFirestoreTour(raw, lang) : null);
-      } catch {
-        if (!cancelled) setFsTour(null);
+      } catch (error) {
+        try {
+          const tours = await listFirestoreTours();
+          const raw = tours.find((item) => item.id === tourId) || null;
+          if (!cancelled) setFsTour(raw ? normalizeFirestoreTour(raw, lang) : null);
+        } catch {
+          console.error("Unable to load tour details", error);
+          if (!cancelled) setFsTour(null);
+        }
       } finally {
         if (!cancelled) setFsLoading(false);
       }
@@ -1184,7 +1200,7 @@ if (fsLoading) {
                 >
                   <div className="tb-card-img-wrap">
                     <Image
-                      src={item.img}
+                      src={item.img || "/hero.png"}
                       alt={asLocalizedText(item.title, lang)}
                       className="tb-card-img"
                       fill
@@ -1253,7 +1269,7 @@ if (fsLoading) {
                 >
                   <div className="tb-card-img-wrap">
                     <Image
-                      src={item.img}
+                      src={item.img || "/hero.png"}
                       alt={asLocalizedText(item.title, lang)}
                       className="tb-card-img"
                       fill

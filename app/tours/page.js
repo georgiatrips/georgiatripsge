@@ -356,7 +356,7 @@ function ToursPageContent() {
                     <Link key={tour.id} href={`/tours/${tour.id}`} className="tb-card" style={{ textDecoration: "none" }}>
                       <div className="tb-card-img-wrap">
                         <Image
-                          src={tour.img}
+                          src={tour.img || "/hero.png"}
                           alt={titleText}
                           className="tb-card-img"
                           fill

@@ -67,8 +67,12 @@ export async function POST(request) {
       );
     }
 
+    const optimizedUrl = data.secure_url
+      ? data.secure_url.replace("/upload/", "/upload/f_auto,q_auto/")
+      : data.secure_url;
+
     return NextResponse.json({
-      url: data.secure_url,
+      url: optimizedUrl,
       publicId: data.public_id,
       width: data.width,
       height: data.height,

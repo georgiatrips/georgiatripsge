@@ -12,6 +12,7 @@ import { FlagGeorgia, FlagUK, FlagRussia, FlagTurkey, FlagArabic } from "./Flags
 // Shared site navigation. `active` highlights the current top-level item.
 // Supported active values: "home" | "tours" | "transport" | "posts" | "hotels" | "admin" | "about" | "contact"
 export default function Navbar({ active = "home" }) {
+  const [mounted, setMounted] = useState(false);
   const [navScrolled, setNavScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
@@ -21,6 +22,10 @@ export default function Navbar({ active = "home" }) {
   const { user, logOut } = useAuth() ?? {};
   const router = useRouter();
   const { lang, setLang, t, isGeorgian, isEnglish, isRussian } = useLanguage();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const displayName =
     user?.displayName ||
@@ -142,17 +147,31 @@ export default function Navbar({ active = "home" }) {
           </button>
           {currencyDropdownOpen && (
             <div className="nav-dropdown nav-dropdown-sm">
-              {Object.keys(CURRENCY_RATES).map((cur) => (
-                <button key={cur} className={`nav-dropdown-item ${currency === cur ? "active" : ""}`} onClick={() => { setCurrency(cur); setCurrencyDropdownOpen(false); }}>
-                  {CURRENCY_RATES[cur].symbol !== cur ? `${CURRENCY_RATES[cur].symbol} ${cur}` : cur}
-                </button>
-              ))}
+              {Object.keys(CURRENCY_RATES).map((cur) => {
+                const item = CURRENCY_RATES[cur];
+                return (
+                  <button
+                    key={cur}
+                    className={`nav-dropdown-item ${currency === cur ? "active" : ""}`}
+                    onClick={() => {
+                      setCurrency(cur);
+                      setCurrencyDropdownOpen(false);
+                    }}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" }}
+                  >
+                    <span style={{ fontWeight: 800, color: "var(--teal)", minWidth: "24px", fontSize: "0.95rem" }}>
+                      {item.icon || item.symbol}
+                    </span>
+                    <span style={{ fontWeight: 700, fontSize: "0.86rem" }}>{cur}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
 
         {/* User / Login Button */}
-        {user ? (
+        {mounted && user ? (
           <div
             className="nav-control-wrap"
             onMouseEnter={() => openDropdown(setUserDropdownOpen)}
@@ -227,29 +246,56 @@ export default function Navbar({ active = "home" }) {
         )}
         <div className="nav-mobile-controls">
           {/* Mobile Language Switcher */}
-          <div className="nav-mobile-ctrl-row">
-            <span>{t("nav.language")}:</span>
-            {languages.map((l) => (
-              <button
-                key={l.code}
-                className={`nav-mobile-ctrl-btn ${lang === l.code ? "active" : ""}`}
-                onClick={() => setLang(l.code)}
-                style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
-              >
-                {l.flag} <span>{l.label}</span>
-              </button>
-            ))}
+          <div className="nav-mobile-ctrl-section">
+            <span className="nav-mobile-ctrl-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              {t("nav.language") || "ენა"}
+            </span>
+            <div className="nav-mobile-lang-grid">
+              {languages.map((l) => (
+                <button
+                  key={l.code}
+                  className={`nav-mobile-lang-card ${lang === l.code ? "active" : ""}`}
+                  onClick={() => {
+                    setLang(l.code);
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  <span className="nav-mobile-flag">{l.flag}</span>
+                  <span className="nav-mobile-lang-name">{l.label}</span>
+                  {lang === l.code && <span className="nav-mobile-active-dot">✓</span>}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="nav-mobile-ctrl-row">
-            <span>{t("nav.currency")}:</span>
-            {Object.keys(CURRENCY_RATES).map((cur) => (
-              <button key={cur} className={`nav-mobile-ctrl-btn ${currency === cur ? "active" : ""}`} onClick={() => setCurrency(cur)}>
-                {CURRENCY_RATES[cur].symbol !== cur ? `${CURRENCY_RATES[cur].symbol} ${cur}` : cur}
-              </button>
-            ))}
+
+          {/* Mobile Currency Switcher */}
+          <div className="nav-mobile-ctrl-section">
+            <span className="nav-mobile-ctrl-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 8h4.5a2.5 2.5 0 0 1 0 5H9m0 0h4.5a2.5 2.5 0 0 1 0 5H9"/></svg>
+              {t("nav.currency") || "ვალუტა"}
+            </span>
+            <div className="nav-mobile-curr-grid">
+              {Object.keys(CURRENCY_RATES).map((cur) => {
+                const item = CURRENCY_RATES[cur];
+                return (
+                  <button
+                    key={cur}
+                    className={`nav-mobile-curr-card ${currency === cur ? "active" : ""}`}
+                    onClick={() => {
+                      setCurrency(cur);
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <span className="nav-mobile-curr-sym">{item.icon || item.symbol}</span>
+                    <span className="nav-mobile-curr-code">{cur}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
-        {user ? (
+        {mounted && user ? (
           <div className="nav-mobile-user">
             <div className="nav-mobile-user-info">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

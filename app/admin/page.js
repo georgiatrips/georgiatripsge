@@ -29,6 +29,7 @@ import {
   asLocalizedText,
   matchesMultiLang,
   firestoreErrorMessage,
+  extractImageUrl,
 } from "../lib/toursFirestore";
 
 const emptyLocation = () => ({ placeId: "", search: "", title: emptyLangObj(), desc: emptyLangObj(), img: "" });
@@ -407,17 +408,18 @@ export default function AdminPage() {
 
     const cleanedGallery = gallery
       .map((item) => {
-        if (typeof item === "string") return { url: item, locationTitle: "", placeId: "" };
-        if (item && item.url) {
+        const url = extractImageUrl(item);
+        if (typeof item === "string" && url) return { url, locationTitle: "", placeId: "" };
+        if (item && typeof item === "object" && url) {
           return {
-            url: item.url,
+            url,
             locationTitle: item.locationTitle || "",
             placeId: item.placeId || "",
           };
         }
         return null;
       })
-      .filter((i) => i && i.url);
+      .filter((i) => i?.url);
 
     const payload = {
       title,
@@ -452,8 +454,10 @@ export default function AdminPage() {
       isVip,
       isPopular,
       itinerary,
-      gallery,
-      img: gallery[0] || itinerary[0]?.img || "/hero.png",
+      // Store a URL, never the gallery object itself. Older records can contain
+      // gallery metadata objects, while next/image requires a string source.
+      gallery: cleanedGallery,
+      img: cleanedGallery[0]?.url || extractImageUrl(itinerary[0]?.img) || "/hero.png",
       departureDates: hasGroup
         ? departureDates.map((d) => ({
             date: d.date,
@@ -520,10 +524,11 @@ export default function AdminPage() {
     setGallery(
       (Array.isArray(tour.gallery) ? tour.gallery : [])
         .map((item) => {
-          if (typeof item === "string") return { url: item, locationTitle: "", placeId: "" };
-          if (item && typeof item === "object" && item.url) {
+          const url = extractImageUrl(item);
+          if (typeof item === "string" && url) return { url, locationTitle: "", placeId: "" };
+          if (item && typeof item === "object" && url) {
             return {
-              url: item.url,
+              url,
               locationTitle: typeof item.locationTitle === "string" ? item.locationTitle : asLocalizedText(item.locationTitle, "ka") || "",
               placeId: item.placeId || "",
             };
@@ -998,7 +1003,7 @@ export default function AdminPage() {
                           .map((place) => (
                             <button type="button" key={place.id} className="admin-place-search-result" onClick={() => selectPlaceForLocation(idx, place)}>
                               <span className="admin-place-result-thumb">
-                                <Image src={place.img || place.gallery?.[0] || "/hero.png"} alt="" fill sizes="42px" style={{ objectFit: "cover" }} />
+                                <Image src={extractImageUrl(place.img) || extractImageUrl(place.gallery?.[0]) || "/hero.png"} alt="" fill sizes="42px" style={{ objectFit: "cover" }} />
                               </span>
                               <span><strong>{asLocalizedText(place.title, "ka")}</strong><small>{asLocalizedText(place.region, "ka")}</small></span>
                             </button>
@@ -1023,7 +1028,7 @@ export default function AdminPage() {
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: "0.85rem", minWidth: 0 }}>
                         <div style={{ position: "relative", width: "52px", height: "52px", borderRadius: "8px", overflow: "hidden", flexShrink: 0, border: "1px solid rgba(255,255,255,0.2)" }}>
-                          <Image src={loc.img || "/hero.png"} alt="" fill sizes="52px" style={{ objectFit: "cover" }} />
+                          <Image src={extractImageUrl(loc.img) || "/hero.png"} alt="" fill sizes="52px" style={{ objectFit: "cover" }} />
                         </div>
                         <div style={{ minWidth: 0 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
@@ -1447,7 +1452,11 @@ export default function AdminPage() {
                     return matchesSearch && matchesRegion;
                   })
                   .map((tItem) => {
-                    const mainImg = tItem.gallery?.[0] || "/hero.png";
+                    const mainImg =
+                      extractImageUrl(tItem.img) ||
+                      extractImageUrl(tItem.image) ||
+                      (tItem.gallery && extractImageUrl(tItem.gallery[0])) ||
+                      "/hero.png";
                     return (
                       <div key={tItem.id} className="admin-entry-card">
                         <div style={{ display: "flex", gap: "0.8rem", padding: "0.8rem" }}>

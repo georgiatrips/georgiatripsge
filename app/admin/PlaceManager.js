@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { GEORGIA_REGIONS } from "../lib/placesMeta";
 import { createPlace, deletePlace, listPlaces, updatePlace } from "../lib/placesFirestore";
-import { asLocalizedText } from "../lib/toursFirestore";
+import { asLocalizedText, extractImageUrl } from "../lib/toursFirestore";
 import LocalizedInputGroup, { emptyLangObj, parseLocal } from "./LocalizedInputGroup";
 
 async function upload(file) {
@@ -290,7 +290,10 @@ export default function PlaceManager({ onPlacesCountChange }) {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", maxHeight: "800px", overflowY: "auto", paddingRight: "4px" }}>
             {filteredPlaces.map((place) => {
-              const mainImg = place.gallery?.[0] || place.img || "/hero.png";
+              const mainImg =
+                extractImageUrl(place.img) ||
+                (place.gallery && extractImageUrl(place.gallery[0])) ||
+                "/hero.png";
               return (
                 <div key={place.id} className="admin-entry-card">
                   <div style={{ display: "flex", gap: "0.8rem", padding: "0.8rem" }}>
@@ -318,14 +321,22 @@ export default function PlaceManager({ onPlacesCountChange }) {
                   </div>
                   <div className="admin-entry-actions">
                     <Link href={`/places/${place.id}`} className="admin-action-btn link" target="_blank">
-                      საიტზე ნახვა →
+                      👁️ ნახვა ↗
                     </Link>
-                    <div style={{ display: "flex", gap: "0.4rem" }}>
-                      <button type="button" className="admin-action-btn edit" onClick={() => edit(place)}>
-                        რედაქტირება
+                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                      <button
+                        type="button"
+                        className={`admin-action-btn edit ${editingId === place.id ? "is-editing" : ""}`}
+                        onClick={() => edit(place)}
+                      >
+                        ✏️ რედაქტირება
                       </button>
-                      <button type="button" className="admin-action-btn delete" onClick={() => remove(place.id)}>
-                        წაშლა
+                      <button
+                        type="button"
+                        className="admin-action-btn delete"
+                        onClick={() => remove(place.id)}
+                      >
+                        🗑️ წაშლა
                       </button>
                     </div>
                   </div>

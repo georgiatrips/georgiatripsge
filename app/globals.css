@@ -808,10 +808,77 @@ body {
   opacity: 1;
   transform: scale(1.02);
   z-index: 1;
+  animation: heroPhotoReveal 1.6s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
 .hero-bg.loaded.active {
   transform: scale(1);
+}
+
+/* The incoming photo itself fades from a soft blur while the outgoing image
+   dissolves through the mosaic overlay. */
+@keyframes heroPhotoReveal {
+  0% {
+    opacity: 0;
+    filter: brightness(0.82) saturate(1.15) blur(14px);
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    filter: brightness(0.82) saturate(1.15) blur(0);
+    transform: scale(1);
+  }
+}
+
+/* 252-tile glass shutter shown only while the hero photo changes. Each tile
+   inherits a different opacity/blur value and fades to transparent in a wave. */
+.hero-mosaic-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(18, minmax(0, 1fr));
+  grid-template-rows: repeat(14, minmax(0, 1fr));
+  pointer-events: none;
+  overflow: hidden;
+  contain: layout paint;
+}
+
+.hero-mosaic-box {
+  opacity: 0;
+  background-color: rgba(235, 247, 255, 0.08);
+  background-image: var(--tile-image);
+  background-size: 1800% 1400%;
+  background-position: var(--tile-position);
+  background-repeat: no-repeat;
+  backdrop-filter: blur(0);
+  -webkit-backdrop-filter: blur(0);
+  transform: scale(1.02);
+}
+
+.hero-mosaic-grid.is-shuttering .hero-mosaic-box {
+  animation: heroMosaicShutter 880ms cubic-bezier(0.22, 0.61, 0.36, 1) var(--shutter-delay) both;
+  will-change: opacity, transform, backdrop-filter;
+}
+
+@keyframes heroMosaicShutter {
+  0% {
+    opacity: var(--base-opacity);
+    backdrop-filter: blur(var(--base-blur));
+    -webkit-backdrop-filter: blur(var(--base-blur));
+    transform: scale(1.02);
+  }
+  38% {
+    opacity: var(--base-opacity);
+    backdrop-filter: blur(var(--base-blur));
+    -webkit-backdrop-filter: blur(var(--base-blur));
+  }
+  100% {
+    opacity: 0;
+    backdrop-filter: blur(0);
+    -webkit-backdrop-filter: blur(0);
+    transform: scale(1.1);
+  }
 }
 
 .hero-location-badge {
@@ -871,7 +938,7 @@ body {
 
 .hero-content {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   max-width: 880px;
   width: 100%;
   padding: 0 5%;
@@ -879,6 +946,20 @@ body {
   flex-direction: column;
   align-items: center;
   margin-top: -30px;
+}
+
+@media (max-width: 768px) {
+  /* Keep the transition smooth on phones: retain the pattern but halve the
+     number of active blur surfaces. */
+  .hero-mosaic-box:nth-child(even) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-mosaic-grid.is-shuttering .hero-mosaic-box {
+    animation: none;
+  }
 }
 
 /* Eyebrow badge with golden shimmer border */
@@ -23181,5 +23262,316 @@ html {
   font-size: 0.95rem;
 }
 
+/* ============================================================
+   PREMIUM MOBILE NAVIGATION - LANGUAGE & CURRENCY GRIDS
+   ============================================================ */
 
+.nav-mobile {
+  max-height: calc(100dvh - 70px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2.5rem !important;
+}
 
+.nav-mobile-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 1rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav-mobile-ctrl-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.nav-mobile-ctrl-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--teal, #2ec4b6);
+}
+
+.nav-mobile-lang-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.5rem;
+}
+
+.nav-mobile-lang-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 8px 12px;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  width: 100%;
+}
+
+.nav-mobile-lang-card:hover {
+  background: rgba(46, 196, 182, 0.15);
+  border-color: rgba(46, 196, 182, 0.4);
+  color: #ffffff;
+}
+
+.nav-mobile-lang-card.active {
+  background: rgba(46, 196, 182, 0.22);
+  border-color: var(--teal, #2ec4b6);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(46, 196, 182, 0.25);
+}
+
+.nav-mobile-flag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nav-mobile-lang-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-mobile-active-dot {
+  color: var(--teal, #2ec4b6);
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.nav-mobile-curr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 0.5rem;
+}
+
+.nav-mobile-curr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 8px 6px;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.nav-mobile-curr-card:hover {
+  background: rgba(46, 196, 182, 0.15);
+  border-color: rgba(46, 196, 182, 0.4);
+  color: #ffffff;
+}
+
+.nav-mobile-curr-card.active {
+  background: rgba(46, 196, 182, 0.22);
+  border-color: var(--teal, #2ec4b6);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(46, 196, 182, 0.25);
+}
+
+.nav-mobile-curr-sym {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--teal, #2ec4b6);
+}
+
+.nav-mobile-curr-code {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* ============================================================
+   DATEPICKER MOBILE OPTIMIZATION & BACKDROP
+   ============================================================ */
+
+.dp-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999990 !important;
+  background: rgba(4, 13, 24, 0.7) !important;
+  backdrop-filter: blur(5px) !important;
+  -webkit-backdrop-filter: blur(5px) !important;
+  animation: dpBackdropFade 0.2s ease both !important;
+}
+
+@keyframes dpBackdropFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .dp-popover {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: min(360px, calc(100vw - 24px)) !important;
+    max-width: calc(100vw - 24px) !important;
+    max-height: calc(100dvh - 24px) !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
+    padding: 16px !important;
+    border-radius: 20px !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(46, 196, 182, 0.3) !important;
+    z-index: 9999999 !important;
+    animation: dpModalPop 0.22s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+  }
+
+  @keyframes dpModalPop {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -46%) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+
+  .dp-header {
+    margin-bottom: 12px !important;
+  }
+
+  .dp-month-label {
+    font-size: 1rem !important;
+    font-weight: 800 !important;
+  }
+
+  .dp-nav-btn {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .dp-grid {
+    gap: 4px !important;
+  }
+
+  .dp-day {
+    height: 38px !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    border-radius: 10px !important;
+  }
+
+  .dp-footer {
+    margin-top: 14px !important;
+    padding-top: 12px !important;
+    gap: 10px !important;
+  }
+
+  .dp-today-btn,
+  .dp-clear-btn {
+    padding: 9px 14px !important;
+    font-size: 0.85rem !important;
+    border-radius: 10px !important;
+  }
+}
+
+/* ============================================================
+   ADMIN CATALOG ENTRY CARDS & ACTION BUTTONS
+   ============================================================ */
+
+.admin-entry-card {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.admin-entry-card:hover {
+  border-color: rgba(46, 196, 182, 0.4);
+  background: rgba(15, 23, 42, 0.9);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.admin-entry-card.is-editing {
+  border: 1.5px solid #38bdf8;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.3);
+  background: rgba(56, 189, 248, 0.08);
+}
+
+.admin-entry-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.85rem;
+  background: rgba(0, 0, 0, 0.25);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 0.5rem;
+}
+
+.admin-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.admin-action-btn.link {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.admin-action-btn.link:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+.admin-action-btn.edit {
+  background: rgba(46, 196, 182, 0.15);
+  color: #2ec4b6;
+  border-color: rgba(46, 196, 182, 0.35);
+}
+
+.admin-action-btn.edit:hover,
+.admin-action-btn.edit.is-editing {
+  background: #2ec4b6;
+  color: #0d233a;
+  border-color: #2ec4b6;
+  box-shadow: 0 0 12px rgba(46, 196, 182, 0.4);
+}
+
+.admin-action-btn.delete {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.admin-action-btn.delete:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+}

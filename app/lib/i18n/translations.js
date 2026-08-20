@@ -341,6 +341,7 @@ export const translations = {
       selectDate: "აირჩიეთ თარიღი",
       today: "დღეს",
       clear: "გასუფთავება",
+      close: "დახურვა",
       prevMonth: "წინა თვე",
       nextMonth: "შემდეგი თვე",
       openCalendar: "კალენდრის გახსნა",

@@ -53,11 +53,14 @@ export function normalizeBookingUrl(value) {
   return `https://${raw.replace(/^\/+/, "")}`;
 }
 
+import { extractImageUrl } from "./toursFirestore";
+
 export function normalizeHotel(hotel) {
   if (!hotel) return null;
   const gallery = Array.isArray(hotel.gallery)
-    ? hotel.gallery.filter((image) => typeof image === "string" && image).slice(0, 2)
+    ? hotel.gallery.map(extractImageUrl).filter(Boolean).slice(0, 2)
     : [];
+  const mainImg = extractImageUrl(hotel.img) || gallery[0] || "/hero.png";
   const rating = Number(hotel.rating);
   return {
     ...hotel,
@@ -68,8 +71,8 @@ export function normalizeHotel(hotel) {
     priceFrom: typeof hotel.priceFrom === "string" ? hotel.priceFrom : "",
     rating: Number.isFinite(rating) && rating > 0 ? Math.min(rating, 10) : null,
     bookingUrl: normalizeBookingUrl(hotel.bookingUrl),
-    gallery,
-    img: gallery[0] || "/hero.png",
+    gallery: gallery.length > 0 ? gallery : [mainImg],
+    img: mainImg,
     isFeatured: Boolean(hotel.isFeatured),
     priceLabel: hotel.priceLabel,
     buttonText: hotel.buttonText,
