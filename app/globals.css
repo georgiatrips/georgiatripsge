@@ -45,7 +45,7 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
   font-size: 16px;
   background: var(--bg-main);
 }
@@ -4728,30 +4728,16 @@ body {
 }
 
 /* ============================================================
-   SCROLL REVEAL
+   SCROLL REVEAL (CLEAN & NON-SHIFTING)
    ============================================================ */
 .reveal {
-  opacity: 0;
-  transform: translateY(32px);
-  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: opacity, transform;
+  opacity: 1;
+  transform: none !important;
 }
 
 .reveal.in-view {
   opacity: 1;
-  transform: translateY(0);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .reveal {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
-
-  html {
-    scroll-behavior: auto;
-  }
+  transform: none !important;
 }
 
 /* ============================================================
@@ -5800,10 +5786,12 @@ body {
    HIGH-END THEMED SECTIONS DESIGN & DISTINCT SEPARATION
    ============================================================ */
 .themed-sections-container {
-  padding: 1.5rem 0 3rem;
   display: flex;
   flex-direction: column;
   gap: 3.5rem;
+  max-width: calc(var(--max-w) + 4%);
+  margin: 0 auto;
+  width: 100%;
 }
 
 .themed-tours-section {
@@ -5948,7 +5936,6 @@ body {
 @media (max-width: 768px) {
   .themed-sections-container {
     gap: 2rem;
-    padding: 1rem 0 2rem;
   }
 
   .themed-tours-section {
@@ -5972,6 +5959,9 @@ body {
 .themed-sections-container {
   display: flex;
   flex-direction: column;
+  max-width: calc(var(--max-w) + 4%);
+  margin: 0 auto;
+  width: 100%;
 }
 
 /* Distinct Section Separation & Styling */
@@ -6204,7 +6194,7 @@ body {
 .themed-sections-container {
   max-width: calc(var(--max-w) + 4%);
   margin: 0 auto;
-  padding: 1rem 1rem 3rem;
+  width: 100%;
 }
 
 .themed-tours-section {
@@ -6609,8 +6599,10 @@ body {
 }
 
 .themed-sections-container {
-  padding-top: 0.5rem !important;
-  padding-bottom: 1rem !important;
+  padding: 0 !important;
+  max-width: calc(var(--max-w) + 4%) !important;
+  margin: 0 auto !important;
+  width: 100% !important;
 }
 
 .themed-section-header {
@@ -8347,15 +8339,15 @@ body {
   transform: rotate(180deg);
 }
 
-/* Backdrop Overlay */
+/* Backdrop Overlay — transparent, only for click-outside detection */
 .dp-backdrop {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 2147483646 !important;
-  background: rgba(4, 13, 24, 0.65) !important;
-  backdrop-filter: blur(6px) !important;
-  -webkit-backdrop-filter: blur(6px) !important;
-  animation: dpBackdropFade 0.2s ease both !important;
+  position: fixed;
+  inset: 0;
+  z-index: 9999998;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  pointer-events: auto;
 }
 
 @keyframes dpBackdropFade {
@@ -8371,7 +8363,7 @@ body {
 /* Popover Base (Desktop & Mobile) */
 .dp-popover {
   position: fixed !important;
-  z-index: 2147483647 !important;
+  z-index: 9999999 !important;
   width: 320px;
   background: linear-gradient(155deg, #0f2742 0%, #0a1b2e 100%) !important;
   border: 1px solid rgba(46, 196, 182, 0.35) !important;
@@ -8574,7 +8566,7 @@ body {
 }
 
 .dp-day--outside {
-  color: rgba(255, 255, 255, 0.24) !important;
+  color: rgba(255, 255, 255, 0.38) !important;
   font-weight: 400 !important;
 }
 
@@ -8584,9 +8576,11 @@ body {
 }
 
 .dp-day--past {
-  color: rgba(255, 255, 255, 0.2) !important;
+  color: rgba(255, 255, 255, 0.42) !important;
   cursor: not-allowed !important;
   pointer-events: none !important;
+  text-decoration: line-through !important;
+  text-decoration-color: rgba(255, 255, 255, 0.15) !important;
 }
 
 /* Footer */
@@ -8670,20 +8664,20 @@ body {
   .dp-popover,
   .dp-popover--mobile {
     position: fixed !important;
-    top: 50% !important;
+    top: 15dvh !important;
     left: 50% !important;
     right: auto !important;
     bottom: auto !important;
-    transform: translate(-50%, -50%) !important;
-    width: min(350px, calc(100vw - 28px)) !important;
-    max-width: calc(100vw - 28px) !important;
-    max-height: calc(100dvh - 32px) !important;
+    transform: translateX(-50%) !important;
+    width: min(396px, calc(100vw - 12px)) !important;
+    max-width: calc(100vw - 12px) !important;
+    max-height: calc(96dvh - 20px) !important;
     box-sizing: border-box !important;
     overflow-y: auto !important;
     padding: 16px 14px !important;
     border-radius: 22px !important;
     box-shadow: 0 25px 70px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(46, 196, 182, 0.35) !important;
-    z-index: 2147483647 !important;
+    z-index: 9999999 !important;
     animation: dpMobileModalIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) both !important;
   }
 
@@ -10240,13 +10234,13 @@ body {
 
   .dp-popover,
   .dp-popover--up {
+    box-sizing: border-box !important;
+    width: min(280px, 92vw) !important;
+    max-width: 280px !important;
+    padding: 10px 2px !important;
     left: 50% !important;
     right: auto !important;
     transform: translateX(-50%) !important;
-    width: min(280px, 92vw) !important;
-    max-width: 280px !important;
-    padding: 10px 12px !important;
-    box-sizing: border-box !important;
   }
 
   .dp-header {
@@ -10415,11 +10409,17 @@ body {
   color: #ffffff;
   font-size: 0.65rem;
   font-weight: 800;
-  padding: 4px 10px;
+  padding: 0 10px;
+  height: 26px;
+  line-height: 26px;
   border-radius: 6px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   user-select: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 .schedule-days-grid {
@@ -10434,13 +10434,19 @@ body {
   background: #29b2b7;
   color: #ffffff;
   border: none;
-  font-size: 0.72rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  padding: 4px 9px;
+  padding: 0 9px;
+  height: 26px;
+  line-height: 26px;
   border-radius: 6px;
   cursor: pointer;
   transition: transform 0.15s ease, background 0.15s ease;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-variant-numeric: tabular-nums;
 }
 
 .schedule-date-chip:hover,
@@ -14754,7 +14760,7 @@ body {
 /* filter popover: light theme so it separates from the dark sidebar */
 .dp-popover--filter {
   width: 296px !important;
-  background: #ffffff !important;
+  background: #153350 !important;
   border: 1px solid #e2e8f0 !important;
   border-radius: 16px !important;
   box-shadow: 0 24px 50px rgba(4, 16, 30, 0.35) !important;
@@ -25249,16 +25255,24 @@ html {
     display: none !important;
   }
 
-  /* 2. Section Containers and Full-Width Mobile Spacing */
+  /* 2. Section Containers and Full-Width Mobile Spacing — ZERO HORIZONTAL PADDING */
+  .container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
   .section {
-    padding: 2.75rem 0 !important;
+    padding: 2.5rem 0 !important;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
   }
 
   .section-inner {
-    padding: 0 1rem !important;
+    padding: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
@@ -25374,10 +25388,10 @@ html {
   .themed-tours-grid {
     display: flex !important;
     flex-direction: column !important;
-    gap: 1.25rem !important;
+    gap: 0.85rem !important;
     width: 100% !important;
     max-width: 100% !important;
-    padding: 0 1rem !important;
+    padding: 0 !important;
     box-sizing: border-box !important;
   }
 
@@ -25392,7 +25406,7 @@ html {
     max-height: none !important;
     margin: 0 !important;
     box-sizing: border-box !important;
-    border-radius: 16px !important;
+    border-radius: 0 !important;
   }
 
   .tours-grid-catalog .tb-card,
@@ -25420,40 +25434,150 @@ html {
   .transport-photos-row {
     display: none !important;
   }
+
+  /* 7. Weather Dashboard Full Width on Mobile */
+  .weather-wrap {
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .weather-dashboard {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 0.85rem !important;
+  }
+
+  .weather-main-card,
+  .weather-forecast-side {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    border-radius: 16px !important;
+  }
+
+  /* 8. Tour Schedule List Full Width on Mobile */
+  .schedule-list-container,
+  .schedule-card-row {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .schedule-card-row {
+    padding: 1.35rem 1rem !important;
+    border-radius: 0 !important;
+  }
+
+  /* 9. Override all 4% side-padding sections — truly edge-to-edge */
+  .weather-section,
+  .map-section,
+  .reviews-section,
+  .stats-band,
+  .faq-section,
+  .why-section,
+  .about-section,
+  .booking-section,
+  .social-section,
+  .intl-section,
+  .batumi-section,
+  .popular-destinations-section,
+  .category-section,
+  .page-tours-catalog-section {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 10. Inner content wrappers — zero horizontal padding */
+  .popular-destinations-inner,
+  .weather-wrap,
+  .section-header,
+  .themed-section-header,
+  .batumi-section-header,
+  .intl-header,
+  .why-wrap,
+  .booking-wrap,
+  .map-wrap,
+  .social-feed-grid,
+  .stats-grid,
+  .faq-list {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 11. Category cards — edge-to-edge with small internal padding */
+  .categories-grid {
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+
+  .category-card {
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-top: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .category-card + .category-card {
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  /* 12. Pop cards and tour mini-cards */
+  .pop-cards-wrapper,
+  .pop-cards-col,
+  .pop-layout-swapped,
+  .mini-cards-slider-container,
+  .pop-tours-grid-wrapper {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+  }
 }
 
 /* ============================================================
-   SCHEDULE MONTHS & COMPACT DATE CHIPS (HORIZONTAL ALIGNMENT)
+   SCHEDULE MONTHS & COMPACT DATE CHIPS (SAME HEIGHT & COMPACT WIDTH)
    ============================================================ */
 
 .schedule-months-flex {
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
-  gap: 0.75rem !important;
+  gap: 0.65rem !important;
   flex-wrap: wrap !important;
   width: 100% !important;
-  margin-top: 0.4rem !important;
+  margin-top: 0.45rem !important;
 }
 
 .schedule-month-block {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 4px !important;
+  gap: 5px !important;
   flex-wrap: nowrap !important;
-  background: rgba(15, 23, 42, 0.04) !important;
-  padding: 3px 5px !important;
-  border-radius: 7px !important;
-  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  background: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .schedule-month-pill {
   min-width: auto !important;
   width: auto !important;
-  height: 23px !important;
-  padding: 2px 7px !important;
+  height: 25px !important;
+  padding: 0 10px !important;
   border-radius: 5px !important;
-  font-size: 0.62rem !important;
+  font-size: 0.68rem !important;
   font-weight: 800 !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -25465,7 +25589,7 @@ html {
   flex-shrink: 0 !important;
   background: #334155 !important;
   color: #f8fafc !important;
-  line-height: 1 !important;
+  line-height: 25px !important;
   box-sizing: border-box !important;
 }
 
@@ -25478,11 +25602,12 @@ html {
 
 .schedule-date-chip,
 .schedule-day-chip {
-  min-width: 36px !important;
-  height: 23px !important;
-  font-size: 0.65rem !important;
+  min-width: 32px !important;
+  width: auto !important;
+  height: 25px !important;
+  font-size: 0.64rem !important;
   font-weight: 700 !important;
-  padding: 2px 5px !important;
+  padding: 0 5px !important;
   border-radius: 5px !important;
   border: none !important;
   background: #29b2b7 !important;
@@ -25491,7 +25616,7 @@ html {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  line-height: 1 !important;
+  line-height: 25px !important;
   font-variant-numeric: tabular-nums !important;
   transition: all 0.15s ease !important;
   touch-action: manipulation !important;
@@ -25511,36 +25636,37 @@ html {
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
-  gap: 0.75rem !important;
+  gap: 0.65rem !important;
   flex-wrap: wrap !important;
 }
 
 .tdp-schedule-month {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 4px !important;
+  gap: 5px !important;
   flex-wrap: nowrap !important;
   margin-bottom: 0 !important;
-  background: rgba(15, 23, 42, 0.04) !important;
-  padding: 3px 5px !important;
-  border-radius: 7px !important;
-  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  background: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .tdp-schedule-month-pill {
   min-width: auto !important;
   width: auto !important;
-  height: 23px !important;
-  padding: 2px 7px !important;
+  height: 25px !important;
+  padding: 0 10px !important;
   border-radius: 5px !important;
-  font-size: 0.62rem !important;
+  font-size: 0.68rem !important;
   font-weight: 800 !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   text-transform: uppercase !important;
   flex-shrink: 0 !important;
-  line-height: 1 !important;
+  line-height: 25px !important;
   box-sizing: border-box !important;
 }
 
@@ -25552,32 +25678,39 @@ html {
 }
 
 .tdp-schedule-chip {
-  min-width: 36px !important;
-  height: 23px !important;
-  font-size: 0.65rem !important;
+  min-width: 32px !important;
+  width: auto !important;
+  height: 25px !important;
+  font-size: 0.64rem !important;
   font-weight: 700 !important;
-  padding: 2px 5px !important;
+  padding: 0 5px !important;
   border-radius: 5px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   font-variant-numeric: tabular-nums !important;
   box-sizing: border-box !important;
-  line-height: 1 !important;
+  line-height: 25px !important;
 }
 
-/* Extra small mobile screens (<= 430px) */
-@media (max-width: 430px) {
+/* Extra small mobile screens (<= 480px) — Edge-to-Edge Perfection */
+@media (max-width: 480px) {
   .section-inner,
   .popular-destinations-inner,
-  .themed-tours-grid {
-    padding-left: 12px !important;
-    padding-right: 12px !important;
+  .themed-tours-grid,
+  .tour-schedule-section,
+  .weather-section .container {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .category-card {
     padding: 1.35rem 1.15rem 1.25rem !important;
     min-height: 155px !important;
+    width: 100% !important;
   }
 
   .tb-card,
@@ -25585,6 +25718,14 @@ html {
   .tour-card {
     height: 320px !important;
     min-height: 320px !important;
+    width: 100% !important;
+  }
+
+  .weather-main-card,
+  .weather-forecast-side,
+  .schedule-card-row,
+  .pop-card {
+    width: 100% !important;
   }
 
   .schedule-months-flex,
@@ -25599,16 +25740,196 @@ html {
 
   .schedule-month-pill,
   .tdp-schedule-month-pill {
-    padding: 2px 5px !important;
-    font-size: 0.6rem !important;
-    height: 21px !important;
+    padding: 0 8px !important;
+    font-size: 0.65rem !important;
+    height: 24px !important;
+    line-height: 24px !important;
   }
 
   .schedule-day-chip,
   .tdp-schedule-chip {
-    min-width: 33px !important;
+    min-width: 30px !important;
     font-size: 0.62rem !important;
-    height: 21px !important;
-    padding: 1px 4px !important;
+    height: 24px !important;
+    padding: 0 4px !important;
+    line-height: 24px !important;
+  }
+}
+
+/* ============================================================
+   MOBILE FINAL FIXES — EDGE-TO-EDGE, CARDS, STAGGER & CHIPS
+   All rules below apply ONLY on phones (max-width: 768px)
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* ── 1. Popular Places (Tourist Spots) — 35% smaller, 2-col stagger ── */
+  .pop-cards-wrapper {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.65rem !important;
+    width: 100% !important;
+    padding: 0 12px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Top card left, bottom card right — achieved via nth-child alignment */
+  .pop-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 14px !important;
+    transform: none !important;
+  }
+
+  /* Stagger: even cards shift down slightly */
+  .pop-card:nth-child(even) {
+    margin-top: 1.5rem !important;
+  }
+
+  .pop-card:nth-child(odd) {
+    margin-top: 0 !important;
+  }
+
+  .pop-card-staggered {
+    transform: none !important;
+  }
+
+  /* Pop card image — 35% smaller overall (4:5 → more compact aspect) */
+  .pop-card-img-wrap {
+    aspect-ratio: 3 / 4 !important;
+    width: 100% !important;
+  }
+
+  /* ── 2. Themed / Section Tour Cards — height +7% (340 → 364px) ── */
+  .tb-card,
+  .intl-card,
+  .tour-card,
+  .themed-tours-grid .tb-card,
+  .pop-fc {
+    height: 364px !important;
+    min-height: 364px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* ── 3. All cards, grids, wrappers — TRUE edge-to-edge ── */
+  .categories-grid,
+  .themed-tours-grid,
+  .pop-tours-grid-wrapper,
+  .mini-cards-slider-container,
+  .tours-grid-catalog {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+  }
+
+  .category-card {
+    width: 100% !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .weather-main-card,
+  .weather-forecast-side {
+    border-radius: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  /* ── 4. Schedule chips — identical to desktop ── */
+  .schedule-months-flex,
+  .tdp-schedule-months {
+    flex-wrap: wrap !important;
+    gap: 0.6rem !important;
+    align-items: center !important;
+  }
+
+  .schedule-month-block,
+  .tdp-schedule-month {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    padding: 0 !important;
+    background: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .schedule-month-pill,
+  .tdp-schedule-month-pill {
+    height: 26px !important;
+    line-height: 26px !important;
+    padding: 0 10px !important;
+    font-size: 0.65rem !important;
+    font-weight: 800 !important;
+    min-width: auto !important;
+    width: auto !important;
+    border-radius: 6px !important;
+    background: #475569 !important;
+    color: #ffffff !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.06em !important;
+    box-sizing: border-box !important;
+    user-select: none !important;
+  }
+
+  .schedule-day-chip,
+  .schedule-date-chip,
+  .tdp-schedule-chip {
+    height: 26px !important;
+    line-height: 26px !important;
+    min-width: 32px !important;
+    width: auto !important;
+    padding: 0 9px !important;
+    font-size: 0.65rem !important;
+    font-weight: 700 !important;
+    border-radius: 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #29b2b7 !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-sizing: border-box !important;
+    font-variant-numeric: tabular-nums !important;
+    cursor: pointer !important;
+    touch-action: manipulation !important;
+  }
+
+  .schedule-days-grid,
+  .tdp-schedule-days {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex-wrap: wrap !important;
+  }
+}
+
+/* ── 430px and below — tighten further ── */
+@media (max-width: 430px) {
+  .pop-cards-wrapper {
+    padding: 0 8px !important;
+    gap: 0.5rem !important;
+  }
+
+  .tb-card,
+  .intl-card,
+  .tour-card {
+    height: 340px !important;
+    min-height: 340px !important;
   }
 }

@@ -1,4 +1,9 @@
 import { NextResponse } from "next/server";
+import {
+  detectBot,
+  checkRateLimit,
+  isStaticAssetRequest,
+} from "./app/lib/security";
 
 const SUPPORTED_LANGUAGES = ["ka", "en", "ru", "tr", "ar"];
 
@@ -24,8 +29,71 @@ function detectLanguage(acceptLanguageHeader) {
   return "en";
 }
 
+// API routes-ის ბოტებისგან დაცვა
+function isApiRequest(pathname) {
+  return pathname.startsWith("/api/") || pathname === "/api";
+}
+
 export function proxy(request) {
   const { pathname, searchParams } = request.nextUrl;
+
+  // ═══════════════════════════════════════════════════════════════
+  // 1. ბოტების გამოვლენა და დაბლოკვა
+  // ═══════════════════════════════════════════════════════════════
+  const botInfo = detectBot(request);
+
+  // დაბლოკილი ბოტები - 403 დაბრუნება (გარდა სტატიკური აქტივებისა)
+  if (botInfo?.blocked && !isStaticAssetRequest(request)) {
+    return new NextResponse("Bot access denied", { status: 403 });
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 2. Rate Limiting ყველა მომხმარებლისთვის (მათ შორის ბოტებისთვის)
+  // ═══════════════════════════════════════════════════════════════
+  // API routes-ზე ზოგად ლიმიტს არ ვუშვებთ - მათ ცალკე ლიმიტი აქვთ (30/წთ)
+  if (!isApiRequest(pathname) && !isStaticAssetRequest(request)) {
+    const { rateLimited, retryAfter } = checkRateLimit(request);
+
+    if (rateLimited) {
+      return new NextResponse("Too many requests", {
+        status: 429,
+        headers: {
+          "Retry-After": String(retryAfter || 60),
+          "X-RateLimit-Limit": "120",
+          "X-RateLimit-Remaining": "0",
+        },
+      });
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 3. API routes-ის დამატებითი დაცვა
+  // ═══════════════════════════════════════════════════════════════
+  if (isApiRequest(pathname)) {
+    // API-ზე ბოტის მსგავსი User-Agent (-ის დაბლოკვა)
+    if (botInfo?.suspicious) {
+      return new NextResponse("API access denied", { status: 403 });
+    }
+    // API-ზე მკაცრი ლიმიტი (30/წუთი)
+    const { rateLimited: apiLimited, retryAfter: apiRetryAfter } =
+      checkRateLimit(request, { max: 30 });
+    if (apiLimited) {
+      return new NextResponse("API rate limit exceeded", {
+        status: 429,
+        headers: {
+          "Retry-After": String(apiRetryAfter || 60),
+          "X-RateLimit-Limit": "30",
+          "X-RateLimit-Remaining": "0",
+        },
+      });
+    }
+    // API routes-ზე არ ვასრულებთ ენის redirect-ს - უბრალოდ ვაგრძელებთ
+    return NextResponse.next();
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 4. ენის გადამისამართება / rewrite (არსებული ლოგიკა)
+  // ═══════════════════════════════════════════════════════════════
   const urlLang = searchParams.get("lang");
   const cookieLang = request.cookies.get("gt_language")?.value;
   const pathParts = pathname.split("/");
@@ -76,5 +144,5 @@ export function proxy(request) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)"],
 };

@@ -320,28 +320,6 @@ export default function Home() {
     return () => clearInterval(heroInterval);
   }, [currentHeroSlide, goToHeroSlide]);
 
-  // Scroll-reveal animation for all sections
-  useEffect(() => {
-    const targets = document.querySelectorAll(
-      ".section-header, .categories-grid, .why-wrap, .booking-wrap, .weather-wrap, .map-wrap, .social-feed-grid, .stats-grid, .faq-list, .batumi-section-header, .intl-header"
-    );
-    targets.forEach((el) => el.classList.add("reveal"));
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("in-view");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
-    );
-    targets.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
-
   const handleBookNow = (tourTitle, tourPrice) => {
     bookTourOnWhatsApp(tourTitle, tourPrice, lang);
   };

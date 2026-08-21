@@ -92,15 +92,20 @@ export default function DatePicker({
       const isMobile = windowW <= 768;
 
       if (isMobile) {
+        // Use visualViewport height when available (accounts for on-screen keyboard)
+        const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        // 10% - 12% higher = practically top of screen (clamped to min 8px)
+        const topOffset = Math.round(vh * 0.15);
+        const maxH = Math.min(vh - topOffset - 16, 580); // fill most of screen
         return {
           position: "fixed",
-          top: "50%",
+          top: `${topOffset}px`,
           left: "50%",
-          transform: "translate(-50%, -50%)",
+          transform: "translateX(-50%)",
           zIndex: 9999999,
-          width: "min(360px, calc(100vw - 24px))",
-          maxWidth: "calc(100vw - 24px)",
-          maxHeight: "calc(100dvh - 24px)",
+          width: "min(396px, calc(100vw - 12px))",   // +10% wider, less margin
+          maxWidth: "calc(100vw - 12px)",
+          maxHeight: `${maxH}px`,
           overflowY: "auto",
           boxSizing: "border-box",
         };
@@ -166,9 +171,16 @@ export default function DatePicker({
 
     window.addEventListener("scroll", handleScrollOrResize, { capture: true, passive: true });
     window.addEventListener("resize", handleScrollOrResize, { passive: true });
+    // Also reposition when virtual keyboard appears/disappears on mobile
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", handleScrollOrResize);
+    }
     return () => {
       window.removeEventListener("scroll", handleScrollOrResize, true);
       window.removeEventListener("resize", handleScrollOrResize);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", handleScrollOrResize);
+      }
     };
   }, [open, direction]);
 
