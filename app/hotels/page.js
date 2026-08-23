@@ -13,7 +13,7 @@ import { SearchIcon } from "../components/Icons";
 
 function HotelCard({ hotel, t, lang }) {
   const { format } = useCurrency();
-  const photo = hotel.gallery?.[0] || "/hero.png";
+  const photo = hotel.gallery?.[0] || "/hero.webp";
   const nameText = asLocalizedText(hotel.name, lang);
   const descText = asLocalizedText(hotel.desc, lang);
   const priceLabelText = asLocalizedText(hotel.priceLabel, lang);
@@ -99,7 +99,7 @@ export default function HotelsPage() {
         kicker={t("hotelsPage.kicker")}
         title={t("hotelsPage.title")}
         subtitle={t("hotelsPage.subtitle")}
-        image="/villa.png"
+        image="/villa.webp"
         alt={t("hotelsPage.title")}
       >
         <div className="hm-search">

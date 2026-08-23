@@ -495,7 +495,7 @@ if (fsLoading) {
                   "@id": `https://georgiatrips.ge/tours/${tourId}#tour`,
                   "name": asLocalizedText(tour.title, lang),
                   "description": asLocalizedText(tour.desc, lang),
-                  "image": tour.img ? (tour.img.startsWith("http") ? tour.img : `https://georgiatrips.ge${tour.img.startsWith("/") ? "" : "/"}${tour.img}`) : "https://georgiatrips.ge/hero.png",
+                  "image": tour.img ? (tour.img.startsWith("http") ? tour.img : `https://georgiatrips.ge${tour.img.startsWith("/") ? "" : "/"}${tour.img}`) : "https://georgiatrips.ge/hero.webp",
                   "offers": {
                     "@type": "AggregateOffer",
                     "lowPrice": tour.priceNumber || (typeof tour.price === "number" ? tour.price : 80),
@@ -572,7 +572,7 @@ if (fsLoading) {
       <section className="tdp-hero2">
         <div className="tdp-hero2-media">
           <Image
-            src={tour.img || "/hero.png"}
+            src={tour.img || "/hero.webp"}
             alt={asLocalizedText(tour.title, lang)}
             fill
             priority

@@ -27,28 +27,28 @@ export default function TransfersPage() {
     sedan: {
       key: "sedan",
       img: "/1car.webp",
-      fallbackImg: "/car1.png",
+      fallbackImg: "/1car.webp",
       pax: 3,
       bags: 2,
     },
     minivan: {
       key: "minivan",
       img: "/2car.webp",
-      fallbackImg: "/car2.png",
+      fallbackImg: "/2car.webp",
       pax: 6,
       bags: 5,
     },
     jeep: {
       key: "jeep",
       img: "/3car.webp",
-      fallbackImg: "/car3.png",
+      fallbackImg: "/3car.webp",
       pax: 4,
       bags: 3,
     },
     sprinter: {
       key: "sprinter",
       img: "/4car.webp",
-      fallbackImg: "/car4.png",
+      fallbackImg: "/4car.webp",
       pax: 16,
       bags: 14,
     },
@@ -224,7 +224,7 @@ export default function TransfersPage() {
         kicker={t("transfersPage.heroKicker")}
         title={t("transfersPage.heroTitle")}
         subtitle={t("transfersPage.heroSubtitle")}
-        image="/hero.png"
+        image="/hero.webp"
         alt={t("transfersPage.heroTitle")}
       />
 

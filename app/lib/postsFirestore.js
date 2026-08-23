@@ -76,7 +76,7 @@ export async function listPosts(userId = "", maxPosts = 0) {
       id: postDoc.id,
       category: data.category || "article",
       author: asText(data.authorName, "მომხმარებელი"),
-      avatar: data.authorPhoto || "/logo.png",
+      avatar: data.authorPhoto || "/logo.webp",
       timeTag: data.createdAt?.toDate?.()?.toLocaleDateString("ka-GE") || "ახლახან",
       location: data.location ? "📍 " + asText(data.location) : "📍 საქართველო",
       title: asText(data.title, asText(data.text).slice(0, 80) || "ახალი პოსტი"),

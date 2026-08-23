@@ -31,11 +31,11 @@ const truncateText = (value, maxLength = 100) => {
 };
 
 const HERO_SLIDES = [
-  { image: "/hero.png", label: "Kazbegi, Georgia" },
-  { image: "/tbilisi.png", label: "Tbilisi, Georgia" },
-  { image: "/gudauri.png", label: "Gudauri, Georgia" },
-  { image: "/mestia.png", label: "Svaneti, Georgia" },
-  { image: "/batumi.png", label: "Batumi, Georgia" }
+  { image: "/hero.webp", label: "Kazbegi, Georgia" },
+  { image: "/tbilisi.webp", label: "Tbilisi, Georgia" },
+  { image: "/gudauri.webp", label: "Gudauri, Georgia" },
+  { image: "/mestia.webp", label: "Svaneti, Georgia" },
+  { image: "/batumi.webp", label: "Batumi, Georgia" }
 ];
 
 const ICONS = {

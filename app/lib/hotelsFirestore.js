@@ -60,7 +60,7 @@ export function normalizeHotel(hotel) {
   const gallery = Array.isArray(hotel.gallery)
     ? hotel.gallery.map(extractImageUrl).filter(Boolean).slice(0, 2)
     : [];
-  const mainImg = extractImageUrl(hotel.img) || gallery[0] || "/hero.png";
+  const mainImg = extractImageUrl(hotel.img) || gallery[0] || "/hero.webp";
   const rating = Number(hotel.rating);
   return {
     ...hotel,

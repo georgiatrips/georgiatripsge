@@ -27,7 +27,7 @@ export function normalizePlace(place) {
   const gallery = Array.isArray(place.gallery)
     ? place.gallery.map(extractImageUrl).filter(Boolean)
     : [];
-  const mainImg = extractImageUrl(place.img) || gallery[0] || "/hero.png";
+  const mainImg = extractImageUrl(place.img) || gallery[0] || "/hero.webp";
   return {
     ...place,
     id: place.id,

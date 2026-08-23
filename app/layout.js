@@ -136,7 +136,7 @@ export async function generateMetadata() {
   return {
     metadataBase: new URL("https://georgiatrips.ge"),
     icons: {
-      icon: "/logo.png",
+      icon: "/logo.webp",
     },
     title: curr.title,
     description: curr.description,
@@ -160,7 +160,7 @@ export async function generateMetadata() {
       type: "website",
       images: [
         {
-          url: "/hero.png",
+          url: "/hero.webp",
           width: 1200,
           height: 630,
           alt: curr.ogTitle,
@@ -171,7 +171,7 @@ export async function generateMetadata() {
       card: "summary_large_image",
       title: curr.ogTitle,
       description: curr.ogDesc,
-      images: ["/hero.png"],
+      images: ["/hero.webp"],
     },
     verification: {
       google: "pqDpqUT-VHHamkaxnisNnk8LO2z-v0EdXak_z77V86U",
@@ -208,8 +208,8 @@ function buildStructuredData(lang = "ka") {
         name: "GeorgiaTrips",
         legalName: "GeorgiaTrips",
         url: "https://georgiatrips.ge",
-        logo: "https://georgiatrips.ge/logo.png",
-        image: "https://georgiatrips.ge/hero.png",
+        logo: "https://georgiatrips.ge/logo.webp",
+        image: "https://georgiatrips.ge/hero.webp",
         description: "Premium tours, private excursions, and VIP transfers in Georgia (Tbilisi, Batumi, Kazbegi, Kakheti, Svaneti).",
         telephone: "+995504220020",
         email: "info@georgiatrips.ge",
@@ -328,9 +328,9 @@ export default async function RootLayout({ children }) {
           <>
             <Script
               src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
-              strategy="afterInteractive"
+              strategy="lazyOnload"
             />
-            <Script id="google-analytics" strategy="afterInteractive">
+            <Script id="google-analytics" strategy="lazyOnload">
               {`
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
@@ -342,7 +342,7 @@ export default async function RootLayout({ children }) {
         )}
 
         {/* Meta Pixel (Facebook & Instagram Ads) */}
-        <Script id="meta-pixel" strategy="afterInteractive">
+        <Script id="meta-pixel" strategy="lazyOnload">
           {`
             !function(f,b,e,v,n,t,s)
             {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -368,7 +368,7 @@ export default async function RootLayout({ children }) {
 
         {/* Microsoft Clarity (Free Screen Recordings & Heatmaps) */}
         {process.env.NEXT_PUBLIC_CLARITY_ID && (
-          <Script id="ms-clarity" strategy="afterInteractive">
+          <Script id="ms-clarity" strategy="lazyOnload">
             {`
               (function(c,l,a,r,i,t,y){
                   c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};

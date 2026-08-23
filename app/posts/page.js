@@ -442,7 +442,7 @@ export default function PostsPage() {
         kicker={t("postsPage.heroKicker")}
         title={t("postsPage.heroTitle")}
         subtitle={t("postsPage.heroSubtitle")}
-        image="/mestia.png"
+        image="/mestia.webp"
         alt={t("postsPage.heroTitle")}
       />
 
@@ -472,7 +472,7 @@ export default function PostsPage() {
             <div className="posts-sidebar-tour-list">
               {sidebarTours.map((tour) => (
                 <Link key={tour.id} href={"/tours/" + tour.id} className="posts-sidebar-tour">
-                  <span className="posts-sidebar-tour-image"><Image src={tour.img || "/hero.png"} alt={asLocalizedText(tour.title, lang)} fill sizes="96px" style={{ objectFit: "cover" }} /></span>
+                  <span className="posts-sidebar-tour-image"><Image src={tour.img || "/hero.webp"} alt={asLocalizedText(tour.title, lang)} fill sizes="96px" style={{ objectFit: "cover" }} /></span>
                   <span className="posts-sidebar-tour-info">
                     <strong>{asLocalizedText(tour.title, lang)}</strong>
                     <small>{translateDuration(tour.duration, lang)} · {translateLocation(tour.destinationLabel || tour.destination || tour.location, lang)}</small>

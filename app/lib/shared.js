@@ -163,10 +163,10 @@ export function getFaqs(lang = "ka") {
   return FAQS_BY_LANG[lang] || FAQS_BY_LANG.ka;
 }
 
-// Brand logo — uses the uploaded logo.png asset
+// Brand logo — uses the uploaded logo.webp asset
 export const BrandLogo = ({ width = 48, height = 48, priority = false }) => (
   <Image
-    src="/logo.png"
+    src="/logo.webp"
     alt="GeorgiaTrips"
     width={width}
     height={height}

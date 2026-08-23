@@ -151,7 +151,7 @@ function ToursPageContent() {
         kicker={t("toursPage.kicker")}
         title={t("toursPage.title")}
         subtitle={t("toursPage.subtitle")}
-        image="/hero.png"
+        image="/hero.webp"
         alt={t("toursPage.title")}
       />
 
@@ -356,7 +356,7 @@ function ToursPageContent() {
                     <Link key={tour.id} href={`/tours/${tour.id}`} className="tb-card" style={{ textDecoration: "none" }}>
                       <div className="tb-card-img-wrap">
                         <Image
-                          src={tour.img || "/hero.png"}
+                          src={tour.img || "/hero.webp"}
                           alt={titleText}
                           className="tb-card-img"
                           fill

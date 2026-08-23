@@ -442,7 +442,7 @@ export function normalizeFirestoreTour(tour, lang = "ka") {
     placeId: typeof item?.placeId === "string" ? item.placeId : "",
     title: asLocalizedText(item?.title, lang),
     desc: asLocalizedText(item?.desc, lang),
-    img: extractImageUrl(item?.img) || extractImageUrl(item?.image) || "/hero.png",
+    img: extractImageUrl(item?.img) || extractImageUrl(item?.image) || "/hero.webp",
   }));
 
   const gallery = (Array.isArray(tour.gallery) ? tour.gallery : [])
@@ -467,7 +467,7 @@ export function normalizeFirestoreTour(tour, lang = "ka") {
     extractImageUrl(tour.coverImage) ||
     gallery[0] ||
     (itinerary[0] && itinerary[0].img) ||
-    "/hero.png";
+    "/hero.webp";
 
   return {
     ...tour,

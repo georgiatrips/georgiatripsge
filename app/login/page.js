@@ -185,7 +185,7 @@ export default function LoginPage() {
             <>
               {/* ── Logo + headline ── */}
               <div className="lp-logo">
-                <Image src="/logo.png" alt="GeorgiaTrips" width={64} height={64} style={{ objectFit: "contain" }} />
+                <Image src="/logo.webp" alt="GeorgiaTrips" width={64} height={64} style={{ objectFit: "contain" }} />
               </div>
               <h1 className="lp-title">{t("loginPage.welcomeTitle")}</h1>
               <p className="lp-subtitle">{t("loginPage.welcomeSubtitle")}</p>

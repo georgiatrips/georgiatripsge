@@ -118,7 +118,7 @@ export default function PlacesPage() {
           kicker={t("placesPage.kicker")}
           title={t("placesPage.title")}
           subtitle={t("placesPage.subtitle")}
-          image="/tbilisi.png"
+          image="/tbilisi.webp"
           alt={t("placesPage.title")}
         />
 
