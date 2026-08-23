@@ -20,6 +20,7 @@ import { listReviews } from "../lib/reviewsFirestore";
 import { useAuth } from "../lib/AuthContext";
 import { useCurrency } from "../lib/currency/CurrencyContext";
 import { useLanguage } from "../lib/i18n/LanguageContext";
+import { adminFetch } from "../lib/apiClient";
 import {
   createTour,
   listFirestoreTours,
@@ -37,7 +38,7 @@ const emptyLocation = () => ({ placeId: "", search: "", title: emptyLangObj(), d
 async function uploadToCloudinary(file) {
   const fd = new FormData();
   fd.append("file", file);
-  const res = await fetch("/api/upload", { method: "POST", body: fd });
+  const res = await adminFetch("/api/upload", { method: "POST", body: fd });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "ატვირთვა ვერ მოხერხდა");
   return data.url;
@@ -128,7 +129,7 @@ export default function AdminPage() {
   const schedulePreview = groupDepartureDates(departureDates);
 
   const refreshList = async () => {
-    if (!user) {
+    if (!user || !user.isAdmin) {
       setExistingTours([]);
       setLoadingList(false);
       return;
@@ -148,7 +149,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (user === undefined) return;
-    if (!user) {
+    if (!user || !user.isAdmin) {
       setExistingTours([]);
       setLoadingList(false);
       return;
@@ -581,6 +582,28 @@ export default function AdminPage() {
               </p>
               <Link href="/login" className="admin-btn-primary">
                 შესვლა
+              </Link>
+            </div>
+          </div>
+        </section>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!user.isAdmin) {
+    return (
+      <div className="admin-page">
+        <Navbar active="admin" />
+        <section className="admin-section">
+          <div className="container admin-layout">
+            <div className="admin-login-prompt">
+              <h2>წვდომა შეზღუდულია</h2>
+              <p>
+                ადმინ პანელზე წვდომა დაშვებულია მხოლოდ ადმინისტრატორის ანგარიშისთვის.
+              </p>
+              <Link href="/" className="admin-btn-primary" style={{ marginTop: "1rem" }}>
+                მთავარ გვერდზე დაბრუნება
               </Link>
             </div>
           </div>

@@ -1,48 +1,92 @@
 rules_version = '2';
-// დროებით: ადმინ პანელი ღიაა (წესები განაახლეთ Firebase Console-ში ან: firebase deploy --only firestore:rules)
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.admin == true ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true)
+      );
+    }
+
+    // Tours collection
     match /tours/{tourId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isAdmin();
     }
+
+    // Places / Attractions collection
+    match /places/{placeId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Hotels collection
+    match /hotels/{hotelId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Customer Reviews
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+
+    // Analytics and Visitor Sessions
+    match /visitor_sessions/{sessionId} {
+      allow read: if isAdmin();
+      allow create, update: if true;
+      allow delete: if isAdmin();
+    }
+
+    match /analytics_events/{eventId} {
+      allow read: if isAdmin();
+      allow create, update: if true;
+      allow delete: if isAdmin();
+    }
+
+    // User profiles
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow create: if isAuthenticated() && request.auth.uid == userId &&
+        (!('isAdmin' in request.resource.data) || request.resource.data.isAdmin == false);
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin']))
+      );
+      allow delete: if isAdmin();
     }
+
+    // Community Posts & Blog
     match /posts/{postId} {
       allow read: if true;
-      allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
-      allow update, delete: if request.auth != null && resource.data.authorId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isAdmin());
 
       match /likes/{userId} {
         allow read: if true;
-        allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+        allow create, update, delete: if isAuthenticated() && request.auth.uid == userId;
       }
 
       match /comments/{commentId} {
         allow read: if true;
-        allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
-        allow update, delete: if request.auth != null && resource.data.authorId == request.auth.uid;
+        allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
+        allow update, delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isAdmin());
       }
 
       match /votes/{userId} {
         allow read: if true;
-        allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+        allow create, update, delete: if isAuthenticated() && request.auth.uid == userId;
       }
-    }
-    match /places/{placeId} {
-      allow read, write: if true;
-    }
-    match /hotels/{hotelId} {
-      allow read, write: if true;
-    }
-    match /reviews/{reviewId} {
-      allow read, write: if true;
-    }
-    match /visitor_sessions/{sessionId} {
-      allow read, write: if true;
-    }
-    match /analytics_events/{eventId} {
-      allow read, write: if true;
     }
   }
 }
+

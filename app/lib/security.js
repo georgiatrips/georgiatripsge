@@ -11,6 +11,10 @@ if (!globalThis.__rateLimitStore) {
   globalThis.__rateLimitStore = new Map();
 }
 
+const MAX_TRACKED_CLIENTS = 20_000;
+const CLEANUP_INTERVAL_MS = 60 * 1000;
+if (!globalThis.__rateLimitLastCleanup) globalThis.__rateLimitLastCleanup = 0;
+
 function cleanupExpiredEntries(now) {
   const store = globalThis.__rateLimitStore;
   for (const [key, entry] of store) {
@@ -34,15 +38,21 @@ export function getClientIp(request) {
   return "unknown";
 }
 
-export function checkRateLimit(request, { max = MAX_REQUESTS_PER_WINDOW, windowMs = WINDOW_MS } = {}) {
+export function checkRateLimit(request, { max = MAX_REQUESTS_PER_WINDOW, windowMs = WINDOW_MS, namespace = "page" } = {}) {
   const now = Date.now();
-  cleanupExpiredEntries(now);
+  if (now - globalThis.__rateLimitLastCleanup > CLEANUP_INTERVAL_MS) {
+    cleanupExpiredEntries(now);
+    globalThis.__rateLimitLastCleanup = now;
+  }
 
   const ip = getClientIp(request);
-  const key = `rl:${ip}`;
+  const key = `rl:${namespace}:${ip}`;
 
   const current = globalThis.__rateLimitStore.get(key);
   if (!current || current.resetAt < now) {
+    if (globalThis.__rateLimitStore.size >= MAX_TRACKED_CLIENTS) {
+      return { rateLimited: false, remaining: max };
+    }
     globalThis.__rateLimitStore.set(key, {
       count: 1,
       resetAt: now + windowMs,

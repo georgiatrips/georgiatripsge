@@ -7,11 +7,12 @@ import { GEORGIA_REGIONS } from "../lib/placesMeta";
 import { createPlace, deletePlace, listPlaces, updatePlace } from "../lib/placesFirestore";
 import { asLocalizedText, extractImageUrl } from "../lib/toursFirestore";
 import LocalizedInputGroup, { emptyLangObj, parseLocal } from "./LocalizedInputGroup";
+import { adminFetch } from "../lib/apiClient";
 
 async function upload(file) {
   const fd = new FormData();
   fd.append("file", file);
-  const response = await fetch("/api/upload", { method: "POST", body: fd });
+  const response = await adminFetch("/api/upload", { method: "POST", body: fd });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "ატვირთვა ვერ მოხერხდა");
   return data.url;

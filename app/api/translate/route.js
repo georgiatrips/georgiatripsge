@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "../../lib/server/adminAuth";
+
+const ALLOWED_TARGETS = new Set(["ka", "en", "ru", "tr", "ar"]);
+const MAX_TEXT_LENGTH = 5_000;
 
 export async function POST(req) {
   try {
+    const admin = await requireAdmin(req);
+    if (admin.error) return NextResponse.json({ error: admin.error }, { status: admin.status });
+
     const { text, target } = await req.json();
-    if (!text) {
+    if (!text || typeof text !== "string" || text.length > MAX_TEXT_LENGTH) {
       return NextResponse.json({ error: "Text is required" }, { status: 400 });
     }
-    if (!target) {
+    if (!ALLOWED_TARGETS.has(target)) {
       return NextResponse.json({ error: "Target language is required" }, { status: 400 });
     }
 

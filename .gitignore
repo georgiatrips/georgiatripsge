@@ -23,6 +23,12 @@
 # misc
 .DS_Store
 *.pem
+client_secret*.json
+
+# local temp / scratch scripts
+fix.js
+original_page.js
+readlines.js
 
 # debug
 npm-debug.log*
@@ -39,3 +45,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+

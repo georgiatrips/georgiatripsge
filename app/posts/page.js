@@ -12,6 +12,7 @@ import { useAuth } from "../lib/AuthContext";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 import { addPostComment, createPost, deletePost, listPosts, togglePostLike, updatePost, voteOnPoll } from "../lib/postsFirestore";
 import { formatLocationTag, asLocalizedText, translateDuration, translateLocation } from "../lib/toursFirestore";
+import { adminFetch } from "../lib/apiClient";
 
 const asText = (value, fallback = "") => {
   if (typeof value === "string" || typeof value === "number") return String(value);
@@ -291,7 +292,7 @@ export default function PostsPage() {
     try {
       const data = new FormData();
       data.append("file", file);
-      const response = await fetch("/api/upload", { method: "POST", body: data });
+      const response = await adminFetch("/api/upload", { method: "POST", body: data });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || t("postsPage.uploadPhotoError"));
       setPostImage(result.url);

@@ -174,6 +174,7 @@ export async function generateMetadata() {
       images: ["/hero.png"],
     },
     verification: {
+      google: "pqDpqUT-VHHamkaxnisNnk8LO2z-v0EdXak_z77V86U",
       other: {
         "facebook-domain-verification": "ef9kax36lazdya98y738pn5e10ny2e",
       },

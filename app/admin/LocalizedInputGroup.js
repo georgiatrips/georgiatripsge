@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { adminFetch } from "../lib/apiClient";
 
 export const emptyLangObj = () => ({ ka: "", en: "", ru: "", tr: "", ar: "" });
 
@@ -41,7 +42,7 @@ export default function LocalizedInputGroup({
     try {
       for (const target of targets) {
         if (!getValueForLang(target)) {
-          const res = await fetch("/api/translate", {
+          const res = await adminFetch("/api/translate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ text: kaText, target }),

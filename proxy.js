@@ -34,6 +34,15 @@ function isApiRequest(pathname) {
   return pathname.startsWith("/api/") || pathname === "/api";
 }
 
+const API_LIMITS = {
+  "/api/upload": { max: 5, methods: ["POST"] },
+  "/api/translate": { max: 10, methods: ["POST"] },
+  "/api/google-reviews": { max: 10, methods: ["GET"] },
+  "/api/weather": { max: 30, methods: ["GET"] },
+  "/api/currency": { max: 30, methods: ["GET"] },
+  "/api/analytics/track": { max: 20, methods: ["GET"] },
+};
+
 export function proxy(request) {
   const { pathname, searchParams } = request.nextUrl;
 
@@ -74,15 +83,28 @@ export function proxy(request) {
     if (botInfo?.suspicious) {
       return new NextResponse("API access denied", { status: 403 });
     }
+    const policy = API_LIMITS[pathname] || { max: 20, methods: ["GET", "POST"] };
+    if (!policy.methods.includes(request.method)) {
+      return new NextResponse("Method not allowed", {
+        status: 405,
+        headers: { Allow: policy.methods.join(", ") },
+      });
+    }
+    if (pathname === "/api/upload") {
+      const contentLength = Number(request.headers.get("content-length") || 0);
+      if (contentLength > 5 * 1024 * 1024 + 64 * 1024) {
+        return new NextResponse("Payload too large", { status: 413 });
+      }
+    }
     // API-ზე მკაცრი ლიმიტი (30/წუთი)
     const { rateLimited: apiLimited, retryAfter: apiRetryAfter } =
-      checkRateLimit(request, { max: 30 });
+      checkRateLimit(request, { max: policy.max, namespace: pathname });
     if (apiLimited) {
       return new NextResponse("API rate limit exceeded", {
         status: 429,
         headers: {
           "Retry-After": String(apiRetryAfter || 60),
-          "X-RateLimit-Limit": "30",
+          "X-RateLimit-Limit": String(policy.max),
           "X-RateLimit-Remaining": "0",
         },
       });

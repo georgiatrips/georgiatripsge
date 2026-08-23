@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import { requireAuthenticatedUser } from "../../lib/server/adminAuth";
 
 export const runtime = "nodejs";
 
@@ -7,6 +8,8 @@ const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
 const API_KEY = process.env.CLOUDINARY_API_KEY;
 const API_SECRET = process.env.CLOUDINARY_API_SECRET;
 const FOLDER = "georgia-trips/tours";
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 function signParams(params) {
   const toSign = Object.keys(params)
@@ -18,6 +21,14 @@ function signParams(params) {
 
 export async function POST(request) {
   try {
+    const user = await requireAuthenticatedUser(request);
+    if (user.error) return NextResponse.json({ error: user.error }, { status: user.status });
+
+    const declaredLength = Number(request.headers.get("content-length") || 0);
+    if (declaredLength > MAX_UPLOAD_BYTES + 64 * 1024) {
+      return NextResponse.json({ error: "File is too large" }, { status: 413 });
+    }
+
     if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
       return NextResponse.json(
         { error: "Cloudinary credentials are not configured" },
@@ -30,6 +41,13 @@ export async function POST(request) {
 
     if (!file || typeof file === "string") {
       return NextResponse.json({ error: "ფაილი ვერ მოიძებნა" }, { status: 400 });
+    }
+
+    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+      return NextResponse.json({ error: "Only JPEG, PNG, and WebP images are allowed" }, { status: 415 });
+    }
+    if (file.size <= 0 || file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json({ error: "Image must be 5 MB or smaller" }, { status: 413 });
     }
 
     const bytes = await file.arrayBuffer();
