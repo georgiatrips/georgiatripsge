@@ -584,197 +584,124 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ==================== TOUR CATEGORIES ==================== */}
-      <section className="section" id="categories">
-        <div className="section-inner">
-          <div className="section-header">
-            <span className="section-eyebrow">{t("categories.eyebrow")}</span>
-            <h2 className="section-title">{t("categories.title")}</h2>
-            <div className="gold-line"></div>
-          </div>
-          <div className="categories-grid">
-            {categoriesList.map((cat, idx) => (
-              <div
-                key={idx}
-                className="category-card"
-                onClick={() => document.querySelector(cat.link)?.scrollIntoView({ behavior: "smooth" })}
-              >
-                <span className="cat-num" aria-hidden="true">0{idx + 1}</span>
-                <h3 className="category-title">{cat.title}</h3>
-                <p className="category-desc">{cat.desc}</p>
-                <div className="cat-arrow" aria-hidden="true">→</div>
+      {/* ==================== 1. POPULAR TOURS SECTION ==================== */}
+      <section className="popular-tours-standalone-section" id="popular-tours">
+        <div className="popular-destinations-inner">
+          <div className="pop-tours-grid-wrapper">
+            <div className="pop-grid-header-row">
+              <div className="pop-grid-header">
+                <span className="pop-eyebrow" style={{ marginBottom: "0.4rem" }}>{t("popular.eyebrow")}</span>
+                <h2 className="pop-grid-title" style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)" }}>
+                  {t("popular.popularToursTitle")} <span className="teal-accent">{t("popular.popularToursHighlight")}</span>
+                </h2>
+                <p className="pop-grid-subtitle">{t("popular.popularToursSubtitle")}</p>
               </div>
-            ))}
+
+              <div className="pop-tour-slider-dots">
+                {popularTourPairs.map((_, idx) => (
+                  <button
+                    key={idx}
+                    className={`pop-tour-dot ${idx === popTourSlide ? "active" : ""}`}
+                    onClick={() => setPopTourSlide(idx)}
+                    aria-label={t("popular.slideLabel").replace("{idx}", idx + 1)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="mini-cards-slider-container">
+              <div
+                className="mini-cards-slider-track"
+                style={{ transform: `translateX(-${popTourSlide * 100}%)` }}
+              >
+                {popularTourPairs.map((pair, pIdx) => (
+                  <div key={pIdx} className="mini-cards-pair-slide">
+                    {pair.map((tour, index) => (
+                      <article
+                        key={tour.id}
+                        className="pop-fc"
+                        onClick={() => handleTourClick(tour)}
+                      >
+                        {/* Full-bleed Image */}
+                        <Image
+                          src={tour.img || "/hero.webp"}
+                          alt={asLocalizedText(tour.title, lang)}
+                          fill
+                          style={{ objectFit: "cover" }}
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                          loading={pIdx === 0 && index === 0 ? "eager" : "lazy"}
+                          className="pop-fc-img"
+                        />
+
+                        {/* Dark gradient overlay */}
+                        <div className="pop-fc-gradient" />
+
+                        {/* Top row: badge + dates */}
+                        <div className="pop-fc-top">
+                          <span className="pop-fc-badge">
+                            {(t("tourBadges") || {})[asLocalizedText(tour.badge, lang)] ||
+                              (t("tourBadges") || {})[asLocalizedText(tour.badge, "ka")] ||
+                              asLocalizedText(tour.badge, lang)}
+                          </span>
+                          <div className="pop-fc-dates">
+                            {tour.dates?.slice(0, 3).map((d, i) => (
+                              <span key={i} className="pop-fc-date">{d}</span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Bottom overlay body */}
+                        <div className="pop-fc-body">
+                          <div className="pop-fc-meta">
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                              <ClockIcon size={13} color="var(--yellow)" />
+                              {translateDuration(tour.duration, lang)}
+                            </span>
+                            {((translateLocation(tour.destinationLabel || tour.destination || tour.location || tour.region, lang) || "").replace(/^📍\s*/, "")) && (
+                              <>
+                                <span className="pop-fc-dot">•</span>
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                                  <LocationIcon size={13} color="var(--yellow)" />
+                                  {(translateLocation(tour.destinationLabel || tour.destination || tour.location || tour.region, lang) || "").replace(/^📍\s*/, "")}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                          <h3 className="pop-fc-title">{asLocalizedText(tour.title, lang)}</h3>
+                          <p className="pop-fc-desc">{asLocalizedText(tour.desc, lang)}</p>
+                          <div className="pop-fc-footer">
+                            <div className="pop-fc-prices">
+                              {tour.priceGroup && (
+                                <div className="pop-fc-price-item">
+                                  <small>{t("popular.groupPrice")}</small>
+                                  <strong>{format(tour.priceGroup, lang)}</strong>
+                                </div>
+                              )}
+                              {tour.pricePrivate && (
+                                <div className="pop-fc-price-item">
+                                  <small>{t("popular.privatePrice")}</small>
+                                  <strong>{format(tour.pricePrivate, lang)}</strong>
+                                </div>
+                              )}
+                            </div>
+                            <button className="pop-fc-btn">{t("popular.book")} →</button>
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-
-      {/* ==================== THEMED TOUR SECTIONS ==================== */}
+      {/* ==================== 2. THEMED & REGIONAL TOUR SECTIONS ==================== */}
       <div className="themed-sections-container">
-        {dynamicSections.map((sec) =>
-          sec.id === "popular" ? (
-            <section key={sec.id} className="popular-destinations-section" id={sec.id}>
-              <div className="popular-destinations-inner">
-                {/* Section Header */}
-                <div className="popular-destinations-header">
-                  <span className="pop-eyebrow">{t("popular.eyebrow")}</span>
-                  <h2 className="pop-main-title"><span className="teal-accent">{t("popular.titleHighlight")}</span> {t("popular.titleRest")}</h2>
-                </div>
-
-                <div className="pop-content-layout pop-layout-swapped">
-                  {/* Left Column: Asymmetrical/Staggered Cards */}
-                  <div className="pop-cards-col">
-                    <div className="pop-cards-wrapper">
-                      {popularPlaces.map((place, index) => (
-                        <a key={place.id} href={"/places/" + place.id} className={"pop-card" + (index === 1 ? " pop-card-staggered" : "")}>
-                          <div className="pop-card-img-wrap">
-                            <Image src={place.img} alt={asLocalizedText(place.title, lang)} fill sizes="(max-width: 768px) 100vw, 30vw" style={{ objectFit: "cover" }} loading="lazy" />
-                            <div className="pop-card-badge">{t("popular.topPopularBadge").replace("{index}", index + 1)}</div>
-                            <div className="pop-card-gradient"></div>
-                            <div className="pop-card-footer-info">
-                              <h4 className="pop-card-title">{asLocalizedText(place.title, lang)}</h4>
-                              <span className="pop-card-sub">{translateLocation(place.region, lang) || t("common.georgia")}</span>
-                            </div>
-                          </div>
-                        </a>
-                      ))}
-                    </div>
-
-                    <div className="pop-dots">
-                      <span className="pop-dot active"></span>
-                    </div>
-                  </div>
-
-                  {/* Right Column: Information & Attractions Grid */}
-                  <div className="pop-info-col">
-                    <p className="pop-description">
-                      {t("popular.description")}
-                    </p>
-
-                    <div className="pop-attractions-grid">
-                      {latestPlaces.map((place) => (
-                        <a key={place.id} href={"/places/" + place.id} className="pop-attraction-item">
-                          <span className="pop-name">{asLocalizedText(place.title, lang)}</span>
-                          <span className="pop-pin" aria-hidden="true">📍</span>
-                        </a>
-                      ))}
-                    </div>
-
-                    <a href="/places" className="pop-all-btn">
-                      {t("popular.allLocations")} <span>→</span>
-                    </a>
-                  </div>
-                </div>
-
-                {/* Popular Tours Auto-Sliding 2-Card Pair Carousel */}
-                <div className="pop-tours-grid-wrapper">
-                  <div className="pop-grid-header-row">
-                    <div className="pop-grid-header">
-                      <h3 className="pop-grid-title">{t("popular.popularToursTitle")} <span className="teal-accent">{t("popular.popularToursHighlight")}</span></h3>
-                      <p className="pop-grid-subtitle">{t("popular.popularToursSubtitle")}</p>
-                    </div>
-
-                    <div className="pop-tour-slider-dots">
-                      {popularTourPairs.map((_, idx) => (
-                        <button
-                          key={idx}
-                          className={`pop-tour-dot ${idx === popTourSlide ? "active" : ""}`}
-                          onClick={() => setPopTourSlide(idx)}
-                          aria-label={t("popular.slideLabel").replace("{idx}", idx + 1)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mini-cards-slider-container">
-                    <div
-                      className="mini-cards-slider-track"
-                      style={{ transform: `translateX(-${popTourSlide * 100}%)` }}
-                    >
-                      {popularTourPairs.map((pair, pIdx) => (
-                        <div key={pIdx} className="mini-cards-pair-slide">
-                          {pair.map((tour, index) => (
-                            <article
-                              key={tour.id}
-                              className="pop-fc"
-                              onClick={() => handleTourClick(tour)}
-                            >
-                              {/* Full-bleed Image */}
-                              <Image
-                                src={tour.img}
-                                alt={asLocalizedText(tour.title, lang)}
-                                fill
-                                style={{ objectFit: "cover" }}
-                                sizes="(max-width: 768px) 100vw, 50vw"
-                                loading={pIdx === 0 && index === 0 ? "eager" : "lazy"}
-                                className="pop-fc-img"
-                              />
-
-                              {/* Dark gradient overlay */}
-                              <div className="pop-fc-gradient" />
-
-                              {/* Top row: badge + dates */}
-                              <div className="pop-fc-top">
-                                <span className="pop-fc-badge">
-                                  {(t("tourBadges") || {})[asLocalizedText(tour.badge, lang)] ||
-                                    (t("tourBadges") || {})[asLocalizedText(tour.badge, "ka")] ||
-                                    asLocalizedText(tour.badge, lang)}
-                                </span>
-                                <div className="pop-fc-dates">
-                                  {tour.dates?.slice(0, 3).map((d, i) => (
-                                    <span key={i} className="pop-fc-date">{d}</span>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Bottom overlay body */}
-                              <div className="pop-fc-body">
-                                <div className="pop-fc-meta">
-                                  <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                                    <ClockIcon size={13} color="var(--yellow)" />
-                                    {translateDuration(tour.duration, lang)}
-                                  </span>
-                                  {((translateLocation(tour.destinationLabel || tour.destination || tour.location || tour.region, lang) || "").replace(/^📍\s*/, "")) && (
-                                    <>
-                                      <span className="pop-fc-dot">•</span>
-                                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                                        <LocationIcon size={13} color="var(--yellow)" />
-                                        {(translateLocation(tour.destinationLabel || tour.destination || tour.location || tour.region, lang) || "").replace(/^📍\s*/, "")}
-                                      </span>
-                                    </>
-                                  )}
-                                </div>
-                                <h3 className="pop-fc-title">{asLocalizedText(tour.title, lang)}</h3>
-                                <p className="pop-fc-desc">{asLocalizedText(tour.desc, lang)}</p>
-                                <div className="pop-fc-footer">
-                                  <div className="pop-fc-prices">
-                                    {tour.priceGroup && (
-                                      <div className="pop-fc-price-item">
-                                        <small>{t("popular.groupPrice")}</small>
-                                        <strong>{format(tour.priceGroup, lang)}</strong>
-                                      </div>
-                                    )}
-                                    {tour.pricePrivate && (
-                                      <div className="pop-fc-price-item">
-                                        <small>{t("popular.privatePrice")}</small>
-                                        <strong>{format(tour.pricePrivate, lang)}</strong>
-                                      </div>
-                                    )}
-                                  </div>
-                                  <button className="pop-fc-btn">{t("popular.book")} →</button>
-                                </div>
-                              </div>
-                            </article>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-          ) : (
+        {dynamicSections
+          .filter((sec) => sec.id !== "popular")
+          .map((sec) => (
             <section key={sec.id} className="themed-tours-section" id={sec.id}>
               <div className="themed-section-header">
                 <h2 className="themed-section-title">{asLocalizedText(sec.title, lang)}</h2>
@@ -790,7 +717,7 @@ export default function Home() {
                   >
                     <div className="tb-card-img-wrap">
                       <Image
-                        src={tour.img || "/hero.png"}
+                        src={tour.img || "/hero.webp"}
                         alt={asLocalizedText(tour.title, lang)}
                         className="tb-card-img"
                         fill
@@ -822,28 +749,108 @@ export default function Home() {
                       </div>
                     </div>
 
-                            <div className="tb-card-body">
-                              <h3 className="tb-card-title">{asLocalizedText(tour.title, lang)}</h3>
-                              <p className="tb-card-annotation">{asLocalizedText(tour.desc, lang)}</p>
-                              <div className="tb-card-line"></div>
-                              <div className="tb-card-facilities">
-                                <span className="tb-facility-item" style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                                  <ClockIcon size={14} color="var(--teal)" />
-                                  <span>{translateDuration(tour.duration, lang)}</span>
-                                </span>
-                                <span className="tb-facility-item" style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                                  <LocationIcon size={14} color="var(--teal)" />
-                                  <span>{(translateLocation(tour.destinationLabel || tour.destination || tour.location || tour.region, lang) || t("popular.fromBatumiShort")).replace(/^📍\s*/, "")}</span>
-                                </span>
-                              </div>
-                            </div>
+                    <div className="tb-card-body">
+                      <h3 className="tb-card-title">{asLocalizedText(tour.title, lang)}</h3>
+                      <p className="tb-card-annotation">{asLocalizedText(tour.desc, lang)}</p>
+                      <div className="tb-card-line"></div>
+                      <div className="tb-card-facilities">
+                        <span className="tb-facility-item" style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                          <ClockIcon size={14} color="var(--teal)" />
+                          <span>{translateDuration(tour.duration, lang)}</span>
+                        </span>
+                        <span className="tb-facility-item" style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                          <LocationIcon size={14} color="var(--teal)" />
+                          <span>{(translateLocation(tour.destinationLabel || tour.destination || tour.location || tour.region, lang) || t("popular.fromBatumiShort")).replace(/^📍\s*/, "")}</span>
+                        </span>
+                      </div>
+                    </div>
                   </Link>
                 ))}
               </div>
             </section>
-          )
-        )}
+          ))}
       </div>
+
+      {/* ==================== 3. TOUR CATEGORIES / OUR SERVICES ==================== */}
+      <section className="section" id="categories">
+        <div className="section-inner">
+          <div className="section-header">
+            <span className="section-eyebrow">{t("categories.eyebrow")}</span>
+            <h2 className="section-title">{t("categories.title")}</h2>
+            <div className="gold-line"></div>
+          </div>
+          <div className="categories-grid">
+            {categoriesList.map((cat, idx) => (
+              <div
+                key={idx}
+                className="category-card"
+                onClick={() => document.querySelector(cat.link)?.scrollIntoView({ behavior: "smooth" })}
+              >
+                <span className="cat-num" aria-hidden="true">0{idx + 1}</span>
+                <h3 className="category-title">{cat.title}</h3>
+                <p className="category-desc">{cat.desc}</p>
+                <div className="cat-arrow" aria-hidden="true">→</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ==================== 4. MOST POPULAR TOURIST PLACES ==================== */}
+      <section className="popular-destinations-section" id="popular">
+        <div className="popular-destinations-inner">
+          <div className="popular-destinations-header">
+            <span className="pop-eyebrow">{t("popular.eyebrow")}</span>
+            <h2 className="pop-main-title"><span className="teal-accent">{t("popular.titleHighlight")}</span> {t("popular.titleRest")}</h2>
+          </div>
+
+          <div className="pop-content-layout pop-layout-swapped">
+            {/* Left Column: Asymmetrical/Staggered Cards */}
+            <div className="pop-cards-col">
+              <div className="pop-cards-wrapper">
+                {popularPlaces.map((place, index) => (
+                  <a key={place.id} href={"/places/" + place.id} className={"pop-card" + (index === 1 ? " pop-card-staggered" : "")}>
+                    <div className="pop-card-img-wrap">
+                      <Image src={place.img} alt={asLocalizedText(place.title, lang)} fill sizes="(max-width: 768px) 100vw, 30vw" style={{ objectFit: "cover" }} loading="lazy" />
+                      <div className="pop-card-badge">{t("popular.topPopularBadge").replace("{index}", index + 1)}</div>
+                      <div className="pop-card-gradient"></div>
+                      <div className="pop-card-footer-info">
+                        <h4 className="pop-card-title">{asLocalizedText(place.title, lang)}</h4>
+                        <span className="pop-card-sub">{translateLocation(place.region, lang) || t("common.georgia")}</span>
+                      </div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+
+              <div className="pop-dots">
+                <span className="pop-dot active"></span>
+              </div>
+            </div>
+
+            {/* Right Column: Information & Attractions Grid */}
+            <div className="pop-info-col">
+              <p className="pop-description">
+                {t("popular.description")}
+              </p>
+
+              <div className="pop-attractions-grid">
+                {latestPlaces.map((place) => (
+                  <a key={place.id} href={"/places/" + place.id} className="pop-attraction-item">
+                    <span className="pop-name">{asLocalizedText(place.title, lang)}</span>
+                    <span className="pop-pin" aria-hidden="true">📍</span>
+                  </a>
+                ))}
+              </div>
+
+              <a href="/places" className="pop-all-btn">
+                {t("popular.allLocations")} <span>→</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ==================== TOUR SCHEDULE & FREE DATES SECTION ==================== */}
       <section className="tour-schedule-section" id="schedule">
         <div className="section-inner">
