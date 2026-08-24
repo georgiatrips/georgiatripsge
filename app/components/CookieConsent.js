@@ -101,9 +101,9 @@ export default function CookieConsent() {
         <span style={{ fontSize: "1.25rem" }}>🍪</span>
         <strong style={{ fontSize: "1rem", fontWeight: 700 }}>{t.title}</strong>
       </div>
-      <p style={{ fontSize: "0.85rem", color: "rgba(255, 255, 255, 0.8)", lineHeight: 1.5, margin: "0 0 1rem 0" }}>
+      <p style={{ fontSize: "0.85rem", color: "rgba(255, 255, 255, 0.9)", lineHeight: 1.5, margin: "0 0 1rem 0" }}>
         {t.desc}
-        <Link href="/privacy-policy" style={{ color: "var(--teal, #29b2b7)", textDecoration: "underline" }}>
+        <Link href="/privacy-policy" style={{ color: "#5eead4", textDecoration: "underline" }}>
           {t.privacy}
         </Link>.
       </p>
@@ -112,8 +112,8 @@ export default function CookieConsent() {
           onClick={handleDecline}
           style={{
             background: "transparent",
-            color: "rgba(255, 255, 255, 0.7)",
-            border: "1px solid rgba(255, 255, 255, 0.2)",
+            color: "#ffffff",
+            border: "1px solid rgba(255, 255, 255, 0.4)",
             padding: "0.5rem 1rem",
             borderRadius: "10px",
             fontSize: "0.85rem",
@@ -126,7 +126,7 @@ export default function CookieConsent() {
         <button
           onClick={handleAccept}
           style={{
-            background: "var(--teal, #29b2b7)",
+            background: "#0d9488",
             color: "#ffffff",
             border: "none",
             padding: "0.5rem 1.25rem",
@@ -134,7 +134,7 @@ export default function CookieConsent() {
             fontSize: "0.85rem",
             fontWeight: 700,
             cursor: "pointer",
-            boxShadow: "0 4px 12px rgba(41, 178, 183, 0.3)",
+            boxShadow: "0 4px 12px rgba(13, 148, 136, 0.4)",
           }}
         >
           {t.accept}

@@ -8,7 +8,7 @@
   --blue: #106da4;
   --teal: #29b2b7;
   --yellow: #fab418;
-  --text-teal: #137f9e;
+  --text-teal: #0f766e;
   --bg-main: #f8fafc;
   /* Premium Light Gray */
   --bg-card: #ffffff;
@@ -1366,7 +1366,7 @@ body {
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--teal);
+  color: var(--text-teal, #0f766e);
   margin-bottom: 0.75rem;
 }
 
@@ -1421,7 +1421,7 @@ body {
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #29b2b7;
+  color: var(--text-teal, #0f766e);
   margin-bottom: 1.1rem;
 }
 
@@ -4019,10 +4019,10 @@ body {
 
 .map-chip:hover,
 .map-chip-active {
-  background: var(--teal);
-  border-color: var(--teal);
+  background: #0d9488;
+  border-color: #0d9488;
   color: var(--white);
-  box-shadow: 0 4px 10px rgba(41, 178, 183, 0.2);
+  box-shadow: 0 4px 10px rgba(13, 148, 136, 0.25);
   transform: translateY(-1px);
 }
 
@@ -8807,7 +8807,7 @@ body {
   font-weight: 700 !important;
   letter-spacing: 0.18em !important;
   text-transform: uppercase !important;
-  color: #29b2b7 !important;
+  color: var(--text-teal, #0f766e) !important;
   margin-bottom: 0.6rem !important;
 }
 
@@ -8822,7 +8822,7 @@ body {
 }
 
 .pop-main-title .teal-accent {
-  color: #29b2b7 !important;
+  color: var(--text-teal, #0f766e) !important;
 }
 
 /* Grid layout for columns */
@@ -9065,7 +9065,7 @@ body {
   font-weight: 700 !important;
   letter-spacing: 0.12em !important;
   text-transform: uppercase !important;
-  color: #29b2b7 !important;
+  color: var(--text-teal, #0f766e) !important;
   background: rgba(41, 178, 183, 0.08) !important;
   padding: 6px 16px !important;
   border-radius: 50px !important;
@@ -9083,7 +9083,7 @@ body {
 }
 
 .pop-main-title .teal-accent {
-  color: #29b2b7 !important;
+  color: var(--text-teal, #0f766e) !important;
 }
 
 /* Swapped Column Grid Layout: Cards Left (1.2fr), Info Right (1fr) */
@@ -10355,19 +10355,19 @@ body {
 .schedule-tour-title {
   font-size: 1.15rem;
   font-weight: 800;
-  color: #29b2b7;
+  color: #0f172a;
   cursor: pointer;
   line-height: 1.35;
   transition: color 0.2s ease;
   font-family: var(--font-main);
   text-decoration: underline;
-  text-decoration-color: rgba(41, 178, 183, 0.3);
+  text-decoration-color: rgba(15, 118, 110, 0.4);
   text-underline-offset: 4px;
 }
 
 .schedule-tour-title:hover {
-  color: #1e969b;
-  text-decoration-color: #29b2b7;
+  color: #0f766e;
+  text-decoration-color: #0f766e;
 }
 
 .schedule-tour-price {
@@ -10431,7 +10431,7 @@ body {
 
 .schedule-date-chip,
 .schedule-day-chip {
-  background: #29b2b7;
+  background: #0d9488;
   color: #ffffff;
   border: none;
   font-size: 0.65rem;
@@ -10451,7 +10451,7 @@ body {
 
 .schedule-date-chip:hover,
 .schedule-day-chip:hover {
-  background: #1e969b;
+  background: #0f766e;
   transform: translateY(-1px) scale(1.05);
 }
 
@@ -11376,7 +11376,7 @@ body {
 }
 
 .pop-fc-btn {
-  background: #29b2b7;
+  background: #0d9488;
   color: #ffffff;
   border: none;
   font-size: 0.82rem;
@@ -11390,7 +11390,7 @@ body {
 }
 
 .pop-fc:hover .pop-fc-btn {
-  background: #1e969b;
+  background: #0f766e;
   transform: scale(1.04);
 }
 
@@ -25610,7 +25610,7 @@ html {
   padding: 0 5px !important;
   border-radius: 5px !important;
   border: none !important;
-  background: #29b2b7 !important;
+  background: #0d9488 !important;
   color: #ffffff !important;
   cursor: pointer !important;
   display: inline-flex !important;
@@ -25627,7 +25627,7 @@ html {
 .schedule-date-chip:hover,
 .schedule-day-chip:hover,
 .schedule-day-chip:active {
-  background: #1e969b !important;
+  background: #0f766e !important;
   transform: scale(1.06) !important;
 }
 
