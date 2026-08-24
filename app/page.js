@@ -383,13 +383,17 @@ export default function Home() {
 
       {/* ==================== HERO — CINEMATIC ==================== */}
       <section className="hero" id="home">
-        {HERO_SLIDES.map((slide, idx) => (
-          <div
-            key={idx}
-            className={`hero-bg ${idx === currentHeroSlide ? "loaded active" : ""}`}
-            style={{ backgroundImage: `url('${slide.image}')` }}
-          ></div>
-        ))}
+        <div className="hero-bg loaded active">
+          <Image
+            src={HERO_SLIDES[currentHeroSlide].image}
+            alt={HERO_SLIDES[currentHeroSlide].label}
+            fill
+            priority
+            sizes="100vw"
+            quality={75}
+            style={{ objectFit: "cover", objectPosition: "center 25%" }}
+          />
+        </div>
 
         {/* 252-Box Blur & Opacity Mosaic Matrix Transition */}
         <HeroMosaicGrid
@@ -397,7 +401,6 @@ export default function Home() {
           currentSlide={currentHeroSlide}
           outgoingImage={HERO_SLIDES[previousHeroSlide].image}
         />
-
         <div className="hero-content">
           <div className="hero-badge">
             <span>{t("hero.badge")}</span>
@@ -427,8 +430,10 @@ export default function Home() {
                 <LocationIcon size={16} color="var(--teal)" />
               </span>
               <div className="hero-search-input-wrap">
-                <label>{t("hero.destination")}</label>
+                <label htmlFor="hero-dest-select">{t("hero.destination")}</label>
                 <select
+                  id="hero-dest-select"
+                  aria-label={t("hero.destination")}
                   className="hero-search-select"
                   value={heroDestination}
                   onChange={(e) => setHeroDestination(e.target.value)}
@@ -443,23 +448,73 @@ export default function Home() {
 
             <div className="hero-search-divider" />
 
-            <div className="hero-search-field"><span className="hero-search-icon"><CalendarIcon size={16} color="var(--teal)" /></span><div className="hero-search-input-wrap"><label>{t("hero.date")}</label><DatePicker value={heroDate} onChange={setHeroDate} availableDates={allAvailableDates} variant="hero" /></div></div>
+            <div className="hero-search-field">
+              <span className="hero-search-icon">
+                <CalendarIcon size={16} color="var(--teal)" />
+              </span>
+              <div className="hero-search-input-wrap">
+                <label>{t("hero.date")}</label>
+                <DatePicker value={heroDate} onChange={setHeroDate} availableDates={allAvailableDates} variant="hero" />
+              </div>
+            </div>
+
             <div className="hero-search-divider" />
-            <div className="hero-search-field"><span className="hero-search-icon"><UsersIcon size={16} color="var(--teal)" /></span><div className="hero-search-input-wrap"><label>{t("hero.tourFormat")}</label><select className="hero-search-select" value={heroFormat} onChange={(e) => setHeroFormat(e.target.value)}><option value="all">{t("hero.allFormats")}</option><option value="individual">{t("hero.individual")}</option><option value="group">{t("hero.group")}</option></select></div></div>
-            <button type="button" onClick={handleHeroSearch} className="hero-search-btn"><SearchIcon size={16} color="currentColor" strokeWidth={2.5} /><span>{t("hero.search")}</span></button>
+
+            <div className="hero-search-field">
+              <span className="hero-search-icon">
+                <UsersIcon size={16} color="var(--teal)" />
+              </span>
+              <div className="hero-search-input-wrap">
+                <label htmlFor="hero-format-select">{t("hero.tourFormat")}</label>
+                <select
+                  id="hero-format-select"
+                  aria-label={t("hero.tourFormat")}
+                  className="hero-search-select"
+                  value={heroFormat}
+                  onChange={(e) => setHeroFormat(e.target.value)}
+                >
+                  <option value="all">{t("hero.allFormats")}</option>
+                  <option value="individual">{t("hero.individual")}</option>
+                  <option value="group">{t("hero.group")}</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="button" onClick={handleHeroSearch} className="hero-search-btn">
+              <SearchIcon size={16} color="currentColor" strokeWidth={2.5} />
+              <span>{t("hero.search")}</span>
+            </button>
           </div>
         </div>
+
         <div className="hero-location-badge">
           <span className="loc-pin" aria-hidden="true">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
           </span>
           <span className="loc-text">{HERO_SLIDES[currentHeroSlide].label}</span>
         </div>
-        <div className="hero-dots" role="tablist" aria-label="slides">{HERO_SLIDES.map((slide, idx) => <button key={idx} className={`hero-dot ${idx === currentHeroSlide ? "active" : ""}`} onClick={() => goToHeroSlide(idx)} aria-label={slide.label} aria-selected={idx === currentHeroSlide} role="tab" />)}</div>
-      </section>
-      <section className="about-section" id="about" aria-label="about"><div className="about-inner"><div className="about-photo-wrap"><div className="about-photo-frame"><Image src="/profile.png" alt="GeorgiaTrips travel company" fill style={{ objectFit: "cover", objectPosition: "center 35%" }} sizes="(max-width: 768px) 100vw, 50vw" priority /></div><div className="about-photo-accent" aria-hidden="true">GeorgiaTrips</div></div>
-          {/*
 
+        <div className="hero-dots" role="tablist" aria-label="slides">
+          {HERO_SLIDES.map((slide, idx) => (
+            <button
+              key={idx}
+              className={`hero-dot ${idx === currentHeroSlide ? "active" : ""}`}
+              onClick={() => goToHeroSlide(idx)}
+              aria-label={slide.label}
+              aria-selected={idx === currentHeroSlide}
+              role="tab"
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* ==================== ABOUT US SECTION ==================== */}
+      <section className="about-section" id="about" aria-label="about">
+        <div className="about-inner">
+          <div className="about-photo-wrap">
+            <div className="about-photo-frame">
+              <Image
+                src="/profile.png"
                 alt="GeorgiaTrips — პროფესიონალი სამოგზაურო კომპანია საქართველოში"
                 fill
                 style={{ objectFit: "cover", objectPosition: "center 35%" }}

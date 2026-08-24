@@ -3,19 +3,17 @@
 import React, { useMemo } from "react";
 
 const COLS = 18;
-const ROWS = 14; // 18 x 14 = 252 tiles (within 200-300 range requested by user)
+const ROWS = 14; // 18 x 14 = 252 tiles
 
 export default function HeroMosaicGrid({ isTransitioning, currentSlide, outgoingImage }) {
   const tiles = useMemo(() => {
     const list = [];
     for (let r = 0; r < ROWS; r++) {
-      // Progressive vertical decay: top rows start at high opacity/blur, cascading down to 0%
       const verticalFactor = Math.max(0, 1 - (r / (ROWS - 1)));
       const baseOpacity = Math.pow(verticalFactor, 1.6) * 0.88;
       const baseBlur = Math.round(verticalFactor * 16);
 
       for (let c = 0; c < COLS; c++) {
-        // Calculate radial and diagonal ripple wave delay for each tile
         const centerDist = Math.hypot(c - COLS / 2, r - ROWS / 2);
         const waveDelay = Math.round((c * 24 + r * 28 + centerDist * 18) % 650);
 
@@ -33,9 +31,11 @@ export default function HeroMosaicGrid({ isTransitioning, currentSlide, outgoing
     return list;
   }, []);
 
+  if (!isTransitioning) return null;
+
   return (
     <div
-      className={`hero-mosaic-grid ${isTransitioning ? "is-shuttering" : ""}`}
+      className="hero-mosaic-grid is-shuttering"
       aria-hidden="true"
     >
       {tiles.map((tile) => (
