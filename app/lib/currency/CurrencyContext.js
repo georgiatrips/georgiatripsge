@@ -10,16 +10,12 @@ export const CURRENCY_RATES = {
   GEL: { code: "GEL", symbol: "₾", rate: 1.0, label: "GEL (₾)", name: "GEL", icon: "₾" },
   USD: { code: "USD", symbol: "$", rate: 0.37, label: "USD ($)", name: "USD", icon: "$" },
   EUR: { code: "EUR", symbol: "€", rate: 0.34, label: "EUR (€)", name: "EUR", icon: "€" },
-  AED: { code: "AED", symbol: "AED", rate: 1.36, label: "AED (د.إ)", name: "AED", icon: "د.إ" },
-  TRY: { code: "TRY", symbol: "₺", rate: 19.5, label: "TRY (₺)", name: "TRY", icon: "₺" },
-  SAR: { code: "SAR", symbol: "SAR", rate: 1.39, label: "SAR (﷼)", name: "SAR", icon: "﷼" },
-  RUB: { code: "RUB", symbol: "₽", rate: 34.0, label: "RUB (₽)", name: "RUB", icon: "₽" },
 };
 
 /**
  * Intelligent Price Formatter & Converter
  * Converts numeric amounts or genuine price strings (e.g. "₾100/კაცი", "50 GEL", "₾50-დან")
- * according to target currency and language, while never modifying dates, phone numbers or times.
+ * according to target currency (GEL, USD, EUR) and language.
  */
 export function formatPrice(priceVal, targetCurrency = "GEL", lang = "ka") {
   if (priceVal === null || priceVal === undefined || priceVal === "") return "";
@@ -39,10 +35,6 @@ export function formatPrice(priceVal, targetCurrency = "GEL", lang = "ka") {
     if (curr.code === "GEL") return `₾${converted}`;
     if (curr.code === "USD") return `$${converted}`;
     if (curr.code === "EUR") return `€${converted}`;
-    if (curr.code === "TRY") return `₺${converted}`;
-    if (curr.code === "SAR") return `${converted} SAR`;
-    if (curr.code === "AED") return `${converted} AED`;
-    if (curr.code === "RUB") return `₽${converted}`;
     return `${converted} ${curr.code}`;
   }
 
@@ -61,7 +53,7 @@ export function formatPrice(priceVal, targetCurrency = "GEL", lang = "ka") {
 
   // Check if string contains currency indicator or is a plain price number string
   const isExplicitPrice =
-    /[₾$€₺]|GEL|USD|EUR|TRY|AED|SAR|ლარი|კაცი|person|чел|kişi|شخص|-დან|from|от|من/i.test(str) ||
+    /[₾$€]|GEL|USD|EUR|ლარი|კაცი|person|чел|kişi|شخص|-დან|from|от|من/i.test(str) ||
     /^\d+(\.\d+)?$/.test(str);
 
   if (!isExplicitPrice) {
@@ -85,9 +77,6 @@ export function formatPrice(priceVal, targetCurrency = "GEL", lang = "ka") {
   if (curr.code === "GEL") formatted = `₾${convertedNum}`;
   else if (curr.code === "USD") formatted = `$${convertedNum}`;
   else if (curr.code === "EUR") formatted = `€${convertedNum}`;
-  else if (curr.code === "TRY") formatted = `₺${convertedNum}`;
-  else if (curr.code === "SAR") formatted = `${convertedNum} SAR`;
-  else if (curr.code === "AED") formatted = `${convertedNum} AED`;
   else formatted = `${convertedNum} ${curr.code}`;
 
   if (isFrom) {

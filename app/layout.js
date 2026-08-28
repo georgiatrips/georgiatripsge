@@ -162,6 +162,12 @@ export async function generateMetadata() {
     title: curr.title,
     description: curr.description,
     keywords: curr.keywords,
+    authors: [
+      { name: "GeorgiaTrips", url: "https://georgiatrips.ge" },
+      { name: "Manuchar Lominadze", url: "https://www.instagram.com/lominadzee10/" },
+    ],
+    creator: "Manuchar Lominadze (@lominadzee10)",
+    publisher: "GeorgiaTrips",
     alternates: {
       canonical: localizedUrl(lang),
       languages: {
@@ -203,6 +209,7 @@ export async function generateMetadata() {
     },
     other: {
       "facebook-domain-verification": "ef9kax36lazdya98y738pn5e10ny2e",
+      "developer": "Manuchar Lominadze (https://www.instagram.com/lominadzee10/)",
     },
     robots: {
       index: true,
@@ -236,7 +243,7 @@ function buildStructuredData(lang = "ka") {
         telephone: "+995504220020",
         email: "info@georgiatrips.ge",
         priceRange: "$$",
-        currenciesAccepted: "GEL, USD, EUR, TRY, SAR, AED",
+        currenciesAccepted: "GEL, USD, EUR",
         paymentAccepted: "Cash, Credit Card, Bank Transfer, Online Payment",
         aggregateRating: {
           "@type": "AggregateRating",
@@ -274,12 +281,29 @@ function buildStructuredData(lang = "ka") {
         publisher: {
           "@id": "https://georgiatrips.ge/#organization",
         },
+        creator: {
+          "@type": "Person",
+          "@id": "https://www.instagram.com/lominadzee10/#person",
+          name: "Manuchar Lominadze",
+          url: "https://www.instagram.com/lominadzee10/",
+          sameAs: ["https://www.instagram.com/lominadzee10/"],
+          jobTitle: "Lead Full-Stack Web Developer & UI/UX Designer",
+        },
         potentialAction: {
           "@type": "SearchAction",
           target: "https://georgiatrips.ge/tours?search={search_term_string}",
           "query-input": "required name=search_term_string",
         },
         inLanguage: ["ka", "en", "ru", "tr", "ar"],
+      },
+      {
+        "@type": "Person",
+        "@id": "https://www.instagram.com/lominadzee10/#person",
+        name: "Manuchar Lominadze",
+        url: "https://www.instagram.com/lominadzee10/",
+        sameAs: ["https://www.instagram.com/lominadzee10/"],
+        jobTitle: "Lead Full-Stack Web Developer & UI/UX Designer",
+        knowsAbout: ["Full-Stack Web Development", "Next.js", "React", "UI/UX Engineering", "Search Engine Optimization (SEO)"],
       },
       {
         "@type": "FAQPage",
