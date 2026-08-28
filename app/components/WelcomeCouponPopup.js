@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../lib/AuthContext";
 import { useLanguage } from "../lib/i18n/LanguageContext";
+import { useCoupon } from "../lib/CouponContext";
 import { getCouponSettings, isIpClaimed, recordClaimedIp } from "../lib/couponSettings";
 import CouponTicket from "./CouponTicket";
 
@@ -12,6 +13,7 @@ const COUNTDOWN_DURATION_MS = 30 * 60 * 1000; // 30 minutes in ms
 export default function WelcomeCouponPopup() {
   const { user } = useAuth() ?? {};
   const { t } = useLanguage();
+  const { claimWelcomeCoupon } = useCoupon();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -147,6 +149,7 @@ export default function WelcomeCouponPopup() {
 
   const handleClaim = (e) => {
     e?.stopPropagation?.();
+    claimWelcomeCoupon();
     handleClose();
     if (clientIp) {
       recordClaimedIp(clientIp, "");
@@ -163,41 +166,17 @@ export default function WelcomeCouponPopup() {
 
   return (
     <div className="gt-floating-coupon-widget" aria-live="polite">
-      {/* Dark Urgency Bar with timer + close button */}
-      <div className="gt-floating-urgency-bar">
-        <div className="gt-floating-timer-badge">
-          <span className="gt-floating-fire">🔥</span>
-          <span className="gt-floating-time-lbl">{t("welcomePopup.timeRemaining") || "დარჩენილია:"}</span>
-          <strong className="gt-floating-clock-val">{formattedMinutes}:{formattedSeconds}</strong>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
-          <button type="button" className="gt-floating-claim-link" onClick={handleClaim}>
-            {t("welcomePopup.registerClaimBtn") || "აღება"} →
-          </button>
-          <button
-            type="button"
-            className="gt-floating-coupon-close"
-            onClick={handleClose}
-            aria-label="დახურვა"
-            title="დახურვა"
-          >
-            ✕
-          </button>
-        </div>
-      </div>
-
-      {/* Ticket card directly below bar */}
-      <div className="gt-floating-ticket-wrapper">
-        <CouponTicket
-          code="WELCOME10"
-          discountPercent={10}
-          isUsed={false}
-          compact={true}
-          showCopy={true}
-          showUseBtn={true}
-          onUse={handleClaim}
-        />
-      </div>
+      <CouponTicket
+        code="WELCOME10"
+        discountPercent={10}
+        isUsed={false}
+        compact={true}
+        showCopy={true}
+        showUseBtn={true}
+        timeLeftText={`${formattedMinutes}:${formattedSeconds}`}
+        onClose={handleClose}
+        onUse={handleClaim}
+      />
     </div>
   );
 }

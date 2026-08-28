@@ -3,9 +3,11 @@ import { Noto_Sans_Georgian, Noto_Serif_Georgian, Playfair_Display, Noto_Sans_Ar
 import { cookies, headers } from "next/headers";
 import Script from "next/script";
 import "./globals.css";
+import "./coupon.css";
 import { AuthProvider } from "./lib/AuthContext";
 import { LanguageProvider } from "./lib/i18n/LanguageContext";
 import { CurrencyProvider } from "./lib/currency/CurrencyContext";
+import { CouponProvider } from "./lib/CouponContext";
 import { isRtlLanguage } from "./lib/i18n/locale";
 import CookieConsent from "./components/CookieConsent";
 import AnalyticsTracker from "./components/AnalyticsTracker";
@@ -331,12 +333,14 @@ export default async function RootLayout({ children }) {
         <LanguageProvider initialLang={htmlLang}>
           <CurrencyProvider>
             <AuthProvider>
-              {children}
-              <Suspense fallback={null}>
-                <AnalyticsTracker />
-              </Suspense>
-              <CookieConsent />
-              <WelcomeCouponPopup />
+              <CouponProvider>
+                {children}
+                <Suspense fallback={null}>
+                  <AnalyticsTracker />
+                </Suspense>
+                <CookieConsent />
+                <WelcomeCouponPopup />
+              </CouponProvider>
             </AuthProvider>
           </CurrencyProvider>
         </LanguageProvider>

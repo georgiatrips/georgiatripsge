@@ -6,9 +6,9 @@ import Link from "next/link";
 import Image from "next/image";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import CouponTicket from "../components/CouponTicket";
 import { useAuth } from "../lib/AuthContext";
 import { useLanguage } from "../lib/i18n/LanguageContext";
+import { useCoupon } from "../lib/CouponContext";
 import {
   signInWithGoogle,
   signInWithFacebook,
@@ -69,6 +69,7 @@ export default function LoginPage() {
   const [suPassword, setSuPassword] = useState("");
 
   const { user } = useAuth() ?? {};
+  const { claimWelcomeCoupon } = useCoupon();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -91,6 +92,7 @@ export default function LoginPage() {
     setError("");
     try {
       await signInWithGoogle();
+      claimWelcomeCoupon();
       showSuccess(t("loginPage.welcomeRedirect"));
       setTimeout(() => router.push("/"), 900);
     } catch (e) {
@@ -105,6 +107,7 @@ export default function LoginPage() {
     setError("");
     try {
       await signInWithFacebook();
+      claimWelcomeCoupon();
       showSuccess(t("loginPage.welcomeRedirect"));
       setTimeout(() => router.push("/"), 900);
     } catch (e) {
@@ -121,6 +124,7 @@ export default function LoginPage() {
     setError("");
     try {
       await signInWithEmail(siEmail, siPassword);
+      claimWelcomeCoupon();
       showSuccess(t("loginPage.welcomeRedirect"));
       setTimeout(() => router.push("/"), 900);
     } catch (e) {
@@ -137,6 +141,7 @@ export default function LoginPage() {
     setError("");
     try {
       await signUpWithEmail(suEmail, suPassword, suName);
+      claimWelcomeCoupon();
       showSuccess(t("loginPage.accountCreatedVerify"));
       setTimeout(() => setTab("signin"), 3000);
     } catch (e) {

@@ -19,6 +19,7 @@ import { useLanguage } from "./lib/i18n/LanguageContext";
 import { useCurrency } from "./lib/currency/CurrencyContext";
 import { formatPriceStr } from "./lib/i18n/formatPriceStr";
 import { LocationIcon, CalendarIcon, UsersIcon, SearchIcon, ClockIcon } from "./components/Icons";
+import TourPrice from "./components/TourPrice";
 import { BrandLogo, WA_LINK, WA_NUMBER, bookTourOnWhatsApp, getFaqs } from "./lib/shared";
 import { createBooking } from "./lib/bookingsFirestore";
 import { DEFAULT_WEATHER_DATA as WEATHER_DATA } from "./lib/weatherFallback";
@@ -674,13 +675,13 @@ export default function Home() {
                               {tour.priceGroup && (
                                 <div className="pop-fc-price-item">
                                   <small>{t("popular.groupPrice")}</small>
-                                  <strong>{format(tour.priceGroup, lang)}</strong>
+                                  <TourPrice price={tour.priceGroup} lang={lang} variant="card" />
                                 </div>
                               )}
                               {tour.pricePrivate && (
                                 <div className="pop-fc-price-item">
                                   <small>{t("popular.privatePrice")}</small>
-                                  <strong>{format(tour.pricePrivate, lang)}</strong>
+                                  <TourPrice price={tour.pricePrivate} lang={lang} variant="card" />
                                 </div>
                               )}
                             </div>
@@ -730,13 +731,13 @@ export default function Home() {
                         {tour.pricePrivate && (
                           <div className="tb-price-tag tb-price-priv">
                             <small>{t("popular.privateLabel")}</small>
-                            <strong>{format(tour.pricePrivate, lang)}</strong>
+                            <TourPrice price={tour.pricePrivate} lang={lang} variant="card" />
                           </div>
                         )}
                         {tour.priceGroup && (
                           <div className="tb-price-tag tb-price-group">
                             <small>{t("popular.groupPrice")}</small>
-                            <strong>{format(tour.priceGroup, lang)}</strong>
+                            <TourPrice price={tour.priceGroup} lang={lang} variant="card" />
                           </div>
                         )}
                         {tour.dates && tour.dates.length > 0 && (

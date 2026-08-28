@@ -14,11 +14,14 @@ import { useCurrency } from "../../lib/currency/CurrencyContext";
 import { formatPriceStr } from "../../lib/i18n/formatPriceStr";
 import { createBooking } from "../../lib/bookingsFirestore";
 import { useAuth } from "../../lib/AuthContext";
+import { useCoupon } from "../../lib/CouponContext";
+import TourPrice from "../../components/TourPrice";
 import { ClockIcon, LocationIcon } from "../../components/Icons";
 
 export default function TourDetailPage() {
   const params = useParams();
   const { user } = useAuth() ?? {};
+  const { coupons, bestCoupon, maxDiscountPercent, hasActiveCoupon, addCoupon } = useCoupon();
   const { t, lang, isEnglish, isRussian } = useLanguage();
   const { format } = useCurrency();
   const routeId = Array.isArray(params?.id) ? params.id[0] : params?.id;
@@ -243,7 +246,15 @@ export default function TourDetailPage() {
     : parsePriceNumber(tour?.pricePrivate);
   const peopleCount = Math.max(peopleMin, parseInt(bookingPeople, 10) || peopleMin);
   const baseTotalPrice = tourType === "group" ? groupUnitPrice * peopleCount : privateTotalPrice;
-  const discountPercent = appliedCoupon?.discountPercent || 0;
+  
+  // Auto-apply maximum coupon when available if not manually removed
+  useEffect(() => {
+    if (hasActiveCoupon && bestCoupon && !appliedCoupon) {
+      setAppliedCoupon(bestCoupon);
+    }
+  }, [hasActiveCoupon, bestCoupon]);
+
+  const discountPercent = appliedCoupon ? Number(appliedCoupon.discountPercent || 10) : 0;
   const discountAmount = appliedCoupon && baseTotalPrice > 0 ? Math.round(baseTotalPrice * (discountPercent / 100)) : 0;
   const totalPrice = Math.max(0, baseTotalPrice - discountAmount);
 
@@ -253,11 +264,22 @@ export default function TourDetailPage() {
       setCouponError(t("bookingCoupon.enterCode") || "შეიყვანეთ კუპონის კოდი");
       return;
     }
-    const validCodes = ["WELCOME10", "GEO10", "COUPON10"];
-    if (validCodes.includes(code)) {
-      setAppliedCoupon({ code, discountPercent: 10 });
+    const found = coupons.find((c) => c.code.toUpperCase() === code);
+    let pct = found ? Number(found.discountPercent) : 0;
+    if (!pct) {
+      if (code === "WELCOME10" || code === "GEO10" || code === "COUPON10") pct = 10;
+      else if (/^([A-Z]+)(\d{1,2})$/.test(code)) {
+        const m = code.match(/^([A-Z]+)(\d{1,2})$/);
+        pct = parseInt(m[2], 10);
+      }
+    }
+
+    if (pct > 0 && pct <= 50) {
+      const newC = { code, discountPercent: pct };
+      setAppliedCoupon(newC);
+      addCoupon(newC);
       setCouponError("");
-      setCouponSuccess(t("bookingCoupon.appliedSuccess") || "10%-იანი ფასდაკლება გააქტიურებულია!");
+      setCouponSuccess(`${pct}%-იანი ფასდაკლება (${code}) გააქტიურებულია!`);
       setCouponCodeInput("");
     } else {
       setCouponError(t("bookingCoupon.invalidCode") || "არასწორი კუპონის კოდი");
@@ -670,7 +692,9 @@ if (fsLoading) {
               </div>
               <div className="tdp-hero2-fact">
                 <span className="fact-label">{t("tourDetail.price")}</span>
-                <strong className="fact-value accent">{format(tour.priceGroup, lang)}</strong>
+                <strong className="fact-value accent">
+                  <TourPrice price={tour.priceGroup || tour.pricePrivate || "₾70"} lang={lang} variant="hero" />
+                </strong>
               </div>
             </div>
 
@@ -1028,7 +1052,9 @@ if (fsLoading) {
                         <strong>{t("tourDetail.groupTour")}</strong>
                         <small>{hasGroupDates ? t("tourDetail.fixedSchedule") : t("tourDetail.notScheduled")}</small>
                       </div>
-                      <div className="tier-amount">{format(tour.priceGroup, lang)}</div>
+                      <div className="tier-amount">
+                        <TourPrice price={tour.priceGroup} lang={lang} variant="card" />
+                      </div>
                     </button>
                   )}
 
@@ -1044,7 +1070,9 @@ if (fsLoading) {
                         <strong>{t("tourDetail.privateTour")}</strong>
                         <small>{t("tourDetail.onlyYourGroup")}</small>
                       </div>
-                      <div className="tier-amount">{format(tour.pricePrivate, lang)}</div>
+                      <div className="tier-amount">
+                        <TourPrice price={tour.pricePrivate} lang={lang} variant="card" />
+                      </div>
                     </button>
                   )}
                 </div>
@@ -1339,13 +1367,13 @@ if (fsLoading) {
                       {item.pricePrivate && (
                         <div className="tb-price-tag tb-price-priv">
                           <small>{t("popular.privateLabel")}</small>
-                          <strong>{item.pricePrivate}</strong>
+                          <TourPrice price={item.pricePrivate} lang={lang} variant="card" />
                         </div>
                       )}
                       {item.priceGroup && (
                         <div className="tb-price-tag tb-price-group">
                           <small>{t("popular.groupPrice")}</small>
-                          <strong>{item.priceGroup}</strong>
+                          <TourPrice price={item.priceGroup} lang={lang} variant="card" />
                         </div>
                       )}
                     </div>
@@ -1408,13 +1436,13 @@ if (fsLoading) {
                       {item.pricePrivate && (
                         <div className="tb-price-tag tb-price-priv">
                           <small>{t("popular.privateLabel")}</small>
-                          <strong>{item.pricePrivate}</strong>
+                          <TourPrice price={item.pricePrivate} lang={lang} variant="card" />
                         </div>
                       )}
                       {item.priceGroup && (
                         <div className="tb-price-tag tb-price-group">
                           <small>{t("popular.groupPrice")}</small>
-                          <strong>{item.priceGroup}</strong>
+                          <TourPrice price={item.priceGroup} lang={lang} variant="card" />
                         </div>
                       )}
                     </div>
@@ -1590,7 +1618,7 @@ if (fsLoading) {
         <div className="tdp-mobile-floating-bar">
           <div className="mobile-floating-price">
             <small>{t("tourDetail.pricePerPerson")}</small>
-            <strong>{format(tour.priceGroup || tour.price || "₾70", lang)}</strong>
+            <TourPrice price={tour.priceGroup || tour.price || "₾70"} lang={lang} variant="card" />
           </div>
           <button
             type="button"

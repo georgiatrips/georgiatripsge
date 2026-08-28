@@ -17,6 +17,7 @@ import { WA_LINK } from "../lib/shared";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 import { useCurrency } from "../lib/currency/CurrencyContext";
 import { formatPriceStr } from "../lib/i18n/formatPriceStr";
+import TourPrice from "../components/TourPrice";
 import { SearchIcon, LocationIcon, ClockIcon, UsersIcon, CalendarIcon } from "../components/Icons";
 
 function ToursPageContent() {
@@ -366,8 +367,8 @@ function ToursPageContent() {
                         />
                         <span className="tb-badge">{badgeLabel}</span>
                         <div className="tb-overlay-right">
-                          {tour.pricePrivate && <div className="tb-price-tag tb-price-priv"><small>{t("popular.privateLabel")}</small><strong>{format(tour.pricePrivate, lang)}</strong></div>}
-                          {tour.priceGroup && <div className="tb-price-tag tb-price-group"><small>{t("popular.groupPrice")}</small><strong>{format(tour.priceGroup, lang)}</strong></div>}
+                          {tour.pricePrivate && <div className="tb-price-tag tb-price-priv"><small>{t("popular.privateLabel")}</small><TourPrice price={tour.pricePrivate} lang={lang} variant="card" /></div>}
+                          {tour.priceGroup && <div className="tb-price-tag tb-price-group"><small>{t("popular.groupPrice")}</small><TourPrice price={tour.priceGroup} lang={lang} variant="card" /></div>}
                           {tour.dates?.length > 0 && <div className="tb-dates-row">{tour.dates.slice(0, 4).map((date, index) => <span key={index} className="tb-date-chip">{date}</span>)}</div>}
                         </div>
                       </div>
