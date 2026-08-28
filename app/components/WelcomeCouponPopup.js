@@ -20,7 +20,6 @@ export default function WelcomeCouponPopup() {
   const [mounted, setMounted] = useState(false);
   const [clientIp, setClientIp] = useState("");
 
-  // Initialize and handle 10-second trigger with IP limit check
   useEffect(() => {
     setMounted(true);
 
@@ -37,8 +36,7 @@ export default function WelcomeCouponPopup() {
 
     let isCancelled = false;
 
-    // Check IP eligibility and trigger timer
-    async function checkEligibilityAndTrigger() {
+    async function setupWelcomePopup() {
       try {
         // 1. Fetch current IP from analytics route
         let ip = "";
@@ -58,12 +56,11 @@ export default function WelcomeCouponPopup() {
         if (settings.limitOnePerIp && ip) {
           const alreadyClaimed = await isIpClaimed(ip);
           if (alreadyClaimed) {
-            console.log("Welcome coupon popup blocked: IP already claimed (Admin 1-IP limit active)");
             return;
           }
         }
 
-        // Initialize 30-min timer start in localStorage
+        // 4. Initialize 30-min timer
         let startTime = null;
         try {
           const savedStart = localStorage.getItem("gt_urgency_timer_start");
@@ -77,25 +74,44 @@ export default function WelcomeCouponPopup() {
           startTime = Date.now();
         }
 
-        // Calculate remaining time
         const elapsed = Date.now() - startTime;
         const remaining = Math.max(0, COUNTDOWN_DURATION_MS - (elapsed % COUNTDOWN_DURATION_MS));
         if (!isCancelled) setTimeLeft(remaining);
 
-        // Trigger popup strictly after 10 seconds (10,000ms)
-        const triggerTimer = setTimeout(() => {
-          if (!isCancelled && !user) {
-            setIsOpen(true);
-          }
-        }, 10000);
+        // 5. Trigger logic based on Cookie Consent
+        const isMobile = typeof window !== "undefined" && window.innerWidth <= 768;
+        const hasCookieConsent = typeof localStorage !== "undefined" && localStorage.getItem("gt_cookie_consent");
 
-        return () => clearTimeout(triggerTimer);
+        const triggerCoupon = (delayMs = 1200) => {
+          setTimeout(() => {
+            if (!isCancelled && !user) {
+              setIsOpen(true);
+            }
+          }, delayMs);
+        };
+
+        if (isMobile) {
+          if (hasCookieConsent) {
+            // Cookie already dismissed previously -> Show coupon after 2s
+            triggerCoupon(2000);
+          } else {
+            // Listen for cookie banner dismissal event (either user clicked or 10s auto-dismiss occurred)
+            const handleCookieDismissed = () => {
+              triggerCoupon(1200);
+              window.removeEventListener("gt_cookie_dismissed", handleCookieDismissed);
+            };
+            window.addEventListener("gt_cookie_dismissed", handleCookieDismissed);
+          }
+        } else {
+          // Desktop: standard 10s trigger
+          triggerCoupon(10000);
+        }
       } catch (err) {
-        console.warn("Coupon popup eligibility check error:", err);
+        console.warn("Coupon popup error:", err);
       }
     }
 
-    checkEligibilityAndTrigger();
+    setupWelcomePopup();
 
     return () => {
       isCancelled = true;
@@ -121,7 +137,6 @@ export default function WelcomeCouponPopup() {
     return () => clearInterval(interval);
   }, [isOpen]);
 
-  // ONLY closes when X button is clicked
   const handleClose = (e) => {
     e?.stopPropagation?.();
     setIsOpen(false);
@@ -147,19 +162,17 @@ export default function WelcomeCouponPopup() {
   const formattedSeconds = String(seconds).padStart(2, "0");
 
   return (
-    /* Floating Bottom-Right Widget - Non-blocking, page fully scrollable */
     <div className="gt-floating-coupon-widget" aria-live="polite">
-
       {/* Dark Urgency Bar with timer + close button */}
       <div className="gt-floating-urgency-bar">
         <div className="gt-floating-timer-badge">
           <span className="gt-floating-fire">🔥</span>
-          <span>{t("welcomePopup.timeRemaining") || "დარჩენილია:"}</span>
+          <span className="gt-floating-time-lbl">{t("welcomePopup.timeRemaining") || "დარჩენილია:"}</span>
           <strong className="gt-floating-clock-val">{formattedMinutes}:{formattedSeconds}</strong>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
           <button type="button" className="gt-floating-claim-link" onClick={handleClaim}>
-            {t("welcomePopup.registerClaimBtn") || "რეგისტრაცია და აღება"} →
+            {t("welcomePopup.registerClaimBtn") || "აღება"} →
           </button>
           <button
             type="button"
@@ -173,7 +186,7 @@ export default function WelcomeCouponPopup() {
         </div>
       </div>
 
-      {/* Ticket card directly below bar, no extra wrapper */}
+      {/* Ticket card directly below bar */}
       <div className="gt-floating-ticket-wrapper">
         <CouponTicket
           code="WELCOME10"

@@ -390,12 +390,115 @@
 /* ─── Mobile ─────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .gt-floating-coupon-widget {
-    bottom: 14px;
-    right: 10px;
-    left: 10px;
-    width: auto;
-    max-width: calc(100vw - 20px);
+    bottom: 12px !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    width: calc(100vw - 20px) !important;
+    max-width: 370px !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
   }
-  .gt-coupon-compact .gt-coupon-amount { font-size: 1.5rem; }
-  .gt-coupon-stub { width: 60px; min-width: 60px; }
+
+  .gt-floating-urgency-bar {
+    padding: 7px 10px;
+    gap: 6px;
+    box-sizing: border-box;
+  }
+
+  .gt-floating-timer-badge {
+    font-size: 0.72rem;
+    gap: 4px;
+  }
+
+  .gt-floating-time-lbl {
+    display: none;
+  }
+
+  .gt-floating-clock-val {
+    font-size: 0.82rem;
+  }
+
+  .gt-floating-claim-link {
+    font-size: 0.68rem;
+    padding: 4px 8px;
+    font-weight: 800;
+  }
+
+  .gt-coupon-ticket {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .gt-coupon-stub {
+    width: 46px !important;
+    min-width: 46px !important;
+    padding: 10px 0 !important;
+  }
+
+  .gt-coupon-stub-vertical {
+    font-size: 0.72rem !important;
+    letter-spacing: 2px !important;
+  }
+
+  .gt-coupon-stub-icon {
+    font-size: 0.8rem !important;
+  }
+
+  .gt-coupon-body {
+    padding: 10px 12px !important;
+    box-sizing: border-box !important;
+  }
+
+  .gt-coupon-compact .gt-coupon-body {
+    padding: 10px 12px !important;
+  }
+
+  .gt-coupon-header-row {
+    margin-bottom: 4px !important;
+  }
+
+  .gt-coupon-badge {
+    font-size: 0.62rem !important;
+    padding: 2px 6px !important;
+  }
+
+  .gt-coupon-verified {
+    font-size: 0.65rem !important;
+  }
+
+  .gt-coupon-discount-row {
+    gap: 6px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .gt-coupon-discount-label {
+    font-size: 0.75rem !important;
+  }
+
+  .gt-coupon-amount {
+    font-size: 1.4rem !important;
+  }
+
+  .gt-coupon-compact .gt-coupon-amount {
+    font-size: 1.4rem !important;
+  }
+
+  .gt-coupon-off {
+    font-size: 0.8rem !important;
+  }
+
+  .gt-coupon-desc {
+    font-size: 0.74rem !important;
+    line-height: 1.35 !important;
+    margin: 2px 0 8px !important;
+    word-break: break-word !important;
+  }
+
+  .gt-coupon-use-btn {
+    padding: 7px 10px !important;
+    font-size: 0.78rem !important;
+  }
 }

@@ -914,16 +914,6 @@ body {
   letter-spacing: 0.05em;
 }
 
-@media (max-width: 768px) {
-  .hero-location-badge {
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 1.5rem;
-    white-space: nowrap;
-  }
-}
-
-
 /* Multi-layer cinematic gradient for depth and text pop */
 .hero::after {
   content: '';
@@ -952,11 +942,43 @@ body {
 }
 
 @media (max-width: 768px) {
+  .hero {
+    height: auto !important;
+    min-height: 100svh !important;
+    padding: 85px 1rem 40px 1rem !important;
+  }
 
-  /* Keep the transition smooth on phones: retain the pattern but halve the
-     number of active blur surfaces. */
-  .hero-mosaic-box:nth-child(even) {
-    display: none;
+  .hero-content {
+    margin-top: 0 !important;
+    padding: 0 !important;
+  }
+
+  .hero-title {
+    font-size: clamp(2.1rem, 8vw, 3rem) !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .hero-locations {
+    margin-top: 0.9rem !important;
+    gap: 0.35rem !important;
+  }
+
+  .hero-loc-tag {
+    padding: 5px 10px !important;
+    font-size: 0.72rem !important;
+  }
+
+  .hero-location-badge {
+    position: relative !important;
+    left: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    margin-top: 1.25rem !important;
+    white-space: nowrap !important;
+  }
+
+  .hero-mosaic-grid {
+    display: none !important;
   }
 }
 
