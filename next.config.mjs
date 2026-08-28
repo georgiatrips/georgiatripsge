@@ -22,6 +22,15 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/transport',
+        destination: '/transfers',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

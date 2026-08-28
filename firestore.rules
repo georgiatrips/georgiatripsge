@@ -53,6 +53,19 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Global Site / Coupon Settings
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Claimed Coupon IPs
+    match /claimed_coupon_ips/{ipDoc} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+
     // User profiles
     match /users/{userId} {
       allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());

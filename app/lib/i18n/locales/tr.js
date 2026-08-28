@@ -13,7 +13,8 @@ export const tr = {
     "logout": "Çıkış",
     "language": "Dil",
     "currency": "Para Birimi",
-    "loginRegister": "Giriş Yap / Üye Ol"
+    "loginRegister": "Giriş Yap / Üye Ol",
+    "coupons": "Kuponlarım"
   },
   "hero": {
     "badge": "Georgia Trips — Seyahat Acentesi",
@@ -706,6 +707,48 @@ export const tr = {
       "invalidCredential": "E-posta veya şifre hatalı.",
       "defaultError": "Bir hata oluştu. Lütfen tekrar deneyin."
     }
+  }
+,
+  "coupon":   {
+      "statusActive": "Aktif • 1 Kullanım",
+      "statusUsed": "Kullanıldı",
+      "verified": "Doğrulandı",
+      "discountLabel": "DISCOUNT",
+      "offLabel": "OFF",
+      "desc": "GeorgiaTrips'te tüm turlarda %10 indirim",
+      "codeLabel": "Promosyon Kodu:",
+      "copied": "Kopyalandı!",
+      "copy": "Kopyala",
+      "useInBooking": "Kuponu Kullan",
+      "myCouponsTitle": "İndirim Kuponlarım",
+      "myCouponsSub": "GeorgiaTrips'ten 1 özel indirim kuponunuz var",
+      "howToUseTitle": "Kupon nasıl kullanılır:",
+      "step1": "Kataloğumuzdan istediğiniz turu seçin",
+      "step2": "Rezervasyon formuna WELCOME10 kodunu girin",
+      "step3": "Toplam fiyata anında %10 indirim uygulanır!",
+      "exploreToursBtn": "Turları İncele ve Rezervasyon Yap"
+  },
+  "welcomePopup":   {
+      "limitedOffer": "Sınırlı Süreli Özel Teklif!",
+      "title": "%10 İndirim Kuponu Kazanın",
+      "subtitle": "30 dakika içinde hemen kaydolun ve tüm turlarda geçerli %10 indirim kuponu kazanın!",
+      "timeRemaining": "Teklifin bitmesine kalan süre:",
+      "mins": "dk",
+      "secs": "sn",
+      "registerClaimBtn": "Kayıt Ol ve Kuponu Al (%10 İndirim)",
+      "dismissBtn": "Daha sonra, teşekkürler"
+  },
+  "bookingCoupon":   {
+      "title": "İndirim Kuponu",
+      "placeholder": "örn: WELCOME10",
+      "applyBtn": "Uygula",
+      "useMyWelcome": "%10 indirim kuponum (WELCOME10)",
+      "apply": "Uygula",
+      "remove": "Kaldır",
+      "enterCode": "Lütfen bir kupon kodu girin",
+      "invalidCode": "Geçersiz kupon kodu",
+      "appliedSuccess": "%10 indirim başarıyla uygulandı!",
+      "discountApplied": "%10 indirim uygulandı"
   }
 };
 export default tr;

@@ -13,7 +13,8 @@ export const ru = {
     "logout": "Выход",
     "language": "Язык",
     "currency": "Валюта",
-    "loginRegister": "Вход / Регистрация"
+    "loginRegister": "Вход / Регистрация",
+    "coupons": "Мои купоны"
   },
   "hero": {
     "badge": "Georgia Trips — Туристическая компания",
@@ -706,6 +707,48 @@ export const ru = {
       "invalidCredential": "Неверная эл. почта или пароль.",
       "defaultError": "Ошибка. Пожалуйста, попробуйте снова."
     }
+  }
+,
+  "coupon":   {
+      "statusActive": "Активен • 1 исп.",
+      "statusUsed": "Использован",
+      "verified": "Проверено",
+      "discountLabel": "DISCOUNT",
+      "offLabel": "OFF",
+      "desc": "Скидка 10% на любой тур в GeorgiaTrips",
+      "codeLabel": "Промокод:",
+      "copied": "Скопировано!",
+      "copy": "Копировать",
+      "useInBooking": "Использовать",
+      "myCouponsTitle": "Мои скидочные купоны",
+      "myCouponsSub": "У вас есть 1 эксклюзивный купон на скидку от GeorgiaTrips",
+      "howToUseTitle": "Как использовать купон:",
+      "step1": "Выберите желаемый тур в нашем каталоге",
+      "step2": "Введите код WELCOME10 в форме бронирования",
+      "step3": "Общая стоимость автоматически уменьшится на 10%!",
+      "exploreToursBtn": "Смотреть и бронировать туры"
+  },
+  "welcomePopup":   {
+      "limitedOffer": "Эксклюзивное предложение на ограниченное время!",
+      "title": "Получите купон на скидку 10%",
+      "subtitle": "Зарегистрируйтесь в течение 30 минут и моментально получите скидочный купон 10% на любой тур!",
+      "timeRemaining": "До окончания акции осталось:",
+      "mins": "мин",
+      "secs": "сек",
+      "registerClaimBtn": "Регистрация и получение купона (10% OFF)",
+      "dismissBtn": "Позже, спасибо"
+  },
+  "bookingCoupon":   {
+      "title": "Купон на скидку",
+      "placeholder": "напр: WELCOME10",
+      "applyBtn": "Применить",
+      "useMyWelcome": "Мой купон 10% (WELCOME10)",
+      "apply": "Применить",
+      "remove": "Удалить",
+      "enterCode": "Введите промокод",
+      "invalidCode": "Неверный промокод",
+      "appliedSuccess": "Скидка 10% успешно применена!",
+      "discountApplied": "Скидка 10% применена"
   }
 };
 export default ru;

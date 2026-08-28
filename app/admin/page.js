@@ -13,6 +13,7 @@ import PlaceManager from "./PlaceManager";
 import HotelManager from "./HotelManager";
 import ReviewManager from "./ReviewManager";
 import AnalyticsManager from "./AnalyticsManager";
+import CouponManager from "./CouponManager";
 import { subscribeToLiveSessions } from "../lib/analytics";
 import LocalizedInputGroup, { emptyLangObj, parseLocal } from "./LocalizedInputGroup";
 import { listHotels } from "../lib/hotelsFirestore";
@@ -688,6 +689,15 @@ export default function AdminPage() {
                 {liveVisitorsCount}
               </span>
             </button>
+            <button
+              type="button"
+              className={`admin-nav-tab ${activeTab === "coupons" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("coupons")}
+            >
+              <span style={{ fontSize: "1.2rem" }}>🎟️</span>
+              <span>კუპონები & IP</span>
+              <span className="admin-tab-count" style={{ background: "#fab418", color: "#0f172a", fontWeight: 800 }}>10%</span>
+            </button>
           </div>
 
           {/* DASHBOARD STATS ROW */}
@@ -742,6 +752,16 @@ export default function AdminPage() {
                   🟢 {liveVisitorsCount} Online
                 </strong>
                 <span>Live ანალიტიკა</span>
+              </div>
+            </div>
+            <div
+              className={`admin-stat-card ${activeTab === "coupons" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("coupons")}
+            >
+              <div className="admin-stat-icon">🎟️</div>
+              <div className="admin-stat-info">
+                <strong style={{ color: "var(--teal)" }}>10% OFF</strong>
+                <span>კუპონის მართვა & IP</span>
               </div>
             </div>
           </div>
@@ -1552,6 +1572,11 @@ export default function AdminPage() {
           {/* TAB 5: LIVE ANALYTICS */}
           {activeTab === "analytics" && (
             <AnalyticsManager />
+          )}
+
+          {/* TAB 6: COUPONS & IP MANAGEMENT */}
+          {activeTab === "coupons" && (
+            <CouponManager />
           )}
         </div>
       </section>

@@ -13,10 +13,12 @@ import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { useCurrency } from "../../lib/currency/CurrencyContext";
 import { formatPriceStr } from "../../lib/i18n/formatPriceStr";
 import { createBooking } from "../../lib/bookingsFirestore";
+import { useAuth } from "../../lib/AuthContext";
 import { ClockIcon, LocationIcon } from "../../components/Icons";
 
 export default function TourDetailPage() {
   const params = useParams();
+  const { user } = useAuth() ?? {};
   const { t, lang, isEnglish, isRussian } = useLanguage();
   const { format } = useCurrency();
   const routeId = Array.isArray(params?.id) ? params.id[0] : params?.id;
@@ -32,6 +34,10 @@ export default function TourDetailPage() {
   const [messengerPref, setMessengerPref] = useState("WhatsApp");
   const [bookingNotes, setBookingNotes] = useState("");
   const [tourType, setTourType] = useState("group");
+  const [couponCodeInput, setCouponCodeInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponError, setCouponError] = useState("");
+  const [couponSuccess, setCouponSuccess] = useState("");
   const [expandedStep, setExpandedStep] = useState(null);
   const [hoveredStop, setHoveredStop] = useState(null);
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
@@ -40,7 +46,7 @@ export default function TourDetailPage() {
   const [showMobileStickyBtn, setShowMobileStickyBtn] = useState(false);
   const bookingSidebarRef = useRef(null);
 
-useEffect(() => {
+  useEffect(() => {
     let cancelled = false;
     setFsLoading(true);
     (async () => {
@@ -137,8 +143,8 @@ useEffect(() => {
         departure: translateLocation(rawTour.destinationLabel || rawTour.destination || "ბათუმი", lang),
         meetingPoint: currDefaults.meetingPoint,
         dressCode: currDefaults.dressCode,
-        includes: Array.isArray(rawTour.includes) && rawTour.includes.length ? rawTour.includes.map(i => asLocalizedText(i, lang)) : currDefaults.includes,
-        excludes: Array.isArray(rawTour.excludes) && rawTour.excludes.length ? rawTour.excludes.map(i => asLocalizedText(i, lang)) : currDefaults.excludes,
+        includes: Array.isArray(rawTour.includes) && rawTour.includes.length ? rawTour.includes.map((i) => asLocalizedText(i, lang)) : currDefaults.includes,
+        excludes: Array.isArray(rawTour.excludes) && rawTour.excludes.length ? rawTour.excludes.map((i) => asLocalizedText(i, lang)) : currDefaults.excludes,
         payment: currDefaults.payment,
         highlights: [asLocalizedText(rawTour.desc, lang)],
         gallery: rawTour.gallery?.length ? rawTour.gallery : [rawTour.img].filter(Boolean),
@@ -236,7 +242,34 @@ useEffect(() => {
     ? (rawTour?.pricePrivateNum || parsePriceNumber(tour?.pricePrivate))
     : parsePriceNumber(tour?.pricePrivate);
   const peopleCount = Math.max(peopleMin, parseInt(bookingPeople, 10) || peopleMin);
-  const totalPrice = tourType === "group" ? groupUnitPrice * peopleCount : privateTotalPrice;
+  const baseTotalPrice = tourType === "group" ? groupUnitPrice * peopleCount : privateTotalPrice;
+  const discountPercent = appliedCoupon?.discountPercent || 0;
+  const discountAmount = appliedCoupon && baseTotalPrice > 0 ? Math.round(baseTotalPrice * (discountPercent / 100)) : 0;
+  const totalPrice = Math.max(0, baseTotalPrice - discountAmount);
+
+  const handleApplyCoupon = (overrideCode) => {
+    const code = (typeof overrideCode === "string" ? overrideCode : couponCodeInput).trim().toUpperCase();
+    if (!code) {
+      setCouponError(t("bookingCoupon.enterCode") || "შეიყვანეთ კუპონის კოდი");
+      return;
+    }
+    const validCodes = ["WELCOME10", "GEO10", "COUPON10"];
+    if (validCodes.includes(code)) {
+      setAppliedCoupon({ code, discountPercent: 10 });
+      setCouponError("");
+      setCouponSuccess(t("bookingCoupon.appliedSuccess") || "10%-იანი ფასდაკლება გააქტიურებულია!");
+      setCouponCodeInput("");
+    } else {
+      setCouponError(t("bookingCoupon.invalidCode") || "არასწორი კუპონის კოდი");
+      setCouponSuccess("");
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponError("");
+    setCouponSuccess("");
+  };
 
   // Auto-select nearest available date from today if not manually selected.
   // Only applies to GROUP tours — individual tours can pick any date.
@@ -284,6 +317,7 @@ useEffect(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tourId, tourType]);
 
+  // When switching tour type, make sure the selected date is valid for group tours
   // When switching tour type, make sure the selected date is valid for group tours
   const handleTourTypeChange = (type) => {
     if (type === "group" && !hasGroupDates) return;
@@ -404,7 +438,10 @@ useEffect(() => {
       phone: bookingPhone.trim(),
       people: Number(bookingPeople) || 1,
       channel: messengerPref,
+      originalPrice: baseTotalPrice,
       price: totalPrice,
+      couponCode: appliedCoupon ? appliedCoupon.code : null,
+      discountAmount: discountAmount,
       notes: bookingNotes.trim(),
       language: lang,
     });
@@ -1139,7 +1176,86 @@ if (fsLoading) {
                   />
                 </div>
 
-                {totalPrice > 0 && (
+                {/* Coupon Apply Section */}
+                <div className="tdp-coupon-section">
+                  <div className="tdp-coupon-label-row">
+                    <label>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                        <line x1="7" y1="7" x2="7.01" y2="7" />
+                      </svg>
+                      <span>{t("bookingCoupon.title") || "ფასდაკლების კუპონი"}</span>
+                    </label>
+                    {appliedCoupon && (
+                      <span className="tdp-coupon-active-badge">
+                        ✓ 10% OFF
+                      </span>
+                    )}
+                  </div>
+
+                  {appliedCoupon ? (
+                    <div className="tdp-coupon-applied-box">
+                      <div className="tdp-coupon-applied-info">
+                        <span className="tdp-coupon-applied-code">🎟️ {appliedCoupon.code}</span>
+                        <span className="tdp-coupon-applied-desc">
+                          {t("bookingCoupon.discountApplied") || "10%-იანი ფასდაკლება გააქტიურებულია"} (-{format(discountAmount, lang)})
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        className="tdp-coupon-remove-btn"
+                        onClick={handleRemoveCoupon}
+                        aria-label="Remove coupon"
+                      >
+                        {t("bookingCoupon.remove") || "გაუქმება"}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="tdp-coupon-input-wrap">
+                      <div className="tdp-coupon-input-row">
+                        <input
+                          type="text"
+                          placeholder={t("bookingCoupon.placeholder") || "მაგ: WELCOME10"}
+                          value={couponCodeInput}
+                          onChange={(e) => {
+                            setCouponCodeInput(e.target.value);
+                            setCouponError("");
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleApplyCoupon();
+                            }
+                          }}
+                          className="tdp-coupon-input"
+                        />
+                        <button
+                          type="button"
+                          className="tdp-coupon-apply-btn"
+                          onClick={() => handleApplyCoupon()}
+                        >
+                          {t("bookingCoupon.applyBtn") || "გამოყენება"}
+                        </button>
+                      </div>
+
+                      {user && (
+                        <button
+                          type="button"
+                          className="tdp-coupon-quick-apply"
+                          onClick={() => handleApplyCoupon("WELCOME10")}
+                        >
+                          <span>✨ {t("bookingCoupon.useMyWelcome") || "ჩემი 10%-იანი კუპონი (WELCOME10)"}</span>
+                          <span className="tdp-quick-apply-tag">{t("bookingCoupon.apply") || "გამოყენება"}</span>
+                        </button>
+                      )}
+
+                      {couponError && <p className="tdp-coupon-err-msg">{couponError}</p>}
+                      {couponSuccess && <p className="tdp-coupon-success-msg">{couponSuccess}</p>}
+                    </div>
+                  )}
+                </div>
+
+                {baseTotalPrice > 0 && (
                   <div className="tdp-total-price-row">
                     <div className="total-price-label">
                       <span>{t("tourDetail.totalCost")}</span>
@@ -1149,7 +1265,17 @@ if (fsLoading) {
                           : t("tourDetail.privatePriceCalc")}
                       </small>
                     </div>
-                    <strong className="total-price-amount">{format(totalPrice, lang)}</strong>
+                    <div className="total-price-values">
+                      {appliedCoupon && discountAmount > 0 ? (
+                        <div className="tdp-discounted-price-box">
+                          <span className="tdp-old-price">{format(baseTotalPrice, lang)}</span>
+                          <span className="tdp-discount-tag">-10%</span>
+                          <strong className="total-price-amount">{format(totalPrice, lang)}</strong>
+                        </div>
+                      ) : (
+                        <strong className="total-price-amount">{format(totalPrice, lang)}</strong>
+                      )}
+                    </div>
                   </div>
                 )}
 

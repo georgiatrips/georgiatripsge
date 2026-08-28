@@ -25945,3 +25945,968 @@ html {
     min-height: 340px !important;
   }
 }
+
+/* ============================================================
+   GeorgiaTrips - 10% Coupon & Ticket System Styling
+   ============================================================ */
+
+/* --- Coupon Pill in Navbar --- */
+.nav-coupon-pill {
+  background: linear-gradient(135deg, #fab418, #f59e0b);
+  color: #0f172a;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(250, 180, 24, 0.35);
+}
+
+.nav-mobile-coupon-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: rgba(41, 178, 183, 0.08) !important;
+  border: 1px solid rgba(41, 178, 183, 0.25) !important;
+  color: var(--teal) !important;
+  font-weight: 700 !important;
+}
+
+/* --- Branded Coupon Ticket Component --- */
+.gt-coupon-ticket {
+  display: flex;
+  position: relative;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 35px -8px rgba(16, 109, 164, 0.16), 0 2px 10px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(41, 178, 183, 0.2);
+  overflow: visible;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.gt-coupon-ticket:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 45px -10px rgba(16, 109, 164, 0.24);
+}
+
+.gt-coupon-compact {
+  max-width: 400px;
+}
+
+/* Left Stub */
+.gt-coupon-stub {
+  position: relative;
+  width: 76px;
+  min-width: 76px;
+  background: linear-gradient(175deg, #106da4 0%, #29b2b7 100%);
+  border-top-left-radius: 15px;
+  border-bottom-left-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  padding: 18px 0;
+  border-right: 2px dashed rgba(255, 255, 255, 0.45);
+}
+
+.gt-coupon-stub-vertical {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.gt-coupon-stub-icon {
+  margin-top: 10px;
+  font-size: 1rem;
+  color: #fab418;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* Scalloped edge / Cutout notches */
+.gt-coupon-notch {
+  position: absolute;
+  right: -10px;
+  width: 20px;
+  height: 20px;
+  background: var(--bg-main, #f8fafc);
+  border-radius: 50%;
+  z-index: 3;
+}
+
+.gt-coupon-notch.top {
+  top: -10px;
+  box-shadow: inset 0 -3px 3px rgba(0, 0, 0, 0.04);
+}
+
+.gt-coupon-notch.bottom {
+  bottom: -10px;
+  box-shadow: inset 0 3px 3px rgba(0, 0, 0, 0.04);
+}
+
+/* Right Body */
+.gt-coupon-body {
+  flex: 1;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: #ffffff;
+  border-top-right-radius: 15px;
+  border-bottom-right-radius: 15px;
+}
+
+.gt-coupon-compact .gt-coupon-body {
+  padding: 16px 18px;
+}
+
+.gt-coupon-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.gt-coupon-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #0f766e;
+  background: rgba(41, 178, 183, 0.12);
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.gt-coupon-verified {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.gt-coupon-discount-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.gt-coupon-discount-label {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #106da4;
+}
+
+.gt-coupon-amount-wrap {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.gt-coupon-amount {
+  font-size: 2.3rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #29b2b7;
+  letter-spacing: -1px;
+}
+
+.gt-coupon-compact .gt-coupon-amount {
+  font-size: 1.9rem;
+}
+
+.gt-coupon-off {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #fab418;
+  letter-spacing: 1px;
+}
+
+.gt-coupon-desc {
+  font-size: 0.83rem;
+  color: #64748b;
+  margin: 4px 0 12px 0;
+  line-height: 1.4;
+}
+
+/* Code & Copy Bar */
+.gt-coupon-code-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #f1f5f9;
+  border: 1px dashed #cbd5e1;
+  padding: 8px 12px;
+  border-radius: 10px;
+}
+
+.gt-coupon-code-val {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gt-coupon-code-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.gt-coupon-code-text {
+  font-family: monospace;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: 1px;
+}
+
+.gt-coupon-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gt-coupon-copy-btn:hover {
+  background: var(--teal);
+  color: #ffffff;
+  border-color: var(--teal);
+}
+
+.gt-coupon-copy-btn.copied {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #10b981;
+}
+
+.gt-coupon-use-btn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 9px 14px;
+  background: linear-gradient(135deg, #106da4 0%, #29b2b7 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gt-coupon-use-btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.95;
+}
+
+/* ============================================================
+   Coupon Modal
+   ============================================================ */
+.gt-coupon-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: gtFadeIn 0.25s ease-out;
+}
+
+.gt-coupon-modal-card {
+  position: relative;
+  background: #ffffff;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 520px;
+  padding: 32px 28px;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.35);
+  border: 1px solid rgba(41, 178, 183, 0.2);
+  animation: gtScaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gt-coupon-modal-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: none;
+  font-size: 1rem;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.gt-coupon-modal-close:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.gt-coupon-modal-header {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.gt-coupon-modal-icon-badge {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(16, 109, 164, 0.12), rgba(41, 178, 183, 0.18));
+  color: #29b2b7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px auto;
+}
+
+.gt-coupon-modal-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+.gt-coupon-modal-sub {
+  font-size: 0.88rem;
+  color: #64748b;
+}
+
+.gt-coupon-modal-ticket-wrap {
+  margin: 18px 0 24px 0;
+}
+
+.gt-coupon-steps {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 22px;
+}
+
+.gt-coupon-steps-title {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 10px;
+}
+
+.gt-coupon-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gt-coupon-step-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: #475569;
+}
+
+.gt-coupon-step-num {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  border-radius: 50%;
+  background: #29b2b7;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gt-coupon-modal-actions {
+  display: flex;
+}
+
+.gt-coupon-modal-btn-explore {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #106da4 0%, #29b2b7 100%);
+  color: #ffffff;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 25px -4px rgba(41, 178, 183, 0.4);
+  transition: all 0.25s ease;
+}
+
+.gt-coupon-modal-btn-explore:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -4px rgba(41, 178, 183, 0.55);
+}
+
+/* ============================================================
+   Welcome Urgency Popup (Guest / 10s Trigger)
+   ============================================================ */
+.gt-urgency-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: gtFadeIn 0.3s ease-out;
+}
+
+.gt-urgency-card {
+  position: relative;
+  background: #ffffff;
+  border-radius: 28px;
+  width: 100%;
+  max-width: 490px;
+  padding: 36px 28px 28px 28px;
+  box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(41, 178, 183, 0.25);
+  animation: gtScaleUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  text-align: center;
+}
+
+.gt-urgency-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: none;
+  font-size: 1rem;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.gt-urgency-close:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.gt-urgency-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, rgba(250, 180, 24, 0.18), rgba(245, 158, 11, 0.25));
+  border: 1px solid rgba(250, 180, 24, 0.5);
+  padding: 5px 14px;
+  border-radius: 20px;
+  margin-bottom: 16px;
+}
+
+.gt-urgency-fire-icon {
+  font-size: 0.95rem;
+  animation: gtBounce 1.5s infinite;
+}
+
+.gt-urgency-banner-text {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #b45309;
+  letter-spacing: 0.4px;
+}
+
+.gt-urgency-title {
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+
+.gt-urgency-subtitle {
+  font-size: 0.88rem;
+  color: #64748b;
+  line-height: 1.45;
+  margin-bottom: 18px;
+}
+
+.gt-urgency-ticket-container {
+  margin-bottom: 20px;
+}
+
+/* Urgency Timer Box */
+.gt-urgency-timer-box {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-radius: 16px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25);
+}
+
+.gt-urgency-timer-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-align: left;
+}
+
+.gt-urgency-timer-label svg {
+  color: #fab418;
+}
+
+.gt-urgency-clock-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gt-clock-unit {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 4px 8px;
+  min-width: 44px;
+  text-align: center;
+}
+
+.gt-clock-digit {
+  font-family: monospace;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #fab418;
+  display: block;
+  line-height: 1;
+}
+
+.gt-clock-tag {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.gt-clock-colon {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #fab418;
+  animation: gtPulse 1s infinite;
+}
+
+.gt-urgency-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gt-urgency-btn-claim {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 15px 20px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #106da4 0%, #29b2b7 100%);
+  color: #ffffff;
+  border: none;
+  font-size: 0.96rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 30px -5px rgba(41, 178, 183, 0.45);
+  transition: all 0.25s ease;
+}
+
+.gt-urgency-btn-claim:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px -5px rgba(41, 178, 183, 0.6);
+}
+
+.gt-urgency-btn-dismiss {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s ease;
+}
+
+.gt-urgency-btn-dismiss:hover {
+  color: #475569;
+}
+
+/* ============================================================
+   Tour Detail Booking Form Coupon Section
+   ============================================================ */
+.tdp-coupon-section {
+  background: #f8fafc;
+  border: 1px dashed rgba(41, 178, 183, 0.35);
+  border-radius: 12px;
+  padding: 14px;
+  margin: 14px 0;
+}
+
+.tdp-coupon-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.tdp-coupon-label-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.tdp-coupon-label-row label svg {
+  color: var(--teal);
+}
+
+.tdp-coupon-active-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: #10b981;
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.tdp-coupon-applied-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid #10b981;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.tdp-coupon-applied-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tdp-coupon-applied-code {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.tdp-coupon-applied-desc {
+  font-size: 0.76rem;
+  color: #059669;
+  font-weight: 600;
+}
+
+.tdp-coupon-remove-btn {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #ef4444;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tdp-coupon-remove-btn:hover {
+  background: #fee2e2;
+}
+
+.tdp-coupon-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tdp-coupon-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.tdp-coupon-input {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  font-family: monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.tdp-coupon-input:focus {
+  outline: none;
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(41, 178, 183, 0.15);
+}
+
+.tdp-coupon-apply-btn {
+  padding: 8px 14px;
+  background: #106da4;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.tdp-coupon-apply-btn:hover {
+  background: var(--teal);
+}
+
+.tdp-coupon-quick-apply {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(41, 178, 183, 0.1);
+  border: 1px solid rgba(41, 178, 183, 0.3);
+  padding: 6px 10px;
+  border-radius: 8px;
+  color: #0f766e;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.tdp-coupon-quick-apply:hover {
+  background: rgba(41, 178, 183, 0.18);
+  border-color: var(--teal);
+}
+
+.tdp-quick-apply-tag {
+  background: var(--teal);
+  color: #ffffff;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+}
+
+.tdp-coupon-err-msg {
+  font-size: 0.75rem;
+  color: #ef4444;
+  font-weight: 600;
+  margin: 0;
+}
+
+.tdp-coupon-success-msg {
+  font-size: 0.75rem;
+  color: #10b981;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Discounted Price Breakdown in Total Row */
+.total-price-values {
+  text-align: right;
+}
+
+.tdp-discounted-price-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tdp-old-price {
+  font-size: 0.92rem;
+  color: #94a3b8;
+  text-decoration: line-through;
+  font-weight: 600;
+}
+
+.tdp-discount-tag {
+  font-size: 0.74rem;
+  font-weight: 800;
+  background: rgba(250, 180, 24, 0.2);
+  color: #b45309;
+  border: 1px solid rgba(250, 180, 24, 0.4);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+/* Keyframe Animations */
+@keyframes gtFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes gtScaleUp {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes gtBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes gtPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+
+/* ============================================================
+   Floating Bottom-Right Coupon Widget (Non-blocking / Scrollable)
+   Only shows the naked ticket card - no background overlay
+   ============================================================ */
+.gt-floating-coupon-widget {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9998;
+  width: auto;
+  max-width: 400px;
+  animation: gtSlideInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto;
+  /* No background, no padding — pure ticket card floats */
+}
+
+.gt-floating-coupon-close {
+  display: block;
+  margin-left: auto;
+  margin-bottom: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #0f172a;
+  color: #ffffff;
+  border: 2px solid #ffffff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.gt-floating-coupon-close:hover {
+  background: #ef4444;
+  transform: scale(1.1);
+}
+
+.gt-floating-ticket-wrapper {
+  overflow: visible;
+}
+
+/* The ticket itself floats cleanly with a subtle shadow */
+.gt-floating-ticket-wrapper .gt-coupon-ticket {
+  box-shadow: 0 16px 45px -8px rgba(15, 23, 42, 0.22), 0 4px 16px rgba(41, 178, 183, 0.15) !important;
+  margin: 0 !important;
+}
+
+@keyframes gtSlideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Mobile Responsiveness for Floating Widget */
+@media (max-width: 640px) {
+  .gt-floating-coupon-widget {
+    bottom: 16px;
+    right: 12px;
+    left: 12px;
+    max-width: calc(100vw - 24px);
+  }
+
+  .gt-floating-ticket-wrapper .gt-coupon-amount {
+    font-size: 1.6rem !important;
+  }
+
+  .gt-floating-ticket-wrapper .gt-coupon-stub {
+    width: 60px !important;
+    min-width: 60px !important;
+  }
+}
+
+/* Floating Widget: X button sits inline inside urgency bar, bar+ticket form one unit */
+.gt-floating-urgency-bar {
+  border-radius: 12px 12px 0 0;
+}
+.gt-floating-coupon-close {
+  display: inline-flex !important;
+  margin: 0 !important;
+  width: 24px !important;
+  height: 24px !important;
+  font-size: 0.7rem !important;
+  background: rgba(255,255,255,0.15) !important;
+  border: 1px solid rgba(255,255,255,0.3) !important;
+  box-shadow: none !important;
+}
+.gt-floating-coupon-close:hover {
+  background: #ef4444 !important;
+}
+.gt-floating-ticket-wrapper .gt-coupon-ticket {
+  border-radius: 0 0 16px 16px !important;
+  box-shadow: 0 16px 40px -8px rgba(15,23,42,0.22), 0 4px 16px rgba(41,178,183,0.12) !important;
+  margin: 0 !important;
+}

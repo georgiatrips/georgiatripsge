@@ -8,6 +8,7 @@ import { useAuth } from "../lib/AuthContext";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 import { useCurrency, CURRENCY_RATES } from "../lib/currency/CurrencyContext";
 import { FlagGeorgia, FlagUK, FlagRussia, FlagTurkey, FlagArabic } from "./Flags";
+import CouponModal from "./CouponModal";
 
 // Shared site navigation. `active` highlights the current top-level item.
 // Supported active values: "home" | "tours" | "transport" | "posts" | "hotels" | "admin" | "about" | "contact"
@@ -18,6 +19,7 @@ export default function Navbar({ active = "home" }) {
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [currencyDropdownOpen, setCurrencyDropdownOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [couponModalOpen, setCouponModalOpen] = useState(false);
   const { currency, setCurrency } = useCurrency();
   const { user, logOut } = useAuth() ?? {};
   const router = useRouter();
@@ -197,16 +199,36 @@ export default function Navbar({ active = "home" }) {
               </svg>
             </button>
             {userDropdownOpen && (
-              <div className="nav-dropdown" style={{ right: 0, left: "auto", minWidth: 160 }}>
+              <div className="nav-dropdown" style={{ right: 0, left: "auto", minWidth: 175 }}>
                 <button className="nav-dropdown-item" onClick={() => { router.push("/login"); setUserDropdownOpen(false); }}>
-                  {t("nav.profile")}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}>
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <span>{t("nav.profile")}</span>
                 </button>
+                <Link
+                   href="/coupons"
+                   className="nav-dropdown-item nav-dropdown-coupon-btn"
+                   onClick={() => setUserDropdownOpen(false)}
+                   style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                 >
+                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                     <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                     <line x1="7" y1="7" x2="7.01" y2="7" />
+                   </svg>
+                   <span>{t("nav.coupons") || "ჩემი კუპონები"}</span>
+                 </Link>
                 <button
                   className="nav-dropdown-item"
                   onClick={async () => { await logOut?.(); setUserDropdownOpen(false); router.push("/"); }}
                   style={{ color: "#f87171" }}
                 >
-                  {t("nav.logout")}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}>
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </svg>
+                  <span>{t("nav.logout")}</span>
                 </button>
               </div>
             )}
@@ -307,6 +329,13 @@ export default function Navbar({ active = "home" }) {
               <Link href="/login" className="nav-mobile-user-btn" onClick={() => setMobileMenuOpen(false)}>
                 {t("nav.profile")}
               </Link>
+              <Link
+                href="/coupons"
+                className="nav-mobile-user-btn nav-mobile-coupon-btn"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span>{t("nav.coupons") || "ჩემი კუპონები"}</span>
+              </Link>
               <button
                 className="nav-mobile-user-btn nav-mobile-logout"
                 onClick={async () => { await logOut?.(); setMobileMenuOpen(false); router.push("/"); }}
@@ -324,6 +353,8 @@ export default function Navbar({ active = "home" }) {
           </Link>
         )}
       </div>
+
+      <CouponModal isOpen={couponModalOpen} onClose={() => setCouponModalOpen(false)} />
     </nav>
   );
 }

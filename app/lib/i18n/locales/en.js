@@ -13,7 +13,8 @@ export const en = {
     "logout": "Logout",
     "language": "Language",
     "currency": "Currency",
-    "loginRegister": "Login / Register"
+    "loginRegister": "Login / Register",
+    "coupons": "My Coupons"
   },
   "hero": {
     "badge": "Georgia Trips — Travel Company",
@@ -706,6 +707,48 @@ export const en = {
       "invalidCredential": "Invalid email or password.",
       "defaultError": "An error occurred. Please try again."
     }
+  }
+,
+  "coupon":   {
+      "statusActive": "Active • 1 Use",
+      "statusUsed": "Used",
+      "verified": "Verified",
+      "discountLabel": "DISCOUNT",
+      "offLabel": "OFF",
+      "desc": "10% discount on any tour at GeorgiaTrips",
+      "codeLabel": "Promo Code:",
+      "copied": "Copied!",
+      "copy": "Copy",
+      "useInBooking": "Use in Booking",
+      "myCouponsTitle": "My Discount Coupons",
+      "myCouponsSub": "You have 1 exclusive discount voucher from GeorgiaTrips",
+      "howToUseTitle": "How to use your coupon:",
+      "step1": "Choose your desired tour from our catalog",
+      "step2": "Enter code WELCOME10 in the booking form",
+      "step3": "The total price is instantly discounted by 10%!",
+      "exploreToursBtn": "Explore & Book Tours"
+  },
+  "welcomePopup":   {
+      "limitedOffer": "Limited Time Exclusive Offer!",
+      "title": "Get a 10% Discount Coupon",
+      "subtitle": "Register now within 30 minutes and instantly get a 10% discount voucher for any tour!",
+      "timeRemaining": "Time remaining for this offer:",
+      "mins": "min",
+      "secs": "sec",
+      "registerClaimBtn": "Register & Claim Coupon (10% OFF)",
+      "dismissBtn": "Maybe later, thanks"
+  },
+  "bookingCoupon":   {
+      "title": "Discount Coupon",
+      "placeholder": "e.g. WELCOME10",
+      "applyBtn": "Apply",
+      "useMyWelcome": "My 10% coupon (WELCOME10)",
+      "apply": "Apply",
+      "remove": "Remove",
+      "enterCode": "Please enter a coupon code",
+      "invalidCode": "Invalid coupon code",
+      "appliedSuccess": "10% discount applied successfully!",
+      "discountApplied": "10% discount applied"
   }
 };
 export default en;

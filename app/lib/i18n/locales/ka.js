@@ -13,7 +13,8 @@ export const ka = {
     "logout": "გასვლა",
     "language": "ენა",
     "currency": "ვალუტა",
-    "loginRegister": "შესვლა / რეგისტრაცია"
+    "loginRegister": "შესვლა / რეგისტრაცია",
+    "coupons": "ჩემი კუპონები"
   },
   "hero": {
     "badge": "Georgia Trips — Travel Company",
@@ -706,6 +707,48 @@ export const ka = {
       "invalidCredential": "ელ-ფოსტა ან პაროლი არასწორია.",
       "defaultError": "შეცდომა. გთხოვთ სცადოთ თავიდან."
     }
+  }
+,
+  "coupon":   {
+      "statusActive": "აქტიური • 1 გამოყენება",
+      "statusUsed": "გამოყენებულია",
+      "verified": "ვალიდურია",
+      "discountLabel": "DISCOUNT",
+      "offLabel": "OFF",
+      "desc": "10%-იანი ფასდაკლება ნებისმიერ ტურზე GeorgiaTrips-ში",
+      "codeLabel": "პრომო კოდი:",
+      "copied": "დაკოპირდა!",
+      "copy": "კოპირება",
+      "useInBooking": "კუპონის გამოყენება",
+      "myCouponsTitle": "ჩემი ფასდაკლების კუპონები",
+      "myCouponsSub": "თქვენ გაქვთ 1 ექსკლუზიური ფასდაკლების ბარათი GeorgiaTrips-ისგან",
+      "howToUseTitle": "როგორ გამოვიყენოთ კუპონი:",
+      "step1": "აირჩიეთ სასურველი ტური ჩვენს კატალოგში",
+      "step2": "დაჯავშნის ფორმაში შეიყვანეთ კოდი WELCOME10",
+      "step3": "ჯამური ფასი ავტომატურად შემცირდება 10%-ით!",
+      "exploreToursBtn": "ტურების დათვალიერება და დაჯავშნა"
+  },
+  "welcomePopup":   {
+      "limitedOffer": "შეზღუდული დროის ექსკლუზიური შეთავაზება!",
+      "title": "მიიღეთ 10%-იანი ფასდაკლების კუპონი",
+      "subtitle": "დარეგისტრირდით ახლავე 30 წუთის განმავლობაში და მომენტალურად მიიღეთ 10%-იანი ფასდაკლების ბარათი ნებისმიერ ტურზე!",
+      "timeRemaining": "შეთავაზების დასრულებამდე დარჩა:",
+      "mins": "წუთი",
+      "secs": "წამი",
+      "registerClaimBtn": "რეგისტრაცია და კუპონის მიღება (10% OFF)",
+      "dismissBtn": "მოგვიანებით, მადლობა"
+  },
+  "bookingCoupon":   {
+      "title": "ფასდაკლების კუპონი",
+      "placeholder": "მაგ: WELCOME10",
+      "applyBtn": "გამოყენება",
+      "useMyWelcome": "ჩემი 10%-იანი კუპონი (WELCOME10)",
+      "apply": "გამოყენება",
+      "remove": "გაუქმება",
+      "enterCode": "შეიყვანეთ კუპონის კოდი",
+      "invalidCode": "არასწორი კუპონის კოდი",
+      "appliedSuccess": "10%-იანი ფასდაკლება გააქტიურებულია!",
+      "discountApplied": "10%-იანი ფასდაკლება გააქტიურებულია"
   }
 };
 export default ka;

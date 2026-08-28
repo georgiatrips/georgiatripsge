@@ -9,6 +9,7 @@ import { CurrencyProvider } from "./lib/currency/CurrencyContext";
 import { isRtlLanguage } from "./lib/i18n/locale";
 import CookieConsent from "./components/CookieConsent";
 import AnalyticsTracker from "./components/AnalyticsTracker";
+import WelcomeCouponPopup from "./components/WelcomeCouponPopup";
 
 const notoGeorgian = Noto_Sans_Georgian({
   variable: "--font-noto-georgian",
@@ -136,8 +137,26 @@ export async function generateMetadata() {
   return {
     metadataBase: new URL("https://georgiatrips.ge"),
     icons: {
-      icon: "/logo.webp",
+      icon: [
+        { url: "/favicon.ico", sizes: "any" },
+        { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+        { url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" },
+        { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+        { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+        { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      ],
+      shortcut: "/favicon.ico",
+      apple: [
+        { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      ],
+      other: [
+        {
+          rel: "apple-touch-icon-precomposed",
+          url: "/apple-touch-icon-precomposed.png",
+        },
+      ],
     },
+    manifest: "/manifest.json",
     title: curr.title,
     description: curr.description,
     keywords: curr.keywords,
@@ -175,6 +194,7 @@ export async function generateMetadata() {
     },
     verification: {
       google: "pqDpqUT-VHHamkaxnisNnk8LO2z-v0EdXak_z77V86U",
+      yandex: "b8d0557b47549680",
       other: {
         "facebook-domain-verification": "ef9kax36lazdya98y738pn5e10ny2e",
       },
@@ -208,7 +228,7 @@ function buildStructuredData(lang = "ka") {
         name: "GeorgiaTrips",
         legalName: "GeorgiaTrips",
         url: "https://georgiatrips.ge",
-        logo: "https://georgiatrips.ge/logo.webp",
+        logo: "https://georgiatrips.ge/logo.png",
         image: "https://georgiatrips.ge/hero.webp",
         description: "Premium tours, private excursions, and VIP transfers in Georgia (Tbilisi, Batumi, Kazbegi, Kakheti, Svaneti).",
         telephone: "+995504220020",
@@ -289,6 +309,13 @@ export default async function RootLayout({ children }) {
       className={`${notoGeorgian.variable} ${notoSerifGeorgian.variable} ${playfair.variable} ${notoArabic.variable}`}
     >
       <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
+        <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="manifest" href="/manifest.json" />
         <link rel="preconnect" href="https://georgiatripsge.firebaseapp.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://firestore.googleapis.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://connect.facebook.net" crossOrigin="anonymous" />
@@ -309,6 +336,7 @@ export default async function RootLayout({ children }) {
                 <AnalyticsTracker />
               </Suspense>
               <CookieConsent />
+              <WelcomeCouponPopup />
             </AuthProvider>
           </CurrencyProvider>
         </LanguageProvider>

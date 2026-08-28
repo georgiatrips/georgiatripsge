@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import CouponTicket from "../components/CouponTicket";
 import { useAuth } from "../lib/AuthContext";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 import {
@@ -69,6 +70,14 @@ export default function LoginPage() {
 
   const { user } = useAuth() ?? {};
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const tabParam = searchParams?.get("tab");
+    if (tabParam === "signup" || tabParam === "signin") {
+      setTab(tabParam);
+    }
+  }, [searchParams]);
 
   // If already logged in, show profile view (handled below)
   const isLoggedIn = !!user;
@@ -177,9 +186,36 @@ export default function LoginPage() {
               />
               <div className="lp-username">{user.displayName || user.email?.split("@")[0]}</div>
               <div className="lp-useremail">{user.email}</div>
-              <Link href="/" className="lp-btn-primary" style={{ marginTop: "1.25rem", display: "inline-flex", justifyContent: "center" }}>
-                {t("loginPage.exploreTours")}
-              </Link>
+
+              {/* ── User's 10% Discount Coupon Card ── */}
+              <div className="lp-coupon-section" style={{ width: "100%", marginTop: "1.5rem", textAlign: "left" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "1.2rem" }}>🎟️</span>
+                    <strong style={{ fontSize: "1.05rem", color: "var(--text-dark)" }}>
+                      {t("coupon.myCouponsTitle") || "ჩემი ფასდაკლების კუპონი"}
+                    </strong>
+                  </div>
+                  <span style={{ fontSize: "0.78rem", fontWeight: 700, padding: "3px 8px", background: "rgba(41,178,183,0.12)", color: "var(--teal)", borderRadius: "12px" }}>
+                    10% OFF
+                  </span>
+                </div>
+
+                <CouponTicket
+                  code="WELCOME10"
+                  discountPercent={10}
+                  isUsed={false}
+                  showCopy={true}
+                  showUseBtn={true}
+                  onUse={() => router.push("/tours")}
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: "10px", width: "100%", marginTop: "1.5rem" }}>
+                <Link href="/tours" className="lp-btn-primary" style={{ flex: 1, display: "inline-flex", justifyContent: "center", alignItems: "center", textDecoration: "none" }}>
+                  {t("loginPage.exploreTours")}
+                </Link>
+              </div>
             </div>
           ) : (
             <>
