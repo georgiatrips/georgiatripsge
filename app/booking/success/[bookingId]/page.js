@@ -55,7 +55,7 @@ export default function BookingSuccessPage() {
     return () => {
       isMounted = false;
     };
-  }, [bookingId, token]);
+  }, [bookingId, queryToken]);
 
   const currentStatus = booking?.status || "pending";
   const statusInfo = STATUS_CONFIG[currentStatus] || STATUS_CONFIG.pending;
