@@ -57,16 +57,6 @@ export default function TourDetailPage() {
   const [bookingSubmitted, setBookingSubmitted] = useState(false);
   const bookingSidebarRef = useRef(null);
 
-  // Autofill user profile if logged in
-  useEffect(() => {
-    if (user?.displayName && !bookingName) {
-      setBookingName(user.displayName);
-    }
-    if (user?.phoneNumber && !bookingPhone) {
-      setBookingPhone(user.phoneNumber);
-    }
-  }, [user, bookingName, bookingPhone]);
-
   useEffect(() => {
     let cancelled = false;
     setFsLoading(true);
@@ -528,23 +518,16 @@ export default function TourDetailPage() {
 
         setBookingSubmitted(true);
 
-        // Save latest booking locally for instant retrieval on confirmation page
         try {
           if (typeof window !== "undefined") {
-            sessionStorage.setItem("gt_last_booking", JSON.stringify({ bookingId: bId, token: aToken }));
+            if (aToken) localStorage.setItem(`gt_token_${bId}`, aToken);
+            if (bookingPhone) localStorage.setItem(`gt_phone_${bId}`, bookingPhone);
           }
         } catch (_) {}
 
         // Redirect to dedicated booking confirmation page
         const targetUrl = `/booking/success/${encodeURIComponent(bId)}${aToken ? `?token=${encodeURIComponent(aToken)}` : ""}`;
         router.push(targetUrl);
-
-        // Instant fallback so navigation never hangs
-        setTimeout(() => {
-          if (typeof window !== "undefined" && !window.location.pathname.includes(bId)) {
-            window.location.href = targetUrl;
-          }
-        }, 600);
       }
     } catch (err) {
       console.error("Booking submit error:", err);
@@ -1351,17 +1334,6 @@ export default function TourDetailPage() {
                 </div>
 
                 <div className="tdp-form-group">
-                  <label>{t("tourDetail.yourName") || "სახელი და გვარი"}</label>
-                  <input
-                    type="text"
-                    placeholder={t("tourDetail.namePlaceholder") || "თქვენი სახელი და გვარი"}
-                    value={bookingName}
-                    onChange={(e) => setBookingName(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="tdp-form-group">
                   <label>{t("tourDetail.phoneLabel")}</label>
                   <input
                     type="tel"
@@ -1501,7 +1473,7 @@ export default function TourDetailPage() {
                 <button type="submit" className="btn-tdp-submit" disabled={bookingSubmitting}>
                   <span>
                     {bookingSubmitting
-                      ? (t("tourDetail.submitting") || "მუშავდება...")
+                      ? "..."
                       : `${t("tourDetail.bookNow")}${totalPrice > 0 ? ` — ${format(totalPrice, lang)}` : ""}`}
                   </span>
                 </button>

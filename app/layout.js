@@ -400,6 +400,14 @@ export default async function RootLayout({ children }) {
         {/* Meta Pixel (Facebook & Instagram Ads) */}
         <Script id="meta-pixel" strategy="afterInteractive">
           {`
+            if (typeof window !== 'undefined' && typeof Node !== 'undefined' && !Node.prototype.getBoundingClientRect) {
+              Node.prototype.getBoundingClientRect = function() {
+                if (this.parentElement && typeof this.parentElement.getBoundingClientRect === 'function') {
+                  return this.parentElement.getBoundingClientRect();
+                }
+                return { top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0 };
+              };
+            }
             !function(f,b,e,v,n,t,s)
             {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
             n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -408,7 +416,6 @@ export default async function RootLayout({ children }) {
             t.src=v;s=b.getElementsByTagName(e)[0];
             s.parentNode.insertBefore(t,s)}(window, document,'script',
             'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('set', 'autoConfig', false, '${process.env.NEXT_PUBLIC_META_PIXEL_ID || "4302985556633819"}');
             fbq('init', '${process.env.NEXT_PUBLIC_META_PIXEL_ID || "4302985556633819"}');
             fbq('track', 'PageView');
           `}

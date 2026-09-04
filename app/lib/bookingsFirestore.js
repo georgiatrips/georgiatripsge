@@ -12,7 +12,7 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { normalizeBooking, BOOKING_STATUSES, generateBookingId, generateAccessToken } from "./bookingModel";
+import { normalizeBooking, BOOKING_STATUSES } from "./bookingModel";
 
 const BOOKINGS_COLLECTION = "bookings";
 
@@ -40,10 +40,10 @@ export async function createBooking(payload) {
   } catch (err) {
     console.warn("API booking failed, attempting fallback:", err.message);
 
-    // Fallback direct write to Firestore (with normalized structure)
+    // Fallback direct write to Firestore (with normalized structure & accessToken)
     try {
-      const bId = payload.bookingId || generateBookingId();
-      const aToken = payload.accessToken || generateAccessToken();
+      const bId = payload.bookingId || `GT-${Date.now().toString().slice(-6)}`;
+      const aToken = payload.accessToken || `sec_${Math.random().toString(36).substring(2, 15)}${Date.now().toString(36)}`;
       const docRef = await addDoc(collection(db, BOOKINGS_COLLECTION), {
         ...payload,
         bookingId: bId,

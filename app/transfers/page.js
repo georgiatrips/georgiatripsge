@@ -20,6 +20,7 @@ export default function TransfersPage() {
   const [transferDate, setTransferDate] = useState("");
   const [transferTime, setTransferTime] = useState("");
   const [passengerCount, setPassengerCount] = useState("2");
+  const [contactName, setContactName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -81,7 +82,7 @@ export default function TransfersPage() {
     try {
       const result = await createBooking({
         type: "transfer",
-        name: contactPhone ? `მგზავრი (${contactPhone})` : "მგზავრი / Guest",
+        name: contactName.trim() || (contactPhone ? `მგზავრი (${contactPhone})` : "მგზავრი / Guest"),
         vehicle: selectedVehicleKey,
         vehicleName: selectedVehicleName,
         pickup: pickupLoc,
@@ -95,6 +96,14 @@ export default function TransfersPage() {
       });
 
       const bId = result?.bookingId || (typeof result === "string" ? result : null);
+      const aToken = result?.accessToken || "";
+
+      if (bId && typeof window !== "undefined") {
+        try {
+          if (aToken) localStorage.setItem(`gt_token_${bId}`, aToken);
+          if (contactPhone) localStorage.setItem(`gt_phone_${bId}`, contactPhone);
+        } catch (_) {}
+      }
 
       if (bId) {
         if (typeof window !== "undefined" && window.fbq) {
@@ -417,6 +426,17 @@ export default function TransfersPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div className="tf-field-full">
+                <label className="tf-label">{t("tourDetail.yourName") || "თქვენი სახელი"}</label>
+                <input
+                  type="text"
+                  placeholder={t("tourDetail.namePlaceholder") || "მაგ: გიორგი"}
+                  value={contactName}
+                  onChange={(e) => setContactName(e.target.value)}
+                  className="tf-input-styled"
+                />
               </div>
 
               <div className="tf-field-full">

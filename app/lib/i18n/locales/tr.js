@@ -749,42 +749,6 @@ export const tr = {
       "invalidCode": "Geçersiz kupon kodu",
       "appliedSuccess": "%10 indirim başarıyla uygulandı!",
       "discountApplied": "%10 indirim uygulandı"
-  },
-  "bookingSuccess": {
-    "loading": "Rezervasyon bilgileri yükleniyor...",
-    "errorTitle": "Rezervasyon Bulunamadı",
-    "checkByPhone": "Numara ile Durum Sorgula",
-    "title": "Rezervasyon Başarıyla Alındı!",
-    "subtitle": "GeorgiaTrips'i seçtiğiniz için teşekkürler. Talebiniz sisteme başarıyla kaydedildi.",
-    "idLabel": "Rezervasyon No (ID)",
-    "whatNextTitle": "Sırada ne var?",
-    "whatNextDesc": "Rezervasyonunuz alındı, operatörümüz uygun yerleri kontrol ediyor. Kısa süre içinde onay için WhatsApp mesajı veya arama alacaksınız.",
-    "tour": "Tur",
-    "date": "Tarih",
-    "travelers": "Yolcular",
-    "peopleSuffix": "kişi",
-    "totalCost": "Toplam Tutar",
-    "confirmWhatsApp": "WhatsApp ile Onayla",
-    "checkStatus": "Durum Kontrolü",
-    "otherTours": "Diğer Turlar",
-    "waMessageGreeting": "Merhaba! Web sitesinden rezervasyon yaptım"
-  },
-  "bookingStatus": {
-    "title": "Rezervasyon Durumu Sorgulama",
-    "subtitle": "Mevcut durumu görmek için Rezervasyon ID ve telefon numaranızı girin",
-    "bookingIdLabel": "Rezervasyon No (Booking ID)",
-    "bookingIdPlaceholder": "örn: GT-260904-ABCD",
-    "phoneLabel": "Telefon Numarası",
-    "phonePlaceholder": "örn: +995 5XX XX XX XX",
-    "checkBtn": "Durumu Sorgula",
-    "checking": "Sorgulanıyor...",
-    "errorEmptyId": "Lütfen rezervasyon numaranızı girin (örn. GT-260904-XXXX)",
-    "errorEmptyPhone": "Lütfen rezervasyonda belirttiğiniz telefon numarasını girin",
-    "errorNotFound": "Belirtilen bilgilerle rezervasyon bulunamadı",
-    "errorServer": "Sunucu bağlantı hatası. Lütfen daha sonra tekrar deneyin.",
-    "activeStatus": "Mevcut Durum",
-    "customer": "Müşteri",
-    "backHome": "Ana Sayfaya Dön"
   }
 };
 export default tr;

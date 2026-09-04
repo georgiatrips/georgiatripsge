@@ -1,4 +1,4 @@
-const CACHE_NAME = "georgiatrips-v2";
+const CACHE_NAME = "georgiatrips-v3";
 const STATIC_ASSETS = [
   "/logo.png",
   "/manifest.json",
@@ -29,19 +29,17 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(event.request.url);
 
-  // Never intercept navigations, API calls, booking routes, admin, or Next.js RSC requests
+  // Never intercept API routes, navigations, or non-static requests
   if (
     event.request.mode === "navigate" ||
     url.pathname.startsWith("/api/") ||
-    url.pathname.includes("/booking/") ||
-    url.pathname.includes("/admin") ||
-    event.request.headers.get("RSC") === "1" ||
-    url.searchParams.has("_rsc")
+    url.pathname.startsWith("/booking/") ||
+    url.pathname.startsWith("/admin")
   ) {
     return;
   }
 
-  // Only handle static assets (JS chunks, CSS, images, icons)
+  // Only handle static assets
   const isStatic =
     url.pathname.startsWith("/_next/static/") ||
     url.pathname.startsWith("/images/") ||
@@ -68,8 +66,8 @@ self.addEventListener("fetch", (event) => {
           }
           return networkResponse;
         })
-        .catch(() => {
-          return new Response("", { status: 408, statusText: "Request Timeout" });
+        .catch((err) => {
+          return new Response("Network error", { status: 408, headers: { "Content-Type": "text/plain" } });
         });
     })
   );

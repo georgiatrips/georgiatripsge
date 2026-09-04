@@ -39,23 +39,23 @@ export async function POST(request) {
       source = {},
     } = body;
 
-    // 1. Validate mandatory fields
-    const rawName = String(name || body.fullName || "").trim();
-    const defaultLabel = type === "transfer" ? "მგზავრი / Guest" : "ტურისტი / Guest";
-    const cleanName = rawName.length >= 2 ? rawName : (rawName || defaultLabel);
+    // 1. Validate mandatory fields (fallback to Guest if name is empty)
+    const rawName = String(name || "").trim();
+    const cleanName = rawName || (type === "transfer" ? "მგზავრი / Guest" : "მგზავრი / Guest");
 
-    const cleanPhone = String(phone || "").trim();
-    if (!isValidPhone(cleanPhone)) {
+    const cleanPhone = String(phone || body.contactPhone || "").trim();
+    if (type !== "custom_request" && cleanPhone && !isValidPhone(cleanPhone)) {
       return NextResponse.json(
         { success: false, error: "გთხოვთ მიუთითოთ ვალიდური ტელეფონის ნომერი" },
         { status: 400 }
       );
     }
+    const finalPhone = cleanPhone || "+995 000 000 000";
 
     const totalPeople = Math.max(1, parseInt(people, 10) || 1);
 
     // 2. Anti-duplicate / Idempotency check (within 60 seconds)
-    const idempotencyKey = `${cleanPhone}_${tourId}_${date}_${totalPeople}`.toLowerCase();
+    const idempotencyKey = `${finalPhone}_${tourId}_${date}_${totalPeople}`.toLowerCase();
     if (recentSubmissions.has(idempotencyKey)) {
       const existing = recentSubmissions.get(idempotencyKey);
       if (Date.now() - existing.time < 60000) {
@@ -143,9 +143,9 @@ export async function POST(request) {
 
       customer: {
         fullName: cleanName,
-        phone: cleanPhone,
+        phone: finalPhone,
         email: String(email || "").trim(),
-        whatsapp: cleanPhone,
+        whatsapp: finalPhone,
         messengerPref: channel,
         country: body.country || "Georgia",
         language,

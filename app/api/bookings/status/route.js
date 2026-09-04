@@ -14,19 +14,16 @@ export async function GET(request) {
       return NextResponse.json({ error: "Booking ID is required" }, { status: 400 });
     }
 
-    // 1. Direct document fetch by ID (allowed by get rule)
+    // 1. Direct document fetch by ID
     let booking = null;
-    let docId = bookingId;
-
     try {
       const directSnap = await getDoc(doc(db, "bookings", bookingId));
       if (directSnap.exists()) {
         booking = normalizeBooking(directSnap.data(), directSnap.id);
-        docId = directSnap.id;
       }
     } catch (_) {}
 
-    // 2. Query fallback if not stored by custom ID
+    // 2. Query fallback by bookingId field
     if (!booking) {
       try {
         const q = query(
@@ -37,7 +34,6 @@ export async function GET(request) {
         const snap = await getDocs(q);
         if (!snap.empty) {
           booking = normalizeBooking(snap.docs[0].data(), snap.docs[0].id);
-          docId = snap.docs[0].id;
         }
       } catch (_) {}
     }
@@ -46,34 +42,16 @@ export async function GET(request) {
       return NextResponse.json({ error: "ჯავშანი ვერ მოიძებნა" }, { status: 404 });
     }
 
-    // Verify token or phone when provided
+    // Verify token or phone for full customer access
+    const isTokenVerified = Boolean(token && booking.accessToken && token === booking.accessToken);
     const cleanCustomerPhone = (booking.customer?.phone || "").replace(/[\s\-()]/g, "");
-    const phoneMatches = phone && cleanCustomerPhone && (cleanCustomerPhone.endsWith(phone) || phone.endsWith(cleanCustomerPhone));
-    const tokenMatches = token && booking.accessToken && token === booking.accessToken;
+    const isPhoneVerified = Boolean(phone && cleanCustomerPhone && (cleanCustomerPhone.endsWith(phone) || phone.endsWith(cleanCustomerPhone)));
+    const isFullyVerified = isTokenVerified || isPhoneVerified || !booking.accessToken;
 
-    if (phone && !phoneMatches) {
-      return NextResponse.json(
-        { error: "მითითებული ტელეფონის ნომერი არ ემთხვევა ამ ჯავშანს" },
-        { status: 403 }
-      );
-    }
-
-    if (token && !tokenMatches) {
-      return NextResponse.json(
-        { error: "ავტორიზაციის ტოკენი არასწორია ან ვადაგასულია" },
-        { status: 403 }
-      );
-    }
-
-    const isVerified = Boolean(phoneMatches || tokenMatches);
-    const rawFullName = booking.customer?.fullName || "სტუმარი";
-    const displayName = isVerified
-      ? rawFullName
-      : rawFullName.split(" ").map((w) => (w.length > 2 ? `${w[0]}***` : w)).join(" ");
-
-    // Return only safe customer-facing fields
+    // Return safe customer-facing fields (always allow status/tour summary for confirmation)
     return NextResponse.json({
       success: true,
+      verified: isFullyVerified,
       booking: {
         bookingId: booking.bookingId,
         status: booking.status,
@@ -85,8 +63,7 @@ export async function GET(request) {
         children: booking.trip?.children,
         totalPrice: booking.pricing?.totalPrice,
         currency: booking.pricing?.currency || "GEL",
-        customerName: displayName,
-        isVerified,
+        customerName: isFullyVerified ? booking.customer?.fullName : (booking.customer?.fullName ? `${booking.customer.fullName.slice(0, 3)}***` : "მგზავრი"),
         createdAtMillis: booking.createdAtMillis,
         cancellationReason: booking.status === "cancelled" ? (booking.admin?.cancellationReason || null) : null,
       },

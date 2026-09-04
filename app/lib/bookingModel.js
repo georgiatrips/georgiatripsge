@@ -12,8 +12,6 @@ export const STATUS_CONFIG = {
     labelKa: "მოლოდინში",
     labelEn: "Pending Confirmation",
     labelRu: "В ожидании",
-    labelTr: "Onay Bekliyor",
-    labelAr: "قيد الانتظار",
     color: "#eab308", // Amber
     bgColor: "rgba(234, 179, 8, 0.12)",
     borderColor: "rgba(234, 179, 8, 0.35)",
@@ -23,8 +21,6 @@ export const STATUS_CONFIG = {
     labelKa: "დადასტურებულია",
     labelEn: "Confirmed",
     labelRu: "Подтверждено",
-    labelTr: "Onaylandı",
-    labelAr: "مؤكد",
     color: "#10b981", // Emerald green
     bgColor: "rgba(16, 185, 129, 0.12)",
     borderColor: "rgba(16, 185, 129, 0.35)",
@@ -34,8 +30,6 @@ export const STATUS_CONFIG = {
     labelKa: "გაუქმებულია",
     labelEn: "Cancelled",
     labelRu: "Отменено",
-    labelTr: "İptal Edildi",
-    labelAr: "ملغى",
     color: "#ef4444", // Red
     bgColor: "rgba(239, 68, 68, 0.12)",
     borderColor: "rgba(239, 68, 68, 0.35)",
@@ -45,23 +39,12 @@ export const STATUS_CONFIG = {
     labelKa: "დასრულებულია",
     labelEn: "Completed",
     labelRu: "Завершено",
-    labelTr: "Tamamlandı",
-    labelAr: "مكتمل",
     color: "#3b82f6", // Blue
     bgColor: "rgba(59, 130, 246, 0.12)",
     borderColor: "rgba(59, 130, 246, 0.35)",
     icon: "🎉",
   },
 };
-
-export function getBookingStatusLabel(status, lang = "ka") {
-  const conf = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
-  if (lang === "en") return conf.labelEn || conf.labelKa;
-  if (lang === "ru") return conf.labelRu || conf.labelKa;
-  if (lang === "tr") return conf.labelTr || conf.labelEn || conf.labelKa;
-  if (lang === "ar") return conf.labelAr || conf.labelEn || conf.labelKa;
-  return conf.labelKa;
-}
 
 /**
  * Generate human-readable booking ID: GT-YYMMDD-XXXX (e.g. GT-260904-A7B2)
@@ -94,12 +77,12 @@ export function generateAccessToken() {
 }
 
 /**
- * Validate phone number (Georgia or international standard)
+ * Validate phone number (Georgia or international standard, 6-16 digits)
  */
 export function isValidPhone(phone) {
   if (!phone || typeof phone !== "string") return false;
-  const clean = phone.replace(/[\s\-()]/g, "");
-  return /^\+?\d{8,15}$/.test(clean);
+  const digits = phone.replace(/\D/g, "");
+  return digits.length >= 6 && digits.length <= 16;
 }
 
 /**
