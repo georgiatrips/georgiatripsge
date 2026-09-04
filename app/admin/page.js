@@ -14,7 +14,9 @@ import HotelManager from "./HotelManager";
 import ReviewManager from "./ReviewManager";
 import AnalyticsManager from "./AnalyticsManager";
 import CouponManager from "./CouponManager";
+import BookingManager from "./BookingManager";
 import { subscribeToLiveSessions } from "../lib/analytics";
+import { subscribeToBookings } from "../lib/bookingsFirestore";
 import LocalizedInputGroup, { emptyLangObj, parseLocal } from "./LocalizedInputGroup";
 import { listHotels } from "../lib/hotelsFirestore";
 import { listReviews } from "../lib/reviewsFirestore";
@@ -90,6 +92,7 @@ export default function AdminPage() {
   const [placesCount, setPlacesCount] = useState(0);
   const [reviewsCount, setReviewsCount] = useState(0);
   const [liveVisitorsCount, setLiveVisitorsCount] = useState(0);
+  const [pendingBookingsCount, setPendingBookingsCount] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -120,9 +123,17 @@ export default function AdminPage() {
       setLiveVisitorsCount(online);
     });
 
+    // Bookings real-time listener for badge
+    const unsubBookings = subscribeToBookings((items) => {
+      if (!active) return;
+      const pendingCount = items.filter((b) => (b.status || "pending") === "pending").length;
+      setPendingBookingsCount(pendingCount);
+    });
+
     return () => {
       active = false;
       unsubSessions();
+      unsubBookings();
     };
   }, []);
 
@@ -698,10 +709,37 @@ export default function AdminPage() {
               <span>კუპონები & IP</span>
               <span className="admin-tab-count" style={{ background: "#fab418", color: "#0f172a", fontWeight: 800 }}>10%</span>
             </button>
+            <button
+              type="button"
+              className={`admin-nav-tab ${activeTab === "bookings" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("bookings")}
+            >
+              <span style={{ fontSize: "1.2rem" }}>📋</span>
+              <span>ჯავშნები</span>
+              {pendingBookingsCount > 0 ? (
+                <span className="admin-tab-count" style={{ background: "#eab308", color: "#0f172a", fontWeight: 800 }}>
+                  {pendingBookingsCount}
+                </span>
+              ) : (
+                <span className="admin-tab-count">0</span>
+              )}
+            </button>
           </div>
 
           {/* DASHBOARD STATS ROW */}
           <div className="admin-stats-row">
+            <div
+              className={`admin-stat-card ${activeTab === "bookings" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("bookings")}
+            >
+              <div className="admin-stat-icon">📋</div>
+              <div className="admin-stat-info">
+                <strong style={{ color: pendingBookingsCount > 0 ? "#eab308" : "#0d9488" }}>
+                  {pendingBookingsCount > 0 ? `⏳ ${pendingBookingsCount} ახალი` : "ჯავშნები"}
+                </strong>
+                <span>ჯავშნების მართვა</span>
+              </div>
+            </div>
             <div
               className={`admin-stat-card ${activeTab === "tours" ? "is-active" : ""}`}
               onClick={() => setActiveTab("tours")}
@@ -1577,6 +1615,11 @@ export default function AdminPage() {
           {/* TAB 6: COUPONS & IP MANAGEMENT */}
           {activeTab === "coupons" && (
             <CouponManager />
+          )}
+
+          {/* TAB 7: BOOKINGS MANAGEMENT */}
+          {activeTab === "bookings" && (
+            <BookingManager />
           )}
         </div>
       </section>

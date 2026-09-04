@@ -135,15 +135,16 @@ export async function listTourReviews(tourId) {
   try {
     const q = query(
       collection(db, REVIEWS_COLLECTION),
-      where("tourId", "==", tourId),
-      orderBy("createdAt", "desc")
+      where("tourId", "==", tourId)
     );
     const snap = await getDocs(q);
-    return snap.docs.map((d) => ({
-      id: d.id,
-      ...d.data(),
-      date: d.data().createdAt?.toDate ? d.data().createdAt.toDate().toLocaleDateString() : d.data().date || "Recently",
-    }));
+    return snap.docs
+      .map((d) => ({
+        id: d.id,
+        ...d.data(),
+        date: d.data().createdAt?.toDate ? d.data().createdAt.toDate().toLocaleDateString() : d.data().date || "Recently",
+      }))
+      .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
   } catch (err) {
     console.warn("Could not load Firestore reviews:", err);
     return [];

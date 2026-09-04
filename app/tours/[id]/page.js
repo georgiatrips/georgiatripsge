@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import DatePicker from "../../components/DatePicker";
-import { getFirestoreTourById, normalizeFirestoreTour, groupDepartureDates, listFirestoreTours, asLocalizedText, translateDuration, translateLocation, translateMonthName } from "../../lib/toursFirestore";
+import { getFirestoreTourById, normalizeFirestoreTour, groupDepartureDates, listFirestoreTours, asLocalizedText, translateDuration, translateLocation, translateMonthName, getPlaceLocalizedTitle, extractImageUrl } from "../../lib/toursFirestore";
+import { listPlaces } from "../../lib/placesFirestore";
 import { WA_LINK, WA_NUMBER, PHONE_DISPLAY, TELEGRAM_HANDLE, TELEGRAM_LINK, INSTAGRAM_HANDLE, INSTAGRAM_LINK, SOCIAL_PROFILES, FAQS } from "../../lib/shared";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { useCurrency } from "../../lib/currency/CurrencyContext";
@@ -17,9 +18,12 @@ import { useAuth } from "../../lib/AuthContext";
 import { useCoupon } from "../../lib/CouponContext";
 import TourPrice from "../../components/TourPrice";
 import { ClockIcon, LocationIcon } from "../../components/Icons";
+import { trackMetaPurchase, trackMetaViewContent, trackMetaInitiateCheckout, trackEvent } from "../../lib/analytics";
+import { getStoredMarketingAttribution } from "../../lib/utmTracker";
 
 export default function TourDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const { user } = useAuth() ?? {};
   const { coupons, bestCoupon, maxDiscountPercent, hasActiveCoupon, addCoupon } = useCoupon();
   const { t, lang, isEnglish, isRussian } = useLanguage();
@@ -27,7 +31,9 @@ export default function TourDetailPage() {
   const routeId = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const tourId = typeof routeId === "string" ? routeId : "";
 
-  const [fsTour, setFsTour] = useState(null);
+  const [rawFsDoc, setRawFsDoc] = useState(null);
+  const [placesList, setPlacesList] = useState([]);
+  const fsTour = useMemo(() => (rawFsDoc ? normalizeFirestoreTour(rawFsDoc, lang, placesList) : null), [rawFsDoc, lang, placesList]);
   const [fsLoading, setFsLoading] = useState(true);
   const [allFsTours, setAllFsTours] = useState([]);
   const [selectedDate, setSelectedDate] = useState("");
@@ -47,6 +53,8 @@ export default function TourDetailPage() {
   const [activeDetailTab, setActiveDetailTab] = useState("includes");
   const [lightboxImgIndex, setLightboxImgIndex] = useState(null);
   const [showMobileStickyBtn, setShowMobileStickyBtn] = useState(false);
+  const [bookingSubmitting, setBookingSubmitting] = useState(false);
+  const [bookingSubmitted, setBookingSubmitted] = useState(false);
   const bookingSidebarRef = useRef(null);
 
   useEffect(() => {
@@ -54,31 +62,27 @@ export default function TourDetailPage() {
     setFsLoading(true);
     (async () => {
       try {
-        // A direct document read is the fast path. If an old/deployed rule or
-        // a transient client read fails, fall back to the collection already
-        // used successfully by the public lists, so a valid card never leads
-        // to a false “tour not found” page.
         let raw = await getFirestoreTourById(tourId);
         if (!raw) {
           const tours = await listFirestoreTours();
           raw = tours.find((item) => item.id === tourId) || null;
         }
-        if (!cancelled) setFsTour(raw ? normalizeFirestoreTour(raw, lang) : null);
+        if (!cancelled) setRawFsDoc(raw || null);
       } catch (error) {
         try {
           const tours = await listFirestoreTours();
           const raw = tours.find((item) => item.id === tourId) || null;
-          if (!cancelled) setFsTour(raw ? normalizeFirestoreTour(raw, lang) : null);
+          if (!cancelled) setRawFsDoc(raw || null);
         } catch {
           console.error("Unable to load tour details", error);
-          if (!cancelled) setFsTour(null);
+          if (!cancelled) setRawFsDoc(null);
         }
       } finally {
         if (!cancelled) setFsLoading(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [tourId, lang]);
+  }, [tourId]);
 
   // Load all Firestore (Admin panel) tours for the similar/popular sections
   useEffect(() => {
@@ -87,12 +91,20 @@ export default function TourDetailPage() {
       try {
         const list = await listFirestoreTours();
         if (!cancelled) {
-          setAllFsTours(list.map((t) => normalizeFirestoreTour(t, lang)).filter(Boolean));
+          setAllFsTours(list.map((t) => normalizeFirestoreTour(t, lang, placesList)).filter(Boolean));
         }
       } catch {
         if (!cancelled) setAllFsTours([]);
       }
     })();
+    return () => { cancelled = true; };
+  }, [lang, placesList]);
+
+  useEffect(() => {
+    let cancelled = false;
+    listPlaces().then((list) => {
+      if (!cancelled && Array.isArray(list)) setPlacesList(list);
+    }).catch(() => {});
     return () => { cancelled = true; };
   }, []);
 
@@ -258,6 +270,19 @@ export default function TourDetailPage() {
   const discountAmount = appliedCoupon && baseTotalPrice > 0 ? Math.round(baseTotalPrice * (discountPercent / 100)) : 0;
   const totalPrice = Math.max(0, baseTotalPrice - discountAmount);
 
+  // Meta Pixel: ViewContent tracking on tour load
+  useEffect(() => {
+    if (tour && (tour.id || tourId)) {
+      const tTitle = asLocalizedText(tour.title, lang);
+      const estPrice = groupUnitPrice || privateTotalPrice || 0;
+      trackMetaViewContent({
+        tourTitle: tTitle,
+        tourId: tour?.id || tourId,
+        price: estPrice,
+      });
+    }
+  }, [tour?.id, lang, groupUnitPrice, privateTotalPrice]);
+
   const handleApplyCoupon = (overrideCode) => {
     const code = (typeof overrideCode === "string" ? overrideCode : couponCodeInput).trim().toUpperCase();
     if (!code) {
@@ -382,6 +407,13 @@ export default function TourDetailPage() {
   }, []);
 
   const scrollToBooking = () => {
+    if (tour && (tour.id || tourId)) {
+      trackMetaInitiateCheckout({
+        tourTitle: tour.title ? asLocalizedText(tour.title, lang) : "Tour Booking",
+        tourId: tour?.id || tourId,
+        price: totalPrice || groupUnitPrice || privateTotalPrice || 0,
+      });
+    }
     if (bookingSidebarRef.current) {
       bookingSidebarRef.current.scrollIntoView({ behavior: "smooth" });
     } else {
@@ -430,65 +462,72 @@ export default function TourDetailPage() {
     scrollToBooking();
   };
 
-  const handleBookingSubmit = (e) => {
+  const handleBookingSubmit = async (e) => {
     e.preventDefault();
+    if (bookingSubmitting) return;
+    setBookingSubmitting(true);
 
-    const headers = {
-      ka: "✈️ *GeorgiaTrips — ტურის ჯავშანი*",
-      en: "✈️ *GeorgiaTrips — Tour Booking*",
-      ru: "✈️ *GeorgiaTrips — Бронирование тура*",
-      tr: "✈️ *GeorgiaTrips — Tur Rezervasyonu*",
-      ar: "✈️ *GeorgiaTrips — حجز جولة سياحية*",
-    };
-    const labels = {
-      ka: { tour: "ტური", type: "ტიპი", date: "თარიღი", name: "სახელი", phone: "ტელეფონი", people: "მგზავრები", price: "ფასი", notes: "შენიშვნები", group: "ჯგუფური", private: "ინდივიდუალური", agreement: "შეთანხმებით", unprovided: "არ არის მითითებული" },
-      en: { tour: "Tour", type: "Type", date: "Date", name: "Name", phone: "Phone", people: "Passengers", price: "Price", notes: "Notes", group: "Group Tour", private: "Private Tour", agreement: "By Agreement", unprovided: "Not specified" },
-      ru: { tour: "Тур", type: "Тип", date: "Дата", name: "Имя", phone: "Телефон", people: "Пассажиры", price: "Цена", notes: "Примечания", group: "Групповой тур", private: "Индивидуальный тур", agreement: "По договоренности", unprovided: "Не указано" },
-      tr: { tour: "Tur", type: "Tür", date: "Tarih", name: "İsim", phone: "Telefon", people: "Yolcu Sayısı", price: "Fiyat", notes: "Notlar", group: "Grup Turu", private: "Özel Tur", agreement: "Anlaşmaya Göre", unprovided: "Belirtilmedi" },
-      ar: { tour: "الجولة", type: "النوع", date: "التاريخ", name: "الاسم", phone: "الهاتف", people: "عدد الركاب", price: "السعر", notes: "ملاحظات", group: "جولة جماعية", private: "جولة خاصة", agreement: "حسب الاتفاق", unprovided: "غير محدد" },
-    };
-    const l = labels[lang] || labels.ka;
+    try {
+      const marketingSource = getStoredMarketingAttribution();
 
-    // Save online booking to Firestore
-    createBooking({
-      type: "tour",
-      tourId: tour?.id || tourId,
-      tourTitle: asLocalizedText(tour.title, lang),
-      tourType: tourType,
-      date: selectedDate || "by_agreement",
-      name: bookingName.trim(),
-      phone: bookingPhone.trim(),
-      people: Number(bookingPeople) || 1,
-      channel: messengerPref,
-      originalPrice: baseTotalPrice,
-      price: totalPrice,
-      couponCode: appliedCoupon ? appliedCoupon.code : null,
-      discountAmount: discountAmount,
-      notes: bookingNotes.trim(),
-      language: lang,
-    });
+      // Submit online booking through secure API route with server-side validation
+      const result = await createBooking({
+        type: "tour",
+        tourId: tour?.id || tourId,
+        tourTitle: asLocalizedText(tour.title, lang),
+        tourType: tourType,
+        date: selectedDate || "by_agreement",
+        name: bookingName.trim(),
+        phone: bookingPhone.trim(),
+        people: peopleCount,
+        channel: messengerPref,
+        baseTotalPrice,
+        price: totalPrice,
+        unitPrice: groupUnitPrice || privateTotalPrice,
+        couponCode: appliedCoupon ? appliedCoupon.code : null,
+        discountAmount,
+        notes: bookingNotes.trim(),
+        language: lang,
+        source: marketingSource,
+      });
 
-    const msgLines = [
-      headers[lang] || headers.ka,
-      `━━━━━━━━━━━━━━━━━━`,
-      `📍 *${l.tour}:* ${asLocalizedText(tour.title, lang)}`,
-      `🎫 *${l.type}:* ${tourType === "group" ? l.group : l.private}`,
-      `📅 *${l.date}:* ${selectedDate || l.agreement}`,
-      `👤 *${l.name}:* ${bookingName.trim() || l.unprovided}`,
-      `📞 *${l.phone}:* ${bookingPhone.trim() || l.unprovided}`,
-      `👥 *${l.people}:* ${bookingPeople}`,
-      `💬 *Messenger:* ${messengerPref}`,
-      tourType === "group" && groupUnitPrice
-        ? `💰 *${l.price}:* ₾${groupUnitPrice} × ${peopleCount} = *₾${totalPrice}*`
-        : "",
-      tourType === "private" && privateTotalPrice
-        ? `💰 *${l.price}:* *₾${totalPrice}*`
-        : "",
-      bookingNotes.trim() ? `📝 *${l.notes}:* ${bookingNotes.trim()}` : "",
-    ].filter(Boolean);
+      const bId = result?.bookingId;
+      const aToken = result?.accessToken || "";
 
-    const fullMessage = msgLines.join("\n");
-    window.open(`${WA_LINK}?text=${encodeURIComponent(fullMessage)}`, "_blank");
+      if (bId) {
+        // Meta Pixel: Booking conversion event (Lead) with eventID for deduplication
+        if (typeof window !== "undefined" && window.fbq) {
+          window.fbq("track", "Lead", {
+            content_name: asLocalizedText(tour.title, lang),
+            content_ids: [tour?.id || tourId],
+            content_type: "product",
+            value: totalPrice,
+            currency: "GEL",
+            num_items: peopleCount,
+          }, { eventID: bId });
+        }
+
+        trackEvent("book_tour_submit", {
+          eventId: bId,
+          tourTitle: asLocalizedText(tour.title, lang),
+          tourId: tour?.id || tourId,
+          price: totalPrice,
+          people: peopleCount,
+          channel: messengerPref,
+        });
+
+        setBookingSubmitted(true);
+
+        // Redirect to dedicated booking confirmation page
+        const targetUrl = `/booking/success/${encodeURIComponent(bId)}${aToken ? `?token=${encodeURIComponent(aToken)}` : ""}`;
+        router.push(targetUrl);
+      }
+    } catch (err) {
+      console.error("Booking submit error:", err);
+      alert(err.message || "ჯავშნის გაფორმება ვერ მოხერხდა");
+    } finally {
+      setBookingSubmitting(false);
+    }
   };
 
   const openLightbox = (index) => {
@@ -513,7 +552,125 @@ export default function TourDetailPage() {
     }
   };
 
-if (fsLoading) {
+  const resolvePhotoPlaceTitle = (gImg, idx) => {
+    const item = tour?.galleryItems?.[idx];
+    const placeId = item?.placeId || (typeof gImg === "object" ? gImg?.placeId : "");
+    const rawLoc = (item?.rawLocationTitle || item?.locationTitle || (typeof gImg === "object" ? gImg?.locationTitle : "") || "").trim();
+    const photoUrl = extractImageUrl(gImg) || extractImageUrl(item?.url) || "";
+    const cleanPhotoUrl = photoUrl ? photoUrl.split("?")[0] : "";
+
+    // 1. Direct match with tour itinerary by placeId (exact translation entered in itinerary!)
+    if (placeId) {
+      if (Array.isArray(rawFsDoc?.itinerary)) {
+        const match = rawFsDoc.itinerary.find((it) => it?.placeId === placeId);
+        if (match?.title) {
+          const t = asLocalizedText(match.title, lang);
+          if (t) return t.replace(/^📍\s*/, "");
+        }
+      }
+      if (Array.isArray(tour?.itinerary)) {
+        const match = tour.itinerary.find((it) => it?.placeId === placeId);
+        if (match?.title) {
+          const t = asLocalizedText(match.title, lang);
+          if (t) return t.replace(/^📍\s*/, "");
+        }
+      }
+    }
+
+    // 2. Direct match with tour itinerary by photo URL
+    if (cleanPhotoUrl) {
+      const uFilename = cleanPhotoUrl.split("/").pop();
+      if (Array.isArray(rawFsDoc?.itinerary)) {
+        const match = rawFsDoc.itinerary.find((it) => {
+          const itImg = extractImageUrl(it?.img || it?.image);
+          return itImg && (itImg === photoUrl || itImg.split("?")[0] === cleanPhotoUrl || itImg.split("/").pop() === uFilename);
+        });
+        if (match?.title) {
+          const t = asLocalizedText(match.title, lang);
+          if (t) return t.replace(/^📍\s*/, "");
+        }
+      }
+    }
+
+    // 3. Match with tour itinerary by place name/title in any language
+    if (rawLoc) {
+      const cleanRaw = rawLoc.replace(/^📍\s*/, "").trim().toLowerCase();
+      if (Array.isArray(rawFsDoc?.itinerary)) {
+        const match = rawFsDoc.itinerary.find((it) => {
+          if (!it?.title) return false;
+          if (typeof it.title === "string") return it.title.replace(/^📍\s*/, "").trim().toLowerCase() === cleanRaw;
+          return Object.values(it.title).some((v) => typeof v === "string" && v.replace(/^📍\s*/, "").trim().toLowerCase() === cleanRaw);
+        });
+        if (match?.title) {
+          const t = asLocalizedText(match.title, lang);
+          if (t) return t.replace(/^📍\s*/, "");
+        }
+      }
+    }
+
+    // 4. Match with placesList (Firestore places collection) by placeId
+    if (placeId && Array.isArray(placesList) && placesList.length > 0) {
+      const match = placesList.find((p) => p.id === placeId);
+      if (match?.title) {
+        const t = asLocalizedText(match.title, lang);
+        if (t) return t.replace(/^📍\s*/, "");
+      }
+    }
+
+    // 5. Match with placesList by photo URL
+    if (cleanPhotoUrl && Array.isArray(placesList) && placesList.length > 0) {
+      const uFilename = cleanPhotoUrl.split("/").pop();
+      const match = placesList.find((p) => {
+        const pMainImg = extractImageUrl(p.img);
+        if (pMainImg && (pMainImg === photoUrl || pMainImg.split("/").pop() === uFilename)) return true;
+        if (Array.isArray(p.gallery)) {
+          return p.gallery.some((g) => {
+            const gUrl = extractImageUrl(g);
+            return gUrl && (gUrl === photoUrl || gUrl.split("/").pop() === uFilename);
+          });
+        }
+        return false;
+      });
+      if (match?.title) {
+        const t = asLocalizedText(match.title, lang);
+        if (t) return t.replace(/^📍\s*/, "");
+      }
+    }
+
+    // 6. Match with placesList by title
+    if (rawLoc && Array.isArray(placesList) && placesList.length > 0) {
+      const cleanRaw = rawLoc.replace(/^📍\s*/, "").trim().toLowerCase();
+      const match = placesList.find((p) => {
+        if (!p?.title) return false;
+        if (typeof p.title === "string") return p.title.replace(/^📍\s*/, "").trim().toLowerCase() === cleanRaw;
+        return Object.values(p.title).some((v) => typeof v === "string" && v.replace(/^📍\s*/, "").trim().toLowerCase() === cleanRaw);
+      });
+      if (match?.title) {
+        const t = asLocalizedText(match.title, lang);
+        if (t) return t.replace(/^📍\s*/, "");
+      }
+    }
+
+    // 7. Pre-computed locationTitle from normalizeFirestoreTour
+    if (item?.locationTitle) {
+      const t = asLocalizedText(item.locationTitle, lang);
+      if (t) return t.replace(/^📍\s*/, "");
+    }
+
+    // 8. Universal dictionary lookup
+    if (placeId || rawLoc) {
+      const resolved = getPlaceLocalizedTitle({ placeId, rawLocationTitle: rawLoc }, lang, placesList);
+      if (resolved) return resolved.replace(/^📍\s*/, "");
+    }
+
+    if (rawLoc) {
+      return asLocalizedText(rawLoc, lang).replace(/^📍\s*/, "");
+    }
+
+    return "";
+  };
+
+  if (fsLoading) {
     return (
       <div className="tour-page-wrapper">
         <Navbar active="tours" />
@@ -979,8 +1136,7 @@ if (fsLoading) {
                 <div className="tdp-card-body">
                   <div className="tdp-gallery-grid">
                     {tour.gallery.map((gImg, idx) => {
-                      const item = tour.galleryItems?.[idx];
-                      const locTitle = item?.locationTitle;
+                      const locTitle = resolvePhotoPlaceTitle(gImg, idx);
                       return (
                         <div
                           key={idx}
@@ -1307,8 +1463,12 @@ if (fsLoading) {
                   </div>
                 )}
 
-                <button type="submit" className="btn-tdp-submit">
-                  <span>{t("tourDetail.bookNow")}{totalPrice > 0 ? ` — ${format(totalPrice, lang)}` : ""}</span>
+                <button type="submit" className="btn-tdp-submit" disabled={bookingSubmitting}>
+                  <span>
+                    {bookingSubmitting
+                      ? "..."
+                      : `${t("tourDetail.bookNow")}${totalPrice > 0 ? ` — ${format(totalPrice, lang)}` : ""}`}
+                  </span>
                 </button>
               </form>
 
@@ -1602,11 +1762,14 @@ if (fsLoading) {
             </div>
             <button type="button" className="lb-nav lb-next" onClick={nextLightboxImg}>›</button>
             <div className="lb-counter" style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "center" }}>
-              {tour.galleryItems?.[lightboxImgIndex]?.locationTitle && (
-                <span style={{ color: "var(--teal, #29b2b7)", fontWeight: 700, fontSize: "0.95rem" }}>
-                  📍 {tour.galleryItems[lightboxImgIndex].locationTitle}
-                </span>
-              )}
+              {(() => {
+                const cleanLoc = resolvePhotoPlaceTitle(tour.gallery[lightboxImgIndex], lightboxImgIndex);
+                return cleanLoc ? (
+                  <span style={{ color: "var(--teal, #29b2b7)", fontWeight: 700, fontSize: "0.95rem" }}>
+                    📍 {cleanLoc}
+                  </span>
+                ) : null;
+              })()}
               <span>{lightboxImgIndex + 1} / {tour.gallery.length}</span>
             </div>
           </div>

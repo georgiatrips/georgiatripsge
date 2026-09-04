@@ -102,6 +102,7 @@ export default function Footer() {
               <li><Link href="/hotels">{t("nav.hotels")}</Link></li>
               <li><Link href="/transfers">{t("nav.transport")}</Link></li>
               <li><Link href="/posts">{t("nav.articles")}</Link></li>
+              <li><Link href="/booking/status">{lang === "ka" ? "ჯავშნის სტატუსი" : (lang === "ru" ? "Статус брони" : (lang === "tr" ? "Rezervasyon Durumu" : (lang === "ar" ? "حالة الحجز" : "Booking Status")))}</Link></li>
               <li><Link href="/#booking">{t("footer.bookingLink")}</Link></li>
             </ul>
           </div>

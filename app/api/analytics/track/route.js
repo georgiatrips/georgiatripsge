@@ -46,7 +46,35 @@ export async function GET(request) {
       });
     }
 
-    // Try GeoIP lookup
+    // 1. Fast Edge Headers (Vercel & Cloudflare automatically provide these at 0ms)
+    const vercelCountry = request.headers.get("x-vercel-ip-country");
+    const vercelCity = request.headers.get("x-vercel-ip-city");
+    const vercelRegion = request.headers.get("x-vercel-ip-country-region");
+    const cfCountry = request.headers.get("cf-ipcountry");
+
+    if (vercelCountry || cfCountry) {
+      const countryCode = (vercelCountry || cfCountry || "UN").toUpperCase();
+      const city = vercelCity ? decodeURIComponent(vercelCity) : "Unknown";
+      const region = vercelRegion ? decodeURIComponent(vercelRegion) : "";
+      return NextResponse.json(
+        {
+          ip: rawIp || "Edge Visitor",
+          country: countryCode === "GE" ? "Georgia" : countryCode,
+          countryCode,
+          city,
+          region,
+          flag: getFlagEmoji(countryCode),
+          isp: "Cloudflare/Vercel Edge",
+        },
+        {
+          headers: {
+            "Cache-Control": "private, max-age=3600",
+          },
+        }
+      );
+    }
+
+    // Try GeoIP lookup fallback
     let geo = {
       ip: rawIp,
       country: "Unknown",

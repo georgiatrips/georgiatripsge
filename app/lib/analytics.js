@@ -882,10 +882,33 @@ export async function trackEvent(eventName, eventParams = {}) {
     try {
       if (eventName === "click_whatsapp" || eventName === "click_call") {
         window.fbq("track", "Contact", { content_name: eventName, ...eventParams });
+      } else if (eventName === "purchase" || eventName === "book_tour_success") {
+        const purchaseOpts = eventParams.eventId ? { eventID: String(eventParams.eventId) } : undefined;
+        window.fbq("track", "Purchase", {
+          content_name: eventParams.tourTitle || eventParams.content_name || "Tour Booking",
+          content_ids: eventParams.tourId ? [String(eventParams.tourId)] : (eventParams.content_ids || []),
+          content_type: "product",
+          value: Number(eventParams.price || eventParams.value) || 0,
+          currency: "GEL",
+          num_items: Number(eventParams.people || eventParams.num_items) || 1,
+        }, purchaseOpts);
+      } else if (eventName === "initiate_checkout" || eventName === "click_book_button") {
+        window.fbq("track", "InitiateCheckout", {
+          content_name: eventParams.tourTitle || eventParams.label || "Book Tour",
+          content_ids: eventParams.tourId ? [String(eventParams.tourId)] : [],
+          value: Number(eventParams.price) || 0,
+          currency: "GEL",
+        });
+      } else if (eventName === "view_tour" || eventName === "view_tour_detail") {
+        window.fbq("track", "ViewContent", {
+          content_name: eventParams.tourTitle,
+          content_ids: eventParams.tourId ? [String(eventParams.tourId)] : [],
+          content_type: "product",
+          value: Number(eventParams.price) || 0,
+          currency: "GEL",
+        });
       } else if (eventName === "book_tour_submit") {
-        window.fbq("track", "Lead", { content_name: eventParams.tourTitle, value: eventParams.price, currency: "GEL" });
-      } else if (eventName === "view_tour") {
-        window.fbq("track", "ViewContent", { content_name: eventParams.tourTitle, id: eventParams.tourId });
+        window.fbq("track", "Lead", { content_name: eventParams.tourTitle, value: Number(eventParams.price) || 0, currency: "GEL" });
       } else {
         window.fbq("trackCustom", eventName, eventParams);
       }
@@ -896,6 +919,58 @@ export async function trackEvent(eventName, eventParams = {}) {
   if (typeof window !== "undefined" && window.gtag) {
     try {
       window.gtag("event", eventName, eventParams);
+    } catch (_) {}
+  }
+}
+
+// ── Meta Pixel Dedicated Helper Functions ───────────────────
+export function trackMetaPageView() {
+  if (typeof window !== "undefined" && window.fbq) {
+    try {
+      window.fbq("track", "PageView");
+    } catch (_) {}
+  }
+}
+
+export function trackMetaViewContent({ tourTitle, tourId, price = 0 }) {
+  if (typeof window !== "undefined" && window.fbq) {
+    try {
+      window.fbq("track", "ViewContent", {
+        content_name: tourTitle || "Tour",
+        content_ids: tourId ? [String(tourId)] : [],
+        content_type: "product",
+        value: Number(price) || 0,
+        currency: "GEL",
+      });
+    } catch (_) {}
+  }
+}
+
+export function trackMetaInitiateCheckout({ tourTitle, tourId, price = 0 }) {
+  if (typeof window !== "undefined" && window.fbq) {
+    try {
+      window.fbq("track", "InitiateCheckout", {
+        content_name: tourTitle || "Tour Booking",
+        content_ids: tourId ? [String(tourId)] : [],
+        value: Number(price) || 0,
+        currency: "GEL",
+      });
+    } catch (_) {}
+  }
+}
+
+export function trackMetaPurchase({ bookingId, tourTitle, tourId, price, people = 1 }) {
+  if (typeof window !== "undefined" && window.fbq) {
+    try {
+      const opts = bookingId ? { eventID: String(bookingId) } : undefined;
+      window.fbq("track", "Purchase", {
+        content_name: tourTitle || "Tour Booking",
+        content_ids: tourId ? [String(tourId)] : [],
+        content_type: "product",
+        value: Number(price) || 0,
+        currency: "GEL",
+        num_items: Number(people) || 1,
+      }, opts);
     } catch (_) {}
   }
 }

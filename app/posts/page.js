@@ -389,12 +389,29 @@ export default function PostsPage() {
 
   const handleAddComment = async (postId, event) => {
     event.preventDefault();
-    if (!user || !commentInput.trim()) return;
+    const text = commentInput.trim();
+    if (!user || !text) return;
     try {
-      await addPostComment(postId, user, commentInput);
+      const commentId = await addPostComment(postId, user, text);
       setCommentInput("");
-      const refreshedPosts = await listPosts(user.uid);
-      setRemotePosts(refreshedPosts);
+      const newComment = {
+        id: commentId || String(Date.now()),
+        author: user.displayName || user.email?.split("@")[0] || "მომხმარებელი",
+        avatar: user.photoURL || "",
+        text,
+        createdAt: "ახლახან",
+      };
+      setRemotePosts((prev) =>
+        prev.map((p) => {
+          if (p.id !== postId) return p;
+          const currentComments = p.comments || [];
+          return {
+            ...p,
+            comments: [...currentComments, newComment],
+            initialComments: (p.initialComments || currentComments.length) + 1,
+          };
+        })
+      );
     } catch (error) {
       console.error("კომენტარი ვერ შეინახა", error);
     }

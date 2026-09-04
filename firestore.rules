@@ -66,6 +66,14 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // Bookings collection
+    match /bookings/{bookingId} {
+      // Only admins can list all customer bookings, update statuses, or delete
+      allow list, update, delete: if isAdmin();
+      // Public / API can create a booking and get a single booking by ID (verified by token in API)
+      allow create, get: if true;
+    }
+
     // User profiles
     match /users/{userId} {
       allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());

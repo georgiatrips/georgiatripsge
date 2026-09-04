@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { registerPageVisit, sendHeartbeat, trackEvent } from "../lib/analytics";
+import { captureMarketingParams } from "../lib/utmTracker";
 
 export default function AnalyticsTracker() {
   const pathname = usePathname();
@@ -10,8 +11,13 @@ export default function AnalyticsTracker() {
   const sessionStartTime = useRef(Date.now());
   const pageStartTime = useRef(Date.now());
 
+  const isFirstMount = useRef(true);
+
   // ── Track Page Changes & Session Heartbeat ───────────────
   useEffect(() => {
+    // Capture any incoming marketing parameters (UTM & fbclid)
+    captureMarketingParams();
+
     // Don't track admin panel visits to avoid polluting visitor analytics
     if (pathname && pathname.startsWith("/admin")) {
       return;
@@ -26,11 +32,22 @@ export default function AnalyticsTracker() {
       title: document.title || fullPath,
     });
 
-    // Send heartbeat every 15 seconds to keep Live Status fresh and track total dwell time
+    // Meta Pixel: Dispatch PageView on subsequent SPA route navigations
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+    } else {
+      if (typeof window !== "undefined" && window.fbq) {
+        window.fbq("track", "PageView");
+      }
+    }
+
+    // Send heartbeat every 45 seconds to keep Live Status fresh without overloading Firestore
     const interval = setInterval(() => {
-      const totalSeconds = (Date.now() - sessionStartTime.current) / 1000;
-      sendHeartbeat(fullPath, document.title, totalSeconds);
-    }, 15000);
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        const totalSeconds = (Date.now() - sessionStartTime.current) / 1000;
+        sendHeartbeat(fullPath, document.title, totalSeconds);
+      }
+    }, 45000);
 
     const handleVisibilityOrUnload = () => {
       const totalSeconds = (Date.now() - sessionStartTime.current) / 1000;

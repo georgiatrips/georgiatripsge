@@ -9,6 +9,7 @@ import DatePicker from "../components/DatePicker";
 import { WA_LINK, WhatsAppIcon, SOCIAL_PROFILES } from "../lib/shared";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 import { createBooking } from "../lib/bookingsFirestore";
+import { trackEvent } from "../lib/analytics";
 
 export default function TransfersPage() {
   const { t, lang, isEnglish } = useLanguage();
@@ -74,22 +75,44 @@ export default function TransfersPage() {
 
   const selectedVehicleName = t(`transfersPage.vehicles.${selectedVehicleKey}.name`) || selectedVehicleKey;
 
-  const handleTransferSubmit = (e) => {
+  const handleTransferSubmit = async (e) => {
     e.preventDefault();
 
-    createBooking({
-      type: "transfer",
-      vehicle: selectedVehicleKey,
-      vehicleName: selectedVehicleName,
-      pickup: pickupLoc,
-      dropoff: dropoffLoc,
-      date: transferDate,
-      time: transferTime,
-      passengers: passengerCount,
-      phone: contactPhone,
-      notes: notes,
-      language: lang,
-    });
+    try {
+      const result = await createBooking({
+        type: "transfer",
+        name: contactPhone ? `მგზავრი (${contactPhone})` : "მგზავრი / Guest",
+        vehicle: selectedVehicleKey,
+        vehicleName: selectedVehicleName,
+        pickup: pickupLoc,
+        dropoff: dropoffLoc,
+        date: transferDate,
+        time: transferTime,
+        passengers: passengerCount,
+        phone: contactPhone,
+        notes: notes,
+        language: lang,
+      });
+
+      const bId = result?.bookingId || (typeof result === "string" ? result : null);
+
+      if (bId) {
+        if (typeof window !== "undefined" && window.fbq) {
+          window.fbq("track", "Lead", {
+            content_name: `Transfer: ${selectedVehicleName}`,
+            content_category: "Transfer",
+          }, { eventID: bId });
+        }
+        trackEvent("book_transfer_success", {
+          eventId: bId,
+          vehicle: selectedVehicleName,
+          pickup: pickupLoc,
+          dropoff: dropoffLoc,
+        });
+      }
+    } catch (err) {
+      console.error("Transfer booking error:", err);
+    }
 
     const lines = isEnglish || lang === "en"
       ? [

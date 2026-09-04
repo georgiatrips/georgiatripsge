@@ -10,23 +10,36 @@ function sanitizeIp(ip) {
   return String(ip).replace(/[\/\.#$\[\]:]/g, "_");
 }
 
+let cachedSettings = null;
+let cachedSettingsTime = 0;
+const SETTINGS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 /**
  * Get coupon settings from Firestore (defaults to limitOnePerIp: false for easy testing)
  */
 export async function getCouponSettings() {
+  if (cachedSettings && Date.now() - cachedSettingsTime < SETTINGS_CACHE_TTL) {
+    return cachedSettings;
+  }
   try {
     const docRef = doc(db, SETTINGS_COLLECTION, SETTINGS_DOC);
     const snap = await getDoc(docRef);
     if (snap.exists()) {
-      return {
+      const data = {
         limitOnePerIp: snap.data().limitOnePerIp === true,
         updatedAt: snap.data().updatedAt || null,
       };
+      cachedSettings = data;
+      cachedSettingsTime = Date.now();
+      return data;
     }
-    return { limitOnePerIp: false };
+    const def = { limitOnePerIp: false };
+    cachedSettings = def;
+    cachedSettingsTime = Date.now();
+    return def;
   } catch (err) {
     console.warn("Could not load coupon settings from Firestore:", err);
-    return { limitOnePerIp: false };
+    return cachedSettings || { limitOnePerIp: false };
   }
 }
 
@@ -40,6 +53,8 @@ export async function updateCouponSettings(settings) {
       limitOnePerIp: !!settings.limitOnePerIp,
       updatedAt: serverTimestamp(),
     }, { merge: true });
+    cachedSettings = { limitOnePerIp: !!settings.limitOnePerIp, updatedAt: new Date() };
+    cachedSettingsTime = Date.now();
     return true;
   } catch (err) {
     console.error("Failed to update coupon settings:", err);

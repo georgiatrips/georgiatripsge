@@ -12,18 +12,37 @@ import { db } from "./firebase";
 
 const COLLECTION = "hotels";
 
-export async function listHotels() {
-  const snapshot = await getDocs(collection(db, COLLECTION));
-  return snapshot.docs
-    .map((item) => normalizeHotel({ id: item.id, ...item.data() }))
-    .sort(
-      (a, b) =>
-        Number(b.isFeatured) - Number(a.isFeatured) ||
-        (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)
-    );
+let cachedHotels = null;
+let cachedHotelsTime = 0;
+const HOTELS_CACHE_TTL = 5 * 60 * 1000;
+
+export async function listHotels(forceRefresh = false) {
+  if (!forceRefresh && cachedHotels && Date.now() - cachedHotelsTime < HOTELS_CACHE_TTL) {
+    return cachedHotels;
+  }
+  try {
+    const snapshot = await getDocs(collection(db, COLLECTION));
+    const list = snapshot.docs
+      .map((item) => normalizeHotel({ id: item.id, ...item.data() }))
+      .sort(
+        (a, b) =>
+          Number(b.isFeatured) - Number(a.isFeatured) ||
+          (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)
+      );
+    cachedHotels = list;
+    cachedHotelsTime = Date.now();
+    return list;
+  } catch (err) {
+    console.warn("Could not load hotels:", err);
+    return cachedHotels || [];
+  }
 }
 
 export async function getHotel(id) {
+  if (cachedHotels) {
+    const found = cachedHotels.find((h) => h.id === id);
+    if (found) return found;
+  }
   const snapshot = await getDoc(doc(db, COLLECTION, id));
   return snapshot.exists() ? normalizeHotel({ id: snapshot.id, ...snapshot.data() }) : null;
 }
@@ -34,15 +53,18 @@ export async function createHotel(data) {
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+  cachedHotels = null;
   return ref.id;
 }
 
 export async function updateHotel(id, data) {
   await updateDoc(doc(db, COLLECTION, id), { ...data, updatedAt: serverTimestamp() });
+  cachedHotels = null;
 }
 
 export async function deleteHotel(id) {
   await deleteDoc(doc(db, COLLECTION, id));
+  cachedHotels = null;
 }
 
 // ლინკს ვასწორებთ — თუ პროტოკოლი არ არის, ვამატებთ https://-ს

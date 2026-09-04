@@ -40,16 +40,30 @@ export default function WelcomeCouponPopup() {
 
     async function setupWelcomePopup() {
       try {
-        // 1. Fetch current IP from analytics route
+        // 1. Fetch current IP (check session cache first to avoid extra network requests)
         let ip = "";
         try {
-          const res = await fetch("/api/analytics/track");
-          if (res.ok) {
-            const data = await res.json();
-            ip = data.ip || "";
+          const cachedGeo = sessionStorage.getItem("gt_geo_cache");
+          if (cachedGeo) {
+            const parsed = JSON.parse(cachedGeo);
+            ip = parsed.ip || "";
+          }
+          if (!ip) {
+            const res = await fetch("/api/analytics/track");
+            if (res.ok) {
+              const data = await res.json();
+              ip = data.ip || "";
+              try {
+                sessionStorage.setItem("gt_geo_cache", JSON.stringify(data));
+              } catch (_) {}
+            }
+          }
+          if (ip && !isCancelled) {
             setClientIp(ip);
           }
         } catch (_) {}
+
+        if (isCancelled) return;
 
         // 2. Fetch admin coupon settings
         const settings = await getCouponSettings();
