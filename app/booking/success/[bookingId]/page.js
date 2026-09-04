@@ -15,7 +15,7 @@ export default function BookingSuccessPage() {
   const { lang, t } = useLanguage();
 
   const bookingId = (params?.bookingId || "").toUpperCase();
-  const token = searchParams.get("token") || "";
+  const queryToken = searchParams.get("token") || "";
 
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -24,8 +24,18 @@ export default function BookingSuccessPage() {
   useEffect(() => {
     if (!bookingId) return;
 
+    let effectiveToken = queryToken;
+    if (!effectiveToken && typeof window !== "undefined") {
+      try {
+        const stored = JSON.parse(sessionStorage.getItem("gt_last_booking") || "{}");
+        if (stored && stored.bookingId === bookingId && stored.token) {
+          effectiveToken = stored.token;
+        }
+      } catch (_) {}
+    }
+
     let isMounted = true;
-    fetch(`/api/bookings/status?bookingId=${encodeURIComponent(bookingId)}&token=${encodeURIComponent(token)}`)
+    fetch(`/api/bookings/status?bookingId=${encodeURIComponent(bookingId)}&token=${encodeURIComponent(effectiveToken)}`)
       .then((res) => res.json())
       .then((data) => {
         if (!isMounted) return;

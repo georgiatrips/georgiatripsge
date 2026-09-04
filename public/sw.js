@@ -27,9 +27,27 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
-  // Never cache navigations. App Router pages and development HMR must always
-  // receive the current HTML and RSC payload from Next.js.
-  if (event.request.mode === "navigate") return;
+  const url = new URL(event.request.url);
+
+  // Never intercept navigations, API calls, booking routes, admin, or Next.js RSC requests
+  if (
+    event.request.mode === "navigate" ||
+    url.pathname.startsWith("/api/") ||
+    url.pathname.includes("/booking/") ||
+    url.pathname.includes("/admin") ||
+    event.request.headers.get("RSC") === "1" ||
+    url.searchParams.has("_rsc")
+  ) {
+    return;
+  }
+
+  // Only handle static assets (JS chunks, CSS, images, icons)
+  const isStatic =
+    url.pathname.startsWith("/_next/static/") ||
+    url.pathname.startsWith("/images/") ||
+    STATIC_ASSETS.includes(url.pathname);
+
+  if (!isStatic) return;
 
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
@@ -41,8 +59,7 @@ self.addEventListener("fetch", (event) => {
           if (
             networkResponse &&
             networkResponse.status === 200 &&
-            networkResponse.type === "basic" &&
-            (event.request.url.includes("/_next/static/") || event.request.url.includes("/images/"))
+            networkResponse.type === "basic"
           ) {
             const responseToCache = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
@@ -52,9 +69,7 @@ self.addEventListener("fetch", (event) => {
           return networkResponse;
         })
         .catch(() => {
-          if (event.request.headers.get("accept")?.includes("text/html")) {
-            return caches.match("/");
-          }
+          return new Response("", { status: 408, statusText: "Request Timeout" });
         });
     })
   );

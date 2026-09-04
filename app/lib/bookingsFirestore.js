@@ -12,7 +12,7 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { normalizeBooking, BOOKING_STATUSES } from "./bookingModel";
+import { normalizeBooking, BOOKING_STATUSES, generateBookingId, generateAccessToken } from "./bookingModel";
 
 const BOOKINGS_COLLECTION = "bookings";
 
@@ -42,15 +42,17 @@ export async function createBooking(payload) {
 
     // Fallback direct write to Firestore (with normalized structure)
     try {
-      const bId = payload.bookingId || `GT-${Date.now().toString().slice(-6)}`;
+      const bId = payload.bookingId || generateBookingId();
+      const aToken = payload.accessToken || generateAccessToken();
       const docRef = await addDoc(collection(db, BOOKINGS_COLLECTION), {
         ...payload,
         bookingId: bId,
+        accessToken: aToken,
         status: payload.status || BOOKING_STATUSES.PENDING,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      return { bookingId: bId, id: docRef.id };
+      return { bookingId: bId, accessToken: aToken, id: docRef.id };
     } catch (fsErr) {
       console.error("Critical: failed to save booking to Firestore:", fsErr);
       return null;

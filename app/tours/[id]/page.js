@@ -57,6 +57,16 @@ export default function TourDetailPage() {
   const [bookingSubmitted, setBookingSubmitted] = useState(false);
   const bookingSidebarRef = useRef(null);
 
+  // Autofill user profile if logged in
+  useEffect(() => {
+    if (user?.displayName && !bookingName) {
+      setBookingName(user.displayName);
+    }
+    if (user?.phoneNumber && !bookingPhone) {
+      setBookingPhone(user.phoneNumber);
+    }
+  }, [user, bookingName, bookingPhone]);
+
   useEffect(() => {
     let cancelled = false;
     setFsLoading(true);
@@ -518,8 +528,15 @@ export default function TourDetailPage() {
 
         setBookingSubmitted(true);
 
+        // Save latest booking locally for instant retrieval on confirmation page
+        try {
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem("gt_last_booking", JSON.stringify({ bookingId: bId, token: aToken }));
+          }
+        } catch (_) {}
+
         // Redirect to dedicated booking confirmation page
-        const targetUrl = `/booking/success/${encodeURIComponent(bId)}${aToken ? `?token=${encodeURIComponent(aToken)}` : ""}`;
+        const targetUrl = `/${lang}/booking/success/${encodeURIComponent(bId)}${aToken ? `?token=${encodeURIComponent(aToken)}` : ""}`;
         router.push(targetUrl);
       }
     } catch (err) {
@@ -1324,6 +1341,17 @@ export default function TourDetailPage() {
                       {t("tourDetail.groupSeatsHint").replace("{seats}", freeSeatsForSelected).replace("{max}", peopleMax)}
                     </p>
                   )}
+                </div>
+
+                <div className="tdp-form-group">
+                  <label>{t("auth.fullNameLabel") || "სახელი და გვარი"}</label>
+                  <input
+                    type="text"
+                    placeholder={t("auth.fullNamePlaceholder") || "თქვენი სახელი და გვარი"}
+                    value={bookingName}
+                    onChange={(e) => setBookingName(e.target.value)}
+                    required
+                  />
                 </div>
 
                 <div className="tdp-form-group">

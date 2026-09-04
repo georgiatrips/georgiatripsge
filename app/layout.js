@@ -408,6 +408,7 @@ export default async function RootLayout({ children }) {
             t.src=v;s=b.getElementsByTagName(e)[0];
             s.parentNode.insertBefore(t,s)}(window, document,'script',
             'https://connect.facebook.net/en_US/fbevents.js');
+            fbq('set', 'autoConfig', false, '${process.env.NEXT_PUBLIC_META_PIXEL_ID || "4302985556633819"}');
             fbq('init', '${process.env.NEXT_PUBLIC_META_PIXEL_ID || "4302985556633819"}');
             fbq('track', 'PageView');
           `}

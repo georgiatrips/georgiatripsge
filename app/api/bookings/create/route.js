@@ -40,14 +40,9 @@ export async function POST(request) {
     } = body;
 
     // 1. Validate mandatory fields
-    const rawName = String(name || "").trim();
-    const cleanName = rawName || (type === "transfer" ? "მგზავრი / Guest" : "");
-    if (!cleanName || cleanName.length < 2) {
-      return NextResponse.json(
-        { success: false, error: "გთხოვთ მიუთითოთ თქვენი სახელი (მინიმუმ 2 სიმბოლო)" },
-        { status: 400 }
-      );
-    }
+    const rawName = String(name || body.fullName || "").trim();
+    const defaultLabel = type === "transfer" ? "მგზავრი / Guest" : "ტურისტი / Guest";
+    const cleanName = rawName.length >= 2 ? rawName : (rawName || defaultLabel);
 
     const cleanPhone = String(phone || "").trim();
     if (!isValidPhone(cleanPhone)) {
