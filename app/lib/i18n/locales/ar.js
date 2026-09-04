@@ -749,6 +749,42 @@ export const ar = {
       "invalidCode": "رمز القسيمة غير صالح",
       "appliedSuccess": "تم تطبيق خصم 10% بنجاح!",
       "discountApplied": "تم تطبيق خصم 10%"
+  },
+  "bookingSuccess": {
+    "loading": "جارٍ تحميل تفاصيل الحجز...",
+    "errorTitle": "لم يتم العثور على الحجز",
+    "checkByPhone": "التحقق من الحالة برقم الهاتف",
+    "title": "تم استلام الحجز بنجاح!",
+    "subtitle": "شكراً لاختيارك GeorgiaTrips. تم تسجيل طلبك بنجاح في النظام.",
+    "idLabel": "رقم الحجز (ID)",
+    "whatNextTitle": "ماذا يحدث بعد ذلك؟",
+    "whatNextDesc": "تم استلام حجزك ويقوم موظفنا بالتحقق من المقاعد المتاحة. ستتلقى قريباً رسالة عبر واتساب أو مكالمة لتأكيد التفاصيل.",
+    "tour": "الجولة",
+    "date": "التاريخ",
+    "travelers": "المسافرون",
+    "peopleSuffix": "أشخاص",
+    "totalCost": "التكلفة الإجمالية",
+    "confirmWhatsApp": "تأكيد عبر واتساب",
+    "checkStatus": "التحقق من الحالة",
+    "otherTours": "جولات سياحية أخرى",
+    "waMessageGreeting": "مرحباً! لقد قمت بعمل حجز عبر الموقع"
+  },
+  "bookingStatus": {
+    "title": "التحقق من حالة الحجز",
+    "subtitle": "أدخل رقم الحجز ورقم الهاتف لعرض الحالة الحالية",
+    "bookingIdLabel": "رقم الحجز (Booking ID)",
+    "bookingIdPlaceholder": "مثال: GT-260904-ABCD",
+    "phoneLabel": "رقم الهاتف",
+    "phonePlaceholder": "مثال: +995 5XX XX XX XX",
+    "checkBtn": "التحقق من الحالة",
+    "checking": "جارٍ التحقق...",
+    "errorEmptyId": "الرجاء إدخال رقم الحجز (مثال: GT-260904-XXXX)",
+    "errorEmptyPhone": "الرجاء إدخال رقم الهاتف المستخدم أثناء الحجز",
+    "errorNotFound": "لم يتم العثور على حجز بالبيانات المدخلة",
+    "errorServer": "خطأ في الاتصال بالخادم. يرجى المحاولة لاحقاً.",
+    "activeStatus": "الحالة الحالية",
+    "customer": "العميل",
+    "backHome": "العودة إلى الرئيسية"
   }
 };
 export default ar;

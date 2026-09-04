@@ -1,15 +1,20 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
-import { STATUS_CONFIG } from "../../lib/bookingModel";
+import { STATUS_CONFIG, getBookingStatusLabel } from "../../lib/bookingModel";
 import { WA_LINK, WA_NUMBER, PHONE_DISPLAY } from "../../lib/shared";
+import { useLanguage } from "../../lib/i18n/LanguageContext";
+import { useCurrency } from "../../lib/currency/CurrencyContext";
 
 export default function BookingStatusPage() {
   const searchParams = useSearchParams();
+  const { lang, t } = useLanguage();
+  const { format } = useCurrency();
+
   const initialId = searchParams.get("id") || "";
 
   const [bookingIdInput, setBookingIdInput] = useState(initialId);
@@ -24,11 +29,11 @@ export default function BookingStatusPage() {
     const phone = phoneInput.trim();
 
     if (!bId) {
-      setError("გთხოვთ შეიყვანოთ ჯავშნის ნომერი (მაგ. GT-260904-XXXX)");
+      setError(t("bookingStatus.errorEmptyId", "გთხოვთ შეიყვანოთ ჯავშნის ნომერი (მაგ. GT-260904-XXXX)"));
       return;
     }
     if (!phone) {
-      setError("გთხოვთ შეიყვანოთ დაჯავშნისას მითითებული ტელეფონის ნომერი");
+      setError(t("bookingStatus.errorEmptyPhone", "გთხოვთ შეიყვანოთ დაჯავშნისას მითითებული ტელეფონის ნომერი"));
       return;
     }
 
@@ -45,10 +50,10 @@ export default function BookingStatusPage() {
       if (res.ok && data.success && data.booking) {
         setBookingResult(data.booking);
       } else {
-        setError(data.error || "ჯავშანი მითითებული მონაცემებით ვერ მოიძებნა");
+        setError(data.error || t("bookingStatus.errorNotFound", "ჯავშანი მითითებული მონაცემებით ვერ მოიძებნა"));
       }
     } catch (err) {
-      setError("სერვერთან კავშირის შეცდომა. გთხოვთ სცადოთ მოგვიანებით.");
+      setError(t("bookingStatus.errorServer", "სერვერთან კავშირის შეცდომა. გთხოვთ სცადოთ მოგვიანებით."));
     } finally {
       setLoading(false);
     }
@@ -56,6 +61,7 @@ export default function BookingStatusPage() {
 
   const currentStatus = bookingResult?.status || "pending";
   const statusInfo = STATUS_CONFIG[currentStatus] || STATUS_CONFIG.pending;
+  const statusLabel = getBookingStatusLabel(currentStatus, lang);
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f8fafc" }}>
@@ -64,10 +70,10 @@ export default function BookingStatusPage() {
       <main style={{ flex: 1, padding: "3rem 1rem 5rem", maxWidth: "620px", margin: "0 auto", width: "100%" }}>
         <div style={{ textAlign: "center", marginBottom: "2rem" }}>
           <h1 style={{ fontSize: "1.85rem", fontWeight: 800, color: "#0d233a", marginBottom: "0.5rem" }}>
-            ჯავშნის სტატუსის შემოწმება
+            {t("bookingStatus.title", "ჯავშნის სტატუსის შემოწმება")}
           </h1>
           <p style={{ color: "#64748b", fontSize: "0.95rem" }}>
-            შეიყვანეთ თქვენი ჯავშნის ID და ტელეფონის ნომერი მიმდინარე სტატუსის სანახავად
+            {t("bookingStatus.subtitle", "შეიყვანეთ თქვენი ჯავშნის ID და ტელეფონის ნომერი მიმდინარე სტატუსის სანახავად")}
           </p>
         </div>
 
@@ -85,11 +91,11 @@ export default function BookingStatusPage() {
           <form onSubmit={handleLookup} style={{ display: "grid", gap: "1.2rem" }}>
             <div>
               <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "#334155", marginBottom: "0.4rem" }}>
-                ჯავშნის ნომერი (Booking ID)
+                {t("bookingStatus.bookingIdLabel", "ჯავშნის ნომერი (Booking ID)")}
               </label>
               <input
                 type="text"
-                placeholder="მაგ: GT-260904-ABCD"
+                placeholder={t("bookingStatus.bookingIdPlaceholder", "მაგ: GT-260904-ABCD")}
                 value={bookingIdInput}
                 onChange={(e) => setBookingIdInput(e.target.value.toUpperCase())}
                 style={{
@@ -108,11 +114,11 @@ export default function BookingStatusPage() {
 
             <div>
               <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "#334155", marginBottom: "0.4rem" }}>
-                ტელეფონის ნომერი
+                {t("bookingStatus.phoneLabel", "ტელეფონის ნომერი")}
               </label>
               <input
                 type="tel"
-                placeholder="მაგ: 599123456 ან +995 5XX XX XX XX"
+                placeholder={t("bookingStatus.phonePlaceholder", "მაგ: 599123456 ან +995 5XX XX XX XX")}
                 value={phoneInput}
                 onChange={(e) => setPhoneInput(e.target.value)}
                 style={{
@@ -159,7 +165,7 @@ export default function BookingStatusPage() {
                 transition: "opacity 0.2s",
               }}
             >
-              {loading ? "მოწმდება..." : "სტატუსის ჩვენება"}
+              {loading ? t("bookingStatus.checking", "მოწმდება...") : t("bookingStatus.checkBtn", "სტატუსის შემოწმება")}
             </button>
           </form>
         </div>
@@ -178,7 +184,7 @@ export default function BookingStatusPage() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
               <div>
                 <span style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", fontWeight: 700 }}>
-                  ჯავშნის ID
+                  {t("bookingSuccess.idLabel", "ჯავშნის ID")}
                 </span>
                 <h3 style={{ margin: 0, fontSize: "1.25rem", color: "#0f172a", fontFamily: "monospace" }}>
                   {bookingResult.bookingId}
@@ -200,7 +206,7 @@ export default function BookingStatusPage() {
                 }}
               >
                 <span>{statusInfo.icon}</span>
-                <span>{statusInfo.labelKa}</span>
+                <span>{statusLabel}</span>
               </div>
             </div>
 
@@ -234,32 +240,32 @@ export default function BookingStatusPage() {
                   marginBottom: "1.25rem",
                 }}
               >
-                🎉 <strong>თქვენი ჯავშანი დადასტურებულია!</strong> ჩვენი გუნდი გელოდებათ მითითებულ თარიღზე.
+                🎉 <strong>{statusLabel}!</strong>
               </div>
             )}
 
             <div style={{ display: "grid", gap: "0.75rem", marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "0.5rem", borderBottom: "1px solid #f1f5f9" }}>
-                <span style={{ color: "#64748b", fontSize: "0.9rem" }}>ტური:</span>
+                <span style={{ color: "#64748b", fontSize: "0.9rem" }}>{t("bookingSuccess.tour", "ტური")}:</span>
                 <strong style={{ color: "#1e293b", fontSize: "0.95rem" }}>{bookingResult.tourTitle}</strong>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "0.5rem", borderBottom: "1px solid #f1f5f9" }}>
-                <span style={{ color: "#64748b", fontSize: "0.9rem" }}>თარიღი:</span>
+                <span style={{ color: "#64748b", fontSize: "0.9rem" }}>{t("bookingSuccess.date", "თარიღი")}:</span>
                 <strong style={{ color: "#1e293b", fontSize: "0.95rem" }}>{bookingResult.date}</strong>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "0.5rem", borderBottom: "1px solid #f1f5f9" }}>
-                <span style={{ color: "#64748b", fontSize: "0.9rem" }}>მგზავრები:</span>
-                <strong style={{ color: "#1e293b", fontSize: "0.95rem" }}>{bookingResult.totalPeople} ადამიანი</strong>
+                <span style={{ color: "#64748b", fontSize: "0.9rem" }}>{t("bookingSuccess.travelers", "მგზავრები")}:</span>
+                <strong style={{ color: "#1e293b", fontSize: "0.95rem" }}>{bookingResult.totalPeople} {t("bookingSuccess.peopleSuffix", "ადამიანი")}</strong>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "0.5rem", borderBottom: "1px solid #f1f5f9" }}>
-                <span style={{ color: "#64748b", fontSize: "0.9rem" }}>ფასი:</span>
-                <strong style={{ color: "#0d9488", fontSize: "1.1rem" }}>₾{bookingResult.totalPrice} GEL</strong>
+                <span style={{ color: "#64748b", fontSize: "0.9rem" }}>{t("bookingSuccess.totalCost", "ფასი")}:</span>
+                <strong style={{ color: "#0d9488", fontSize: "1.1rem" }}>{format(bookingResult.totalPrice, lang)}</strong>
               </div>
             </div>
 
             <div style={{ display: "flex", gap: "0.75rem" }}>
               <a
-                href={`${WA_LINK}?text=${encodeURIComponent(`გამარჯობა, ჯავშანთან (${bookingResult.bookingId}) დაკავშირებით მაქვს შეკითხვა.`)}`}
+                href={`${WA_LINK}?text=${encodeURIComponent(`Hello, I have a question regarding my booking ${bookingResult.bookingId}.`)}`}
                 target="_blank"
                 rel="noreferrer"
                 style={{
@@ -274,7 +280,7 @@ export default function BookingStatusPage() {
                   textDecoration: "none",
                 }}
               >
-                💬 WhatsApp დახმარება
+                💬 WhatsApp
               </a>
               <a
                 href={`tel:${WA_NUMBER}`}

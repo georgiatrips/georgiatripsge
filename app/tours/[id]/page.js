@@ -536,8 +536,15 @@ export default function TourDetailPage() {
         } catch (_) {}
 
         // Redirect to dedicated booking confirmation page
-        const targetUrl = `/${lang}/booking/success/${encodeURIComponent(bId)}${aToken ? `?token=${encodeURIComponent(aToken)}` : ""}`;
+        const targetUrl = `/booking/success/${encodeURIComponent(bId)}${aToken ? `?token=${encodeURIComponent(aToken)}` : ""}`;
         router.push(targetUrl);
+
+        // Instant fallback so navigation never hangs
+        setTimeout(() => {
+          if (typeof window !== "undefined" && !window.location.pathname.includes(bId)) {
+            window.location.href = targetUrl;
+          }
+        }, 600);
       }
     } catch (err) {
       console.error("Booking submit error:", err);
@@ -1344,10 +1351,10 @@ export default function TourDetailPage() {
                 </div>
 
                 <div className="tdp-form-group">
-                  <label>{t("auth.fullNameLabel") || "სახელი და გვარი"}</label>
+                  <label>{t("tourDetail.yourName") || "სახელი და გვარი"}</label>
                   <input
                     type="text"
-                    placeholder={t("auth.fullNamePlaceholder") || "თქვენი სახელი და გვარი"}
+                    placeholder={t("tourDetail.namePlaceholder") || "თქვენი სახელი და გვარი"}
                     value={bookingName}
                     onChange={(e) => setBookingName(e.target.value)}
                     required
@@ -1494,7 +1501,7 @@ export default function TourDetailPage() {
                 <button type="submit" className="btn-tdp-submit" disabled={bookingSubmitting}>
                   <span>
                     {bookingSubmitting
-                      ? "..."
+                      ? (t("tourDetail.submitting") || "მუშავდება...")
                       : `${t("tourDetail.bookNow")}${totalPrice > 0 ? ` — ${format(totalPrice, lang)}` : ""}`}
                   </span>
                 </button>

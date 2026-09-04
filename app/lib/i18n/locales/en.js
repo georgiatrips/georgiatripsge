@@ -749,6 +749,42 @@ export const en = {
       "invalidCode": "Invalid coupon code",
       "appliedSuccess": "10% discount applied successfully!",
       "discountApplied": "10% discount applied"
+  },
+  "bookingSuccess": {
+    "loading": "Loading booking details...",
+    "errorTitle": "Booking Not Found",
+    "checkByPhone": "Check Status by Phone",
+    "title": "Booking Successfully Received!",
+    "subtitle": "Thank you for choosing GeorgiaTrips. Your request has been registered in the system.",
+    "idLabel": "Booking ID",
+    "whatNextTitle": "What happens next?",
+    "whatNextDesc": "Your booking is received and our operator is checking available seats. You will shortly receive a WhatsApp message or call to confirm details.",
+    "tour": "Tour",
+    "date": "Date",
+    "travelers": "Travelers",
+    "peopleSuffix": "people",
+    "totalCost": "Total Cost",
+    "confirmWhatsApp": "Confirm via WhatsApp",
+    "checkStatus": "Check Status",
+    "otherTours": "Explore More Tours",
+    "waMessageGreeting": "Hello! I made a booking on the website"
+  },
+  "bookingStatus": {
+    "title": "Check Booking Status",
+    "subtitle": "Enter your Booking ID and phone number to view current status",
+    "bookingIdLabel": "Booking ID",
+    "bookingIdPlaceholder": "e.g. GT-260904-ABCD",
+    "phoneLabel": "Phone Number",
+    "phonePlaceholder": "e.g. +995 5XX XX XX XX",
+    "checkBtn": "Check Status",
+    "checking": "Checking...",
+    "errorEmptyId": "Please enter your Booking ID (e.g. GT-260904-XXXX)",
+    "errorEmptyPhone": "Please enter the phone number used during booking",
+    "errorNotFound": "Booking not found with the provided details",
+    "errorServer": "Server connection error. Please try again later.",
+    "activeStatus": "Current Status",
+    "customer": "Customer",
+    "backHome": "Back to Home"
   }
 };
 export default en;
