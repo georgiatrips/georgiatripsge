@@ -348,6 +348,42 @@ export default async function RootLayout({ children }) {
         <link rel="dns-prefetch" href="https://georgiatripsge.firebaseapp.com" />
         <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
         <link rel="dns-prefetch" href="https://connect.facebook.net" />
+
+        {/* Meta Pixel Code (Direct in Head for Meta Crawler & Verification) */}
+        <script
+          id="fb-pixel-base"
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (typeof window !== 'undefined' && typeof Node !== 'undefined' && !Node.prototype.getBoundingClientRect) {
+                Node.prototype.getBoundingClientRect = function() {
+                  if (this.parentElement && typeof this.parentElement.getBoundingClientRect === 'function') {
+                    return this.parentElement.getBoundingClientRect();
+                  }
+                  return { top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0 };
+                };
+              }
+              !function(f,b,e,v,n,t,s)
+              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+              n.queue=[];t=b.createElement(e);t.async=!0;
+              t.src=v;s=b.getElementsByTagName(e)[0];
+              s.parentNode.insertBefore(t,s)}(window, document,'script',
+              'https://connect.facebook.net/en_US/fbevents.js');
+              fbq('init', '4302985556633819');
+              fbq('track', 'PageView');
+            `,
+          }}
+        />
+        <noscript>
+          <img
+            height="1"
+            width="1"
+            style={{ display: "none" }}
+            src="https://www.facebook.com/tr?id=4302985556633819&ev=PageView&noscript=1"
+            alt=""
+          />
+        </noscript>
       </head>
       <body>
         <script
@@ -396,39 +432,6 @@ export default async function RootLayout({ children }) {
             </Script>
           </>
         )}
-
-        {/* Meta Pixel (Facebook & Instagram Ads) */}
-        <Script id="meta-pixel" strategy="afterInteractive">
-          {`
-            if (typeof window !== 'undefined' && typeof Node !== 'undefined' && !Node.prototype.getBoundingClientRect) {
-              Node.prototype.getBoundingClientRect = function() {
-                if (this.parentElement && typeof this.parentElement.getBoundingClientRect === 'function') {
-                  return this.parentElement.getBoundingClientRect();
-                }
-                return { top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0 };
-              };
-            }
-            !function(f,b,e,v,n,t,s)
-            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-            n.queue=[];t=b.createElement(e);t.async=!0;
-            t.src=v;s=b.getElementsByTagName(e)[0];
-            s.parentNode.insertBefore(t,s)}(window, document,'script',
-            'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', '${process.env.NEXT_PUBLIC_META_PIXEL_ID || "4302985556633819"}');
-            fbq('track', 'PageView');
-          `}
-        </Script>
-        <noscript>
-          <img
-            height="1"
-            width="1"
-            style={{ display: "none" }}
-            src={`https://www.facebook.com/tr?id=${process.env.NEXT_PUBLIC_META_PIXEL_ID || "4302985556633819"}&ev=PageView&noscript=1`}
-            alt=""
-          />
-        </noscript>
 
         {/* Microsoft Clarity (Free Screen Recordings & Heatmaps) */}
         {process.env.NEXT_PUBLIC_CLARITY_ID && (
