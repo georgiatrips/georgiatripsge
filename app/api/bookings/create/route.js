@@ -44,13 +44,13 @@ export async function POST(request) {
     const cleanName = rawName || (type === "transfer" ? "მგზავრი / Guest" : "მგზავრი / Guest");
 
     const cleanPhone = String(phone || body.contactPhone || "").trim();
-    if (type !== "custom_request" && cleanPhone && !isValidPhone(cleanPhone)) {
+    if (!isValidPhone(cleanPhone)) {
       return NextResponse.json(
-        { success: false, error: "გთხოვთ მიუთითოთ ვალიდური ტელეფონის ნომერი" },
+        { success: false, error: "გთხოვთ მიუთითოთ ვალიდური ტელეფონის ნომერი (მაგ: +995 5XX XX XX XX)" },
         { status: 400 }
       );
     }
-    const finalPhone = cleanPhone || "+995 000 000 000";
+    const finalPhone = cleanPhone;
 
     const totalPeople = Math.max(1, parseInt(people, 10) || 1);
 

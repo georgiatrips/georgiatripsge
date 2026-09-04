@@ -12,6 +12,8 @@ export const STATUS_CONFIG = {
     labelKa: "მოლოდინში",
     labelEn: "Pending Confirmation",
     labelRu: "В ожидании",
+    labelTr: "Onay Bekliyor",
+    labelAr: "قيد الانتظار",
     color: "#eab308", // Amber
     bgColor: "rgba(234, 179, 8, 0.12)",
     borderColor: "rgba(234, 179, 8, 0.35)",
@@ -21,6 +23,8 @@ export const STATUS_CONFIG = {
     labelKa: "დადასტურებულია",
     labelEn: "Confirmed",
     labelRu: "Подтверждено",
+    labelTr: "Onaylandı",
+    labelAr: "تم التأكيد",
     color: "#10b981", // Emerald green
     bgColor: "rgba(16, 185, 129, 0.12)",
     borderColor: "rgba(16, 185, 129, 0.35)",
@@ -30,6 +34,8 @@ export const STATUS_CONFIG = {
     labelKa: "გაუქმებულია",
     labelEn: "Cancelled",
     labelRu: "Отменено",
+    labelTr: "İptal Edildi",
+    labelAr: "ملغي",
     color: "#ef4444", // Red
     bgColor: "rgba(239, 68, 68, 0.12)",
     borderColor: "rgba(239, 68, 68, 0.35)",
@@ -39,12 +45,23 @@ export const STATUS_CONFIG = {
     labelKa: "დასრულებულია",
     labelEn: "Completed",
     labelRu: "Завершено",
+    labelTr: "Tamamlandı",
+    labelAr: "مكتمل",
     color: "#3b82f6", // Blue
     bgColor: "rgba(59, 130, 246, 0.12)",
     borderColor: "rgba(59, 130, 246, 0.35)",
     icon: "🎉",
   },
 };
+
+export function getStatusLabel(status, lang = "ka") {
+  const conf = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
+  if (lang === "en") return conf.labelEn;
+  if (lang === "ru") return conf.labelRu;
+  if (lang === "tr") return conf.labelTr;
+  if (lang === "ar") return conf.labelAr;
+  return conf.labelKa;
+}
 
 /**
  * Generate human-readable booking ID: GT-YYMMDD-XXXX (e.g. GT-260904-A7B2)
@@ -77,12 +94,17 @@ export function generateAccessToken() {
 }
 
 /**
- * Validate phone number (Georgia or international standard, 6-16 digits)
+ * Validate phone number (Georgia or international standard, 7-16 digits)
  */
 export function isValidPhone(phone) {
   if (!phone || typeof phone !== "string") return false;
-  const digits = phone.replace(/\D/g, "");
-  return digits.length >= 6 && digits.length <= 16;
+  const clean = phone.trim();
+  const digits = clean.replace(/\D/g, "");
+  // Must have between 7 and 16 digits
+  if (digits.length < 7 || digits.length > 16) return false;
+  // Reject repetitive dummy numbers like 0000000, 11111111
+  if (/^(\d)\1+$/.test(digits)) return false;
+  return true;
 }
 
 /**

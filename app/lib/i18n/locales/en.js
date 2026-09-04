@@ -501,6 +501,7 @@ export const en = {
     "groupSeatsHint": "{seats} seats free on this date — max {max} people",
     "peopleCount": "Number of Travelers",
     "phoneLabel": "Phone / WhatsApp",
+    "invalidPhoneError": "Please enter a valid phone number (e.g. +995 5XX XX XX XX)",
     "preferredContact": "Preferred Contact",
     "phoneCall": "Phone Call",
     "notesLabel": "Additional Notes / Questions",
@@ -749,6 +750,42 @@ export const en = {
       "invalidCode": "Invalid coupon code",
       "appliedSuccess": "10% discount applied successfully!",
       "discountApplied": "10% discount applied"
+  },
+  "bookingSuccess": {
+    "loading": "Loading booking details...",
+    "notFoundTitle": "Booking Not Found",
+    "checkStatusByPhone": "Check Status by Phone",
+    "successTitle": "Booking Successfully Received!",
+    "successSubtitle": "Thank you for choosing GeorgiaTrips. Your request has been registered in our system.",
+    "bookingIdLabel": "Booking ID",
+    "whatNextTitle": "ℹ️ What happens next?",
+    "whatNextDesc": "Your booking has been received and our operator is checking available seats. You will soon receive a WhatsApp message or phone call to confirm details.",
+    "tour": "📍 Tour:",
+    "date": "📅 Date:",
+    "people": "👥 Travelers:",
+    "peopleCount": "{count} people",
+    "totalCost": "💰 Total Amount:",
+    "confirmOnWhatsapp": "Confirm on WhatsApp",
+    "checkStatus": "🔍 Check Status",
+    "otherTours": "Other Tours"
+  },
+  "bookingStatus": {
+    "title": "Check Booking Status",
+    "subtitle": "Enter your Booking ID and phone number to view your current status",
+    "idLabel": "Booking Number (Booking ID)",
+    "phoneLabel": "Phone Number",
+    "phonePlaceholder": "e.g. +995 5XX XX XX XX or international format",
+    "submitBtn": "Check Status",
+    "checking": "Checking...",
+    "cancelledReason": "Cancellation Reason:",
+    "confirmedMsg": "🎉 Your booking is confirmed! Our team is looking forward to welcoming you.",
+    "tour": "Tour:",
+    "date": "Date:",
+    "people": "Travelers:",
+    "price": "Price:",
+    "waHelp": "💬 WhatsApp Support",
+    "enterIdError": "Please enter your Booking ID (e.g. GT-260904-XXXX)",
+    "enterPhoneError": "Please enter the phone number provided during booking"
   }
 };
 export default en;

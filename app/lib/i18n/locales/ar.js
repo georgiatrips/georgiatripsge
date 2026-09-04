@@ -584,6 +584,7 @@ export const ar = {
     "groupSeatsHint": "متبقي {seats} مقاعد لهذا التاريخ — الحد الأقصى {max} شخص",
     "peopleCount": "عدد المسافرين (أشخاص)",
     "phoneLabel": "الهاتف / واتساب",
+    "invalidPhoneError": "يرجى إدخال رقم هاتف صالح (مثال: 9955XXXXXXXX+)",
     "preferredContact": "طريقة التواصل المفضلة",
     "phoneCall": "مكالمة هاتفية",
     "notesLabel": "ملاحظات إضافية / أسئلة",
@@ -749,6 +750,42 @@ export const ar = {
       "invalidCode": "رمز القسيمة غير صالح",
       "appliedSuccess": "تم تطبيق خصم 10% بنجاح!",
       "discountApplied": "تم تطبيق خصم 10%"
+  },
+  "bookingSuccess": {
+    "loading": "جاري تحميل تفاصيل الحجز...",
+    "notFoundTitle": "لم يتم العثور على الحجز",
+    "checkStatusByPhone": "التحقق من الحالة برقم الهاتف",
+    "successTitle": "تم استلام طلب الحجز بنجاح!",
+    "successSubtitle": "شكراً لاختياركم GeorgiaTrips. تم تسجيل طلبكم في نظامنا بنجاح.",
+    "bookingIdLabel": "رقم الحجز (ID)",
+    "whatNextTitle": "ℹ️ ماذا يحدث بعد ذلك؟",
+    "whatNextDesc": "تم استلام حجزكم ويقوم الموظف بالتحقق من الأماكن المتاحة. ستتلقون قريباً رسالة عبر واتساب أو مكالمة هاتفية لتأكيد كافة التفاصيل.",
+    "tour": "📍 الرحلة:",
+    "date": "📅 التاريخ:",
+    "people": "👥 المسافرون:",
+    "peopleCount": "{count} أشخاص",
+    "totalCost": "💰 التكلفة الإجمالية:",
+    "confirmOnWhatsapp": "تأكيد عبر واتساب",
+    "checkStatus": "🔍 التحقق من الحالة",
+    "otherTours": "رحلات أخرى"
+  },
+  "bookingStatus": {
+    "title": "التحقق من حالة الحجز",
+    "subtitle": "أدخل رقم الحجز ورقم الهاتف لعرض الحالة الحالية لحجزك",
+    "idLabel": "رقم الحجز (Booking ID)",
+    "phoneLabel": "رقم الهاتف",
+    "phonePlaceholder": "مثال: 9955XXXXXXXX+ أو رقم الهاتف المسجل",
+    "submitBtn": "عرض الحالة",
+    "checking": "جاري التحقق...",
+    "cancelledReason": "سبب الإلغاء:",
+    "confirmedMsg": "🎉 تم تأكيد حجزك بنجاح! فريقنا بانتظارك في التاريخ المحدد.",
+    "tour": "الرحلة:",
+    "date": "التاريخ:",
+    "people": "المسافرون:",
+    "price": "السعر:",
+    "waHelp": "💬 دعم واتساب",
+    "enterIdError": "يرجى إدخال رقم الحجز (مثال: GT-260904-XXXX)",
+    "enterPhoneError": "يرجى إدخال رقم الهاتف المسجل أثناء الحجز"
   }
 };
 export default ar;

@@ -28,6 +28,7 @@ export async function createBooking(payload) {
       body: JSON.stringify(payload),
     });
 
+    let isValidation = false;
     const data = await res.json();
     if (res.ok && data.success) {
       return {
@@ -36,8 +37,16 @@ export async function createBooking(payload) {
         booking: data.booking,
       };
     }
-    throw new Error(data.error || "Booking submission failed");
+    if (res.status === 400) {
+      isValidation = true;
+    }
+    const err = new Error(data.error || "Booking submission failed");
+    if (isValidation) err.isValidation = true;
+    throw err;
   } catch (err) {
+    if (err.isValidation) {
+      throw err;
+    }
     console.warn("API booking failed, attempting fallback:", err.message);
 
     // Fallback direct write to Firestore (with normalized structure & accessToken)

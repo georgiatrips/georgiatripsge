@@ -584,6 +584,7 @@ export const tr = {
     "groupSeatsHint": "Bu tarihte {seats} boş koltuk kaldı — maksimum {max} kişi",
     "peopleCount": "Gezgin sayısı (kişi)",
     "phoneLabel": "Telefon / WhatsApp",
+    "invalidPhoneError": "Lütfen geçerli bir telefon numarası girin (ör. +995 5XX XX XX XX)",
     "preferredContact": "Tercih edilen iletişim yöntemi",
     "phoneCall": "Telefon Araması",
     "notesLabel": "Ek notlar / Sorular",
@@ -749,6 +750,42 @@ export const tr = {
       "invalidCode": "Geçersiz kupon kodu",
       "appliedSuccess": "%10 indirim başarıyla uygulandı!",
       "discountApplied": "%10 indirim uygulandı"
+  },
+  "bookingSuccess": {
+    "loading": "Rezervasyon detayları yükleniyor...",
+    "notFoundTitle": "Rezervasyon Bulunamadı",
+    "checkStatusByPhone": "Numarayla Durumu Kontrol Et",
+    "successTitle": "Rezervasyonunuz Başarıyla Alındı!",
+    "successSubtitle": "GeorgiaTrips'i tercih ettiğiniz için teşekkür ederiz. Talebiniz sistemimize kaydedilmiştir.",
+    "bookingIdLabel": "Rezervasyon No (ID)",
+    "whatNextTitle": "ℹ️ Sırada ne var?",
+    "whatNextDesc": "Rezervasyonunuz alındı ve operatörümüz müsaitliği kontrol ediyor. Kısa süre içinde WhatsApp mesajı veya telefon araması ile detaylar onaylanacaktır.",
+    "tour": "📍 Tur:",
+    "date": "📅 Tarih:",
+    "people": "👥 Yolcular:",
+    "peopleCount": "{count} kişi",
+    "totalCost": "💰 Toplam Tutar:",
+    "confirmOnWhatsapp": "WhatsApp ile Onayla",
+    "checkStatus": "🔍 Durumu Kontrol Et",
+    "otherTours": "Diğer Turlar"
+  },
+  "bookingStatus": {
+    "title": "Rezervasyon Durumu Kontrolü",
+    "subtitle": "Mevcut durumu görüntülemek için Rezervasyon ID ve telefon numaranızı girin",
+    "idLabel": "Rezervasyon Numarası (Booking ID)",
+    "phoneLabel": "Telefon Numarası",
+    "phonePlaceholder": "ör: +995 5XX XX XX XX veya 599123456",
+    "submitBtn": "Durumu Göster",
+    "checking": "Kontrol ediliyor...",
+    "cancelledReason": "İptal Nedeni:",
+    "confirmedMsg": "🎉 Rezervasyonunuz onaylandı! Ekibimiz belirtilen tarihte sizi bekliyor.",
+    "tour": "Tur:",
+    "date": "Tarih:",
+    "people": "Yolcular:",
+    "price": "Tutar:",
+    "waHelp": "💬 WhatsApp Destek",
+    "enterIdError": "Lütfen Rezervasyon ID numaranızı girin (ör. GT-260904-XXXX)",
+    "enterPhoneError": "Lütfen rezervasyon sırasında belirttiğiniz telefon numarasını girin"
   }
 };
 export default tr;

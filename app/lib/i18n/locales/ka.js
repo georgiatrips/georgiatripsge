@@ -501,6 +501,7 @@ export const ka = {
     "groupSeatsHint": "ამ თარიღზე თავისუფალია {seats} ადგილი — მაქსიმუმ {max} კაცი",
     "peopleCount": "მოგზაურთა რაოდენობა (კაცი)",
     "phoneLabel": "ტელეფონი / WhatsApp",
+    "invalidPhoneError": "გთხოვთ მიუთითოთ სწორი ტელეფონის ნომერი (მაგ: +995 5XX XX XX XX)",
     "preferredContact": "სასურველი კავშირი",
     "phoneCall": "სატელეფონო ზარი",
     "notesLabel": "დამატებითი შენიშვნა / კითხვა",
@@ -749,6 +750,42 @@ export const ka = {
       "invalidCode": "არასწორი კუპონის კოდი",
       "appliedSuccess": "10%-იანი ფასდაკლება გააქტიურებულია!",
       "discountApplied": "10%-იანი ფასდაკლება გააქტიურებულია"
+  },
+  "bookingSuccess": {
+    "loading": "ჯავშნის მონაცემები იტვირთება...",
+    "notFoundTitle": "ჯავშანი ვერ მოიძებნა",
+    "checkStatusByPhone": "სტატუსის შემოწმება ნომრით",
+    "successTitle": "ჯავშანი წარმატებით მიღებულია!",
+    "successSubtitle": "მადლობა, რომ ირჩევთ GeorgiaTrips-ს. თქვენი განაცხადი დარეგისტრირდა სისტემაში.",
+    "bookingIdLabel": "ჯავშნის ნომერი (ID)",
+    "whatNextTitle": "ℹ️ რა ხდება შემდეგ?",
+    "whatNextDesc": "თქვენი ჯავშანი მიღებულია და ოპერატორი ამოწმებს თავისუფალ ადგილებს. უმოკლეს დროში მიიღებთ შეტყობინებას WhatsApp-ზე ან ზარს დეტალების დასადასტურებლად.",
+    "tour": "📍 ტური:",
+    "date": "📅 თარიღი:",
+    "people": "👥 მგზავრები:",
+    "peopleCount": "{count} ადამიანი",
+    "totalCost": "💰 ჯამური ღირებულება:",
+    "confirmOnWhatsapp": "WhatsApp-ში დადასტურება",
+    "checkStatus": "🔍 სტატუსის შემოწმება",
+    "otherTours": "სხვა ტურები"
+  },
+  "bookingStatus": {
+    "title": "ჯავშნის სტატუსის შემოწმება",
+    "subtitle": "შეიყვანეთ თქვენი ჯავშნის ID და ტელეფონის ნომერი მიმდინარე სტატუსის სანახავად",
+    "idLabel": "ჯავშნის ნომერი (Booking ID)",
+    "phoneLabel": "ტელეფონის ნომერი",
+    "phonePlaceholder": "მაგ: 599123456 ან +995 5XX XX XX XX",
+    "submitBtn": "სტატუსის ჩვენება",
+    "checking": "მოწმდება...",
+    "cancelledReason": "გაუქმების მიზეზი:",
+    "confirmedMsg": "🎉 თქვენი ჯავშანი დადასტურებულია! ჩვენი გუნდი გელოდებათ მითითებულ თარიღზე.",
+    "tour": "ტური:",
+    "date": "თარიღი:",
+    "people": "მგზავრები:",
+    "price": "ფასი:",
+    "waHelp": "💬 WhatsApp დახმარება",
+    "enterIdError": "გთხოვთ შეიყვანოთ ჯავშნის ნომერი (მაგ. GT-260904-XXXX)",
+    "enterPhoneError": "გთხოვთ შეიყვანოთ დაჯავშნისას მითითებული ტელეფონის ნომერი"
   }
 };
 export default ka;

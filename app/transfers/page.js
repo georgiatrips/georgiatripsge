@@ -9,6 +9,7 @@ import DatePicker from "../components/DatePicker";
 import { WA_LINK, WhatsAppIcon, SOCIAL_PROFILES } from "../lib/shared";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 import { createBooking } from "../lib/bookingsFirestore";
+import { isValidPhone } from "../lib/bookingModel";
 import { trackEvent } from "../lib/analytics";
 
 export default function TransfersPage() {
@@ -22,6 +23,7 @@ export default function TransfersPage() {
   const [passengerCount, setPassengerCount] = useState("2");
   const [contactName, setContactName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
+  const [phoneError, setPhoneError] = useState("");
   const [notes, setNotes] = useState("");
 
   const fleetKeys = ["sedan", "minivan", "jeep", "sprinter"];
@@ -79,10 +81,17 @@ export default function TransfersPage() {
   const handleTransferSubmit = async (e) => {
     e.preventDefault();
 
+    const cleanPhone = contactPhone.trim();
+    if (!isValidPhone(cleanPhone)) {
+      setPhoneError(t("tourDetail.invalidPhoneError") || "გთხოვთ მიუთითოთ სწორი ტელეფონის ნომერი (მაგ: +995 5XX XX XX XX)");
+      return;
+    }
+    setPhoneError("");
+
     try {
       const result = await createBooking({
         type: "transfer",
-        name: contactName.trim() || (contactPhone ? `მგზავრი (${contactPhone})` : "მგზავრი / Guest"),
+        name: contactName.trim() || `მგზავრი (${cleanPhone})`,
         vehicle: selectedVehicleKey,
         vehicleName: selectedVehicleName,
         pickup: pickupLoc,
@@ -90,7 +99,7 @@ export default function TransfersPage() {
         date: transferDate,
         time: transferTime,
         passengers: passengerCount,
-        phone: contactPhone,
+        phone: cleanPhone,
         notes: notes,
         language: lang,
       });
@@ -445,10 +454,19 @@ export default function TransfersPage() {
                   type="tel"
                   placeholder={t("transfersPage.phonePlaceholder")}
                   value={contactPhone}
-                  onChange={(e) => setContactPhone(e.target.value)}
+                  onChange={(e) => {
+                    setContactPhone(e.target.value);
+                    if (phoneError) setPhoneError("");
+                  }}
                   required
                   className="tf-input-styled"
+                  style={phoneError ? { borderColor: "#ef4444", boxShadow: "0 0 0 3px rgba(239, 68, 68, 0.2)" } : {}}
                 />
+                {phoneError && (
+                  <p style={{ color: "#ef4444", fontSize: "0.82rem", marginTop: "0.35rem", fontWeight: 600 }}>
+                    ⚠️ {phoneError}
+                  </p>
+                )}
               </div>
 
               <div className="tf-field-full">

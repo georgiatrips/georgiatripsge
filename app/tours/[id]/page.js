@@ -14,6 +14,7 @@ import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { useCurrency } from "../../lib/currency/CurrencyContext";
 import { formatPriceStr } from "../../lib/i18n/formatPriceStr";
 import { createBooking } from "../../lib/bookingsFirestore";
+import { isValidPhone } from "../../lib/bookingModel";
 import { useAuth } from "../../lib/AuthContext";
 import { useCoupon } from "../../lib/CouponContext";
 import TourPrice from "../../components/TourPrice";
@@ -39,6 +40,7 @@ export default function TourDetailPage() {
   const [selectedDate, setSelectedDate] = useState("");
   const [bookingName, setBookingName] = useState("");
   const [bookingPhone, setBookingPhone] = useState("");
+  const [phoneError, setPhoneError] = useState("");
   const [bookingPeople, setBookingPeople] = useState("2");
   const [messengerPref, setMessengerPref] = useState("WhatsApp");
   const [bookingNotes, setBookingNotes] = useState("");
@@ -465,6 +467,13 @@ export default function TourDetailPage() {
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
     if (bookingSubmitting) return;
+
+    const cleanPhone = bookingPhone.trim();
+    if (!isValidPhone(cleanPhone)) {
+      setPhoneError(t("tourDetail.invalidPhoneError") || "გთხოვთ მიუთითოთ სწორი ტელეფონის ნომერი (მაგ: +995 5XX XX XX XX)");
+      return;
+    }
+    setPhoneError("");
     setBookingSubmitting(true);
 
     try {
@@ -478,7 +487,7 @@ export default function TourDetailPage() {
         tourType: tourType,
         date: selectedDate || "by_agreement",
         name: bookingName.trim(),
-        phone: bookingPhone.trim(),
+        phone: cleanPhone,
         people: peopleCount,
         channel: messengerPref,
         baseTotalPrice,
@@ -521,7 +530,7 @@ export default function TourDetailPage() {
         try {
           if (typeof window !== "undefined") {
             if (aToken) localStorage.setItem(`gt_token_${bId}`, aToken);
-            if (bookingPhone) localStorage.setItem(`gt_phone_${bId}`, bookingPhone);
+            if (cleanPhone) localStorage.setItem(`gt_phone_${bId}`, cleanPhone);
           }
         } catch (_) {}
 
@@ -531,7 +540,11 @@ export default function TourDetailPage() {
       }
     } catch (err) {
       console.error("Booking submit error:", err);
-      alert(err.message || "ჯავშნის გაფორმება ვერ მოხერხდა");
+      if (err.message && (err.message.includes("ნომერ") || err.message.includes("phone") || err.message.includes("ტელეფონ"))) {
+        setPhoneError(err.message);
+      } else {
+        alert(err.message || "ჯავშნის გაფორმება ვერ მოხერხდა");
+      }
     } finally {
       setBookingSubmitting(false);
     }
@@ -1339,9 +1352,18 @@ export default function TourDetailPage() {
                     type="tel"
                     placeholder="+995 5XX XX XX XX"
                     value={bookingPhone}
-                    onChange={(e) => setBookingPhone(e.target.value)}
+                    onChange={(e) => {
+                      setBookingPhone(e.target.value);
+                      if (phoneError) setPhoneError("");
+                    }}
+                    style={phoneError ? { borderColor: "#ef4444", boxShadow: "0 0 0 3px rgba(239, 68, 68, 0.2)" } : {}}
                     required
                   />
+                  {phoneError && (
+                    <p style={{ color: "#ef4444", fontSize: "0.82rem", marginTop: "0.35rem", fontWeight: 600 }}>
+                      ⚠️ {phoneError}
+                    </p>
+                  )}
                 </div>
 
                 <div className="tdp-form-group">
