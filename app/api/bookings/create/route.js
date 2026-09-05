@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { collection, addDoc, setDoc, getDocs, query, where, serverTimestamp, doc, getDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { generateBookingId, generateAccessToken, isValidPhone, BOOKING_STATUSES } from "../../../lib/bookingModel";
+import { validateCouponServer, recordCouponUsage } from "../../../lib/coupons";
 
 // Short-term in-memory cache for anti-spam / duplicate prevention (60 seconds)
 const recentSubmissions = new Map();
@@ -108,22 +109,27 @@ export async function POST(request) {
       unitPrice = baseTotalPrice;
     }
 
-    // 4. Validate coupon discount server-side
+    // 4. Secure Server-Side Coupon Validation (Strict Firestore & Whitelist Rules)
+    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
     let discountPercent = 0;
+    let discountAmount = 0;
     let cleanCouponCode = null;
-    if (couponCode && typeof couponCode === "string") {
-      cleanCouponCode = couponCode.trim().toUpperCase();
-      if (cleanCouponCode === "WELCOME10" || cleanCouponCode === "GEO10" || cleanCouponCode === "COUPON10") {
-        discountPercent = 10;
-      } else if (/^([A-Z]+)(\d{1,2})$/.test(cleanCouponCode)) {
-        const match = cleanCouponCode.match(/^([A-Z]+)(\d{1,2})$/);
-        discountPercent = Math.min(50, parseInt(match[2], 10));
+
+    if (couponCode && typeof couponCode === "string" && couponCode.trim()) {
+      const couponValidation = await validateCouponServer({
+        code: couponCode,
+        baseTotalPrice,
+        ip: clientIp,
+        userId: body.userId || "",
+      });
+
+      if (couponValidation.valid) {
+        cleanCouponCode = couponValidation.code;
+        discountPercent = couponValidation.discountPercent;
+        discountAmount = couponValidation.discountAmount;
       }
     }
 
-    const discountAmount = discountPercent > 0 && baseTotalPrice > 0
-      ? Math.round(baseTotalPrice * (discountPercent / 100))
-      : 0;
     const finalTotalPrice = Math.max(0, baseTotalPrice - discountAmount);
 
     // 5. Generate unique Booking ID & Secure Access Token
@@ -203,6 +209,15 @@ export async function POST(request) {
 
     // 7. Save to Firestore (doc ID = bookingId)
     await setDoc(doc(db, "bookings", bookingId), bookingDoc);
+
+    // 8. Record coupon usage & increment count if discount was applied
+    if (cleanCouponCode && discountAmount > 0) {
+      recordCouponUsage({
+        code: cleanCouponCode,
+        ip: clientIp,
+        userId: body.userId || "",
+      }).catch((err) => console.error("[api/bookings/create] Coupon usage record error:", err));
+    }
 
     // Record in local cache for duplicate prevention
     recentSubmissions.set(idempotencyKey, {

@@ -35,12 +35,12 @@ function isApiRequest(pathname) {
 }
 
 const API_LIMITS = {
-  "/api/upload": { max: 5, methods: ["POST"] },
-  "/api/translate": { max: 10, methods: ["POST"] },
-  "/api/google-reviews": { max: 10, methods: ["GET"] },
-  "/api/weather": { max: 30, methods: ["GET"] },
-  "/api/currency": { max: 30, methods: ["GET"] },
-  "/api/analytics/track": { max: 20, methods: ["GET"] },
+  "/api/upload": { max: 60, methods: ["POST"] },
+  "/api/translate": { max: 120, methods: ["POST"] },
+  "/api/google-reviews": { max: 30, methods: ["GET"] },
+  "/api/weather": { max: 60, methods: ["GET"] },
+  "/api/currency": { max: 60, methods: ["GET"] },
+  "/api/analytics/track": { max: 60, methods: ["GET", "POST"] },
 };
 
 export function proxy(request) {
@@ -53,13 +53,16 @@ export function proxy(request) {
 
   // დაბლოკილი ბოტები - 403 დაბრუნება (გარდა სტატიკური აქტივებისა)
   if (botInfo?.blocked && !isStaticAssetRequest(request)) {
+    if (isApiRequest(pathname)) {
+      return NextResponse.json({ error: "Bot access denied" }, { status: 403 });
+    }
     return new NextResponse("Bot access denied", { status: 403 });
   }
 
   // ═══════════════════════════════════════════════════════════════
   // 2. Rate Limiting ყველა მომხმარებლისთვის (მათ შორის ბოტებისთვის)
   // ═══════════════════════════════════════════════════════════════
-  // API routes-ზე ზოგად ლიმიტს არ ვუშვებთ - მათ ცალკე ლიმიტი აქვთ (30/წთ)
+  // API routes-ზე ზოგად ლიმიტს არ ვუშვებთ - მათ ცალკე ლიმიტი აქვთ
   if (!isApiRequest(pathname) && !isStaticAssetRequest(request)) {
     const { rateLimited, retryAfter } = checkRateLimit(request);
 
@@ -81,33 +84,43 @@ export function proxy(request) {
   if (isApiRequest(pathname)) {
     // API-ზე ბოტის მსგავსი User-Agent (-ის დაბლოკვა)
     if (botInfo?.suspicious) {
-      return new NextResponse("API access denied", { status: 403 });
+      return NextResponse.json({ error: "API access denied" }, { status: 403 });
     }
-    const policy = API_LIMITS[pathname] || { max: 20, methods: ["GET", "POST"] };
+    const policy = API_LIMITS[pathname] || { max: 60, methods: ["GET", "POST"] };
     if (!policy.methods.includes(request.method)) {
-      return new NextResponse("Method not allowed", {
-        status: 405,
-        headers: { Allow: policy.methods.join(", ") },
-      });
+      return NextResponse.json(
+        { error: "Method not allowed" },
+        {
+          status: 405,
+          headers: { Allow: policy.methods.join(", ") },
+        }
+      );
     }
     if (pathname === "/api/upload") {
       const contentLength = Number(request.headers.get("content-length") || 0);
       if (contentLength > 5 * 1024 * 1024 + 64 * 1024) {
-        return new NextResponse("Payload too large", { status: 413 });
+        return NextResponse.json({ error: "Payload too large" }, { status: 413 });
       }
     }
-    // API-ზე მკაცრი ლიმიტი (30/წუთი)
+
+    const isAuth = !!request.headers.get("authorization");
+    const rateLimitMax = isAuth ? policy.max * 2 : policy.max;
+    const namespace = isAuth ? `${pathname}:auth` : pathname;
+
     const { rateLimited: apiLimited, retryAfter: apiRetryAfter } =
-      checkRateLimit(request, { max: policy.max, namespace: pathname });
+      checkRateLimit(request, { max: rateLimitMax, namespace });
     if (apiLimited) {
-      return new NextResponse("API rate limit exceeded", {
-        status: 429,
-        headers: {
-          "Retry-After": String(apiRetryAfter || 60),
-          "X-RateLimit-Limit": String(policy.max),
-          "X-RateLimit-Remaining": "0",
-        },
-      });
+      return NextResponse.json(
+        { error: "API rate limit exceeded", retryAfter: apiRetryAfter || 60 },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(apiRetryAfter || 60),
+            "X-RateLimit-Limit": String(rateLimitMax),
+            "X-RateLimit-Remaining": "0",
+          },
+        }
+      );
     }
     // API routes-ზე არ ვასრულებთ ენის redirect-ს - უბრალოდ ვაგრძელებთ
     return NextResponse.next();

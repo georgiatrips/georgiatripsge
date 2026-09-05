@@ -8,6 +8,7 @@ import Footer from "../components/Footer";
 import CouponTicket from "../components/CouponTicket";
 import { useAuth } from "../lib/AuthContext";
 import { useLanguage } from "../lib/i18n/LanguageContext";
+import { getCouponByCode } from "../lib/coupons";
 import "../coupon.css";
 
 // Valid coupon codes and their details
@@ -50,15 +51,31 @@ export default function CouponsPage() {
     ? [welcomeCoupon, ...addedCoupons]
     : [...addedCoupons];
 
-  const handlePromoCheck = () => {
+  const handlePromoCheck = async () => {
     const code = promoInput.trim().toUpperCase();
     if (!code) {
       setPromoError(t("bookingCoupon.enterCode") || "შეიყვანეთ კუპონის კოდი");
       return;
     }
-    const coupon = VALID_COUPONS[code];
+    
+    let coupon = VALID_COUPONS[code];
     if (!coupon) {
-      setPromoError(t("bookingCoupon.invalidCode") || "კოდი არასწორია — სცადეთ WELCOME10, GEO10 ან COUPON10");
+      try {
+        const remoteCoupon = await getCouponByCode(code);
+        if (remoteCoupon && remoteCoupon.active !== false) {
+          coupon = {
+            code: remoteCoupon.code,
+            discount: remoteCoupon.discountPercent || 10,
+            desc: remoteCoupon.title || `${remoteCoupon.discountPercent || 10}%-იანი ფასდაკლების კუპონი`,
+            type: remoteCoupon.usageType || "exclusive",
+            minOrder: 0,
+          };
+        }
+      } catch (_) {}
+    }
+
+    if (!coupon) {
+      setPromoError(t("bookingCoupon.invalidCode") || "კოდი არასწორია ან ვადაგასულია");
       setPromoSuccess("");
       return;
     }

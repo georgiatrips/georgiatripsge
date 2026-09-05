@@ -59,6 +59,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Dynamic Coupons Collection (Managed from Admin)
+    match /coupons/{couponId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Claimed Coupon IPs
     match /claimed_coupon_ips/{ipDoc} {
       allow read: if true;

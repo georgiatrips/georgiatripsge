@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import "./admin.css";
 import Image from "next/image";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
@@ -36,14 +37,26 @@ import {
   extractImageUrl,
 } from "../lib/toursFirestore";
 
-const emptyLocation = () => ({ placeId: "", search: "", title: emptyLangObj(), desc: emptyLangObj(), img: "" });
+const emptyLocation = () => ({
+  placeId: "",
+  search: "",
+  title: emptyLangObj(),
+  desc: emptyLangObj(),
+  img: "",
+  mode: "place",
+});
 
 async function uploadToCloudinary(file) {
   const fd = new FormData();
   fd.append("file", file);
   const res = await adminFetch("/api/upload", { method: "POST", body: fd });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "ატვირთვა ვერ მოხერხდა");
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    data = { error: `ატვირთვა ვერ მოხერხდა (სტატუსი: ${res.status})` };
+  }
+  if (!res.ok) throw new Error(data?.error || "ატვირთვა ვერ მოხერხდა");
   return data.url;
 }
 
@@ -187,6 +200,7 @@ export default function AdminPage() {
         i === idx
           ? {
               ...loc,
+              mode: "place",
               placeId: place.id,
               search: placeTitle,
               title: parseLocal(place.title),
@@ -236,14 +250,40 @@ export default function AdminPage() {
     setLocations((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== idx)));
   };
 
+  const moveLocation = (fromIdx, toIdx) => {
+    setLocations((prev) => {
+      if (toIdx < 0 || toIdx >= prev.length) return prev;
+      const copy = [...prev];
+      const [item] = copy.splice(fromIdx, 1);
+      copy.splice(toIdx, 0, item);
+      return copy;
+    });
+  };
+
   const handleLocationPhoto = async (idx, file) => {
     if (!file) return;
     try {
       setUploading(true);
       const url = await uploadToCloudinary(file);
       updateLocation(idx, "img", url);
+      setGallery((prev) => {
+        const existingUrls = new Set(
+          prev.map((item) => (typeof item === "string" ? item : item?.url))
+        );
+        if (!existingUrls.has(url)) {
+          return [
+            ...prev,
+            {
+              url,
+              locationTitle: locations[idx]?.title?.ka || "ლოკაცია",
+              placeId: locations[idx]?.placeId || "",
+            },
+          ];
+        }
+        return prev;
+      });
     } catch (err) {
-      setMessage({ type: "error", text: err.message });
+      setMessage({ type: "error", text: err.message || "ფოტოს ატვირთვა ვერ მოხერხდა" });
     } finally {
       setUploading(false);
     }
@@ -380,28 +420,28 @@ export default function AdminPage() {
     }
 
     const itinerary = locations
-      .filter((l) => l.title.ka?.trim())
+      .filter((l) => (l.title?.ka && l.title.ka.trim()) || (l.title?.en && l.title.en.trim()) || l.placeId)
       .map((l) => ({
         placeId: l.placeId || "",
         title: {
-          ka: l.title.ka?.trim() || "",
-          en: l.title.en?.trim() || "",
-          ru: l.title.ru?.trim() || "",
-          tr: l.title.tr?.trim() || "",
-          ar: l.title.ar?.trim() || "",
+          ka: l.title?.ka?.trim() || "",
+          en: l.title?.en?.trim() || "",
+          ru: l.title?.ru?.trim() || "",
+          tr: l.title?.tr?.trim() || "",
+          ar: l.title?.ar?.trim() || "",
         },
         desc: {
-          ka: l.desc.ka?.trim() || "",
-          en: l.desc.en?.trim() || "",
-          ru: l.desc.ru?.trim() || "",
-          tr: l.desc.tr?.trim() || "",
-          ar: l.desc.ar?.trim() || "",
+          ka: l.desc?.ka?.trim() || "",
+          en: l.desc?.en?.trim() || "",
+          ru: l.desc?.ru?.trim() || "",
+          tr: l.desc?.tr?.trim() || "",
+          ar: l.desc?.ar?.trim() || "",
         },
         img: l.img || "",
       }));
 
-    if (itinerary.length === 0 || itinerary.some((location) => !location.placeId)) {
-      setMessage({ type: "error", text: "აირჩიეთ მარშრუტის ყველა ლოკაცია Places-დან" });
+    if (itinerary.length === 0 || itinerary.some((location) => !location.title?.ka)) {
+      setMessage({ type: "error", text: "შეიყვანეთ მარშრუტის ყველა ლოკაციის სახელი (ქართულად მაინც)" });
       return;
     }
     if (!selectedBadge) {
@@ -437,14 +477,7 @@ export default function AdminPage() {
     const payload = {
       title,
       desc,
-      itinerary: locations
-        .filter((l) => l.title?.ka || l.title?.en || l.placeId)
-        .map((l) => ({
-          placeId: l.placeId || "",
-          title: l.title,
-          desc: l.desc,
-          img: l.img || "",
-        })),
+      itinerary,
       departure: {
         ka: destinationLabel,
         en: destinationLabel,
@@ -527,13 +560,19 @@ export default function AdminPage() {
     setPriceGroup(tour.priceGroup ?? ""); setPricePrivate(tour.pricePrivate ?? "");
     setIsVip(!!tour.isVip); setIsPopular(!!tour.isPopular); setSelectedBadge(asLocalizedText(tour.badge) || TOUR_BADGE_OPTIONS[0]);
     setTourSection(tour.tourSection || tour.category || "");
-    setLocations(Array.isArray(tour.itinerary) && tour.itinerary.length ? tour.itinerary.map((location) => ({ 
-      ...location, 
-      placeId: location.placeId || "", 
-      search: asLocalizedText(location.title, "ka") || "",
-      title: parseLocal(location.title),
-      desc: parseLocal(location.desc)
-    })) : [emptyLocation()]);
+    setLocations(
+      Array.isArray(tour.itinerary) && tour.itinerary.length
+        ? tour.itinerary.map((location) => ({
+            ...location,
+            mode: location.placeId ? "place" : "custom",
+            placeId: location.placeId || "",
+            search: asLocalizedText(location.title, "ka") || "",
+            title: parseLocal(location.title),
+            desc: parseLocal(location.desc),
+            img: location.img || "",
+          }))
+        : [emptyLocation()]
+    );
     setGallery(
       (Array.isArray(tour.gallery) ? tour.gallery : [])
         .map((item) => {
@@ -1055,99 +1094,345 @@ export default function AdminPage() {
               <p className="admin-hint">
                 მიიტანეთ კურსორი წერტილზე დეტალებისა და ფოტოს სანახავად — აქ დაამატეთ ლოკაციები.
               </p>
-              {locations.map((loc, idx) => (
-                <div key={idx} className="admin-location-card">
-                  <div className="admin-location-head">
-                    <strong>ლოკაცია #{idx + 1}</strong>
-                    {locations.length > 1 && (
-                      <button
-                        type="button"
-                        className="admin-btn-ghost"
-                        onClick={() => removeLocation(idx)}
-                      >
-                        წაშლა
-                      </button>
-                    )}
-                  </div>
-                  <div className="admin-field admin-place-search-field">
-                    <label>ადგილის მოძებნა</label>
-                    <input
-                      value={loc.search || ""}
-                      onChange={(e) => updateLocation(idx, "search", e.target.value)}
-                      placeholder="მოძებნეთ დამატებული ადგილი..."
-                    />
-                    {loc.search && !loc.placeId && (
-                      <div className="admin-place-search-results">
-                        {availablePlaces
-                          .filter((place) => matchesMultiLang(place.title, loc.search) || matchesMultiLang(place.region, loc.search))
-                          .slice(0, 6)
-                          .map((place) => (
-                            <button type="button" key={place.id} className="admin-place-search-result" onClick={() => selectPlaceForLocation(idx, place)}>
-                              <span className="admin-place-result-thumb">
-                                <Image src={extractImageUrl(place.img) || extractImageUrl(place.gallery?.[0]) || "/hero.png"} alt="" fill sizes="42px" style={{ objectFit: "cover" }} />
-                              </span>
-                              <span><strong>{asLocalizedText(place.title, "ka")}</strong><small>{asLocalizedText(place.region, "ka")}</small></span>
-                            </button>
-                          ))}
-                      </div>
-                    )}
-                  </div>
-                  {loc.placeId ? (
+              {locations.map((loc, idx) => {
+                const isCustom = loc.mode === "custom";
+                return (
+                  <div
+                    key={idx}
+                    className="admin-location-card"
+                    style={{
+                      border: "1px solid rgba(255, 255, 255, 0.12)",
+                      borderRadius: "12px",
+                      padding: "1.25rem",
+                      marginBottom: "1.25rem",
+                      background: "rgba(15, 23, 42, 0.65)",
+                    }}
+                  >
                     <div
-                      className="admin-location-selected-card"
+                      className="admin-location-head"
                       style={{
-                        marginTop: "0.75rem",
-                        padding: "0.75rem 1rem",
-                        borderRadius: "10px",
-                        background: "rgba(41, 178, 183, 0.08)",
-                        border: "1px solid rgba(41, 178, 183, 0.3)",
                         display: "flex",
-                        alignItems: "center",
                         justifyContent: "space-between",
-                        gap: "1rem"
+                        alignItems: "center",
+                        marginBottom: "0.9rem",
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.85rem", minWidth: 0 }}>
-                        <div style={{ position: "relative", width: "52px", height: "52px", borderRadius: "8px", overflow: "hidden", flexShrink: 0, border: "1px solid rgba(255,255,255,0.2)" }}>
-                          <Image src={extractImageUrl(loc.img) || "/hero.png"} alt="" fill sizes="52px" style={{ objectFit: "cover" }} />
-                        </div>
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                            <strong style={{ fontSize: "0.95rem", color: "#ffffff" }}>
-                              {asLocalizedText(loc.title, "ka") || "დამატებული ადგილი"}
-                            </strong>
-                            <span style={{ fontSize: "0.72rem", background: "rgba(16, 185, 129, 0.25)", color: "#34d399", padding: "1px 6px", borderRadius: "4px", fontWeight: 600 }}>
-                              ✓ მრავალენოვანი
-                            </span>
-                          </div>
-                          <p style={{ margin: "2px 0 0", fontSize: "0.8rem", color: "rgba(255,255,255,0.65)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "420px" }}>
-                            {asLocalizedText(loc.desc, "ka") || "აღწერა შენახულია ბაზაში"}
-                          </p>
-                        </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                        <strong style={{ fontSize: "1rem", color: "#38bdf8" }}>
+                          📍 ლოკაცია #{idx + 1}
+                        </strong>
+                        {loc.placeId ? (
+                          <span
+                            style={{
+                              fontSize: "0.75rem",
+                              background: "rgba(41, 178, 183, 0.2)",
+                              color: "#29b2b7",
+                              padding: "2px 8px",
+                              borderRadius: "12px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            🏛️ ბაზიდან (Places)
+                          </span>
+                        ) : isCustom ? (
+                          <span
+                            style={{
+                              fontSize: "0.75rem",
+                              background: "rgba(168, 85, 247, 0.2)",
+                              color: "#c084fc",
+                              padding: "2px 8px",
+                              borderRadius: "12px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            ✍️ ინდივიდუალური / აქტივობა
+                          </span>
+                        ) : null}
                       </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
+                        <button
+                          type="button"
+                          disabled={idx === 0}
+                          onClick={() => moveLocation(idx, idx - 1)}
+                          title="გადატანა ზემოთ"
+                          style={{
+                            background: idx === 0 ? "rgba(255,255,255,0.02)" : "rgba(56, 189, 248, 0.12)",
+                            border: idx === 0 ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(56, 189, 248, 0.3)",
+                            color: idx === 0 ? "rgba(255,255,255,0.25)" : "#38bdf8",
+                            borderRadius: "6px",
+                            padding: "0.3rem 0.6rem",
+                            fontSize: "0.8rem",
+                            fontWeight: 600,
+                            cursor: idx === 0 ? "not-allowed" : "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "3px",
+                          }}
+                        >
+                          ⬆️ ზემოთ
+                        </button>
+                        <button
+                          type="button"
+                          disabled={idx === locations.length - 1}
+                          onClick={() => moveLocation(idx, idx + 1)}
+                          title="გადატანა ქვემოთ"
+                          style={{
+                            background: idx === locations.length - 1 ? "rgba(255,255,255,0.02)" : "rgba(56, 189, 248, 0.12)",
+                            border: idx === locations.length - 1 ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(56, 189, 248, 0.3)",
+                            color: idx === locations.length - 1 ? "rgba(255,255,255,0.25)" : "#38bdf8",
+                            borderRadius: "6px",
+                            padding: "0.3rem 0.6rem",
+                            fontSize: "0.8rem",
+                            fontWeight: 600,
+                            cursor: idx === locations.length - 1 ? "not-allowed" : "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "3px",
+                          }}
+                        >
+                          ⬇️ ქვემოთ
+                        </button>
+                        {locations.length > 1 && (
+                          <button
+                            type="button"
+                            className="admin-btn-ghost"
+                            style={{
+                              color: "#ef4444",
+                              borderColor: "rgba(239, 68, 68, 0.3)",
+                              padding: "0.3rem 0.6rem",
+                              fontSize: "0.8rem",
+                            }}
+                            onClick={() => removeLocation(idx)}
+                            title="ლოკაციის წაშლა"
+                          >
+                            🗑️ წაშლა
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Mode Segment Switcher */}
+                    <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem", flexWrap: "wrap" }}>
                       <button
                         type="button"
                         onClick={() => {
-                          updateLocation(idx, "placeId", "");
-                          updateLocation(idx, "search", "");
+                          updateLocation(idx, "mode", "place");
                         }}
                         style={{
-                          background: "rgba(255,255,255,0.08)",
-                          border: "1px solid rgba(255,255,255,0.2)",
-                          color: "#ffffff",
-                          padding: "5px 12px",
-                          borderRadius: "6px",
-                          fontSize: "0.78rem",
+                          flex: 1,
+                          minWidth: "180px",
+                          padding: "0.5rem 0.75rem",
+                          borderRadius: "8px",
+                          fontSize: "0.85rem",
+                          fontWeight: 600,
                           cursor: "pointer",
-                          flexShrink: 0
+                          background: !isCustom ? "rgba(41, 178, 183, 0.25)" : "rgba(255, 255, 255, 0.05)",
+                          color: !isCustom ? "#38bdf8" : "rgba(255, 255, 255, 0.6)",
+                          border: !isCustom ? "1px solid rgba(56, 189, 248, 0.4)" : "1px solid rgba(255, 255, 255, 0.1)",
+                          transition: "all 0.2s",
                         }}
                       >
-                        შეცვლა
+                        🏛️ არსებული ადგილი (Places ბაზიდან)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateLocation(idx, "mode", "custom");
+                          updateLocation(idx, "placeId", "");
+                        }}
+                        style={{
+                          flex: 1,
+                          minWidth: "180px",
+                          padding: "0.5rem 0.75rem",
+                          borderRadius: "8px",
+                          fontSize: "0.85rem",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          background: isCustom ? "rgba(168, 85, 247, 0.25)" : "rgba(255, 255, 255, 0.05)",
+                          color: isCustom ? "#c084fc" : "rgba(255, 255, 255, 0.6)",
+                          border: isCustom ? "1px solid rgba(168, 85, 247, 0.4)" : "1px solid rgba(255, 255, 255, 0.1)",
+                          transition: "all 0.2s",
+                        }}
+                      >
+                        🍷 ინდივიდუალური ლოკაცია / აქტივობა (დეგუსტაცია, დაბრუნება...)
                       </button>
                     </div>
-                  ) : null}
-                </div>
-              ))}
+
+                    {/* Mode Content */}
+                    {!isCustom ? (
+                      <div>
+                        <div className="admin-field admin-place-search-field" style={{ position: "relative", marginBottom: "0.75rem" }}>
+                          <label style={{ fontSize: "0.88rem", color: "#e2e8f0" }}>ადგილის მოძებნა</label>
+                          <input
+                            value={loc.search || ""}
+                            onChange={(e) => updateLocation(idx, "search", e.target.value)}
+                            placeholder="მოძებნეთ დამატებული ადგილი (მაგ: მარტვილი, ყაზბეგი)..."
+                          />
+                          {loc.search && !loc.placeId && (
+                            <div className="admin-place-search-results">
+                              {availablePlaces
+                                .filter((place) => matchesMultiLang(place.title, loc.search) || matchesMultiLang(place.region, loc.search))
+                                .slice(0, 6)
+                                .map((place) => (
+                                  <button type="button" key={place.id} className="admin-place-search-result" onClick={() => selectPlaceForLocation(idx, place)}>
+                                    <span className="admin-place-result-thumb">
+                                      <Image src={extractImageUrl(place.img) || extractImageUrl(place.gallery?.[0]) || "/hero.png"} alt="" fill sizes="42px" style={{ objectFit: "cover" }} />
+                                    </span>
+                                    <span><strong>{asLocalizedText(place.title, "ka")}</strong><small>{asLocalizedText(place.region, "ka")}</small></span>
+                                  </button>
+                                ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {loc.placeId ? (
+                          <div
+                            className="admin-location-selected-card"
+                            style={{
+                              marginTop: "0.75rem",
+                              padding: "0.75rem 1rem",
+                              borderRadius: "10px",
+                              background: "rgba(41, 178, 183, 0.08)",
+                              border: "1px solid rgba(41, 178, 183, 0.3)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              gap: "1rem",
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.85rem", minWidth: 0 }}>
+                              <div style={{ position: "relative", width: "52px", height: "52px", borderRadius: "8px", overflow: "hidden", flexShrink: 0, border: "1px solid rgba(255,255,255,0.2)" }}>
+                                <Image src={extractImageUrl(loc.img) || "/hero.png"} alt="" fill sizes="52px" style={{ objectFit: "cover" }} />
+                              </div>
+                              <div style={{ minWidth: 0 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                                  <strong style={{ fontSize: "0.95rem", color: "#ffffff" }}>
+                                    {asLocalizedText(loc.title, "ka") || "დამატებული ადგილი"}
+                                  </strong>
+                                  <span style={{ fontSize: "0.72rem", background: "rgba(16, 185, 129, 0.25)", color: "#34d399", padding: "1px 6px", borderRadius: "4px", fontWeight: 600 }}>
+                                    ✓ მრავალენოვანი
+                                  </span>
+                                </div>
+                                <p style={{ margin: "2px 0 0", fontSize: "0.8rem", color: "rgba(255,255,255,0.65)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "420px" }}>
+                                  {asLocalizedText(loc.desc, "ka") || "აღწერა შენახულია ბაზაში"}
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLocations((prev) =>
+                                  prev.map((l, i) =>
+                                    i === idx
+                                      ? {
+                                          ...l,
+                                          mode: "place",
+                                          placeId: "",
+                                          search: "",
+                                          title: emptyLangObj(),
+                                          desc: emptyLangObj(),
+                                          img: "",
+                                        }
+                                      : l
+                                  )
+                                );
+                              }}
+                              style={{
+                                background: "rgba(255,255,255,0.08)",
+                                border: "1px solid rgba(255,255,255,0.2)",
+                                color: "#ffffff",
+                                padding: "5px 12px",
+                                borderRadius: "6px",
+                                fontSize: "0.78rem",
+                                cursor: "pointer",
+                                flexShrink: 0,
+                              }}
+                            >
+                              შეცვლა
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : (
+                      /* CUSTOM LOCATION / ACTIVITY MODE */
+                      <div style={{ background: "rgba(0,0,0,0.2)", padding: "1rem", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                        <LocalizedInputGroup
+                          label="ლოკაციის / აქტივობის სახელი"
+                          value={loc.title}
+                          onChange={(val) => updateLocation(idx, "title", val)}
+                          placeholder="მაგ: ღვინის დეგუსტაცია მარანში, დაბრუნება ბათუმში, ლანჩი..."
+                          required
+                        />
+
+                        <LocalizedInputGroup
+                          label="მოკლე აღწერა (არასავალდებულო)"
+                          type="textarea"
+                          rows={2}
+                          value={loc.desc}
+                          onChange={(val) => updateLocation(idx, "desc", val)}
+                          placeholder="მაგ: ადგილობრივი ოჯახური ღვინის და ჭაჭის დაგემოვნება, მასტერკლასი..."
+                        />
+
+                        {/* Image upload / preview */}
+                        <div style={{ marginTop: "0.5rem" }}>
+                          <label style={{ display: "block", marginBottom: "0.4rem", fontSize: "0.85rem", color: "#e2e8f0", fontWeight: 600 }}>
+                            ლოკაციის ფოტო (არასავალდებულო)
+                          </label>
+                          <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+                            {loc.img ? (
+                              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", background: "rgba(255,255,255,0.05)", padding: "6px 12px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)" }}>
+                                <div style={{ position: "relative", width: "48px", height: "48px", borderRadius: "6px", overflow: "hidden" }}>
+                                  <Image src={extractImageUrl(loc.img)} alt="" fill sizes="48px" style={{ objectFit: "cover" }} />
+                                </div>
+                                <span style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.7)", maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                  ფოტო დამატებულია
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => updateLocation(idx, "img", "")}
+                                  style={{ background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.4)", color: "#f87171", padding: "3px 8px", borderRadius: "4px", fontSize: "0.75rem", cursor: "pointer" }}
+                                >
+                                  ✕ წაშლა
+                                </button>
+                              </div>
+                            ) : null}
+
+                            <label
+                              style={{
+                                padding: "0.4rem 0.85rem",
+                                background: "rgba(56, 189, 248, 0.15)",
+                                border: "1px solid rgba(56, 189, 248, 0.35)",
+                                color: "#38bdf8",
+                                borderRadius: "6px",
+                                fontSize: "0.82rem",
+                                fontWeight: 600,
+                                cursor: uploading ? "not-allowed" : "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "6px",
+                              }}
+                            >
+                              📷 {uploading ? "იტვირთება..." : loc.img ? "ფოტოს შეცვლა" : "ფოტოს ატვირთვა"}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                style={{ display: "none" }}
+                                disabled={uploading}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) handleLocationPhoto(idx, file);
+                                  e.target.value = "";
+                                }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
               <button type="button" className="admin-btn-add" onClick={addLocation}>
                 + შემდეგი ლოკაცია
               </button>

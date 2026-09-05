@@ -21,6 +21,7 @@ export default function LocalizedInputGroup({
   rows = 3,
 }) {
   const [translating, setTranslating] = useState(false);
+  const [translateError, setTranslateError] = useState("");
   const safeValue =
     typeof value === "object" && value !== null
       ? value
@@ -37,25 +38,44 @@ export default function LocalizedInputGroup({
     const kaText = getValueForLang("ka");
     if (!kaText) return;
     setTranslating(true);
+    setTranslateError("");
     const newValues = { ...safeValue };
-    const targets = ["en", "ru", "tr", "ar"];
+    const missingTargets = ["en", "ru", "tr", "ar"].filter((t) => !getValueForLang(t));
+    
+    if (missingTargets.length === 0) {
+      setTranslating(false);
+      return;
+    }
+
     try {
-      for (const target of targets) {
-        if (!getValueForLang(target)) {
-          const res = await adminFetch("/api/translate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: kaText, target }),
-          });
-          if (res.ok) {
-            const data = await res.json();
-            newValues[target] = data.translatedText || "";
-          }
-        }
+      const res = await adminFetch("/api/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: kaText, targets: missingTargets }),
+      });
+
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        data = { error: `თარგმნის შეცდომა (სტატუსი: ${res.status})` };
+      }
+
+      if (!res.ok) {
+        throw new Error(data?.error || `თარგმნის შეცდომა (${res.status})`);
+      }
+
+      if (data?.translations) {
+        Object.entries(data.translations).forEach(([lang, val]) => {
+          if (val) newValues[lang] = val;
+        });
+      } else if (data?.translatedText && missingTargets.length === 1) {
+        newValues[missingTargets[0]] = data.translatedText;
       }
       onChange(newValues);
     } catch (err) {
       console.error("Translation error:", err);
+      setTranslateError(err.message || "თარგმნა ვერ მოხერხდა");
     } finally {
       setTranslating(false);
     }
@@ -91,27 +111,34 @@ export default function LocalizedInputGroup({
         <label style={{ margin: 0, color: "#f8fafc", fontSize: "0.95rem", fontWeight: 600 }}>
           {label} {required && <span style={{ color: "#ef4444" }}>*</span>}
         </label>
-        <button
-          type="button"
-          onClick={handleTranslate}
-          disabled={translating || !getValueForLang("ka")}
-          className="admin-btn-ghost"
-          style={{
-            padding: "0.3rem 0.65rem",
-            fontSize: "0.82rem",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.35rem",
-            background: "rgba(56, 189, 248, 0.12)",
-            color: "#38bdf8",
-            border: "1px solid rgba(56, 189, 248, 0.3)",
-            borderRadius: "6px",
-            cursor: translating || !getValueForLang("ka") ? "not-allowed" : "pointer",
-            opacity: translating || !getValueForLang("ka") ? 0.6 : 1,
-          }}
-        >
-          {translating ? "⏳ ითარგმნება..." : "🌐 ავტო-თარგმნა (KA → ALL)"}
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          {translateError && (
+            <span style={{ fontSize: "0.75rem", color: "#f87171" }}>
+              {translateError}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleTranslate}
+            disabled={translating || !getValueForLang("ka")}
+            className="admin-btn-ghost"
+            style={{
+              padding: "0.3rem 0.65rem",
+              fontSize: "0.82rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.35rem",
+              background: "rgba(56, 189, 248, 0.12)",
+              color: "#38bdf8",
+              border: "1px solid rgba(56, 189, 248, 0.3)",
+              borderRadius: "6px",
+              cursor: translating || !getValueForLang("ka") ? "not-allowed" : "pointer",
+              opacity: translating || !getValueForLang("ka") ? 0.6 : 1,
+            }}
+          >
+            {translating ? "⏳ ითარგმნება..." : "🌐 ავტო-თარგმნა (KA → ALL)"}
+          </button>
+        </div>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>

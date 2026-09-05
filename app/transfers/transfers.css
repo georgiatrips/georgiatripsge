@@ -1,0 +1,1163 @@
+/* ============================================================
+   TRANSFERS & VEHICLE FLEET STYLES BUNDLE (GeorgiaTrips)
+   ============================================================ */
+
+/* ============================================================
+   TRANSFERS & VEHICLE FLEET PAGE STYLES
+   ============================================================ */
+
+.transfers-page-wrapper {
+  background: var(--bg-main);
+  min-height: 100vh;
+}
+
+/* Transfers Hero */
+.transfers-hero {
+  position: relative;
+  min-height: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 1.5rem 60px;
+  overflow: hidden;
+  text-align: center;
+}
+
+.transfers-hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.transfers-hero-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(7, 17, 30, 0.88) 0%, rgba(13, 35, 58, 0.92) 100%);
+  z-index: 1;
+}
+
+.transfers-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 820px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.transfers-hero-badge {
+  display: inline-block;
+  background: rgba(250, 180, 24, 0.18);
+  border: 1px solid var(--yellow);
+  color: var(--yellow);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.4rem 1rem;
+  border-radius: 50px;
+  margin-bottom: 1.25rem;
+}
+
+.transfers-hero-title {
+  font-family: var(--font-head);
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.15;
+  margin-bottom: 1rem;
+  text-wrap: balance;
+}
+
+.transfers-hero-sub {
+  font-size: clamp(0.95rem, 1.8vw, 1.15rem);
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.6;
+  max-width: 680px;
+  margin-bottom: 2rem;
+}
+
+.transfers-hero-pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.th-pill {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.45rem 1rem;
+  border-radius: 50px;
+  backdrop-filter: blur(8px);
+}
+
+/* Fleet Cards Grid */
+.transfers-fleet-section {
+  background: #ffffff;
+  padding: 5rem 1.5rem;
+}
+
+.fleet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+.fleet-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.fleet-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1);
+  border-color: #cbd5e1;
+}
+
+.fleet-card-media {
+  position: relative;
+  height: 210px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.fleet-card-img {
+  max-height: 170px;
+  width: auto;
+  object-fit: contain;
+  transition: transform 0.4s ease;
+}
+
+.fleet-card:hover .fleet-card-img {
+  transform: scale(1.06);
+}
+
+.fleet-badge {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: #0d233a;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+}
+
+.fleet-pax-tag {
+  position: absolute;
+  bottom: 0.85rem;
+  right: 1rem;
+  background: rgba(16, 109, 164, 0.9);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.35rem 0.85rem;
+  border-radius: 50px;
+  backdrop-filter: blur(4px);
+}
+
+.fleet-card-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.fleet-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.fleet-card-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.fleet-card-sub {
+  font-size: 0.8rem;
+  color: #64748b;
+  display: block;
+}
+
+.fleet-card-price {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #106da4;
+  white-space: nowrap;
+}
+
+.fleet-features-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  flex: 1;
+}
+
+.fleet-features-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.feat-check {
+  color: #10b981;
+  font-weight: 900;
+}
+
+.btn-fleet-book {
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  background: linear-gradient(135deg, #0d233a 0%, #106da4 100%);
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 800;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(16, 109, 164, 0.25);
+}
+
+.btn-fleet-book:hover {
+  background: linear-gradient(135deg, #106da4 0%, #29b2b7 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(16, 109, 164, 0.4);
+}
+
+/* Airport Transfers Section */
+.transfers-airports-section {
+  background: #f8fafc;
+  padding: 5rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.airports-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.airport-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+}
+
+.airport-card:hover {
+  transform: translateY(-3px);
+  border-color: #cbd5e1;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07);
+}
+
+.airport-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(16, 109, 164, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.airport-icon {
+  font-size: 1.5rem;
+}
+
+.airport-city-pill {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #106da4;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.3rem;
+}
+
+.airport-card-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.35;
+  margin-bottom: 0.4rem;
+}
+
+.airport-card-desc {
+  font-size: 0.85rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.airport-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1rem;
+  border-top: 1px solid #f1f5f9;
+  margin-top: auto;
+}
+
+.airport-price {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.btn-airport-book {
+  padding: 0.55rem 1.1rem;
+  background: #0d233a;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-airport-book:hover {
+  background: #106da4;
+}
+
+/* Private Routes Section */
+.transfers-routes-section {
+  background: #ffffff;
+  padding: 5rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.routes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.25rem;
+}
+
+.route-card {
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  border-radius: 16px;
+  padding: 1.25rem 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  transition: all 0.25s ease;
+}
+
+.route-card:hover {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+  transform: translateY(-2px);
+}
+
+.route-cities {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.route-arrow {
+  color: #106da4;
+  font-weight: 900;
+}
+
+.route-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+
+.route-time {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.route-price {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #106da4;
+}
+
+.btn-route-book {
+  padding: 0.5rem 0.9rem;
+  background: #0d233a;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-route-book:hover {
+  background: #106da4;
+}
+
+/* Booking Form Section */
+.transfers-booking-section {
+  background: #f8fafc;
+  padding: 5rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.transfers-form-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  padding: 2.2rem;
+  box-shadow: 0 15px 40px rgba(15, 23, 42, 0.06);
+}
+
+.transfers-form-header {
+  margin-bottom: 1.8rem;
+  text-align: center;
+}
+
+.transfers-form-header h2 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 0.4rem;
+}
+
+.transfers-form-header p {
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.transfers-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.tf-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+}
+
+.tf-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.tf-group label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.tf-input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  font-size: 0.92rem;
+  font-family: var(--font-main);
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.tf-input:focus {
+  border-color: #106da4;
+  box-shadow: 0 0 0 3px rgba(16, 109, 164, 0.14);
+}
+
+.btn-tf-submit {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #ffffff;
+  background: linear-gradient(135deg, #0d233a 0%, #106da4 100%);
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 20px rgba(16, 109, 164, 0.3);
+  margin-top: 0.8rem;
+}
+
+.btn-tf-submit:hover {
+  background: linear-gradient(135deg, #106da4 0%, #29b2b7 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(16, 109, 164, 0.45);
+}
+
+@media (max-width: 768px) {
+
+  .fleet-grid,
+  .airports-grid,
+  .routes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tf-row {
+    grid-template-columns: 1fr;
+  }
+
+  .transfers-form-card {
+    padding: 1.5rem;
+  }
+
+  .route-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .route-meta {
+    align-items: flex-start;
+  }
+}
+
+/* ── Transfers Page Mobile Perfection ── */
+@media (max-width: 768px) {
+
+  .transfers-fleet-section,
+  .transfers-airports-section,
+  .transfers-booking-section {
+    padding: 3rem 1rem;
+  }
+
+  .fleet-grid,
+  .airports-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .fleet-card-media {
+    height: 180px;
+  }
+
+  .fleet-card-img {
+    max-height: 140px;
+  }
+
+  .fleet-card-body {
+    padding: 1.25rem;
+  }
+
+  .fleet-card-title {
+    font-size: 1.15rem;
+  }
+
+  .fleet-card-sub {
+    font-size: 0.75rem;
+  }
+
+  .fleet-badge {
+    font-size: 0.62rem;
+    padding: 0.25rem 0.6rem;
+  }
+
+  .fleet-pax-tag {
+    font-size: 0.72rem;
+    padding: 0.3rem 0.7rem;
+  }
+
+  .btn-fleet-book {
+    font-size: 0.88rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .airport-card {
+    padding: 1.25rem;
+  }
+
+  .airport-card-title {
+    font-size: 0.95rem;
+  }
+
+  .airport-card-desc {
+    font-size: 0.8rem;
+  }
+
+  .transfers-form-card {
+    padding: 1.5rem 1.1rem;
+    border-radius: 18px;
+  }
+
+  .transfers-form-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .transfers-form-header p {
+    font-size: 0.82rem;
+  }
+
+  .tf-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .tf-group label {
+    font-size: 0.78rem;
+  }
+
+  .tf-input {
+    font-size: 0.88rem;
+    padding: 0.7rem 0.85rem;
+  }
+
+  .btn-tf-submit {
+    font-size: 1rem;
+    padding: 0.9rem 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+
+  .transfers-fleet-section,
+  .transfers-airports-section,
+  .transfers-booking-section {
+    padding: 2.5rem 0.75rem;
+  }
+
+  .fleet-card-media {
+    height: 160px;
+  }
+
+  .fleet-card-img {
+    max-height: 120px;
+  }
+
+  .fleet-card-body {
+    padding: 1.1rem;
+  }
+
+  .fleet-card-title {
+    font-size: 1.05rem;
+  }
+
+  .transfers-form-card {
+    padding: 1.25rem 0.9rem;
+  }
+
+  .transfers-form-header h2 {
+    font-size: 1.15rem;
+  }
+
+  .tf-input {
+    font-size: 0.85rem;
+    padding: 0.65rem 0.75rem;
+  }
+}
+
+/* ============================================================
+   GeorgiaTrips — Luxury Transfers & Transport Page Styling
+   ============================================================ */
+
+.transfers-page-wrapper {
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+/* Quick Routes Bar */
+.transfers-routes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.transfers-route-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  position: relative;
+  overflow: hidden;
+}
+
+.transfers-route-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #29b2b7 0%, #1e888c 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.transfers-route-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(41, 178, 183, 0.4);
+  box-shadow: 0 12px 24px rgba(41, 178, 183, 0.12);
+}
+
+.transfers-route-card:hover::before {
+  opacity: 1;
+}
+
+.transfers-route-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.transfers-route-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(41, 178, 183, 0.12), rgba(41, 178, 183, 0.05));
+  color: #29b2b7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+
+.transfers-route-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.transfers-route-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.825rem;
+  color: #64748b;
+}
+
+.transfers-route-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.transfers-route-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.75rem;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.transfers-route-price {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #29b2b7;
+}
+
+.btn-route-book {
+  background: #f1f5f9;
+  color: #0f172a;
+  border: none;
+  border-radius: 8px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.transfers-route-card:hover .btn-route-book {
+  background: #29b2b7;
+  color: #ffffff;
+}
+
+/* Fleet Cards Grid */
+.transfers-fleet-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+  width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .transfers-fleet-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .transfers-fleet-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
+
+.transfers-fleet-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.transfers-fleet-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1);
+  border-color: rgba(41, 178, 183, 0.4);
+}
+
+.transfers-fleet-media {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  background: #0f172a;
+  overflow: hidden;
+}
+
+.transfers-fleet-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.transfers-fleet-card:hover .transfers-fleet-img {
+  transform: scale(1.06);
+}
+
+.transfers-fleet-badge {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  color: #fbbf24;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.transfers-fleet-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: space-between;
+}
+
+.transfers-fleet-name {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 0.25rem;
+}
+
+.transfers-fleet-sub {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 1.25rem;
+  display: block;
+}
+
+.transfers-fleet-specs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
+}
+
+.transfers-spec-pill {
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.btn-fleet-select {
+  width: 100%;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.25s ease;
+}
+
+.transfers-fleet-card:hover .btn-fleet-select {
+  background: linear-gradient(135deg, #29b2b7 0%, #1e888c 100%);
+  box-shadow: 0 8px 20px rgba(41, 178, 183, 0.35);
+}
+
+/* VIP Perks Section */
+.transfers-perks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.transfers-perk-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  transition: all 0.3s ease;
+}
+
+.transfers-perk-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(41, 178, 183, 0.4);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+}
+
+.transfers-perk-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(41, 178, 183, 0.15), rgba(41, 178, 183, 0.05));
+  color: #29b2b7;
+  font-size: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.transfers-perk-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.35rem;
+}
+
+.transfers-perk-desc {
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+/* High-Conversion Form Card */
+.transfers-form-wrapper {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-radius: 28px;
+  padding: 2.5rem 2rem;
+  color: #ffffff;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.transfers-form-wrapper::before {
+  content: "";
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(41, 178, 183, 0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.transfers-form-title {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.transfers-form-sub {
+  font-size: 0.95rem;
+  color: #94a3b8;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.transfers-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .transfers-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tf-field-full {
+  grid-column: 1 / -1;
+}
+
+.tf-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin-bottom: 0.45rem;
+}
+
+.tf-input-styled {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  font-size: 0.95rem;
+  color: #ffffff;
+  transition: all 0.25s ease;
+  outline: none;
+}
+
+.tf-input-styled::placeholder {
+  color: #64748b;
+}
+
+.tf-input-styled:focus {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: #29b2b7;
+  box-shadow: 0 0 0 3px rgba(41, 178, 183, 0.25);
+}
+
+.btn-tf-whatsapp {
+  width: 100%;
+  background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 14px;
+  padding: 1rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 24px rgba(37, 211, 102, 0.3);
+  margin-top: 0.5rem;
+}
+
+.btn-tf-whatsapp:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(37, 211, 102, 0.45);
+}
+
+/* ============================================================
+   HIGH-TRUST CONVERSION BADGES (Transfers Booking Form)
+   ============================================================ */
+.tf-trust-badges-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 1rem;
+}
+
+.tf-trust-badge-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(41, 178, 183, 0.2);
+  border-radius: 10px;
+  padding: 8px 10px;
+  transition: all 0.2s ease;
+}
+
+.tf-trust-badge-item:hover {
+  background: rgba(41, 178, 183, 0.1);
+  border-color: rgba(41, 178, 183, 0.4);
+  transform: translateY(-1px);
+}
+
+.tf-trust-badge-icon {
+  font-size: 1.05rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.tf-trust-badge-text {
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #e2e8f0;
+}
+
+@media (max-width: 480px) {
+  .tf-trust-badges-grid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}

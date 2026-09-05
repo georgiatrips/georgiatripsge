@@ -13,8 +13,13 @@ async function upload(file) {
   const fd = new FormData();
   fd.append("file", file);
   const response = await adminFetch("/api/upload", { method: "POST", body: fd });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || "ატვირთვა ვერ მოხერხდა");
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    data = { error: `ატვირთვა ვერ მოხერხდა (სტატუსი: ${response.status})` };
+  }
+  if (!response.ok) throw new Error(data?.error || "ატვირთვა ვერ მოხერხდა");
   return data.url;
 }
 

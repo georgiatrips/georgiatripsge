@@ -46,9 +46,16 @@ export function CouponProvider({ children }) {
     } catch (_) {}
   }, []);
 
-  // Sync user coupons from Firestore when user is logged in
+  // Sync user coupons from Firestore when user is logged in, or reset on logout
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      // User logged out: clear user-specific coupons so prices revert to original
+      setCoupons([]);
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (_) {}
+      return;
+    }
 
     let isMounted = true;
     async function fetchUserCoupons() {
@@ -77,13 +84,6 @@ export function CouponProvider({ children }) {
                     title: c.title || c.code,
                   });
                 }
-              });
-            } else if (data.discountPercent && Number(data.discountPercent) > 0) {
-              list.push({
-                code: `PROMO${data.discountPercent}`,
-                discountPercent: Number(data.discountPercent),
-                isUsed: false,
-                title: "Personal Discount",
               });
             }
           }
