@@ -286,16 +286,162 @@
   background: #0d5885;
 }
 
-/* 3. Main Grid Layout */
+/* 3. Main Grid Layout & Sticky Sidebar */
 .tdp-main-section {
   padding: 2.5rem 0 5rem;
+  background: var(--bg-main, #0f172a);
 }
 
-.tdp-grid-layout {
+.tdp-grid-layout,
+.tdp-grid-2col {
   display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: 2rem;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 2.5rem;
   align-items: start;
+}
+
+@media (max-width: 1200px) {
+  .tdp-grid-layout,
+  .tdp-grid-2col {
+    grid-template-columns: minmax(0, 1fr) 390px;
+    gap: 1.75rem;
+  }
+}
+
+@media (max-width: 991px) {
+  .tdp-grid-layout,
+  .tdp-grid-2col {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+.tdp-content-col {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sticky Right Column */
+.tdp-sidebar-col {
+  position: relative;
+  width: 100%;
+}
+
+@media (min-width: 992px) {
+  .tdp-sidebar-col {
+    position: sticky;
+    top: 86px;
+    z-index: 40;
+  }
+}
+
+.tdp-sticky-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 16px 40px -10px rgba(13, 35, 58, 0.12), 0 4px 16px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+}
+
+.tdp-sticky-card:hover {
+  box-shadow: 0 20px 48px -10px rgba(13, 35, 58, 0.18), 0 6px 20px rgba(0, 0, 0, 0.06);
+}
+
+/* Pricing Header Box */
+.tdp-price-box {
+  background: linear-gradient(135deg, #0d233a 0%, #0e4b75 50%, #178396 100%);
+  color: #ffffff;
+  padding: 1.5rem 1.6rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+.tdp-price-box::after {
+  content: "";
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(41, 178, 183, 0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.price-header-label {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 1rem;
+  letter-spacing: -0.01em;
+}
+
+.price-cards-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.price-tier-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  text-align: left;
+}
+
+.price-tier-card:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.45);
+  transform: translateY(-1px);
+}
+
+.price-tier-card.is-selected {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: #fab418;
+  box-shadow: 0 0 18px rgba(250, 180, 24, 0.35);
+}
+
+.price-tier-card.is-unavailable {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.price-tier-card .tier-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.price-tier-card .tier-info strong {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.price-tier-card .tier-info small {
+  font-size: 0.76rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.price-tier-card .tier-amount {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #fab418;
+  white-space: nowrap;
 }
 
 /* Cards Styling */
@@ -1506,13 +1652,13 @@
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: 999;
-    background: rgba(8, 27, 41, 0.95);
+    z-index: 9999;
+    background: rgba(8, 27, 41, 0.97) !important;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border-top: 1px solid rgba(41, 178, 183, 0.3);
+    border-top: 1px solid rgba(41, 178, 183, 0.4);
     padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)) 16px;
-    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.5);
     animation: tdpMobileBarSlideIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
@@ -1537,7 +1683,7 @@
 
   .mobile-floating-price-label {
     font-size: 0.72rem;
-    color: rgba(255, 255, 255, 0.65);
+    color: rgba(255, 255, 255, 0.75) !important;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.4px;
@@ -1549,15 +1695,46 @@
   .mobile-floating-price-val {
     display: flex;
     align-items: baseline;
-    gap: 4px;
+    gap: 6px;
+    flex-wrap: wrap;
   }
 
+  .mobile-floating-price-val .gt-price-box,
   .mobile-floating-price-val .tour-price-card {
-    font-size: 1.25rem !important;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .mobile-floating-price-val .gt-price-current,
+  .mobile-floating-price-val strong,
+  .mobile-floating-price-val .tour-price-card {
+    font-size: 1.35rem !important;
     font-weight: 900 !important;
     color: #fab418 !important;
+    text-shadow: 0 2px 10px rgba(250, 180, 24, 0.4) !important;
     letter-spacing: -0.3px;
     line-height: 1.1;
+  }
+
+  .mobile-floating-price-val .gt-price-old,
+  .mobile-floating-price-val del {
+    font-size: 0.8rem !important;
+    color: rgba(255, 255, 255, 0.55) !important;
+    text-decoration: line-through;
+  }
+
+  .mobile-floating-price-val .gt-price-badge {
+    background: #ef4444 !important;
+    color: #ffffff !important;
+    font-size: 0.65rem !important;
+    font-weight: 800 !important;
+    padding: 1px 5px !important;
+    border-radius: 4px !important;
   }
 
   .mobile-floating-actions {
@@ -1571,8 +1748,8 @@
     width: 44px;
     height: 44px;
     border-radius: 12px;
-    background: #25d366;
-    color: #ffffff;
+    background: #25d366 !important;
+    color: #ffffff !important;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1588,10 +1765,10 @@
   }
 
   .btn-mobile-floating-book {
-    background: linear-gradient(135deg, var(--teal, #29b2b7) 0%, #1a8b90 100%);
-    color: #081b29;
-    font-size: 0.95rem;
-    font-weight: 900;
+    background: linear-gradient(135deg, #29b2b7 0%, #1a8b90 100%) !important;
+    color: #081b29 !important;
+    font-size: 0.95rem !important;
+    font-weight: 900 !important;
     letter-spacing: 0.3px;
     padding: 11px 18px;
     border-radius: 12px;
@@ -1600,7 +1777,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    box-shadow: 0 4px 15px rgba(41, 178, 183, 0.35);
+    box-shadow: 0 4px 15px rgba(41, 178, 183, 0.45);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     white-space: nowrap;
   }
@@ -1609,6 +1786,146 @@
     transform: scale(0.96);
     box-shadow: 0 2px 8px rgba(41, 178, 183, 0.25);
   }
+}
+
+/* ============================================================
+   TDP FAQ SECTION — STUNNING CLEAN PREMIUM ACCORDION DESIGN
+   ============================================================ */
+.tdp-faq-section {
+  padding: 4.5rem 0 5.5rem;
+  background: #ffffff;
+  border-top: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.tdp-faq-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  max-width: 680px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.tdp-faq-eyebrow {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #0f766e;
+  margin-bottom: 0.6rem;
+  background: rgba(15, 118, 110, 0.08);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.tdp-faq-title {
+  font-family: var(--font-head, inherit);
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.3;
+  margin-bottom: 0.6rem;
+}
+
+.tdp-faq-desc {
+  font-size: 0.98rem;
+  color: #64748b;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.tdp-faq-gold-line {
+  width: 50px;
+  height: 3px;
+  background: linear-gradient(90deg, #29b2b7, #fab418);
+  margin: 1.2rem auto 0;
+  border-radius: 2px;
+}
+
+.tdp-faq-list {
+  max-width: 820px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.tdp-faq-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.tdp-faq-item:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 16px rgba(13, 35, 58, 0.06);
+}
+
+.tdp-faq-item.open {
+  border-color: #29b2b7;
+  box-shadow: 0 6px 20px rgba(41, 178, 183, 0.12);
+  background: #f8fafc;
+}
+
+.tdp-faq-question {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.2rem 1.4rem;
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.tdp-faq-question:hover {
+  color: #0284c7;
+}
+
+.tdp-faq-item.open .tdp-faq-question {
+  color: #0369a1;
+}
+
+.tdp-faq-chevron {
+  flex-shrink: 0;
+  color: #29b2b7;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tdp-faq-item.open .tdp-faq-chevron {
+  transform: rotate(180deg);
+  color: #0284c7;
+}
+
+.tdp-faq-answer {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tdp-faq-item.open .tdp-faq-answer {
+  grid-template-rows: 1fr;
+}
+
+.tdp-faq-answer-inner {
+  overflow: hidden;
+}
+
+.tdp-faq-answer-inner p {
+  padding: 0 1.4rem 1.3rem;
+  font-size: 0.92rem;
+  color: #475569;
+  line-height: 1.75;
+  margin: 0;
 }
 
 /* Mobile Transport Photos — Single Horizontal Line with Compact Cars */

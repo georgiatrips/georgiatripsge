@@ -135,6 +135,25 @@ export default function TourBookingSidebar({
               </button>
             )}
           </div>
+
+          {/* Payment Notice Badge inside Price Box */}
+          <div style={{ marginTop: "0.85rem" }}>
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.45rem",
+              background: "rgba(255, 255, 255, 0.12)",
+              border: "1px solid rgba(255, 255, 255, 0.22)",
+              borderRadius: "8px",
+              padding: "0.45rem 0.75rem",
+              fontSize: "0.78rem",
+              fontWeight: 600,
+              color: "#ffffff"
+            }}>
+              <span>💵</span>
+              <span>{trustLabels.payOnArrival}</span>
+            </div>
+          </div>
         </div>
 
         {/* High Conversion Booking Form */}

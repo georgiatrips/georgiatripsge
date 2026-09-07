@@ -370,13 +370,33 @@ export default function TourDetailClient({
 
   const resolvePhotoPlaceTitle = (imgUrl, idx) => {
     if (!imgUrl || !tour) return "";
-    if (Array.isArray(tour.galleryMeta) && tour.galleryMeta[idx]?.locationTitle) {
-      return asLocalizedText(tour.galleryMeta[idx].locationTitle, lang);
+    
+    // 1. From normalized galleryItems
+    if (Array.isArray(tour.galleryItems) && tour.galleryItems[idx]?.locationTitle) {
+      return tour.galleryItems[idx].locationTitle;
     }
+    
+    // 2. From raw gallery array if it contains objects
+    if (Array.isArray(rawFsDoc?.gallery) && typeof rawFsDoc.gallery[idx] === "object" && rawFsDoc.gallery[idx]?.locationTitle) {
+      return asLocalizedText(rawFsDoc.gallery[idx].locationTitle, lang);
+    }
+
+    // 3. Search matching URL in galleryItems
+    if (Array.isArray(tour.galleryItems)) {
+      const cleanTarget = extractImageUrl(imgUrl);
+      const gMatch = tour.galleryItems.find((gi) => {
+        const u = typeof gi === "string" ? gi : gi?.url;
+        return extractImageUrl(u) === cleanTarget;
+      });
+      if (gMatch?.locationTitle) return gMatch.locationTitle;
+    }
+
+    // 4. Search matching URL in itinerary stops
     const matchingStop = tour.itinerary?.find(
-      (it) => extractImageUrl(it.img) === extractImageUrl(imgUrl)
+      (it) => extractImageUrl(it?.img || it?.image) === extractImageUrl(imgUrl)
     );
     if (matchingStop) return asLocalizedText(matchingStop.title, lang);
+
     return "";
   };
 
@@ -488,7 +508,10 @@ export default function TourDetailClient({
     tr: "Rezervasyon",
     ar: "احجز الآن",
   };
-  const bookBtnText = t("toursPage.bookNow") || bookBtnTexts[lang] || "Book Now";
+  const rawBookBtn = t("toursPage.bookNow");
+  const bookBtnText = (rawBookBtn && rawBookBtn !== "toursPage.bookNow")
+    ? rawBookBtn
+    : (bookBtnTexts[lang] || "დაჯავშნა");
 
   const activePrice = tourType === "private" || (!hasGroupSupport && hasPrivateSupport)
     ? (tour?.pricePrivate || tour?.price)

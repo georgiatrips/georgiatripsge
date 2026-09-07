@@ -744,14 +744,30 @@ export function buildTourSlug(title) {
   return `${base || "tour"}-${Date.now().toString(36)}`;
 }
 
+function cleanFirestorePayload(obj) {
+  if (obj === null || obj === undefined) return null;
+  if (typeof obj !== "object") return obj;
+  if (Array.isArray(obj)) {
+    return obj.map(cleanFirestorePayload).filter((v) => v !== undefined);
+  }
+  const res = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined) {
+      res[k] = cleanFirestorePayload(v);
+    }
+  }
+  return res;
+}
+
 export async function createTour(tourData) {
+  const sanitized = cleanFirestorePayload(tourData);
   const payload = {
-    ...tourData,
+    ...sanitized,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   };
   const ref = await addDoc(collection(db, TOURS_COLLECTION), payload);
-  return { id: ref.id, ...tourData };
+  return { id: ref.id, ...sanitized };
 }
 
 export async function getFirestoreTourById(id) {
@@ -774,8 +790,9 @@ export async function listFirestoreTours() {
 
 export async function updateFirestoreTour(id, data) {
   if (!id) throw new Error("Tour ID is required for update");
+  const sanitized = cleanFirestorePayload(data);
   await updateDoc(doc(db, TOURS_COLLECTION, id), {
-    ...data,
+    ...sanitized,
     updatedAt: serverTimestamp(),
   });
 }

@@ -294,23 +294,46 @@ export default function AdminPage() {
     if (!files.length) return;
     try {
       setUploading(true);
-      const newItems = [];
-      for (const file of files) {
+      const uploadPromises = files.map(async (file) => {
         const url = await uploadToCloudinary(file);
-        newItems.push({
+        return {
           url,
-          locationTitle: "დამატებითი ფოტო",
+          locationTitle: "",
           placeId: "",
-        });
-      }
+        };
+      });
+      const newItems = await Promise.all(uploadPromises);
       setGallery((prev) => [...prev, ...newItems]);
       setMessage({ type: "success", text: `${newItems.length} ფოტო წარმატებით აიტვირთა!` });
     } catch (err) {
-      setMessage({ type: "error", text: err.message });
+      console.error(err);
+      setMessage({ type: "error", text: err.message || "ფოტოს ატვირთვა ვერ მოხერხდა" });
     } finally {
       setUploading(false);
       e.target.value = "";
     }
+  };
+
+  const updateGalleryItemTitle = (idx, newTitle) => {
+    setGallery((prev) =>
+      prev.map((item, i) => {
+        if (i !== idx) return item;
+        if (typeof item === "string") {
+          return { url: item, locationTitle: newTitle, placeId: "" };
+        }
+        return { ...item, locationTitle: newTitle };
+      })
+    );
+  };
+
+  const updateGalleryItemPlace = (idx, placeId, placeTitle) => {
+    setGallery((prev) =>
+      prev.map((item, i) => {
+        if (i !== idx) return item;
+        const url = extractImageUrl(item);
+        return { url, locationTitle: placeTitle, placeId };
+      })
+    );
   };
 
   const removeGalleryImage = (idx) => {
@@ -1483,7 +1506,7 @@ export default function AdminPage() {
                   className="admin-gallery-grid"
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))",
                     gap: "1rem",
                     marginTop: "0.5rem"
                   }}
@@ -1495,189 +1518,232 @@ export default function AdminPage() {
                     })
                     .map((item, idx) => {
                       const url = (typeof item === "string" ? item : item?.url) || "/hero.png";
-                      const locTitle = typeof item === "string" ? "" : item?.locationTitle;
+                      const locTitle = typeof item === "string" ? "" : (item?.locationTitle || "");
                       const isCover = idx === 0;
 
                       return (
                         <div
                           key={`${url}-${idx}`}
-                          className="admin-gallery-item"
+                          className="admin-gallery-card"
                           style={{
-                            position: "relative",
-                            aspectRatio: "1",
+                            background: "rgba(13, 35, 58, 0.75)",
+                            border: isCover ? "2px solid #fab418" : "1px solid rgba(255, 255, 255, 0.15)",
                             borderRadius: "12px",
-                            overflow: "hidden",
-                            border: isCover ? "2.5px solid #fab418" : "1px solid rgba(255, 255, 255, 0.15)",
-                            boxShadow: isCover ? "0 0 16px rgba(250, 180, 24, 0.45)" : "none",
-                            background: "rgba(13, 35, 58, 0.5)",
+                            padding: "0.6rem",
+                            boxShadow: isCover ? "0 0 16px rgba(250, 180, 24, 0.35)" : "0 4px 12px rgba(0,0,0,0.2)",
                             display: "flex",
-                            flexDirection: "column"
+                            flexDirection: "column",
+                            gap: "0.5rem",
                           }}
                         >
-                          <Image src={url} alt="" fill sizes="180px" style={{ objectFit: "cover" }} />
-                        
-                        {/* Top Location Badge */}
-                        <div
-                          style={{
-                            position: "absolute",
-                            top: "6px",
-                            left: "6px",
-                            right: "32px",
-                            zIndex: 2,
-                            pointerEvents: "none"
-                          }}
-                        >
-                          <span
-                            title={locTitle || "ტურის ფოტო"}
+                          {/* Photo Container */}
+                          <div
                             style={{
-                              display: "inline-block",
-                              maxWidth: "100%",
-                              whiteSpace: "nowrap",
-                              textOverflow: "ellipsis",
+                              position: "relative",
+                              width: "100%",
+                              aspectRatio: "16/10",
+                              borderRadius: "8px",
                               overflow: "hidden",
-                              background: locTitle && locTitle !== "დამატებითი ფოტო"
-                                ? "rgba(41, 178, 183, 0.9)"
-                                : "rgba(0, 0, 0, 0.65)",
-                              color: "#ffffff",
-                              fontSize: "0.7rem",
-                              fontWeight: 700,
-                              padding: "2px 6px",
-                              borderRadius: "4px",
-                              backdropFilter: "blur(4px)"
+                              background: "#0a192f",
                             }}
                           >
-                            {locTitle ? (locTitle === "დამატებითი ფოტო" ? "✨ დამატებითი" : `📍 ${locTitle}`) : "✨ ტურის ფოტო"}
-                          </span>
-                        </div>
+                            <Image src={url} alt="" fill sizes="240px" style={{ objectFit: "cover" }} />
+                            
+                            {/* Cover Badge */}
+                            {isCover && (
+                              <div
+                                style={{
+                                  position: "absolute",
+                                  top: "6px",
+                                  left: "6px",
+                                  zIndex: 2,
+                                  background: "linear-gradient(135deg, #fab418 0%, #f59e0b 100%)",
+                                  color: "#0d233a",
+                                  fontSize: "0.72rem",
+                                  fontWeight: 800,
+                                  padding: "3px 7px",
+                                  borderRadius: "4px",
+                                  boxShadow: "0 2px 6px rgba(0,0,0,0.3)"
+                                }}
+                              >
+                                ⭐ მთავარი ფოტო
+                              </div>
+                            )}
 
-                        {/* Remove button */}
-                        <button
-                          type="button"
-                          className="admin-gallery-remove"
-                          onClick={() => removeGalleryImage(idx)}
-                          aria-label="წაშლა"
-                          style={{
-                            position: "absolute",
-                            top: "5px",
-                            right: "5px",
-                            width: "24px",
-                            height: "24px",
-                            borderRadius: "50%",
-                            background: "rgba(220, 38, 38, 0.9)",
-                            color: "#ffffff",
-                            border: "none",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: "14px",
-                            fontWeight: "bold",
-                            zIndex: 3
-                          }}
-                        >
-                          ×
-                        </button>
-
-                        {/* Bottom Actions Bar (Cover & Reorder) */}
-                        <div
-                          style={{
-                            position: "absolute",
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            padding: "6px 8px",
-                            background: "linear-gradient(to top, rgba(13,35,58,0.95), rgba(13,35,58,0.4))",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            gap: "4px",
-                            zIndex: 2
-                          }}
-                        >
-                          {isCover ? (
-                            <span
-                              style={{
-                                fontSize: "0.72rem",
-                                fontWeight: 800,
-                                color: "#fab418",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: "3px"
-                              }}
-                            >
-                              ⭐ მთავარი
-                            </span>
-                          ) : (
+                            {/* Remove button */}
                             <button
                               type="button"
-                              onClick={() => setCoverImage(idx)}
+                              className="admin-gallery-remove"
+                              onClick={() => removeGalleryImage(idx)}
+                              aria-label="წაშლა"
                               style={{
-                                background: "rgba(250, 180, 24, 0.2)",
-                                border: "1px solid rgba(250, 180, 24, 0.6)",
-                                color: "#fab418",
-                                fontSize: "0.68rem",
-                                fontWeight: 700,
-                                padding: "2px 6px",
-                                borderRadius: "4px",
-                                cursor: "pointer"
+                                position: "absolute",
+                                top: "6px",
+                                right: "6px",
+                                width: "26px",
+                                height: "26px",
+                                borderRadius: "50%",
+                                background: "rgba(220, 38, 38, 0.9)",
+                                color: "#ffffff",
+                                border: "none",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyItems: "center",
+                                justifyContent: "center",
+                                fontSize: "14px",
+                                fontWeight: "bold",
+                                zIndex: 3,
+                                boxShadow: "0 2px 6px rgba(0,0,0,0.4)"
                               }}
-                              title="დააყენეთ მთავარ ფოტოდ (გამოჩნდება ბარათებზე და მთავარ გვერდზე)"
                             >
-                              ⭐ მთავარად
+                              ✕
                             </button>
-                          )}
+                          </div>
 
-                          {/* Reorder arrows */}
-                          <div style={{ display: "flex", gap: "3px" }}>
-                            {idx > 0 && (
-                              <button
-                                type="button"
-                                onClick={() => moveGalleryImage(idx, -1)}
-                                title="გადატანა მარცხნივ"
-                                style={{
-                                  background: "rgba(255,255,255,0.15)",
-                                  border: "none",
-                                  color: "#fff",
-                                  width: "20px",
-                                  height: "20px",
-                                  borderRadius: "4px",
-                                  fontSize: "11px",
-                                  cursor: "pointer",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center"
-                                }}
-                              >
-                                ◀
-                              </button>
-                            )}
-                            {idx < gallery.length - 1 && (
-                              <button
-                                type="button"
-                                onClick={() => moveGalleryImage(idx, 1)}
-                                title="გადატანა მარჯვნივ"
-                                style={{
-                                  background: "rgba(255,255,255,0.15)",
-                                  border: "none",
-                                  color: "#fff",
-                                  width: "20px",
-                                  height: "20px",
-                                  borderRadius: "4px",
-                                  fontSize: "11px",
-                                  cursor: "pointer",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center"
-                                }}
-                              >
-                                ▶
-                              </button>
+                          {/* Place Name Edit Input */}
+                          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                            <label style={{ fontSize: "0.74rem", color: "#94a3b8", fontWeight: 600, display: "flex", alignItems: "center", gap: "4px" }}>
+                              📍 ადგილის სახელი:
+                            </label>
+                            <input
+                              type="text"
+                              value={locTitle}
+                              onChange={(e) => updateGalleryItemTitle(idx, e.target.value)}
+                              placeholder="მაგ: გერგეტის სამება, ყაზბეგი..."
+                              style={{
+                                width: "100%",
+                                padding: "0.35rem 0.5rem",
+                                fontSize: "0.8rem",
+                                borderRadius: "6px",
+                                background: "rgba(255, 255, 255, 0.08)",
+                                border: "1px solid rgba(255, 255, 255, 0.18)",
+                                color: "#ffffff",
+                              }}
+                            />
+                            
+                            {/* Quick Place Pick from Itinerary */}
+                            {locations.filter((l) => asLocalizedText(l.title, "ka")).length > 0 && (
+                              <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginTop: "2px" }}>
+                                {locations
+                                  .map((l) => ({
+                                    id: l.placeId || "",
+                                    name: asLocalizedText(l.title, "ka"),
+                                  }))
+                                  .filter((l) => l.name)
+                                  .slice(0, 4)
+                                  .map((loc, lIdx) => (
+                                    <button
+                                      type="button"
+                                      key={lIdx}
+                                      onClick={() => updateGalleryItemPlace(idx, loc.id, loc.name)}
+                                      style={{
+                                        fontSize: "0.68rem",
+                                        padding: "2px 6px",
+                                        borderRadius: "4px",
+                                        background: locTitle === loc.name ? "rgba(41, 178, 183, 0.4)" : "rgba(255, 255, 255, 0.06)",
+                                        border: locTitle === loc.name ? "1px solid #29b2b7" : "1px solid rgba(255, 255, 255, 0.1)",
+                                        color: locTitle === loc.name ? "#38bdf8" : "#94a3b8",
+                                        cursor: "pointer",
+                                        whiteSpace: "nowrap",
+                                        maxWidth: "100%",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                      }}
+                                      title={`დააყენეთ: ${loc.name}`}
+                                    >
+                                      + {loc.name}
+                                    </button>
+                                  ))}
+                              </div>
                             )}
                           </div>
+
+                          {/* Actions Row */}
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              marginTop: "auto",
+                              paddingTop: "4px",
+                              borderTop: "1px solid rgba(255,255,255,0.08)",
+                            }}
+                          >
+                            {!isCover ? (
+                              <button
+                                type="button"
+                                onClick={() => setCoverImage(idx)}
+                                style={{
+                                  background: "rgba(250, 180, 24, 0.15)",
+                                  border: "1px solid rgba(250, 180, 24, 0.4)",
+                                  color: "#fab418",
+                                  fontSize: "0.72rem",
+                                  fontWeight: 700,
+                                  padding: "3px 8px",
+                                  borderRadius: "4px",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                ⭐ მთავარად
+                              </button>
+                            ) : (
+                              <span style={{ fontSize: "0.72rem", color: "#fab418", fontWeight: 700 }}>
+                                ✓ მთავარი
+                              </span>
+                            )}
+
+                            {/* Reorder Buttons */}
+                            <div style={{ display: "flex", gap: "4px" }}>
+                              {idx > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => moveGalleryImage(idx, -1)}
+                                  title="მარცხნივ"
+                                  style={{
+                                    background: "rgba(255,255,255,0.12)",
+                                    border: "1px solid rgba(255,255,255,0.15)",
+                                    color: "#fff",
+                                    width: "24px",
+                                    height: "24px",
+                                    borderRadius: "4px",
+                                    fontSize: "12px",
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  ◀
+                                </button>
+                              )}
+                              {idx < gallery.length - 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => moveGalleryImage(idx, 1)}
+                                  title="მარჯვნივ"
+                                  style={{
+                                    background: "rgba(255,255,255,0.12)",
+                                    border: "1px solid rgba(255,255,255,0.15)",
+                                    color: "#fff",
+                                    width: "24px",
+                                    height: "24px",
+                                    borderRadius: "4px",
+                                    fontSize: "12px",
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  ▶
+                                </button>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                 </div>
               ) : (
                 <p className="admin-hint" style={{ textAlign: "center", padding: "1.5rem", border: "1px dashed rgba(255,255,255,0.15)", borderRadius: "10px" }}>

@@ -52,7 +52,7 @@ export default function Navbar({ active = "home" }) {
   const [hasHero, setHasHero] = useState(false);
 
   useEffect(() => {
-    setHasHero(!!document.querySelector(".hero, .tours-page-hero, .transfers-hero, .posts-hero, .page-header, .page-hero, .tdp-hero2, .hotels-hero, .admin-hero"));
+    setHasHero(!!document.querySelector(".hero, .tours-page-hero, .transfers-hero, .posts-hero, .page-header, .page-hero, .tdp-hero, .tdp-hero2, .hotels-hero, .admin-hero"));
 
     // Throttle scroll handler with rAF to avoid excessive re-renders
     let raf = 0;
@@ -60,7 +60,7 @@ export default function Navbar({ active = "home" }) {
       if (raf) return;
       raf = requestAnimationFrame(() => {
         raf = 0;
-        setNavScrolled(window.scrollY > 50);
+        setNavScrolled(window.scrollY > 20);
       });
     };
 
