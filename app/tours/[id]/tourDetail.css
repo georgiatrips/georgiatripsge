@@ -1724,8 +1724,9 @@
   .mobile-floating-price-val .gt-price-old,
   .mobile-floating-price-val del {
     font-size: 0.8rem !important;
-    color: rgba(255, 255, 255, 0.55) !important;
+    color: #94a3b8 !important;
     text-decoration: line-through;
+    text-decoration-color: #f59e0b;
   }
 
   .mobile-floating-price-val .gt-price-badge {

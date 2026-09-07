@@ -140,8 +140,8 @@ export default function Home() {
         title: tour.title,
         desc: tour.desc,
         locationShort: tour.destinationLabel || tour.destination || tour.location || "",
-        priceGroup: tour.priceGroup ? `₾${tour.priceGroup}` : "₾0",
-        priceNote: tour.priceNote || t("popular.perPerson"),
+        priceGroup: tour.priceGroup || tour.price || 0,
+        priceNote: tour.priceNote || t("popular.perPerson") || "1 ადამიანზე",
         months,
       };
     }).filter((t) => t.months.length > 0);

@@ -71,6 +71,7 @@ export const ru = {
     "popularToursSubtitle": "Самые востребованные экскурсии по всей Грузии",
     "groupPrice": "В группе",
     "privatePrice": "Индив.",
+    "perPerson": "за человека",
     "book": "Забронировать",
     "georgia": "Грузия",
     "topPopularBadge": "TOP {index} Популярные",
@@ -338,7 +339,9 @@ export const ru = {
     "georgia": "Грузия",
     "duration": "⏱ {duration}",
     "location": "📍 {location}",
-    "readMore": "Читать далее"
+    "readMore": "Читать далее",
+    "search": "Поиск",
+    "close": "Закрыть"
   },
   "datePicker": {
     "placeholder": "Дата",
@@ -437,7 +440,8 @@ export const ru = {
     "toursFound": "Найдено туров: {count}",
     "noToursFoundTitle": "Туры не найдены",
     "noToursFoundDesc": "К сожалению, с указанными фильтрами туры не найдены. Попробуйте изменить или очистить фильтры.",
-    "clearFilters": "Очистить все фильтры"
+    "clearFilters": "Очистить все фильтры",
+    "bookNow": "Забронировать"
   },
   "transfersPage": {
     "kicker": "Комфортные поездки 24/7",
@@ -603,7 +607,10 @@ export const ru = {
     "promoSubtitle": "Пишите нам в любое время",
     "pricePerPerson": "Цена / 1 чел.",
     "tourNotFound": "Тур не найден",
-    "backToTours": "← Список туров"
+    "backToTours": "← К списку туров",
+    "phoneError": "Пожалуйста, введите корректный номер телефона",
+    "invalidPhoneError": "Пожалуйста, введите корректный номер телефона",
+    "loadingTour": "Загрузка данных тура..."
   },
   "postsPage": {
     "heroKicker": "Следите за нашим путешествием",
@@ -748,8 +755,10 @@ export const ru = {
       "remove": "Удалить",
       "enterCode": "Введите промокод",
       "invalidCode": "Неверный промокод",
-      "appliedSuccess": "Скидка 10% успешно применена!",
-      "discountApplied": "Скидка 10% применена"
+      "appliedSuccess": "Скидка 10% успешно активирована!",
+      "discountApplied": "Скидка 10% применена",
+      "success": "Скидка 10% успешно активирована!",
+      "invalid": "Неверный промокод"
   },
   "bookingSuccess": {
     "loading": "Загрузка данных бронирования...",

@@ -71,6 +71,7 @@ export const ar = {
     "popularToursSubtitle": "الرحلات الأكثر طلباً في جميع أنحاء جورجيا",
     "groupPrice": "جماعي",
     "privatePrice": "خاص",
+    "perPerson": "للشخص",
     "book": "حجز",
     "georgia": "جورجيا",
     "topPopularBadge": "الأكثر شعبية {index}",
@@ -338,7 +339,9 @@ export const ar = {
     "georgia": "جورجيا",
     "duration": "⏱ {duration}",
     "location": "📍 {location}",
-    "readMore": "متابعة القراءة"
+    "readMore": "متابعة القراءة",
+    "search": "بحث",
+    "close": "إغلاق"
   },
   "datePicker": {
     "placeholder": "التاريخ",
@@ -437,7 +440,8 @@ export const ar = {
     "toursFound": "تم العثور على {count} جولة",
     "noToursFoundTitle": "لم يتم العثور على جولات",
     "noToursFoundDesc": "عذراً، لم نجد جولات تطابق الفلاتر المحددة. جرب تغيير الفلاتر أو إعادة ضبطها.",
-    "clearFilters": "مسح جميع الفلاتر"
+    "clearFilters": "مسح جميع الفلاتر",
+    "bookNow": "حجز الآن"
   },
   "transfersPage": {
     "kicker": "مواصلات مريحة 24/7",
@@ -603,7 +607,10 @@ export const ar = {
     "promoSubtitle": "اكتب لنا في أي وقت",
     "pricePerPerson": "السعر / شخص واحد",
     "tourNotFound": "لم يتم العثور على الجولة",
-    "backToTours": "← قائمة الجولات"
+    "backToTours": "← قائمة الجولات",
+    "phoneError": "يرجى إدخال رقم هاتف صحيح",
+    "invalidPhoneError": "يرجى إدخال رقم هاتف صحيح",
+    "loadingTour": "جاري تحميل تفاصيل الجولة..."
   },
   "postsPage": {
     "heroKicker": "تابع رحلتنا",
@@ -749,7 +756,9 @@ export const ar = {
       "enterCode": "الرجاء إدخال رمز القسيمة",
       "invalidCode": "رمز القسيمة غير صالح",
       "appliedSuccess": "تم تطبيق خصم 10% بنجاح!",
-      "discountApplied": "تم تطبيق خصم 10%"
+      "discountApplied": "تم تطبيق خصم 10%",
+      "success": "تم تطبيق خصم 10% بنجاح!",
+      "invalid": "رمز القسيمة غير صالح"
   },
   "bookingSuccess": {
     "loading": "جاري تحميل تفاصيل الحجز...",

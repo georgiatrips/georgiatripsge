@@ -71,6 +71,7 @@ export const ka = {
     "popularToursSubtitle": "ყველაზე მოთხოვნადი ექსკურსიები საქართველოს მასშტაბით",
     "groupPrice": "ჯგუფში",
     "privatePrice": "ინდივ.",
+    "perPerson": "1 ადამიანზე",
     "book": "დაჯავშნა",
     "georgia": "საქართველო",
     "topPopularBadge": "TOP {index} პოპულარული",
@@ -338,7 +339,8 @@ export const ka = {
     "georgia": "საქართველო",
     "duration": "⏱ {duration}",
     "location": "📍 {location}",
-    "readMore": "კითხვის გაგრძელება"
+    "readMore": "კითხვის გაგრძელება",
+    "close": "დახურვა"
   },
   "datePicker": {
     "placeholder": "თარიღი",
@@ -437,7 +439,8 @@ export const ka = {
     "toursFound": "მოიძებნა {count} ტური",
     "noToursFoundTitle": "ტური ვერ მოიძებნა",
     "noToursFoundDesc": "სამწუხაროდ მითითებული ფილტრებით ტური ვერ მოიძებნა. სცადეთ ფილტრების შეცვლა ან გასუფთავება.",
-    "clearFilters": "ყველა ფილტრის გასუფთავება"
+    "clearFilters": "ფილტრების გასუფთავება",
+    "bookNow": "დაჯავშნა"
   },
   "tourDetail": {
     "crumbsHome": "მთავარი",
@@ -520,7 +523,10 @@ export const ka = {
     "promoSubtitle": "მოგვწერეთ ნებისმიერ დროს",
     "pricePerPerson": "ფასი / 1 პირი",
     "tourNotFound": "ტური ვერ მოიძებნა",
-    "backToTours": "← ტურების სია"
+    "backToTours": "← ტურების სია",
+    "phoneError": "გთხოვთ შეიყვანოთ სწორი მობილურის ნომერი",
+    "invalidPhoneError": "გთხოვთ შეიყვანოთ სწორი მობილურის ნომერი",
+    "loadingTour": "ტურის მონაცემები იტვირთება..."
   },
   "postsPage": {
     "heroKicker": "თვალი ადევნეთ ჩვენს მოგზაურობას",
@@ -749,7 +755,9 @@ export const ka = {
       "enterCode": "შეიყვანეთ კუპონის კოდი",
       "invalidCode": "არასწორი კუპონის კოდი",
       "appliedSuccess": "10%-იანი ფასდაკლება გააქტიურებულია!",
-      "discountApplied": "10%-იანი ფასდაკლება გააქტიურებულია"
+      "discountApplied": "10%-იანი ფასდაკლება გააქტიურებულია",
+      "success": "10%-იანი ფასდაკლება გააქტიურებულია!",
+      "invalid": "არასწორი კუპონის კოდი"
   },
   "bookingSuccess": {
     "loading": "ჯავშნის მონაცემები იტვირთება...",

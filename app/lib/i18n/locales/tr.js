@@ -71,6 +71,7 @@ export const tr = {
     "popularToursSubtitle": "Gürcistan genelinde en çok talep gören turlar",
     "groupPrice": "Grupta",
     "privatePrice": "Bireysel",
+    "perPerson": "kişi başı",
     "book": "Rezervasyon",
     "georgia": "Gürcistan",
     "topPopularBadge": "EN POPÜLER {index}",
@@ -338,7 +339,9 @@ export const tr = {
     "georgia": "Gürcistan",
     "duration": "⏱ {duration}",
     "location": "📍 {location}",
-    "readMore": "Okumaya Devam Et"
+    "readMore": "Okumaya Devam Et",
+    "search": "Ara",
+    "close": "Kapat"
   },
   "datePicker": {
     "placeholder": "Tarih",
@@ -437,7 +440,8 @@ export const tr = {
     "toursFound": "En uygun {count} tur bulundu",
     "noToursFoundTitle": "Tur Bulunamadı",
     "noToursFoundDesc": "Maalesef belirtilen filtrelerle eşleşen tur bulunamadı. Filtreleri değiştirmeyi veya temizlemeyi deneyin.",
-    "clearFilters": "Tüm Filtreleri Temizle"
+    "clearFilters": "Tüm Filtreleri Temizle",
+    "bookNow": "Rezervasyon Yap"
   },
   "transfersPage": {
     "kicker": "7/24 Konforlu Ulaşım",
@@ -603,7 +607,10 @@ export const tr = {
     "promoSubtitle": "Bize istediğiniz zaman yazın",
     "pricePerPerson": "Fiyat / 1 kişi",
     "tourNotFound": "Tur Bulunamadı",
-    "backToTours": "← Tur Listesi"
+    "backToTours": "← Tur Listesi",
+    "phoneError": "Lütfen geçerli bir telefon numarası girin",
+    "invalidPhoneError": "Lütfen geçerli bir telefon numarası girin",
+    "loadingTour": "Tur detayları yükleniyor..."
   },
   "postsPage": {
     "heroKicker": "Yolculuğumuzu Takip Edin",
@@ -749,7 +756,9 @@ export const tr = {
       "enterCode": "Lütfen bir kupon kodu girin",
       "invalidCode": "Geçersiz kupon kodu",
       "appliedSuccess": "%10 indirim başarıyla uygulandı!",
-      "discountApplied": "%10 indirim uygulandı"
+      "discountApplied": "%10 indirim uygulandı",
+      "success": "%10 indirim başarıyla uygulandı!",
+      "invalid": "Geçersiz kupon kodu"
   },
   "bookingSuccess": {
     "loading": "Rezervasyon detayları yükleniyor...",

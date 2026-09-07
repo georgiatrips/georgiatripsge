@@ -3,6 +3,7 @@
 import React from "react";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { asLocalizedText, translateMonthName } from "../../lib/toursFirestore";
+import TourPrice from "../TourPrice";
 
 const truncateText = (value, maxLength = 100) => {
   const text = String(value || "").trim();
@@ -34,7 +35,10 @@ export default function HomeScheduleSection({
                 {asLocalizedText(item.title, lang)}
               </h3>
               <div className="schedule-tour-price">
-                <strong>{item.priceGroup}</strong>, <span>{item.priceNote}</span>
+                <TourPrice price={item.priceGroup} lang={lang} variant="card" />
+                {item.priceNote && (
+                  <span className="schedule-price-note">, {item.priceNote}</span>
+                )}
               </div>
               <p className="schedule-tour-desc">{truncateText([item.locationShort, item.desc].filter(Boolean).join(". "))}</p>
 
@@ -48,7 +52,7 @@ export default function HomeScheduleSection({
                           key={dIdx}
                           className="schedule-day-chip"
                           onClick={() => handleBookNow(`${asLocalizedText(item.title, lang)} (${d})`, item.priceGroup)}
-                          title={t("popular.scheduleBookTooltip").replace("{title}", asLocalizedText(item.title, lang)).replace("{date}", d)}
+                          title={(t("popular.scheduleBookTooltip") || "დაჯავშნეთ {title} — {date}").replace("{title}", asLocalizedText(item.title, lang)).replace("{date}", d)}
                         >
                           {d}
                         </button>

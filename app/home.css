@@ -3823,12 +3823,21 @@
 .schedule-tour-price {
   font-size: 0.9rem;
   color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .schedule-tour-price strong {
   color: #0d233a;
   font-weight: 800;
   font-size: 0.95rem;
+}
+
+.schedule-price-note {
+  color: #64748b;
+  font-size: 0.88rem;
+  font-weight: 500;
 }
 
 .schedule-tour-desc {

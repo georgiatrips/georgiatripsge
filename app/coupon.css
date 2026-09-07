@@ -392,30 +392,27 @@
 }
 
 .gt-price-old {
-  color: rgba(255, 255, 255, 0.72);
+  color: #94a3b8 !important;
   font-size: 0.84em;
   font-weight: 600;
   text-decoration: line-through;
-  text-decoration-color: #fab418;
-  text-decoration-thickness: 2.2px;
+  text-decoration-color: #f59e0b;
+  text-decoration-thickness: 2px;
   opacity: 0.9;
   white-space: nowrap;
 }
 
-/* Light cards & sidebars */
+/* Light cards, sidebars & dark tags */
 .tb-price-tag .gt-price-old,
 .tb-card .gt-price-old,
 .tdp-sidebar-box .gt-price-old,
 .tour-card .gt-price-old,
 .tier-card .gt-price-old,
-.pop-fc-price-item .gt-price-old {
-  color: #94a3b8;
-  text-decoration-color: #fab418;
-  text-decoration-thickness: 2.2px;
-}
-
-.pop-fc-price-item .gt-price-old {
-  color: rgba(255, 255, 255, 0.65);
+.pop-fc-price-item .gt-price-old,
+.gt-price-box.variant-hero .gt-price-old {
+  color: #94a3b8 !important;
+  text-decoration-color: #f59e0b;
+  text-decoration-thickness: 2px;
 }
 
 .gt-price-badge {

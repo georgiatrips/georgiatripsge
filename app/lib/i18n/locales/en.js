@@ -13,7 +13,7 @@ export const en = {
     "logout": "Logout",
     "language": "Language",
     "currency": "Currency",
-    "loginRegister": "Login / Register",
+    "loginRegister": "Sign In / Register",
     "coupons": "My Coupons"
   },
   "hero": {
@@ -71,6 +71,7 @@ export const en = {
     "popularToursSubtitle": "Most requested excursions across Georgia",
     "groupPrice": "Group",
     "privatePrice": "Private",
+    "perPerson": "per person",
     "book": "Book Now",
     "georgia": "Georgia",
     "topPopularBadge": "TOP {index} Popular",
@@ -338,7 +339,8 @@ export const en = {
     "georgia": "Georgia",
     "duration": "⏱ {duration}",
     "location": "📍 {location}",
-    "readMore": "Read more"
+    "readMore": "Read More",
+    "close": "Close"
   },
   "datePicker": {
     "placeholder": "Date",
@@ -437,7 +439,8 @@ export const en = {
     "toursFound": "Found {count} tours",
     "noToursFoundTitle": "No Tours Found",
     "noToursFoundDesc": "Unfortunately, no tours match your filters. Try changing or clearing filters.",
-    "clearFilters": "Clear All Filters"
+    "clearFilters": "Clear All Filters",
+    "bookNow": "Book Now"
   },
   "tourDetail": {
     "crumbsHome": "Home",
@@ -520,7 +523,10 @@ export const en = {
     "promoSubtitle": "Message us anytime",
     "pricePerPerson": "Price / 1 person",
     "tourNotFound": "Tour Not Found",
-    "backToTours": "← Back to Tours"
+    "backToTours": "← Back to Tours",
+    "phoneError": "Please enter a valid phone number",
+    "invalidPhoneError": "Please enter a valid phone number",
+    "loadingTour": "Loading tour details..."
   },
   "postsPage": {
     "heroKicker": "Follow Our Journey",
@@ -749,7 +755,9 @@ export const en = {
       "enterCode": "Please enter a coupon code",
       "invalidCode": "Invalid coupon code",
       "appliedSuccess": "10% discount applied successfully!",
-      "discountApplied": "10% discount applied"
+      "discountApplied": "10% discount applied",
+      "success": "10% discount applied successfully!",
+      "invalid": "Invalid coupon code"
   },
   "bookingSuccess": {
     "loading": "Loading booking details...",
