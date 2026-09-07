@@ -39,13 +39,13 @@ export const en = {
     "eyebrow": "Meet GeorgiaTrips",
     "heading1": "Georgia Tours —",
     "heading2": "Your Enjoyment, Our Responsibility",
-    "desc1": "GeorgiaTrips is a professional travel company offering individual and group tours to the most beautiful corners of Georgia: Kazbegi, Svaneti, Batumi, Kakheti, Tbilisi and beyond. Our mission is to create an unforgettable experience for every traveler.",
-    "desc2": "Our experienced guides, comfortable transport and every service are carefully selected so that every detail of your travel plan is flexible, safe and enjoyable — from transfers to exclusive VIP packages.",
+    "desc1": "GeorgiaTrips is a travel company that offers individual and group tours to the most beautiful corners of Georgia: Kazbegi, Svaneti, Batumi, Kakheti, and Tbilisi. Our goal is to create an unforgettable experience for every traveler.",
+    "desc2": "Our experienced guides, comfortable transportation, and quality service are selected so that every detail of the travel plan — from transfers to exclusive VIP packages — is flexible, safe, and enjoyable.",
     "check1": "Years of experience in organizing tourist routes",
     "check2": "Licensed guides and professional drivers",
     "check3": "Flexible schedule — private and group tours",
     "check4": "24/7 support throughout your journey",
-    "altText": "GeorgiaTrips — Professional travel company in Georgia"
+    "altText": "GeorgiaTrips — Travel company in Georgia"
   },
   "categories": {
     "eyebrow": "Our Services",

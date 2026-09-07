@@ -6,6 +6,42 @@ import { listPostSummaries } from "../postsFirestore";
 import { listHotels } from "../hotelsFirestore";
 
 /**
+ * Recursively converts Firestore Timestamp instances, Dates, and non-plain objects
+ * into plain JSON serializable primitives so they safely cross the Server -> Client Component boundary.
+ */
+export function serializeForClient(data) {
+  if (data === null || data === undefined) return data;
+  if (typeof data !== "object") return data;
+
+  // Handle Firestore Timestamp
+  if (typeof data.toMillis === "function") {
+    return data.toMillis();
+  }
+  // Handle Date
+  if (data instanceof Date) {
+    return data.toISOString();
+  }
+  // Handle Array
+  if (Array.isArray(data)) {
+    return data.map(serializeForClient);
+  }
+
+  // Handle Object
+  const plain = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value === undefined) continue;
+    if (value && typeof value === "object" && typeof value.toMillis === "function") {
+      plain[key] = value.toMillis();
+    } else if (value instanceof Date) {
+      plain[key] = value.toISOString();
+    } else {
+      plain[key] = serializeForClient(value);
+    }
+  }
+  return plain;
+}
+
+/**
  * Cached getter for all Tours across the site.
  * Cached for 1 hour, tagged with 'tours'.
  */
@@ -14,17 +50,12 @@ export const getCachedTours = unstable_cache(
     try {
       const fsTours = await listFirestoreTours();
       if (Array.isArray(fsTours) && fsTours.length > 0) {
-        const fsMap = new Map(fsTours.map((t) => [t.id, t]));
-        const merged = [...fsTours];
-        staticTours.forEach((st) => {
-          if (!fsMap.has(st.id)) merged.push(st);
-        });
-        return merged;
+        return serializeForClient(fsTours);
       }
-      return staticTours;
+      return serializeForClient(staticTours);
     } catch (err) {
       console.error("[getCachedTours] Error:", err);
-      return staticTours;
+      return serializeForClient(staticTours);
     }
   },
   ["all-tours-cache"],
@@ -50,10 +81,10 @@ export const getCachedTourById = (tourId) =>
         if (!tour) {
           tour = staticTours.find((t) => t.id === tourId) || null;
         }
-        return tour;
+        return serializeForClient(tour);
       } catch (err) {
         console.error(`[getCachedTourById] Error for ${tourId}:`, err);
-        return staticTours.find((t) => t.id === tourId) || null;
+        return serializeForClient(staticTours.find((t) => t.id === tourId) || null);
       }
     },
     [`tour-detail-${tourId}`],
@@ -71,7 +102,7 @@ export const getCachedPlaces = unstable_cache(
   async () => {
     try {
       const places = await listPlaces();
-      return Array.isArray(places) ? places : [];
+      return serializeForClient(Array.isArray(places) ? places : []);
     } catch (err) {
       console.error("[getCachedPlaces] Error:", err);
       return [];
@@ -93,7 +124,7 @@ export const getCachedPosts = (limitCount = 6) =>
     async () => {
       try {
         const posts = await listPostSummaries(limitCount);
-        return Array.isArray(posts) ? posts : [];
+        return serializeForClient(Array.isArray(posts) ? posts : []);
       } catch (err) {
         console.error("[getCachedPosts] Error:", err);
         return [];
@@ -114,7 +145,7 @@ export const getCachedHotels = unstable_cache(
   async () => {
     try {
       const hotels = await listHotels();
-      return Array.isArray(hotels) ? hotels : [];
+      return serializeForClient(Array.isArray(hotels) ? hotels : []);
     } catch (err) {
       console.error("[getCachedHotels] Error:", err);
       return [];

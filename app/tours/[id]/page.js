@@ -1,6 +1,6 @@
 import React, { Suspense } from "react";
 import { asLocalizedText } from "../../lib/toursFirestore";
-import { getCachedTourById, getCachedTours, getCachedPlaces } from "../../lib/server/cachedData";
+import { getCachedTourById, getCachedTours, getCachedPlaces, serializeForClient } from "../../lib/server/cachedData";
 import TourDetailClient from "../../components/tours/TourDetailClient";
 import "./tourDetail.css";
 
@@ -63,6 +63,10 @@ export default async function TourDetailPage({ params }) {
     getCachedPlaces(),
   ]);
 
+  const cleanTour = serializeForClient(rawTour);
+  const cleanAllTours = serializeForClient(allTours);
+  const cleanPlaces = serializeForClient(places);
+
   // Generate JSON-LD TouristTrip Schema for Google Search Snippets
   const titleKa = rawTour ? asLocalizedText(rawTour.title, "ka") || "ტური საქართველოში" : "ტური";
   const descKa = rawTour ? asLocalizedText(rawTour.desc, "ka") || "" : "";
@@ -100,9 +104,9 @@ export default async function TourDetailPage({ params }) {
       )}
       <Suspense fallback={<div style={{ padding: "4rem", textAlign: "center", color: "#0d233a" }}>...</div>}>
         <TourDetailClient
-          initialTour={rawTour}
-          initialAllTours={allTours}
-          initialPlaces={places}
+          initialTour={cleanTour}
+          initialAllTours={cleanAllTours}
+          initialPlaces={cleanPlaces}
         />
       </Suspense>
     </>

@@ -34,12 +34,12 @@ export default async function sitemap() {
   // 2. Dynamic Tours (Firestore + Static Fallback)
   try {
     const tourIds = new Set();
-    ALL_TOURS.forEach((t) => t.id && tourIds.add(t.id));
-
-    try {
-      const fsTours = await listFirestoreTours();
-      fsTours?.forEach((t) => t.id && tourIds.add(t.id));
-    } catch (_) {}
+    const fsTours = await listFirestoreTours().catch(() => []);
+    if (Array.isArray(fsTours) && fsTours.length > 0) {
+      fsTours.forEach((t) => t.id && tourIds.add(t.id));
+    } else {
+      ALL_TOURS.forEach((t) => t.id && tourIds.add(t.id));
+    }
 
     for (const id of tourIds) {
       entries.push({

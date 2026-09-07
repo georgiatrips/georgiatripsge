@@ -14,7 +14,7 @@ export default function HomeAboutSection() {
           <div className="about-photo-frame">
             <Image
               src="/profile.png"
-              alt="GeorgiaTrips — პროფესიონალი სამოგზაურო კომპანია საქართველოში"
+              alt={t("about.altText") || "GeorgiaTrips — სამოგზაურო კომპანია საქართველოში"}
               fill
               style={{ objectFit: "cover", objectPosition: "center 35%" }}
               sizes="(max-width: 768px) 100vw, 50vw"

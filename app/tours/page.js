@@ -1,6 +1,6 @@
 import React, { Suspense } from "react";
 import { asLocalizedText } from "../lib/toursFirestore";
-import { getCachedTours } from "../lib/server/cachedData";
+import { getCachedTours, serializeForClient } from "../lib/server/cachedData";
 import ToursCatalogClient from "../components/tours/ToursCatalogClient";
 import "./tours.css";
 
@@ -29,7 +29,8 @@ export const metadata = {
 };
 
 export default async function ToursPage() {
-  const tours = await getCachedTours();
+  const rawTours = await getCachedTours();
+  const tours = serializeForClient(rawTours) || [];
 
   // JSON-LD ItemList Schema for Rich Search Results
   const jsonLd = {

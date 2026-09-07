@@ -39,13 +39,13 @@ export const tr = {
     "eyebrow": "GeorgiaTrips ile Tanışın",
     "heading1": "Gürcistan Turları —",
     "heading2": "Sizin Keyfiniz, Bizim Sorumluluğumuz",
-    "desc1": "GeorgiaTrips, Kazbegi, Svaneti, Batum, Kaheti, Tiflis ve daha birçok Gürcistan'ın en güzel köşelerinde bireysel ve grup turları sunan profesyonel bir seyahat acentesidir. Amacımız her gezgin için unutulmaz bir deneyim yaratmaktır.",
-    "desc2": "Deneyimli rehberlerimiz, konforlu araçlarımız ve sunduğumuz tüm hizmetler; transferlerden özel VIP paketlerine kadar seyahat planınızın her detayını esnek, güvenli ve keyifli hale getirecek şekilde özenle seçilmiştir.",
+    "desc1": "GeorgiaTrips; Kazbegi, Svaneti, Batum, Kaheti ve Tiflis gibi Gürcistan'ın en güzel köşelerine bireysel ve grup turları sunan bir seyahat şirketidir. Amacımız her gezgin için unutulmaz bir deneyim yaratmaktır.",
+    "desc2": "Deneyimli rehberlerimiz, konforlu ulaşımımız ve kaliteli hizmetimiz; transferlerden özel VIP paketlerine kadar seyahat planınızın her detayının esnek, güvenli ve keyifli olmasını sağlayacak şekilde seçilmiştir.",
     "check1": "Turist rotalarının organizasyonunda uzun yıllara dayanan deneyim",
     "check2": "Lisanslı rehberler ve profesyonel sürücüler",
     "check3": "Esnek program — bireysel ve grup turları",
     "check4": "Seyahat süresince 7/24 destek",
-    "altText": "GeorgiaTrips — Gürcistan'da profesyonel seyahat acentesi"
+    "altText": "GeorgiaTrips — Gürcistan'da Seyahat Şirketi"
   },
   "categories": {
     "eyebrow": "Hizmetlerimiz",

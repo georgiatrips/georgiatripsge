@@ -11,13 +11,14 @@ const ICONS = {
 };
 
 export default function HomeWeatherSection({
-  weatherData = {},
+  weatherData: rawWeatherData = {},
   isLiveWeather = false,
   weatherLoading = false,
   activeWeatherTab = "tbilisi",
   setActiveWeatherTab,
 }) {
   const { t } = useLanguage();
+  const weatherData = rawWeatherData?.data || rawWeatherData || {};
 
   return (
     <section className="section weather-section" id="weather">
@@ -126,7 +127,7 @@ export default function HomeWeatherSection({
                 <div className="weather-forecast-side">
                    <h4 className="forecast-title">{t("popular.forecastTitle")}</h4>
                   <div className="forecast-list">
-                    {current.forecast.map((f, fIdx) => {
+                    {current.forecast?.map((f, fIdx) => {
                       const dayKey = fIdx === 0 ? "d1" : fIdx === 1 ? "d2" : "d3";
                       const dayTranslation = t(`weather.days.${dayKey}`);
                       const dayLabel = typeof dayTranslation === 'string' && dayTranslation !== `weather.days.${dayKey}`

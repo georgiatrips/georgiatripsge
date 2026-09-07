@@ -155,13 +155,18 @@ export default function Home() {
   );
 
   const weatherData = useMemo(() => {
-    if (liveWeather && !weatherError && Object.keys(liveWeather).length > 0) {
-      return liveWeather;
+    const raw = liveWeather?.data || liveWeather;
+    if (raw && !weatherError && typeof raw === "object" && Object.keys(raw).length > 0 && (raw.tbilisi || raw.batumi)) {
+      return raw;
     }
     return WEATHER_DATA;
   }, [liveWeather, weatherError]);
 
-  const isLiveWeather = !!(liveWeather && !weatherError && Object.keys(liveWeather).length > 0);
+  const isLiveWeather = !!(
+    !weatherError &&
+    ((liveWeather?.data && typeof liveWeather.data === "object" && Object.keys(liveWeather.data).length > 0) ||
+     (liveWeather && !liveWeather.data && typeof liveWeather === "object" && (liveWeather.tbilisi || liveWeather.batumi)))
+  );
 
   useEffect(() => {
     const handleScroll = () => {
