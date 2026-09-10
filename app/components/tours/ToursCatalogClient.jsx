@@ -30,7 +30,6 @@ export default function ToursCatalogClient({ initialTours = [] }) {
   const [selectedFormat, setSelectedFormat] = useState("all"); // "all" | "individual" | "group"
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
-  const [showMobileFilterTrigger, setShowMobileFilterTrigger] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [mounted, setMounted] = useState(false);
   const filterPanelRef = useRef(null);
@@ -39,17 +38,17 @@ export default function ToursCatalogClient({ initialTours = [] }) {
     setMounted(true);
   }, []);
 
+  // Lock body scroll when mobile filter drawer is open
   useEffect(() => {
-    const handleScroll = () => {
-      if (!filterPanelRef.current) return;
-      const rect = filterPanelRef.current.getBoundingClientRect();
-      setShowMobileFilterTrigger(rect.top <= 20);
+    if (mobileFilterOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
     };
-
-    window.addEventListener("scroll", handleScroll, { capture: true, passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll, true);
-  }, []);
+  }, [mobileFilterOpen]);
 
   const allTours = initialTours;
 
@@ -139,7 +138,17 @@ export default function ToursCatalogClient({ initialTours = [] }) {
     setSearchQuery("");
   };
 
-  const hasActiveFilters = selectedDestination !== "all" || selectedType !== "all" || selectedFormat !== "all" || selectedDate || searchQuery;
+  const hasActiveFilters = selectedDestination !== "all" || selectedType !== "all" || selectedFormat !== "all" || Boolean(selectedDate) || Boolean(searchQuery.trim());
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (selectedDestination !== "all") count++;
+    if (selectedType !== "all") count++;
+    if (selectedFormat !== "all") count++;
+    if (selectedDate) count++;
+    if (searchQuery.trim()) count++;
+    return count;
+  }, [selectedDestination, selectedType, selectedFormat, selectedDate, searchQuery]);
 
   return (
     <>
@@ -159,18 +168,20 @@ export default function ToursCatalogClient({ initialTours = [] }) {
         <div className="tours-catalog-inner">
 
           {/* Floating Mobile Filter Trigger Button via Portal */}
-          {mounted && showMobileFilterTrigger && typeof document !== "undefined" && createPortal(
-            <div className="mobile-filter-bar-wrap">
+          {mounted && typeof document !== "undefined" && createPortal(
+            <div className={`mobile-floating-filter-wrap ${mobileFilterOpen ? "is-hidden" : ""}`}>
               <button
                 type="button"
-                className="mobile-filter-trigger-btn"
+                className="mobile-floating-filter-btn"
                 onClick={() => setMobileFilterOpen(true)}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
                 </svg>
                 <span>{t("toursPage.openFilters")}</span>
-                {hasActiveFilters && <span className="mobile-filter-dot" />}
+                {activeFiltersCount > 0 && (
+                  <span className="mobile-filter-badge">{activeFiltersCount}</span>
+                )}
               </button>
             </div>,
             document.body
@@ -183,6 +194,7 @@ export default function ToursCatalogClient({ initialTours = [] }) {
 
           {/* Filter Bar Panel */}
           <aside ref={filterPanelRef} className={"tours-filter-panel " + (mobileFilterOpen ? "mobile-open " : "")}>
+            <div className="mobile-drawer-handle" />
             <div className="filter-panel-header">
               <h3>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -215,6 +227,16 @@ export default function ToursCatalogClient({ initialTours = [] }) {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      className="mobile-search-clear-btn"
+                      onClick={() => setSearchQuery("")}
+                      style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)" }}
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -293,6 +315,42 @@ export default function ToursCatalogClient({ initialTours = [] }) {
 
           {/* Results Summary & Cards Grid */}
           <div className="tours-results-wrap">
+            {/* Mobile in-flow Filter & Search Bar */}
+            <div className="mobile-catalog-top-bar">
+              <div className="mobile-catalog-search-box">
+                <SearchIcon size={16} />
+                <input
+                  type="text"
+                  placeholder={t("toursPage.searchPlaceholder")}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    className="mobile-search-clear-btn"
+                    onClick={() => setSearchQuery("")}
+                    aria-label="Clear search"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+              <button
+                type="button"
+                className={`mobile-filter-open-btn ${hasActiveFilters ? "has-filters" : ""}`}
+                onClick={() => setMobileFilterOpen(true)}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                </svg>
+                <span>{t("toursPage.filterTitle") || "ფილტრი"}</span>
+                {activeFiltersCount > 0 && (
+                  <span className="mobile-filter-badge">{activeFiltersCount}</span>
+                )}
+              </button>
+            </div>
+
             <div className="tours-results-header">
               <h2>
                 {(() => {

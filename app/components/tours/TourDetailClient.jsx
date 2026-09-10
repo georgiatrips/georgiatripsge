@@ -222,6 +222,54 @@ export default function TourDetailClient({
   const similarTours = normalizedAllTours.filter((t) => t.id !== rawTour?.id).slice(0, 3);
   const popularTours = normalizedAllTours.filter((t) => t.isPopular && t.id !== rawTour?.id);
 
+  // Extract unique photo pool from tour
+  const tourPhotos = useMemo(() => {
+    if (!tour) return [];
+    const list = [];
+    const add = (url) => {
+      if (url && typeof url === "string" && url.trim() && !list.includes(url.trim())) {
+        list.push(url.trim());
+      }
+    };
+    if (Array.isArray(tour.gallery)) tour.gallery.forEach(add);
+    if (Array.isArray(tour.itinerary)) tour.itinerary.forEach((it) => add(it?.img));
+    if (tour.img) add(tour.img);
+    if (Array.isArray(tour.places)) tour.places.forEach((p) => add(p?.img || p?.image));
+    return list;
+  }, [tour]);
+
+  // Select two distinct photos: one for About Excursion, one for Excursion Details
+  const { aboutPhoto, detailsPhoto } = useMemo(() => {
+    if (!tourPhotos.length) return { aboutPhoto: null, detailsPhoto: null };
+    if (tourPhotos.length === 1) {
+      return { aboutPhoto: tourPhotos[0], detailsPhoto: tourPhotos[0] };
+    }
+    const idStr = String(tour?.id || tour?.title || "georgiatrips");
+    let hash = 0;
+    for (let i = 0; i < idStr.length; i++) {
+      hash = (hash << 5) - hash + idStr.charCodeAt(i);
+      hash |= 0;
+    }
+    const posHash = Math.abs(hash);
+    const idx1 = posHash % tourPhotos.length;
+    let idx2 = (idx1 + 1 + (posHash % (tourPhotos.length - 1))) % tourPhotos.length;
+    if (idx2 === idx1) {
+      idx2 = (idx1 + 1) % tourPhotos.length;
+    }
+    return {
+      aboutPhoto: tourPhotos[idx1],
+      detailsPhoto: tourPhotos[idx2],
+    };
+  }, [tourPhotos, tour?.id, tour?.title]);
+
+  // Clean formatted description paragraphs
+  const descriptionParagraphs = useMemo(() => {
+    const descText = asLocalizedText(tour?.desc, lang) || "";
+    if (!descText) return [];
+    const parts = descText.split(/\r?\n+/).map((p) => p.trim()).filter(Boolean);
+    return parts.length ? parts : [descText];
+  }, [tour?.desc, lang]);
+
   const tourFaqs = [
     { q: t("faq.q1"), a: t("faq.a1") },
     { q: t("faq.q2"), a: t("faq.a2") },
@@ -546,7 +594,7 @@ export default function TourDetailClient({
           <div className="tdp-content-col">
             
             {/* About Excursion */}
-            <article className="tdp-card-block">
+            <article className="tdp-card-block tdp-about-card-block">
               <div className="tdp-card-header">
                 <div>
                   <h2>{t("tourDetail.aboutTitle")}</h2>
@@ -554,7 +602,24 @@ export default function TourDetailClient({
                 </div>
               </div>
               <div className="tdp-card-body">
-                <p className="tdp-about-lead">{asLocalizedText(tour.desc, lang)}</p>
+                <div className="tdp-about-lead">
+                  {descriptionParagraphs.map((paragraph, pIdx) => (
+                    <p key={pIdx} className="tdp-about-paragraph">
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
+                {aboutPhoto && (
+                  <div className="tdp-about-showcase-photo">
+                    <Image
+                      src={aboutPhoto}
+                      alt={asLocalizedText(tour.title, lang)}
+                      fill
+                      sizes="(max-width: 900px) 100vw, 750px"
+                      style={{ objectFit: "cover" }}
+                    />
+                  </div>
+                )}
               </div>
             </article>
 
@@ -565,7 +630,7 @@ export default function TourDetailClient({
             />
 
             {/* Departure, Time & Payment Details */}
-            <TourDetailInfoTabs tour={tour} />
+            <TourDetailInfoTabs tour={tour} bannerImg={detailsPhoto} />
 
             {/* Tour Schedule & Free Dates */}
             <TourDetailSchedule

@@ -27,17 +27,17 @@ export default function HomeFleetSection({ handleBookNow }) {
             </svg>
           </button>
           <div className="transport-photos-row" id="transport-photos-grid">
-            <a href="#booking" onClick={() => handleBookNow(t("popular.transportLabel").replace("{num}", "1"), format("₾50-დან", lang))} className="transport-photo transport-photo-1" style={{ position: "relative", minHeight: "220px", display: "block" }}>
-              <Image src="/1car.webp" fill sizes="(max-width: 768px) 100vw, 25vw" style={{ objectFit: "cover" }} alt="GeorgiaTrips Transport 1" />
+            <a href="#booking" onClick={() => handleBookNow(t("popular.transportLabel").replace("{num}", "1"), format("₾50-დან", lang))} className="transport-photo transport-photo-1">
+              <Image src="/1car.webp" width={380} height={250} sizes="(max-width: 768px) 25vw, 320px" alt="GeorgiaTrips Transport 1" className="transport-car-img" priority={false} />
             </a>
-            <a href="#booking" onClick={() => handleBookNow(t("popular.transportLabel").replace("{num}", "2"), format("₾90-დან", lang))} className="transport-photo transport-photo-2" style={{ position: "relative", minHeight: "220px", display: "block" }}>
-              <Image src="/2car.webp" fill sizes="(max-width: 768px) 100vw, 25vw" style={{ objectFit: "cover" }} alt="GeorgiaTrips Transport 2" />
+            <a href="#booking" onClick={() => handleBookNow(t("popular.transportLabel").replace("{num}", "2"), format("₾90-დან", lang))} className="transport-photo transport-photo-2">
+              <Image src="/2car.webp" width={380} height={250} sizes="(max-width: 768px) 25vw, 320px" alt="GeorgiaTrips Transport 2" className="transport-car-img" priority={false} />
             </a>
-            <a href="#booking" onClick={() => handleBookNow(t("popular.transportLabel").replace("{num}", "3"), format("₾180-დან", lang))} className="transport-photo transport-photo-3" style={{ position: "relative", minHeight: "220px", display: "block" }}>
-              <Image src="/3car.webp" fill sizes="(max-width: 768px) 100vw, 25vw" style={{ objectFit: "cover" }} alt="GeorgiaTrips Transport 3" />
+            <a href="#booking" onClick={() => handleBookNow(t("popular.transportLabel").replace("{num}", "3"), format("₾180-დან", lang))} className="transport-photo transport-photo-3">
+              <Image src="/3car.webp" width={380} height={250} sizes="(max-width: 768px) 25vw, 320px" alt="GeorgiaTrips Transport 3" className="transport-car-img" priority={false} />
             </a>
-            <a href="#booking" onClick={() => handleBookNow(t("popular.transportLabel").replace("{num}", "4"), format("₾220-დან", lang))} className="transport-photo transport-photo-4" style={{ position: "relative", minHeight: "220px", display: "block" }}>
-              <Image src="/4car.webp" fill sizes="(max-width: 768px) 100vw, 25vw" style={{ objectFit: "cover" }} alt="GeorgiaTrips Transport 4" />
+            <a href="#booking" onClick={() => handleBookNow(t("popular.transportLabel").replace("{num}", "4"), format("₾220-დან", lang))} className="transport-photo transport-photo-4">
+              <Image src="/4car.webp" width={380} height={250} sizes="(max-width: 768px) 25vw, 320px" alt="GeorgiaTrips Transport 4" className="transport-car-img" priority={false} />
             </a>
           </div>
           <button

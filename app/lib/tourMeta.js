@@ -11,7 +11,7 @@ export const TOUR_BADGE_OPTIONS = [
 
 /** ტურის კატეგორია / სექცია */
 export const TOUR_SECTIONS = [
-  { value: "mountains-nature", label: "მთის ტურები და ბუნება" },
+  { value: "mountains-nature", label: "მთის ტურები" },
   { value: "batumi-city", label: "ბათუმის ქალაქის ტური" },
   { value: "wine", label: "ღვინის პროგრამები" },
   { value: "exotic-parks", label: "ეგზოტიკური პარკები და ბუნება" },

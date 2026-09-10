@@ -8484,18 +8484,30 @@ body {
   }
 
   .transport-photos-row {
-    flex-wrap: wrap;
-    gap: 0.5rem;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    justify-content: center !important;
+    align-items: flex-end !important;
+    gap: 0 !important;
+    width: 100% !important;
   }
 
   .transport-photo {
-    flex: 1 1 45%;
-    margin: 0;
-    transform: scale(1);
+    flex: 0 0 25% !important;
+    width: 25% !important;
+    max-width: 25% !important;
+    min-width: 0 !important;
+    margin: 0 -8px !important;
+    transform: scale(1.18) !important;
+    transform-origin: bottom center !important;
   }
 
   .transport-photo img {
-    max-height: 140px;
+    max-height: 140px !important;
+    width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
   }
 
   /* Schedule section */
@@ -10884,10 +10896,10 @@ html {
     box-sizing: border-box !important;
   }
 
-  /* 6. Hide transport photos slider on mobile as requested */
-  .transport-slider-wrapper,
-  .transport-photos-row {
-    display: none !important;
+  /* 6. Transport photos slider on mobile */
+  .transport-slider-wrapper {
+    display: block !important;
+    width: 100% !important;
   }
 
   /* 7. Weather Dashboard Full Width on Mobile */

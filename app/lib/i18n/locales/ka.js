@@ -264,7 +264,7 @@ export const ka = {
     "cat4Title": "ტრანსფერები",
     "cat4Desc": "კომფორტული ტრანსპორტი 24/7.",
     "sectionPopular": "საქართველოს ტურისტული ადგილები",
-    "sectionNature": "მთის ტურები და ბუნება",
+    "sectionNature": "მთის ტურები",
     "sectionCulture": "ბათუმის ქალაქის ტური",
     "sectionTaste": "ღვინის პროგრამები",
     "sectionAdventure": "ეგზოტიკური პარკები და ბუნება",

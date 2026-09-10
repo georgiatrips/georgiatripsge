@@ -1,14 +1,27 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
-import { translateLocation } from "../../lib/toursFirestore";
+import { translateLocation, asLocalizedText } from "../../lib/toursFirestore";
 
-export default function TourDetailInfoTabs({ tour }) {
+export default function TourDetailInfoTabs({ tour, bannerImg }) {
   const { t, lang } = useLanguage();
 
   return (
     <article className="tdp-card-block tdp-minimalist-details-block">
+      {bannerImg && (
+        <div className="tdp-details-showcase-photo">
+          <Image
+            src={bannerImg}
+            alt={asLocalizedText(tour?.title, lang) || "Excursion details"}
+            fill
+            sizes="(max-width: 900px) 100vw, 750px"
+            style={{ objectFit: "cover" }}
+          />
+        </div>
+      )}
+
       <div className="tdp-minimalist-header">
         <h2>{t("tourDetail.detailsTitle")}</h2>
       </div>

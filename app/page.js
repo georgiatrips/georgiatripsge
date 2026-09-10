@@ -105,7 +105,6 @@ export default function Home() {
   }, [popularTours]);
 
   const sectionsData = useMemo(() => [
-    { id: "popular", title: t("home.sectionPopular"), tours: [] },
     { id: "nature", title: t("home.sectionNature"), tours: [] },
     { id: "culture", title: t("home.sectionCulture"), tours: [] },
     { id: "taste", title: t("home.sectionTaste"), tours: [] },
@@ -117,9 +116,13 @@ export default function Home() {
   const dynamicSections = useMemo(() => {
     const map = new Map(sectionsData.map((s) => [s.id, { ...s, tours: [] }]));
     allTours.forEach((tour) => {
-      let targetSectionId = FIREBASE_SECTION_TO_HOME[tour.tourSection] || "popular";
-      if (!map.has(targetSectionId)) targetSectionId = "popular";
-      map.get(targetSectionId).tours.push(tour);
+      const secKey = tour.tourSection;
+      if (secKey && FIREBASE_SECTION_TO_HOME[secKey]) {
+        const targetSectionId = FIREBASE_SECTION_TO_HOME[secKey];
+        if (map.has(targetSectionId)) {
+          map.get(targetSectionId).tours.push(tour);
+        }
+      }
     });
     return Array.from(map.values()).filter((s) => s.tours.length > 0);
   }, [allTours, sectionsData]);
