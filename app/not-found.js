@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -51,6 +52,12 @@ const NOT_FOUND_TEXTS = {
 export default function NotFound() {
   const { lang } = useLanguage();
   const t = NOT_FOUND_TEXTS[lang] || NOT_FOUND_TEXTS.ka;
+
+  useEffect(() => {
+    if (typeof document !== "undefined" && t?.title) {
+      document.title = `${t.title} | GeorgiaTrips`;
+    }
+  }, [t]);
 
   return (
     <>

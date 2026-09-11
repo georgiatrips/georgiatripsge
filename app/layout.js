@@ -12,6 +12,7 @@ import { isRtlLanguage } from "./lib/i18n/locale";
 import CookieConsent from "./components/CookieConsent";
 import AnalyticsTracker from "./components/AnalyticsTracker";
 import WelcomeCouponPopup from "./components/WelcomeCouponPopup";
+import DocumentTitleManager from "./components/DocumentTitleManager";
 
 const notoGeorgian = Noto_Sans_Georgian({
   variable: "--font-noto-georgian",
@@ -391,6 +392,9 @@ export default async function RootLayout({ children }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <LanguageProvider initialLang={htmlLang}>
+          <Suspense fallback={null}>
+            <DocumentTitleManager />
+          </Suspense>
           <CurrencyProvider>
             <AuthProvider>
               <CouponProvider>

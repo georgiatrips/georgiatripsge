@@ -205,6 +205,17 @@ export default function TourDetailClient({
         tourSectionLabel: rawTour.tourSectionLabel,
       };
 
+  // Dynamically update browser tab title when tour title or language changes
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (tour && tour.title) {
+      const tourTitle = asLocalizedText(tour.title, lang) || tour.title;
+      if (tourTitle) {
+        document.title = `${tourTitle} | GeorgiaTrips`;
+      }
+    }
+  }, [tour, lang]);
+
   const firestoreSchedule = rawTour
     ? groupDepartureDates(rawTour.departureDates || [], lang).map((m) => ({
         monthName: m.monthName,

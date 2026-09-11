@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Navbar from "../Navbar";
@@ -28,6 +28,18 @@ export default function PlaceDetailClient({ initialPlace = null, initialAllPlace
   const { t, lang } = useLanguage();
   const [place] = useState(initialPlace);
   const [all] = useState(initialAllPlaces);
+
+  // Dynamically update browser tab title when place or language changes
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (place && place.title) {
+      const placeTitle = asLocalizedText(place.title, lang) || place.title;
+      const reg = place.region ? formatRegionName(asLocalizedText(place.region, lang), lang) : "";
+      if (placeTitle) {
+        document.title = reg ? `${placeTitle} (${reg}) | GeorgiaTrips` : `${placeTitle} | GeorgiaTrips`;
+      }
+    }
+  }, [place, lang]);
 
   const similar = useMemo(() => place ? all.filter((item) => item.id !== place.id && item.region === place.region).slice(0, 3) : [], [all, place]);
   const popular = useMemo(() => place ? all.filter((item) => item.id !== place.id && item.isPopular).slice(0, 3) : [], [all, place]);

@@ -43,7 +43,10 @@ export default function Error({ error, reset }) {
 
   useEffect(() => {
     console.error("App Error Boundary caught:", error);
-  }, [error]);
+    if (typeof document !== "undefined" && t?.title) {
+      document.title = `${t.title} | GeorgiaTrips`;
+    }
+  }, [error, t]);
 
   return (
     <div
