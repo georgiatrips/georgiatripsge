@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import CouponTicket from "../components/CouponTicket";
 import { useAuth } from "../lib/AuthContext";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 import { useCoupon } from "../lib/CouponContext";
@@ -16,6 +17,8 @@ import {
   signInWithEmail,
   resetPassword,
 } from "../lib/firebase";
+import "./login.css";
+import "../coupon.css";
 
 // ── Icons ─────────────────────────────────────────────────────
 const GoogleIcon = () => (
