@@ -1,11 +1,8 @@
-"use client";
-
-import { useEffect } from "react";
 import Link from "next/link";
+import { headers } from "next/headers";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import { useLanguage } from "./lib/i18n/LanguageContext";
-import { getLocalizedHref } from "./lib/siteConfig";
+import { getLocalizedHref, SUPPORTED_LANGUAGES } from "./lib/siteConfig";
 
 const NOT_FOUND_TEXTS = {
   ka: {
@@ -50,15 +47,11 @@ const NOT_FOUND_TEXTS = {
   },
 };
 
-export default function NotFound() {
-  const { lang } = useLanguage();
+export default async function NotFound() {
+  const reqHeaders = await headers();
+  const headerLang = reqHeaders.get("x-georgiatrips-locale");
+  const lang = SUPPORTED_LANGUAGES.includes(headerLang) ? headerLang : "ka";
   const t = NOT_FOUND_TEXTS[lang] || NOT_FOUND_TEXTS.ka;
-
-  useEffect(() => {
-    if (typeof document !== "undefined" && t?.title) {
-      document.title = `${t.title} | GeorgiaTrips`;
-    }
-  }, [t]);
 
   return (
     <>
