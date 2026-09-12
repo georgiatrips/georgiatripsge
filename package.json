@@ -9,6 +9,7 @@
     "google-oauth": "node scripts/google-oauth.js"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "firebase": "^12.17.0",
     "firebase-admin": "^13.10.0",
     "next": "16.2.9",
