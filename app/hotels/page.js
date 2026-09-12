@@ -1,6 +1,7 @@
 import React, { Suspense } from "react";
 import { getCachedHotels } from "../lib/server/cachedData";
 import { asLocalizedText } from "../lib/toursFirestore";
+import { SITE_URL, getCanonicalUrl, getAlternateLanguages } from "../lib/siteConfig";
 import HotelsCatalogClient from "../components/hotels/HotelsCatalogClient";
 import "./hotels.css";
 
@@ -8,21 +9,17 @@ export const metadata = {
   title: "სასტუმროები და აპარტამენტები საქართველოში | GeorgiaTrips.ge",
   description: "საუკეთესო სასტუმროები, ვილები და საოჯახო სასტუმროები თბილისში, ბათუმში, ყაზბეგში, კახეთსა და სვანეთში. პირდაპირი დაჯავშნა საუკეთესო ფასად.",
   alternates: {
-    canonical: "https://georgiatrips.ge/hotels",
-    languages: {
-      ka: "https://georgiatrips.ge/ka/hotels",
-      en: "https://georgiatrips.ge/en/hotels",
-      ru: "https://georgiatrips.ge/ru/hotels",
-    },
+    canonical: getCanonicalUrl("/hotels", "ka"),
+    languages: getAlternateLanguages("/hotels"),
   },
   openGraph: {
     title: "სასტუმროები საქართველოში — GeorgiaTrips",
     description: "აღმოაჩინეთ საუკეთესო დასასვენებელი ადგილები და სასტუმროები საქართველოში.",
-    url: "https://georgiatrips.ge/hotels",
+    url: getCanonicalUrl("/hotels", "ka"),
     siteName: "GeorgiaTrips",
     images: [
       {
-        url: "https://georgiatrips.ge/villa.webp",
+        url: "/villa.webp",
         width: 1200,
         height: 630,
         alt: "სასტუმროები საქართველოში",
@@ -35,7 +32,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "სასტუმროები საქართველოში — GeorgiaTrips",
     description: "სასტუმროების და ვილების საუკეთესო არჩევანი საქართველოში.",
-    images: ["https://georgiatrips.ge/villa.webp"],
+    images: ["/villa.webp"],
   },
 };
 
@@ -47,25 +44,25 @@ export default async function HotelsPage() {
     "@graph": [
       {
         "@type": "BreadcrumbList",
-        "@id": "https://georgiatrips.ge/hotels#breadcrumbs",
+        "@id": `${SITE_URL}/ka/hotels#breadcrumbs`,
         "itemListElement": [
           {
             "@type": "ListItem",
             "position": 1,
             "name": "მთავარი",
-            "item": "https://georgiatrips.ge",
+            "item": `${SITE_URL}/ka`,
           },
           {
             "@type": "ListItem",
             "position": 2,
             "name": "სასტუმროები",
-            "item": "https://georgiatrips.ge/hotels",
+            "item": `${SITE_URL}/ka/hotels`,
           },
         ],
       },
       {
         "@type": "ItemList",
-        "@id": "https://georgiatrips.ge/hotels#list",
+        "@id": `${SITE_URL}/ka/hotels#list`,
         "name": "Hotels and Accommodations in Georgia",
         "itemListElement": (hotels || []).map((hotel, idx) => ({
           "@type": "ListItem",
@@ -74,8 +71,8 @@ export default async function HotelsPage() {
             "@type": "Hotel",
             "name": asLocalizedText(hotel.name, "ka") || hotel.name,
             "description": asLocalizedText(hotel.desc, "ka") || hotel.desc,
-            "image": hotel.gallery?.[0] || "https://georgiatrips.ge/villa.webp",
-            "url": hotel.bookingUrl || "https://georgiatrips.ge/hotels",
+            "image": hotel.gallery?.[0] || `${SITE_URL}/villa.webp`,
+            "url": hotel.bookingUrl || `${SITE_URL}/ka/hotels`,
             ...(hotel.priceFrom
               ? {
                   "priceRange": `₾${hotel.priceFrom}+`,

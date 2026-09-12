@@ -2,6 +2,7 @@ import React, { Suspense } from "react";
 import { getCachedPlaces } from "../../lib/server/cachedData";
 import { asLocalizedText } from "../../lib/toursFirestore";
 import { formatRegionName } from "../../lib/placesMeta";
+import { SITE_URL, getCanonicalUrl, getAlternateLanguages } from "../../lib/siteConfig";
 import PlaceDetailClient from "../../components/places/PlaceDetailClient";
 import "../places.css";
 
@@ -22,19 +23,21 @@ export async function generateMetadata({ params }) {
   const titleKa = asLocalizedText(place.title, "ka") || "ღირსშესანიშნაობა საქართველოში";
   const descKa = asLocalizedText(place.desc, "ka") || "აღმოაჩინეთ საქართველოს ულამაზესი ადგილები GeorgiaTrips-თან ერთად.";
   const regionKa = formatRegionName(asLocalizedText(place.region, "ka"), "ka");
-  const imgUrl = place.img || "https://georgiatrips.ge/hero.webp";
-  const placeUrl = `https://georgiatrips.ge/places/${placeId}`;
+  const imgUrl = place.img || `${SITE_URL}/hero.webp`;
+  const placeCanonical = getCanonicalUrl(`/places/${placeId}`, "ka");
+  const alternateLanguages = getAlternateLanguages(`/places/${placeId}`);
 
   return {
     title: `${titleKa} (${regionKa}) | GeorgiaTrips.ge`,
     description: descKa.slice(0, 160),
     alternates: {
-      canonical: placeUrl,
+      canonical: placeCanonical,
+      languages: alternateLanguages,
     },
     openGraph: {
       title: `${titleKa} — ${regionKa}`,
       description: descKa.slice(0, 200),
-      url: placeUrl,
+      url: placeCanonical,
       siteName: "GeorgiaTrips",
       images: [
         {
@@ -73,7 +76,7 @@ export default async function PlaceDetailPage({ params }) {
         "@type": "TouristAttraction",
         "name": titleKa,
         "description": descKa,
-        "image": place.img || "https://georgiatrips.ge/hero.webp",
+        "image": place.img || `${SITE_URL}/hero.webp`,
         "address": {
           "@type": "PostalAddress",
           "addressRegion": regionKa,

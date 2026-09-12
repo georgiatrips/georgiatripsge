@@ -1,3 +1,5 @@
+import { SITE_URL } from "./lib/siteConfig";
+
 export default function robots() {
   return {
     rules: [
@@ -7,7 +9,8 @@ export default function robots() {
         disallow: ["/admin", "/api/"],
       },
     ],
-    sitemap: "https://georgiatrips.ge/sitemap.xml",
-    host: "https://georgiatrips.ge",
+    sitemap: `${SITE_URL}/sitemap.xml`,
+    host: SITE_URL,
   };
 }
+

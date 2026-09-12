@@ -51,6 +51,7 @@ const notoArabic = Noto_Sans_Arabic({
 });
 
 import { SOCIAL_PROFILES, FAQS_BY_LANG } from "./lib/shared";
+import { SITE_URL, getCanonicalUrl, getAlternateLanguages, SUPPORTED_LANGUAGES } from "./lib/siteConfig";
 
 export const viewport = {
   width: "device-width",
@@ -62,10 +63,10 @@ export const viewport = {
 export async function generateMetadata() {
   const [cookieStore, requestHeaders] = await Promise.all([cookies(), headers()]);
   const storedLang = cookieStore.get("gt_language")?.value || "ka";
-  const lang = ["ka", "en", "ru", "tr", "ar"].includes(storedLang) ? storedLang : "ka";
+  const lang = SUPPORTED_LANGUAGES.includes(storedLang) ? storedLang : "ka";
   const currentPath = requestHeaders.get("x-georgiatrips-path") || `/${lang}`;
-  const pathWithoutLocale = currentPath.replace(/^\/(?:ka|en|ru|tr|ar)(?=\/|$)/, "") || "/";
-  const localizedUrl = (locale) => `https://georgiatrips.ge/${locale}${pathWithoutLocale === "/" ? "" : pathWithoutLocale}`;
+  const canonicalUrl = getCanonicalUrl(currentPath, lang);
+  const alternateLanguages = getAlternateLanguages(currentPath);
 
   const metaByLang = {
     ka: {
@@ -138,7 +139,7 @@ export async function generateMetadata() {
   const curr = metaByLang[lang] || metaByLang.ka;
 
   return {
-    metadataBase: new URL("https://georgiatrips.ge"),
+    metadataBase: new URL(SITE_URL),
     icons: {
       icon: [
         { url: "/favicon.ico", sizes: "any" },
@@ -164,25 +165,19 @@ export async function generateMetadata() {
     description: curr.description,
     keywords: curr.keywords,
     authors: [
-      { name: "GeorgiaTrips", url: "https://georgiatrips.ge" },
+      { name: "GeorgiaTrips", url: SITE_URL },
       { name: "Manuchar Lominadze", url: "https://www.instagram.com/lominadzee10/" },
     ],
     creator: "Manuchar Lominadze (@lominadzee10)",
     publisher: "GeorgiaTrips",
     alternates: {
-      canonical: localizedUrl(lang),
-      languages: {
-        "ka-GE": localizedUrl("ka"),
-        "en-US": localizedUrl("en"),
-        "ru-RU": localizedUrl("ru"),
-        "tr-TR": localizedUrl("tr"),
-        "ar-SA": localizedUrl("ar"),
-      },
+      canonical: canonicalUrl,
+      languages: alternateLanguages,
     },
     openGraph: {
       title: curr.ogTitle,
       description: curr.ogDesc,
-      url: localizedUrl(lang),
+      url: canonicalUrl,
       siteName: "GeorgiaTrips",
       locale: curr.locale,
       type: "website",
@@ -234,12 +229,12 @@ function buildStructuredData(lang = "ka") {
     "@graph": [
       {
         "@type": ["TravelAgency", "Organization"],
-        "@id": "https://georgiatrips.ge/#organization",
+        "@id": `${SITE_URL}/#organization`,
         name: "GeorgiaTrips",
         legalName: "GeorgiaTrips",
-        url: "https://georgiatrips.ge",
-        logo: "https://georgiatrips.ge/logo.png",
-        image: "https://georgiatrips.ge/hero.webp",
+        url: SITE_URL,
+        logo: `${SITE_URL}/logo.png`,
+        image: `${SITE_URL}/hero.webp`,
         description: "Premium tours, private excursions, and VIP transfers in Georgia (Tbilisi, Batumi, Kazbegi, Kakheti, Svaneti).",
         telephone: "+995504220020",
         email: "info@georgiatrips.ge",
@@ -276,11 +271,11 @@ function buildStructuredData(lang = "ka") {
       },
       {
         "@type": "WebSite",
-        "@id": "https://georgiatrips.ge/#website",
-        url: "https://georgiatrips.ge",
+        "@id": `${SITE_URL}/#website`,
+        url: SITE_URL,
         name: "GeorgiaTrips",
         publisher: {
-          "@id": "https://georgiatrips.ge/#organization",
+          "@id": `${SITE_URL}/#organization`,
         },
         creator: {
           "@type": "Person",
@@ -292,7 +287,7 @@ function buildStructuredData(lang = "ka") {
         },
         potentialAction: {
           "@type": "SearchAction",
-          target: "https://georgiatrips.ge/tours?search={search_term_string}",
+          target: `${SITE_URL}/ka/tours?search={search_term_string}`,
           "query-input": "required name=search_term_string",
         },
         inLanguage: ["ka", "en", "ru", "tr", "ar"],
@@ -308,7 +303,7 @@ function buildStructuredData(lang = "ka") {
       },
       {
         "@type": "FAQPage",
-        "@id": "https://georgiatrips.ge/#faq",
+        "@id": `${SITE_URL}/#faq`,
         mainEntity: faqs.map((faq) => ({
           "@type": "Question",
           name: faq.q,

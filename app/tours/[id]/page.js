@@ -1,6 +1,7 @@
 import React, { Suspense } from "react";
 import { asLocalizedText } from "../../lib/toursFirestore";
 import { getCachedTourById, getCachedTours, getCachedPlaces, serializeForClient } from "../../lib/server/cachedData";
+import { SITE_URL, getCanonicalUrl, getAlternateLanguages } from "../../lib/siteConfig";
 import TourDetailClient from "../../components/tours/TourDetailClient";
 import "./tourDetail.css";
 
@@ -19,19 +20,21 @@ export async function generateMetadata({ params }) {
 
   const titleKa = asLocalizedText(tour.title, "ka") || "ტური საქართველოში";
   const descKa = asLocalizedText(tour.desc, "ka") || "საუკეთესო ტური საქართველოში GeorgiaTrips-თან ერთად.";
-  const imgUrl = tour.img || "https://georgiatrips.ge/hero.webp";
-  const tourUrl = `https://georgiatrips.ge/tours/${tourId}`;
+  const imgUrl = tour.img || `${SITE_URL}/hero.webp`;
+  const tourCanonical = getCanonicalUrl(`/tours/${tourId}`, "ka");
+  const alternateLanguages = getAlternateLanguages(`/tours/${tourId}`);
 
   return {
     title: `${titleKa} | GeorgiaTrips.ge`,
     description: descKa,
     alternates: {
-      canonical: tourUrl,
+      canonical: tourCanonical,
+      languages: alternateLanguages,
     },
     openGraph: {
       title: `${titleKa} — GeorgiaTrips`,
       description: descKa,
-      url: tourUrl,
+      url: tourCanonical,
       siteName: "GeorgiaTrips",
       images: [
         {
@@ -77,7 +80,7 @@ export default async function TourDetailPage({ params }) {
         "@type": "TouristTrip",
         "name": titleKa,
         "description": descKa,
-        "image": rawTour.img || "https://georgiatrips.ge/hero.webp",
+        "image": rawTour.img || `${SITE_URL}/hero.webp`,
         "touristType": ["Adventure", "Cultural", "Sightseeing"],
         "offers": {
           "@type": "Offer",
@@ -89,7 +92,7 @@ export default async function TourDetailPage({ params }) {
         "provider": {
           "@type": "TravelAgency",
           "name": "GeorgiaTrips",
-          "url": "https://georgiatrips.ge",
+          "url": SITE_URL,
         },
       }
     : null;

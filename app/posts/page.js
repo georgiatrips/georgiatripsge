@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
 import { getCachedPosts } from "../lib/server/cachedData";
+import { SITE_URL, getCanonicalUrl, getAlternateLanguages } from "../lib/siteConfig";
 import PostsCatalogClient from "../components/posts/PostsCatalogClient";
 import "./posts.css";
 
@@ -7,21 +8,17 @@ export const metadata = {
   title: "ბლოგი და მოგზაურთა შთაბეჭდილებები | GeorgiaTrips.ge",
   description: "საქართველოში მოგზაურობის გამოცდილება, რჩევები, ისტორიები და ფოტოები რეალური მოგზაურებისა და გიდებისგან.",
   alternates: {
-    canonical: "https://georgiatrips.ge/posts",
-    languages: {
-      ka: "https://georgiatrips.ge/ka/posts",
-      en: "https://georgiatrips.ge/en/posts",
-      ru: "https://georgiatrips.ge/ru/posts",
-    },
+    canonical: getCanonicalUrl("/posts", "ka"),
+    languages: getAlternateLanguages("/posts"),
   },
   openGraph: {
     title: "ბლოგი & მოგზაურთა ისტორიები — GeorgiaTrips",
     description: "გაეცანით მოგზაურების რჩევებსა და შთაბეჭდილებებს საქართველოს შესახებ.",
-    url: "https://georgiatrips.ge/posts",
+    url: getCanonicalUrl("/posts", "ka"),
     siteName: "GeorgiaTrips",
     images: [
       {
-        url: "https://georgiatrips.ge/mestia.webp",
+        url: "/mestia.webp",
         width: 1200,
         height: 630,
         alt: "მოგზაურთა შთაბეჭდილებები — GeorgiaTrips",
@@ -34,7 +31,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "ბლოგი & მოგზაურთა ისტორიები — GeorgiaTrips",
     description: "საქართველოში მოგზაურობის რეალური გამოცდილება და რჩევები.",
-    images: ["https://georgiatrips.ge/mestia.webp"],
+    images: ["/mestia.webp"],
   },
 };
 
@@ -46,32 +43,32 @@ export default async function PostsPage() {
     "@graph": [
       {
         "@type": "BreadcrumbList",
-        "@id": "https://georgiatrips.ge/posts#breadcrumbs",
+        "@id": `${SITE_URL}/ka/posts#breadcrumbs`,
         "itemListElement": [
           {
             "@type": "ListItem",
             "position": 1,
             "name": "მთავარი",
-            "item": "https://georgiatrips.ge",
+            "item": `${SITE_URL}/ka`,
           },
           {
             "@type": "ListItem",
             "position": 2,
             "name": "ბლოგი & პოსტები",
-            "item": "https://georgiatrips.ge/posts",
+            "item": `${SITE_URL}/ka/posts`,
           },
         ],
       },
       {
         "@type": "Blog",
-        "@id": "https://georgiatrips.ge/posts#blog",
+        "@id": `${SITE_URL}/ka/posts#blog`,
         "name": "GeorgiaTrips Travel Community Blog",
         "description": "საქართველოს შესახებ მოგზაურთა ბლოგი და პოსტები",
         "blogPost": (posts || []).slice(0, 20).map((post) => ({
           "@type": "BlogPosting",
           "headline": post.title || post.content?.slice(0, 70) || "მოგზაურის პოსტი",
           "articleBody": post.content || "",
-          "image": post.img || "https://georgiatrips.ge/mestia.webp",
+          "image": post.img || `${SITE_URL}/mestia.webp`,
           "author": {
             "@type": "Person",
             "name": post.author || "GeorgiaTrips Traveler",
