@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { Noto_Sans_Georgian, Noto_Serif_Georgian, Playfair_Display, Noto_Sans_Arabic } from "next/font/google";
 import { cookies, headers } from "next/headers";
 import Script from "next/script";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import "./coupon.css";
 import { AuthProvider } from "./lib/AuthContext";
@@ -444,6 +445,7 @@ export default async function RootLayout({ children }) {
             `}
           </Script>
         )}
+        <Analytics />
       </body>
     </html>
   );
