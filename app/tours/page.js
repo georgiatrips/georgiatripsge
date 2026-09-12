@@ -1,4 +1,5 @@
 import React, { Suspense } from "react";
+import "./tours.css";
 import ToursCatalogClient from "../components/tours/ToursCatalogClient";
 import { asLocalizedText } from "../lib/toursFirestore";
 import { getCachedTours, serializeForClient } from "../lib/server/cachedData";

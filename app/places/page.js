@@ -1,4 +1,5 @@
 import React, { Suspense } from "react";
+import "./places.css";
 import PlacesCatalogClient from "../components/places/PlacesCatalogClient";
 import { getCachedPlaces } from "../lib/server/cachedData";
 import { asLocalizedText } from "../lib/toursFirestore";

@@ -1,4 +1,5 @@
 import React from "react";
+import "./home.css";
 import { headers } from "next/headers";
 import { getCachedTours, getCachedPlaces, getCachedPosts, serializeForClient } from "./lib/server/cachedData";
 import { FAQS_BY_LANG, getFaqs } from "./lib/shared";

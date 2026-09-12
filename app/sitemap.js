@@ -1,7 +1,4 @@
-import { listFirestoreTours } from "./lib/toursFirestore";
-import { ALL_TOURS } from "./lib/toursData";
-import { listPlaces } from "./lib/placesFirestore";
-import { listPostSummaries } from "./lib/postsFirestore";
+import { getCachedTours, getCachedPlaces } from "./lib/server/cachedData";
 import { SITE_URL, SUPPORTED_LANGUAGES, getAlternateLanguages } from "./lib/siteConfig";
 
 const STATIC_ROUTES = [
@@ -11,7 +8,6 @@ const STATIC_ROUTES = [
   { path: "/hotels", priority: 0.85, changeFrequency: "weekly" },
   { path: "/transfers", priority: 0.9, changeFrequency: "weekly" },
   { path: "/posts", priority: 0.8, changeFrequency: "daily" },
-  { path: "/coupons", priority: 0.8, changeFrequency: "daily" },
   { path: "/privacy-policy", priority: 0.3, changeFrequency: "monthly" },
   { path: "/terms", priority: 0.3, changeFrequency: "monthly" },
 ];
@@ -41,18 +37,15 @@ export default async function sitemap() {
     addLocalizedEntries(route, priority, changeFrequency);
   }
 
-  // 2. Dynamic Tours (Firestore + Static Fallback) across all supported languages
+  // 2. Published Tours (Firestore + Published Static Tours) across all supported languages
   try {
-    const tourIds = new Set();
-    const fsTours = await listFirestoreTours().catch(() => []);
-    if (Array.isArray(fsTours) && fsTours.length > 0) {
-      fsTours.forEach((t) => t.id && tourIds.add(t.id));
-    } else {
-      ALL_TOURS.forEach((t) => t.id && tourIds.add(t.id));
-    }
+    const allTours = (await getCachedTours()) || [];
+    const seenTourIds = new Set();
 
-    for (const id of tourIds) {
-      addLocalizedEntries(`/tours/${encodeURIComponent(id)}`, 0.9, "daily");
+    for (const tour of allTours) {
+      if (!tour?.id || seenTourIds.has(tour.id)) continue;
+      seenTourIds.add(tour.id);
+      addLocalizedEntries(`/tours/${encodeURIComponent(tour.id)}`, 0.9, "daily");
     }
   } catch (err) {
     console.error("Sitemap tours error:", err);
@@ -60,21 +53,17 @@ export default async function sitemap() {
 
   // 3. Dynamic Places across all supported languages
   try {
-    const places = await listPlaces().catch(() => []);
+    const places = (await getCachedPlaces()) || [];
+    const seenPlaceIds = new Set();
+
     for (const place of places) {
-      if (!place?.id) continue;
+      if (!place?.id || seenPlaceIds.has(place.id)) continue;
+      seenPlaceIds.add(place.id);
       addLocalizedEntries(`/places/${encodeURIComponent(place.id)}`, 0.75, "weekly");
     }
-  } catch (_) {}
-
-  // 4. Dynamic Posts / Blog across all supported languages
-  try {
-    const posts = await listPostSummaries().catch(() => []);
-    for (const post of posts) {
-      if (!post?.id) continue;
-      addLocalizedEntries(`/posts/${encodeURIComponent(post.id)}`, 0.75, "weekly");
-    }
-  } catch (_) {}
+  } catch (err) {
+    console.error("Sitemap places error:", err);
+  }
 
   return entries;
 }

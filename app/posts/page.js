@@ -1,4 +1,5 @@
 import React, { Suspense } from "react";
+import "./posts.css";
 import PostsCatalogClient from "../components/posts/PostsCatalogClient";
 import { getCachedPosts } from "../lib/server/cachedData";
 import { headers } from "next/headers";

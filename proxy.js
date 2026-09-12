@@ -12,7 +12,7 @@ import {
 const SUPPORTED_LANGUAGES = ["ka", "en", "ru", "tr", "ar"];
 
 function detectLanguage(acceptLanguageHeader) {
-  if (!acceptLanguageHeader) return "ka";
+  if (!acceptLanguageHeader) return "en";
   const languages = acceptLanguageHeader
     .split(",")
     .map((item) => {
@@ -64,21 +64,24 @@ export async function proxy(request) {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // 2. Rate Limiting ყველა მომხმარებლისთვის (მათ შორის ბოტებისთვის)
+  // 2. Rate Limiting მომხმარებლებისთვის (საძიებო სისტემის ბოტები გათავისუფლებულია გვერდის ლიმიტისგან)
   // ═══════════════════════════════════════════════════════════════
   // API routes-ზე ზოგად ლიმიტს არ ვუშვებთ - მათ ცალკე ლიმიტი აქვთ
   if (!isApiRequest(pathname) && !isStaticAssetRequest(request)) {
-    const { rateLimited, retryAfter } = checkRateLimit(request);
+    // Only apply human page rate limiting if not a verified search engine crawler
+    if (!botInfo?.isSearchCrawler) {
+      const { rateLimited, retryAfter } = checkRateLimit(request);
 
-    if (rateLimited) {
-      return new NextResponse("Too many requests", {
-        status: 429,
-        headers: {
-          "Retry-After": String(retryAfter || 60),
-          "X-RateLimit-Limit": "120",
-          "X-RateLimit-Remaining": "0",
-        },
-      });
+      if (rateLimited) {
+        return new NextResponse("Too many requests", {
+          status: 429,
+          headers: {
+            "Retry-After": String(retryAfter || 60),
+            "X-RateLimit-Limit": "120",
+            "X-RateLimit-Remaining": "0",
+          },
+        });
+      }
     }
   }
 
@@ -165,13 +168,21 @@ export async function proxy(request) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = `/${locale}${pathname === "/" ? "" : pathname}`;
     redirectUrl.searchParams.delete("lang");
-    const response = NextResponse.redirect(redirectUrl);
+    const isRootPermanent = pathname === "/" && !cookieLang && !urlLang;
+    const response = NextResponse.redirect(redirectUrl, { status: isRootPermanent ? 308 : 307 });
     response.cookies.set("gt_language", locale, {
       path: "/",
       maxAge: 31536000,
       sameSite: "lax",
     });
     return response;
+  }
+
+  // Handle legacy /transport under locale prefix (e.g. /ka/transport -> /ka/transfers)
+  if (pathParts[2] === "transport") {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = `/${pathParts[1]}/transfers`;
+    return NextResponse.redirect(redirectUrl, { status: 308 });
   }
 
   const requestHeaders = new Headers(request.headers);

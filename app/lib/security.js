@@ -90,22 +90,26 @@ const BLOCKED_BOTS = [
   "nimbot",           // Nimble
 ];
 
-// ძიებითი სისტემების ბოტები, რომლებსაც ვუშვებთ
-const ALLOWED_BOTS = [
+// ძიებითი სისტემების ოფიციალური საძიებო ბოტები (Google, Bing, Yandex, etc.)
+const SEARCH_CRAWLERS = [
   "googlebot",
+  "google-inspectiontool",
   "bingbot",
   "yandex",
   "baiduspider",
   "duckduckbot",
-  "facebot",
-  "facebookexternalhit",
   "slurp",
   "msnbot",
   "applebot",
+];
+
+// სხვა ლეგიტიმური ბოტები და სოციალური ქსელების პრევიუერები
+const ALLOWED_SOCIAL_BOTS = [
+  "facebot",
+  "facebookexternalhit",
   "twitterbot",
   "linkedinbot",
   "pinterest",
-  "petalbot",
 ];
 
 export function detectBot(request) {
@@ -117,10 +121,16 @@ export function detectBot(request) {
     if (userAgent.includes(bot)) return { blocked: true, name: bot };
   }
 
-  // შევამოწმოთ დაშვებულები
-  for (const bot of ALLOWED_BOTS) {
-    if (userAgent.includes(bot)) return { blocked: false, name: bot };
+  // შევამოწმოთ ძიებითი სისტემების ბოტები
+  for (const bot of SEARCH_CRAWLERS) {
+    if (userAgent.includes(bot)) return { blocked: false, isSearchCrawler: true, name: bot };
   }
+
+  // შევამოწმოთ სოციალური ქსელების დაშვებული ბოტები
+  for (const bot of ALLOWED_SOCIAL_BOTS) {
+    if (userAgent.includes(bot)) return { blocked: false, isSocialBot: true, name: bot };
+  }
+
   // ცარიელი UA ან "curl", "python-requests" და ა.შ. (მხოლოდ API-ზე შევზღუდოთ)
   const suspiciousPatterns = ["curl", "wget", "python", "requests", "scrapy", "node-fetch", "axios", "postman"];
   for (const pattern of suspiciousPatterns) {

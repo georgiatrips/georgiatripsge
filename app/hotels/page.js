@@ -1,4 +1,5 @@
 import React, { Suspense } from "react";
+import "./hotels.css";
 import HotelsCatalogClient from "../components/hotels/HotelsCatalogClient";
 import { getCachedHotels } from "../lib/server/cachedData";
 import { asLocalizedText } from "../lib/toursFirestore";
