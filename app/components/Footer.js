@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "../lib/i18n/LanguageContext";
+import { getLocalizedHref } from "../lib/siteConfig";
 import { BrandLogo, WA_LINK, PHONE_DISPLAY, TELEGRAM_LINK, INSTAGRAM_LINK, FACEBOOK_LINK, YOUTUBE_LINK, TIKTOK_LINK, LINKEDIN_LINK } from "../lib/shared";
 import { listFirestoreTours, asLocalizedText } from "../lib/toursFirestore";
 
@@ -78,19 +79,19 @@ export default function Footer() {
             <ul className="footer-links">
               {tours.map(tour => (
                 <li key={tour.id}>
-                  <Link href={`/tours/${tour.id}`}>{asLocalizedText(tour.title, lang)}</Link>
+                  <Link href={getLocalizedHref(`/tours/${tour.id}`, lang)}>{asLocalizedText(tour.title, lang)}</Link>
                 </li>
               ))}
               {tours.length === 0 && (
                 <>
-                  <li><Link href="/#tours">{t("footer.kazbegiTour")}</Link></li>
-                  <li><Link href="/#batumi-tours">{t("footer.batumiTour")}</Link></li>
-                  <li><Link href="/#tours">{t("footer.tbilisiTour")}</Link></li>
-                  <li><Link href="/#tours">{t("footer.kakhetiTour")}</Link></li>
-                  <li><Link href="/#tours">{t("footer.svanetiTour")}</Link></li>
+                  <li><Link href={getLocalizedHref("/#tours", lang)}>{t("footer.kazbegiTour")}</Link></li>
+                  <li><Link href={getLocalizedHref("/#batumi-tours", lang)}>{t("footer.batumiTour")}</Link></li>
+                  <li><Link href={getLocalizedHref("/#tours", lang)}>{t("footer.tbilisiTour")}</Link></li>
+                  <li><Link href={getLocalizedHref("/#tours", lang)}>{t("footer.kakhetiTour")}</Link></li>
+                  <li><Link href={getLocalizedHref("/#tours", lang)}>{t("footer.svanetiTour")}</Link></li>
                 </>
               )}
-              <li><Link href="/hotels">{t("nav.hotels")}</Link></li>
+              <li><Link href={getLocalizedHref("/hotels", lang)}>{t("nav.hotels")}</Link></li>
             </ul>
           </div>
 
@@ -98,12 +99,12 @@ export default function Footer() {
           <div className="footer-col">
             <h4 className="footer-col-title">{t("footer.servicesTitle")}</h4>
             <ul className="footer-links">
-              <li><Link href="/#tours">{t("nav.tours")}</Link></li>
-              <li><Link href="/hotels">{t("nav.hotels")}</Link></li>
-              <li><Link href="/transfers">{t("nav.transport")}</Link></li>
-              <li><Link href="/posts">{t("nav.articles")}</Link></li>
-              <li><Link href="/booking/status">{lang === "ka" ? "ჯავშნის სტატუსი" : (lang === "ru" ? "Статус брони" : (lang === "tr" ? "Rezervasyon Durumu" : (lang === "ar" ? "حالة الحجز" : "Booking Status")))}</Link></li>
-              <li><Link href="/#booking">{t("footer.bookingLink")}</Link></li>
+              <li><Link href={getLocalizedHref("/#tours", lang)}>{t("nav.tours")}</Link></li>
+              <li><Link href={getLocalizedHref("/hotels", lang)}>{t("nav.hotels")}</Link></li>
+              <li><Link href={getLocalizedHref("/transfers", lang)}>{t("nav.transport")}</Link></li>
+              <li><Link href={getLocalizedHref("/posts", lang)}>{t("nav.articles")}</Link></li>
+              <li><Link href={getLocalizedHref("/booking/status", lang)}>{lang === "ka" ? "ჯავშნის სტატუსი" : (lang === "ru" ? "Статус брони" : (lang === "tr" ? "Rezervasyon Durumu" : (lang === "ar" ? "حالة الحجز" : "Booking Status")))}</Link></li>
+              <li><Link href={getLocalizedHref("/#booking", lang)}>{t("footer.bookingLink")}</Link></li>
             </ul>
           </div>
 

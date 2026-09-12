@@ -1,39 +1,73 @@
 import React from "react";
+import { headers } from "next/headers";
 import { SOCIAL_PROFILES } from "../lib/shared";
-import { SITE_URL, getCanonicalUrl, getAlternateLanguages } from "../lib/siteConfig";
+import { SITE_URL, getCanonicalUrl, getAlternateLanguages, LANGUAGE_LOCALES, SUPPORTED_LANGUAGES } from "../lib/siteConfig";
 import TransfersClient from "../components/transfers/TransfersClient";
 import "./transfers.css";
 
-export const metadata = {
-  title: "აეროპორტის ტრანსფერები და პირადი მძღოლი საქართველოში | GeorgiaTrips.ge",
-  description: "კომფორტული და უსაფრთხო ტრანსფერები თბილისის, ქუთაისისა და ბათუმის აეროპორტებიდან გუდაურში, ყაზბეგში, მესტიაში და მთელ საქართველოში. სედანი, მინივენი, ჯიპი, სპრინტერი.",
-  alternates: {
-    canonical: getCanonicalUrl("/transfers", "ka"),
-    languages: getAlternateLanguages("/transfers"),
+const TRANSFERS_META = {
+  ka: {
+    title: "აეროპორტის ტრანსფერები და პირადი მძღოლი საქართველოში",
+    description: "კომფორტული და უსაფრთხო ტრანსფერები თბილისის, ქუთაისისა და ბათუმის აეროპორტებიდან გუდაურში, ყაზბეგში, მესტიაში და მთელ საქართველოში. სედანი, მინივენი, ჯიპი, სპრინტერი.",
   },
-  openGraph: {
-    title: "აეროპორტის ტრანსფერები საქართველოში — GeorgiaTrips",
-    description: "კომფორტული და უსაფრთხო ტრანსფერები პროფესიონალი მძღოლებით მთელ საქართველოში.",
-    url: getCanonicalUrl("/transfers", "ka"),
-    siteName: "GeorgiaTrips",
-    images: [
-      {
-        url: "/hero.webp",
-        width: 1200,
-        height: 630,
-        alt: "აეროპორტის ტრანსფერები საქართველოში",
-      },
-    ],
-    locale: "ka_GE",
-    type: "website",
+  en: {
+    title: "Airport Transfers & Private Driver in Georgia",
+    description: "Reliable and comfortable private airport transfers from Tbilisi, Kutaisi, and Batumi airports to Gudauri, Kazbegi, Mestia, and across Georgia.",
   },
-  twitter: {
-    card: "summary_large_image",
-    title: "აეროპორტის ტრანსფერები საქართველოში — GeorgiaTrips",
-    description: "სწრაფი და საიმედო მგზავრობა საქართველოში.",
-    images: ["/hero.webp"],
+  ru: {
+    title: "Трансферы из аэропорта и аренда авто с водителем в Грузии",
+    description: "Надежные трансферы из аэропортов Тбилиси, Кутаиси и Батуми в Гудаури, Казбеги, Местию и по всей Грузии. Седаны, минивэны, внедорожники.",
+  },
+  tr: {
+    title: "Havalimanı Transferleri ve Özel Şoför Hizmeti — Gürcistan",
+    description: "Tiflis, Kutaisi ve Batum havalimanlarından Gudauri, Kazbegi, Mestia ve tüm Gürcistan'a konforlu özel transfer hizmeti.",
+  },
+  ar: {
+    title: "توصيل مطار وسائق خاص في جورجيا",
+    description: "خدمات توصيل وتأجير سيارات مع سائق خاص من مطارات تبليسي، كوتايسي وباتومي إلى غوداوري، كازبيجي، ميسيا وجميع مدن جورجيا.",
   },
 };
+
+export async function generateMetadata() {
+  const reqHeaders = await headers();
+  const headerLang = reqHeaders.get("x-georgiatrips-locale");
+  const lang = SUPPORTED_LANGUAGES.includes(headerLang) ? headerLang : "ka";
+  const meta = TRANSFERS_META[lang] || TRANSFERS_META.ka;
+  const canonicalUrl = getCanonicalUrl("/transfers", lang);
+  const alternateLanguages = getAlternateLanguages("/transfers");
+  const locale = LANGUAGE_LOCALES[lang] || "ka_GE";
+
+  return {
+    title: meta.title,
+    description: meta.description,
+    alternates: {
+      canonical: canonicalUrl,
+      languages: alternateLanguages,
+    },
+    openGraph: {
+      title: `${meta.title} — GeorgiaTrips`,
+      description: meta.description,
+      url: canonicalUrl,
+      siteName: "GeorgiaTrips",
+      images: [
+        {
+          url: "/hero.webp",
+          width: 1200,
+          height: 630,
+          alt: meta.title,
+        },
+      ],
+      locale,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${meta.title} — GeorgiaTrips`,
+      description: meta.description,
+      images: ["/hero.webp"],
+    },
+  };
+}
 
 export default function TransfersPage() {
   const transferJsonLd = {

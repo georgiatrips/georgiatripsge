@@ -9,6 +9,7 @@ import Navbar from "../Navbar";
 import Footer from "../Footer";
 import PageHero from "../PageHero";
 import DatePicker from "../DatePicker";
+import { getLocalizedHref } from "../../lib/siteConfig";
 import { DESTINATIONS } from "../../lib/toursData";
 import { formatRegionName } from "../../lib/placesMeta";
 import { asLocalizedText, translateDuration, translateLocation, formatLocationStr, matchesMultiLang } from "../../lib/toursFirestore";
@@ -410,7 +411,7 @@ export default function ToursCatalogClient({ initialTours = [] }) {
                   const locText = translateLocation(tour.destinationLabel || tour.destination || tour.location || tour.region, lang);
 
                   return (
-                    <Link key={tour.id} href={`/tours/${tour.id}`} className="tb-card" style={{ textDecoration: "none" }}>
+                    <Link key={tour.id} href={getLocalizedHref(`/tours/${tour.id}`, lang)} className="tb-card" style={{ textDecoration: "none" }}>
                       <div className="tb-card-img-wrap">
                         <Image
                           src={tour.img || "/hero.webp"}

@@ -48,11 +48,13 @@ export function serializeForClient(data) {
 export const getCachedTours = unstable_cache(
   async () => {
     try {
-      const fsTours = await listFirestoreTours();
-      if (Array.isArray(fsTours) && fsTours.length > 0) {
-        return serializeForClient(fsTours);
-      }
-      return serializeForClient(staticTours);
+      const fsTours = (await listFirestoreTours()) || [];
+      const fsTourIds = new Set(fsTours.map((t) => t.id));
+      const merged = [
+        ...fsTours,
+        ...staticTours.filter((st) => !fsTourIds.has(st.id)),
+      ];
+      return serializeForClient(merged);
     } catch (err) {
       console.error("[getCachedTours] Error:", err);
       return serializeForClient(staticTours);

@@ -7,13 +7,14 @@ import Navbar from "../Navbar";
 import Footer from "../Footer";
 import PageHero from "../PageHero";
 import { GEORGIA_REGIONS, formatRegionName } from "../../lib/placesMeta";
+import { getLocalizedHref } from "../../lib/siteConfig";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { asLocalizedText, matchesMultiLang } from "../../lib/toursFirestore";
 import { SearchIcon } from "../Icons";
 
 function PlaceCard({ place, lang }) {
   return (
-    <Link href={`/places/${place.id}`} className="place-card">
+    <Link href={getLocalizedHref(`/places/${place.id}`, lang)} className="place-card">
       <div className="place-card-media">
         <Image
           src={place.img}

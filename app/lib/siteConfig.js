@@ -64,3 +64,53 @@ export function getAlternateLanguages(path = "/") {
     "x-default": `${SITE_URL}/en${normalizedPath}`,
   };
 }
+
+/**
+ * Transforms an internal route / path into a localized URL with the given language prefix.
+ * Preserves query params and hashes. Avoids modifying external links, mailto/tel, /api, or /_next.
+ * e.g. ("/tours", "en") -> "/en/tours"
+ * e.g. ("/", "en") -> "/en"
+ * e.g. ("/#booking", "en") -> "/en#booking"
+ * e.g. ("/ka/places/123", "ru") -> "/ru/places/123"
+ */
+export function getLocalizedHref(href, lang = DEFAULT_LANGUAGE) {
+  if (!href || typeof href !== "string") return href || "/";
+
+  // Ignore external or protocol-relative URLs
+  if (
+    href.startsWith("http://") ||
+    href.startsWith("https://") ||
+    href.startsWith("mailto:") ||
+    href.startsWith("tel:") ||
+    href.startsWith("whatsapp:") ||
+    href.startsWith("//")
+  ) {
+    return href;
+  }
+
+  // Ignore API and Next.js internal paths
+  if (href.startsWith("/api/") || href === "/api" || href.startsWith("/_next/")) {
+    return href;
+  }
+
+  // Pure in-page hash links on the current page e.g. "#booking"
+  if (href.startsWith("#")) {
+    return href;
+  }
+
+  const currentLang = SUPPORTED_LANGUAGES.includes(lang) ? lang : DEFAULT_LANGUAGE;
+
+  // Split path, query, and hash
+  const hashIndex = href.indexOf("#");
+  const hash = hashIndex !== -1 ? href.slice(hashIndex) : "";
+  const withoutHash = hashIndex !== -1 ? href.slice(0, hashIndex) : href;
+
+  const queryIndex = withoutHash.indexOf("?");
+  const query = queryIndex !== -1 ? withoutHash.slice(queryIndex) : "";
+  const rawPath = queryIndex !== -1 ? withoutHash.slice(0, queryIndex) : withoutHash;
+
+  const cleanPath = stripLocaleFromPath(rawPath);
+  const normalizedPath = cleanPath === "/" ? "" : cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
+
+  return `/${currentLang}${normalizedPath}${query}${hash}`;
+}

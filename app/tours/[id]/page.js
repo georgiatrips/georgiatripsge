@@ -1,39 +1,49 @@
 import React, { Suspense } from "react";
+import { notFound } from "next/navigation";
 import { asLocalizedText } from "../../lib/toursFirestore";
 import { getCachedTourById, getCachedTours, getCachedPlaces, serializeForClient } from "../../lib/server/cachedData";
-import { SITE_URL, getCanonicalUrl, getAlternateLanguages } from "../../lib/siteConfig";
+import { headers } from "next/headers";
+import { SITE_URL, getCanonicalUrl, getAlternateLanguages, LANGUAGE_LOCALES, SUPPORTED_LANGUAGES } from "../../lib/siteConfig";
 import TourDetailClient from "../../components/tours/TourDetailClient";
 import "./tourDetail.css";
 
+const NOT_FOUND_TITLES = {
+  ka: "ტური ვერ მოიძებნა",
+  en: "Tour Not Found",
+  ru: "Тур не найден",
+  tr: "Tur Bulunamadı",
+  ar: "لم يتم العثور على الجولة",
+};
+
 export async function generateMetadata({ params }) {
-  const resolvedParams = await params;
+  const [resolvedParams, reqHeaders] = await Promise.all([params, headers()]);
   const tourId = resolvedParams?.id;
+  const headerLang = reqHeaders.get("x-georgiatrips-locale");
+  const lang = SUPPORTED_LANGUAGES.includes(headerLang) ? headerLang : "ka";
 
   const tour = await getCachedTourById(tourId);
 
   if (!tour) {
-    return {
-      title: "ტური ვერ მოიძებნა | GeorgiaTrips.ge",
-      description: "მოთხოვნილი ტური ვერ მოიძებნა.",
-    };
+    notFound();
   }
 
-  const titleKa = asLocalizedText(tour.title, "ka") || "ტური საქართველოში";
-  const descKa = asLocalizedText(tour.desc, "ka") || "საუკეთესო ტური საქართველოში GeorgiaTrips-თან ერთად.";
+  const tourTitle = asLocalizedText(tour.title, lang) || asLocalizedText(tour.title, "ka") || "Tour";
+  const tourDesc = asLocalizedText(tour.desc, lang) || asLocalizedText(tour.desc, "ka") || "GeorgiaTrips";
   const imgUrl = tour.img || `${SITE_URL}/hero.webp`;
-  const tourCanonical = getCanonicalUrl(`/tours/${tourId}`, "ka");
+  const tourCanonical = getCanonicalUrl(`/tours/${tourId}`, lang);
   const alternateLanguages = getAlternateLanguages(`/tours/${tourId}`);
+  const locale = LANGUAGE_LOCALES[lang] || "ka_GE";
 
   return {
-    title: `${titleKa} | GeorgiaTrips.ge`,
-    description: descKa,
+    title: tourTitle,
+    description: tourDesc,
     alternates: {
       canonical: tourCanonical,
       languages: alternateLanguages,
     },
     openGraph: {
-      title: `${titleKa} — GeorgiaTrips`,
-      description: descKa,
+      title: `${tourTitle} — GeorgiaTrips`,
+      description: tourDesc,
       url: tourCanonical,
       siteName: "GeorgiaTrips",
       images: [
@@ -41,16 +51,16 @@ export async function generateMetadata({ params }) {
           url: imgUrl,
           width: 1200,
           height: 630,
-          alt: titleKa,
+          alt: tourTitle,
         },
       ],
-      locale: "ka_GE",
+      locale,
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: `${titleKa} — GeorgiaTrips`,
-      description: descKa,
+      title: `${tourTitle} — GeorgiaTrips`,
+      description: tourDesc,
       images: [imgUrl],
     },
   };
@@ -66,16 +76,19 @@ export default async function TourDetailPage({ params }) {
     getCachedPlaces(),
   ]);
 
+  if (!rawTour) {
+    notFound();
+  }
+
   const cleanTour = serializeForClient(rawTour);
   const cleanAllTours = serializeForClient(allTours);
   const cleanPlaces = serializeForClient(places);
 
   // Generate JSON-LD TouristTrip Schema for Google Search Snippets
-  const titleKa = rawTour ? asLocalizedText(rawTour.title, "ka") || "ტური საქართველოში" : "ტური";
-  const descKa = rawTour ? asLocalizedText(rawTour.desc, "ka") || "" : "";
+  const titleKa = asLocalizedText(rawTour.title, "ka") || "ტური საქართველოში";
+  const descKa = asLocalizedText(rawTour.desc, "ka") || "";
 
-  const jsonLd = rawTour
-    ? {
+  const jsonLd = {
         "@context": "https://schema.org",
         "@type": "TouristTrip",
         "name": titleKa,
@@ -94,17 +107,14 @@ export default async function TourDetailPage({ params }) {
           "name": "GeorgiaTrips",
           "url": SITE_URL,
         },
-      }
-    : null;
+      };
 
   return (
     <>
-      {jsonLd && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Suspense fallback={<div style={{ padding: "4rem", textAlign: "center", color: "#0d233a" }}>...</div>}>
         <TourDetailClient
           initialTour={cleanTour}

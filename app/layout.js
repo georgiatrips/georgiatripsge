@@ -50,7 +50,7 @@ const notoArabic = Noto_Sans_Arabic({
   adjustFontFallback: true,
 });
 
-import { SOCIAL_PROFILES, FAQS_BY_LANG } from "./lib/shared";
+import { SOCIAL_PROFILES } from "./lib/shared";
 import { SITE_URL, getCanonicalUrl, getAlternateLanguages, SUPPORTED_LANGUAGES } from "./lib/siteConfig";
 
 export const viewport = {
@@ -62,8 +62,13 @@ export const viewport = {
 
 export async function generateMetadata() {
   const [cookieStore, requestHeaders] = await Promise.all([cookies(), headers()]);
-  const storedLang = cookieStore.get("gt_language")?.value || "ka";
-  const lang = SUPPORTED_LANGUAGES.includes(storedLang) ? storedLang : "ka";
+  const headerLang = requestHeaders.get("x-georgiatrips-locale");
+  const storedLang = cookieStore.get("gt_language")?.value;
+  const lang = SUPPORTED_LANGUAGES.includes(headerLang)
+    ? headerLang
+    : SUPPORTED_LANGUAGES.includes(storedLang)
+      ? storedLang
+      : "ka";
   const currentPath = requestHeaders.get("x-georgiatrips-path") || `/${lang}`;
   const canonicalUrl = getCanonicalUrl(currentPath, lang);
   const alternateLanguages = getAlternateLanguages(currentPath);
@@ -221,9 +226,7 @@ export async function generateMetadata() {
   };
 }
 
-function buildStructuredData(lang = "ka") {
-  const faqs = FAQS_BY_LANG[lang] || FAQS_BY_LANG.ka || [];
-
+function buildStructuredData() {
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -241,13 +244,6 @@ function buildStructuredData(lang = "ka") {
         priceRange: "$$",
         currenciesAccepted: "GEL, USD, EUR",
         paymentAccepted: "Cash, Credit Card, Bank Transfer, Online Payment",
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: "4.9",
-          reviewCount: "128",
-          bestRating: "5",
-          worstRating: "1",
-        },
         areaServed: [
           { "@type": "Country", name: "Georgia" },
           { "@type": "AdministrativeArea", name: "Adjara" },
@@ -301,26 +297,19 @@ function buildStructuredData(lang = "ka") {
         jobTitle: "Lead Full-Stack Web Developer & UI/UX Designer",
         knowsAbout: ["Full-Stack Web Development", "Next.js", "React", "UI/UX Engineering", "Search Engine Optimization (SEO)"],
       },
-      {
-        "@type": "FAQPage",
-        "@id": `${SITE_URL}/#faq`,
-        mainEntity: faqs.map((faq) => ({
-          "@type": "Question",
-          name: faq.q,
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: faq.a,
-          },
-        })),
-      },
     ],
   };
 }
 
 export default async function RootLayout({ children }) {
-  const cookieStore = await cookies();
-  const storedLang = cookieStore.get("gt_language")?.value || "ka";
-  const htmlLang = ["ka", "en", "ru", "tr", "ar"].includes(storedLang) ? storedLang : "ka";
+  const [cookieStore, requestHeaders] = await Promise.all([cookies(), headers()]);
+  const headerLang = requestHeaders.get("x-georgiatrips-locale");
+  const storedLang = cookieStore.get("gt_language")?.value;
+  const htmlLang = SUPPORTED_LANGUAGES.includes(headerLang)
+    ? headerLang
+    : SUPPORTED_LANGUAGES.includes(storedLang)
+      ? storedLang
+      : "ka";
   const htmlDir = isRtlLanguage(htmlLang) ? "rtl" : "ltr";
   const jsonLd = buildStructuredData(htmlLang);
 

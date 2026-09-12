@@ -1,40 +1,73 @@
 import React, { Suspense } from "react";
+import HotelsCatalogClient from "../components/hotels/HotelsCatalogClient";
 import { getCachedHotels } from "../lib/server/cachedData";
 import { asLocalizedText } from "../lib/toursFirestore";
-import { SITE_URL, getCanonicalUrl, getAlternateLanguages } from "../lib/siteConfig";
-import HotelsCatalogClient from "../components/hotels/HotelsCatalogClient";
-import "./hotels.css";
+import { headers } from "next/headers";
+import { SITE_URL, getCanonicalUrl, getAlternateLanguages, LANGUAGE_LOCALES, SUPPORTED_LANGUAGES } from "../lib/siteConfig";
 
-export const metadata = {
-  title: "სასტუმროები და აპარტამენტები საქართველოში | GeorgiaTrips.ge",
-  description: "საუკეთესო სასტუმროები, ვილები და საოჯახო სასტუმროები თბილისში, ბათუმში, ყაზბეგში, კახეთსა და სვანეთში. პირდაპირი დაჯავშნა საუკეთესო ფასად.",
-  alternates: {
-    canonical: getCanonicalUrl("/hotels", "ka"),
-    languages: getAlternateLanguages("/hotels"),
+const HOTELS_META = {
+  ka: {
+    title: "სასტუმროები და აპარტამენტები საქართველოში",
+    description: "საუკეთესო სასტუმროები, ვილები და საოჯახო სასტუმროები თბილისში, ბათუმში, ყაზბეგში, კახეთსა და სვანეთში. პირდაპირი დაჯავშნა საუკეთესო ფასად.",
   },
-  openGraph: {
-    title: "სასტუმროები საქართველოში — GeorgiaTrips",
-    description: "აღმოაჩინეთ საუკეთესო დასასვენებელი ადგილები და სასტუმროები საქართველოში.",
-    url: getCanonicalUrl("/hotels", "ka"),
-    siteName: "GeorgiaTrips",
-    images: [
-      {
-        url: "/villa.webp",
-        width: 1200,
-        height: 630,
-        alt: "სასტუმროები საქართველოში",
-      },
-    ],
-    locale: "ka_GE",
-    type: "website",
+  en: {
+    title: "Hotels, Villas & Accommodations in Georgia",
+    description: "Find the best hotels, luxury villas, and boutique accommodations in Tbilisi, Batumi, Kazbegi, Kakheti, and Svaneti.",
   },
-  twitter: {
-    card: "summary_large_image",
-    title: "სასტუმროები საქართველოში — GeorgiaTrips",
-    description: "სასტუმროების და ვილების საუკეთესო არჩევანი საქართველოში.",
-    images: ["/villa.webp"],
+  ru: {
+    title: "Отели, виллы и апартаменты в Грузии",
+    description: "Лучшие отели, виллы и гостевые дома в Тбилиси, Батуми, Казбеги, Кахетии и Сванетии. Прямое бронирование по лучшим ценам.",
+  },
+  tr: {
+    title: "Gürcistan Otelleri, Villaları ve Konaklama Yerleri",
+    description: "Tiflis, Batum, Kazbegi, Kaheti ve Svaneti'de en iyi otel ve villa seçenekleri.",
+  },
+  ar: {
+    title: "فنادق وفلل وأماكن إقامة فاخرة في جورجيا",
+    description: "أفضل الفنادق والمنتجعات والفلل في تبليسي، باتومي، كازبيجي، كاخيتي وسوانيتي.",
   },
 };
+
+export async function generateMetadata() {
+  const reqHeaders = await headers();
+  const headerLang = reqHeaders.get("x-georgiatrips-locale");
+  const lang = SUPPORTED_LANGUAGES.includes(headerLang) ? headerLang : "ka";
+  const meta = HOTELS_META[lang] || HOTELS_META.ka;
+  const canonicalUrl = getCanonicalUrl("/hotels", lang);
+  const alternateLanguages = getAlternateLanguages("/hotels");
+  const locale = LANGUAGE_LOCALES[lang] || "ka_GE";
+
+  return {
+    title: meta.title,
+    description: meta.description,
+    alternates: {
+      canonical: canonicalUrl,
+      languages: alternateLanguages,
+    },
+    openGraph: {
+      title: `${meta.title} — GeorgiaTrips`,
+      description: meta.description,
+      url: canonicalUrl,
+      siteName: "GeorgiaTrips",
+      images: [
+        {
+          url: "/villa.webp",
+          width: 1200,
+          height: 630,
+          alt: meta.title,
+        },
+      ],
+      locale,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${meta.title} — GeorgiaTrips`,
+      description: meta.description,
+      images: ["/villa.webp"],
+    },
+  };
+}
 
 export default async function HotelsPage() {
   const hotels = await getCachedHotels();

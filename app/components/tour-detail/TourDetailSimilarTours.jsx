@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
+import { getLocalizedHref } from "../../lib/siteConfig";
 import { asLocalizedText, translateDuration, translateLocation } from "../../lib/toursFirestore";
 import { ClockIcon, LocationIcon } from "../Icons";
 import TourPrice from "../TourPrice";
@@ -25,7 +26,7 @@ export default function TourDetailSimilarTours({ similarTours = [], popularTours
               {similarTours.map((item) => (
                 <Link
                   key={item.id}
-                  href={`/tours/${item.id}`}
+                  href={getLocalizedHref(`/tours/${item.id}`, lang)}
                   className="tb-card"
                   style={{ textDecoration: "none" }}
                 >
@@ -94,7 +95,7 @@ export default function TourDetailSimilarTours({ similarTours = [], popularTours
               {popularTours.map((item) => (
                 <Link
                   key={item.id}
-                  href={`/tours/${item.id}`}
+                  href={getLocalizedHref(`/tours/${item.id}`, lang)}
                   className="tb-card"
                   style={{ textDecoration: "none" }}
                 >

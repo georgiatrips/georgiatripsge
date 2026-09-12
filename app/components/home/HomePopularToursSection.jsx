@@ -1,10 +1,9 @@
-"use client";
-
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { asLocalizedText, translateDuration, translateLocation } from "../../lib/toursFirestore";
+import { getLocalizedHref } from "../../lib/siteConfig";
 import { ClockIcon, LocationIcon } from "../Icons";
 import TourPrice from "../TourPrice";
 
@@ -52,10 +51,11 @@ export default function HomePopularToursSection({
                 {popularTourPairs.map((pair, pIdx) => (
                   <div key={pIdx} className="mini-cards-pair-slide">
                     {pair.map((tour, index) => (
-                      <article
+                      <Link
                         key={tour.id}
+                        href={getLocalizedHref(`/tours/${tour.id}`, lang)}
                         className="pop-fc"
-                        onClick={() => handleTourClick(tour)}
+                        style={{ textDecoration: "none" }}
                       >
                         {/* Full-bleed Image */}
                         <Image
@@ -119,10 +119,10 @@ export default function HomePopularToursSection({
                                 </div>
                               )}
                             </div>
-                            <button className="pop-fc-btn">{t("popular.book")} →</button>
+                            <span className="pop-fc-btn">{t("popular.book")} →</span>
                           </div>
                         </div>
-                      </article>
+                      </Link>
                     ))}
                   </div>
                 ))}
@@ -146,7 +146,7 @@ export default function HomePopularToursSection({
                 {sec.tours.map((tour) => (
                   <Link
                     key={tour.id}
-                    href={`/tours/${encodeURIComponent(tour.id)}`}
+                    href={getLocalizedHref(`/tours/${tour.id}`, lang)}
                     className="tb-card"
                     style={{ textDecoration: "none" }}
                   >

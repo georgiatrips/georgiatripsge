@@ -5,6 +5,7 @@ import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { useLanguage } from "../lib/i18n/LanguageContext";
+import { getLocalizedHref } from "../lib/siteConfig";
 
 const CONTENT = {
   ka: {
@@ -88,7 +89,7 @@ export default function PrivacyPolicyPage() {
       <Navbar />
       <main style={{ padding: "7rem 1.5rem 5rem 1.5rem", minHeight: "80vh", background: "var(--bg, #f8fafc)" }}>
         <div style={{ maxWidth: "800px", margin: "0 auto", background: "#ffffff", padding: "3rem 2.5rem", borderRadius: "20px", boxShadow: "0 10px 30px rgba(0,0,0,0.05)" }}>
-          <Link href="/" style={{ color: "var(--teal, #29b2b7)", fontWeight: 700, textDecoration: "none", display: "inline-block", marginBottom: "1.5rem" }}>
+          <Link href={getLocalizedHref("/", lang)} style={{ color: "var(--teal, #29b2b7)", fontWeight: 700, textDecoration: "none", display: "inline-block", marginBottom: "1.5rem" }}>
             {t.backHome}
           </Link>
           <h1 style={{ fontSize: "2.25rem", fontWeight: 800, color: "var(--navy, #0d233a)", marginBottom: "0.5rem" }}>{t.title}</h1>

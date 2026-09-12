@@ -1,40 +1,73 @@
 import React, { Suspense } from "react";
+import PlacesCatalogClient from "../components/places/PlacesCatalogClient";
 import { getCachedPlaces } from "../lib/server/cachedData";
 import { asLocalizedText } from "../lib/toursFirestore";
-import { SITE_URL, getCanonicalUrl, getAlternateLanguages } from "../lib/siteConfig";
-import PlacesCatalogClient from "../components/places/PlacesCatalogClient";
-import "./places.css";
+import { headers } from "next/headers";
+import { SITE_URL, getCanonicalUrl, getAlternateLanguages, LANGUAGE_LOCALES, SUPPORTED_LANGUAGES } from "../lib/siteConfig";
 
-export const metadata = {
-  title: "ღირსშესანიშნაობები საქართველოში | GeorgiaTrips.ge",
-  description: "საქართველოს ულამაზესი ადგილები, კულტურული და ბუნებრივი ძეგლები — ყაზბეგი, სვანეთი, მარტვილი, ვარძია, უფლისციხე, პრომეთეს მღვიმე და სხვა.",
-  alternates: {
-    canonical: getCanonicalUrl("/places", "ka"),
-    languages: getAlternateLanguages("/places"),
+const PLACES_META = {
+  ka: {
+    title: "ღირსშესანიშნაობები საქართველოში",
+    description: "საქართველოს ულამაზესი ადგილები, კულტურული და ბუნებრივი ძეგლები — ყაზბეგი, სვანეთი, მარტვილი, ვარძია, უფლისციხე, პრომეთეს მღვიმე და სხვა.",
   },
-  openGraph: {
-    title: "ღირსშესანიშნაობები საქართველოში — GeorgiaTrips",
-    description: "აღმოაჩინეთ საქართველოს უნიკალური ბუნება და ისტორიული ძეგლები.",
-    url: getCanonicalUrl("/places", "ka"),
-    siteName: "GeorgiaTrips",
-    images: [
-      {
-        url: "/tbilisi.webp",
-        width: 1200,
-        height: 630,
-        alt: "ღირსშესანიშნაობები საქართველოში",
-      },
-    ],
-    locale: "ka_GE",
-    type: "website",
+  en: {
+    title: "Top Attractions & Places to Visit in Georgia",
+    description: "Explore the most beautiful landmarks, national parks, and historic places in Georgia — Kazbegi, Martvili Canyon, Prometheus Cave, Vardzia, and Svaneti.",
   },
-  twitter: {
-    card: "summary_large_image",
-    title: "ღირსშესანიშნაობები საქართველოში — GeorgiaTrips",
-    description: "საქართველოს ულამაზესი ადგილები და ტურისტული ატრაქციები.",
-    images: ["/tbilisi.webp"],
+  ru: {
+    title: "Главные достопримечательности и красивые места Грузии",
+    description: "Узнайте о лучших достопримечательностях Грузии: Казбеги, каньон Мартвили, пещера Прометея, Вардзия, Сванетия и старый Тбилиси.",
+  },
+  tr: {
+    title: "Gürcistan'da Gezilecek En İyi Yerler ve Tarihi Mekanlar",
+    description: "Gürcistan'ın en güzel turistik yerleri, kanyonları, tarihi kaleleri ve doğal güzellikleri.",
+  },
+  ar: {
+    title: "أفضل المعالم والأماكن السياحية في جورجيا",
+    description: "اكتشف أجمل الأماكن السياحية والمعالم التاريخية والطبيعية في جورجيا.",
   },
 };
+
+export async function generateMetadata() {
+  const reqHeaders = await headers();
+  const headerLang = reqHeaders.get("x-georgiatrips-locale");
+  const lang = SUPPORTED_LANGUAGES.includes(headerLang) ? headerLang : "ka";
+  const meta = PLACES_META[lang] || PLACES_META.ka;
+  const canonicalUrl = getCanonicalUrl("/places", lang);
+  const alternateLanguages = getAlternateLanguages("/places");
+  const locale = LANGUAGE_LOCALES[lang] || "ka_GE";
+
+  return {
+    title: meta.title,
+    description: meta.description,
+    alternates: {
+      canonical: canonicalUrl,
+      languages: alternateLanguages,
+    },
+    openGraph: {
+      title: `${meta.title} — GeorgiaTrips`,
+      description: meta.description,
+      url: canonicalUrl,
+      siteName: "GeorgiaTrips",
+      images: [
+        {
+          url: "/tbilisi.webp",
+          width: 1200,
+          height: 630,
+          alt: meta.title,
+        },
+      ],
+      locale,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${meta.title} — GeorgiaTrips`,
+      description: meta.description,
+      images: ["/tbilisi.webp"],
+    },
+  };
+}
 
 export default async function PlacesPage() {
   const places = await getCachedPlaces();

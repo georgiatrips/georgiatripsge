@@ -8,6 +8,7 @@ import Navbar from "../Navbar";
 import Footer from "../Footer";
 import TourPrice from "../TourPrice";
 import "../../tours/[id]/tourDetail.css";
+import { getLocalizedHref } from "../../lib/siteConfig";
 import { getFirestoreTourById, normalizeFirestoreTour, groupDepartureDates, listFirestoreTours, asLocalizedText, translateDuration, translateLocation, translateMonthName, getPlaceLocalizedTitle, extractImageUrl } from "../../lib/toursFirestore";
 import { listPlaces } from "../../lib/placesFirestore";
 import { WA_LINK, WA_NUMBER, WhatsAppIcon, PHONE_DISPLAY, TELEGRAM_HANDLE, TELEGRAM_LINK, INSTAGRAM_HANDLE, INSTAGRAM_LINK, SOCIAL_PROFILES, FAQS } from "../../lib/shared";
@@ -543,7 +544,7 @@ export default function TourDetailClient({
         <div style={{ textAlign: "center", color: "#0d233a" }}>
           <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>🔍</div>
           <h3>{t("tourDetail.tourNotFound") || "ტური ვერ მოიძებნა"}</h3>
-          <Link href="/tours" style={{ color: "var(--teal)", textDecoration: "underline", marginTop: "1rem", display: "inline-block" }}>
+          <Link href={getLocalizedHref("/tours", lang)} style={{ color: "var(--teal)", textDecoration: "underline", marginTop: "1rem", display: "inline-block" }}>
             {t("tourDetail.backToTours") || "ყველა ტურის ნახვა"}
           </Link>
         </div>

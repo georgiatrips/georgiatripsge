@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
+import { getLocalizedHref } from "../../lib/siteConfig";
 import { asLocalizedText, translateDuration, translateLocation } from "../../lib/toursFirestore";
 import TourPrice from "../TourPrice";
 
@@ -31,9 +32,9 @@ export default function TourDetailHero({
 
         <div className="container tdp-hero2-topbar">
           <nav className="tdp-hero2-crumbs" aria-label="ნავიგაცია">
-            <Link href="/">{t("tourDetail.crumbsHome")}</Link>
+            <Link href={getLocalizedHref("/", lang)}>{t("tourDetail.crumbsHome")}</Link>
             <span className="sep">/</span>
-            <Link href="/tours">{t("tourDetail.crumbsTours")}</Link>
+            <Link href={getLocalizedHref("/tours", lang)}>{t("tourDetail.crumbsTours")}</Link>
             <span className="sep">/</span>
             <span className="active">{asLocalizedText(tour.title, lang)}</span>
           </nav>

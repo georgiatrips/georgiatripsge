@@ -1,8 +1,8 @@
-"use client";
-
 import React from "react";
+import Link from "next/link";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { asLocalizedText, translateMonthName } from "../../lib/toursFirestore";
+import { getLocalizedHref } from "../../lib/siteConfig";
 import TourPrice from "../TourPrice";
 
 const truncateText = (value, maxLength = 100) => {
@@ -31,8 +31,13 @@ export default function HomeScheduleSection({
         <div className="schedule-list-container">
           {scheduleTours.map((item) => (
             <article key={item.id} className="schedule-card-row">
-              <h3 className="schedule-tour-title" onClick={() => handleTourClick(item)}>
-                {asLocalizedText(item.title, lang)}
+              <h3 className="schedule-tour-title">
+                <Link
+                  href={getLocalizedHref(`/tours/${item.id}`, lang)}
+                  style={{ color: "inherit", textDecoration: "none" }}
+                >
+                  {asLocalizedText(item.title, lang)}
+                </Link>
               </h3>
               <div className="schedule-tour-price">
                 <TourPrice price={item.priceGroup} lang={lang} variant="card" />

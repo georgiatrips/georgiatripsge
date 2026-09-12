@@ -2,6 +2,7 @@
 
 import { useMemo, useEffect, useState, useRef } from "react";
 import { listFirestoreTours, normalizeFirestoreTour } from "./toursFirestore";
+import { ALL_TOURS as staticTours } from "./toursData";
 import { useLanguage } from "./i18n/LanguageContext";
 
 // Module-level cache for raw Firestore documents to avoid repeated fetches
@@ -44,12 +45,17 @@ export function useAllTours() {
     cachePromise = (async () => {
       try {
         const list = await listFirestoreTours();
-        cachedRawTours = list;
+        const fsTourIds = new Set((list || []).map((t) => t.id));
+        const merged = [
+          ...(list || []),
+          ...staticTours.filter((st) => !fsTourIds.has(st.id)),
+        ];
+        cachedRawTours = merged;
         cacheTimestamp = Date.now();
-        return list;
+        return merged;
       } catch (err) {
         console.error("Firestore tours load failed:", err);
-        return [];
+        return staticTours;
       } finally {
         cachePromise = null;
       }

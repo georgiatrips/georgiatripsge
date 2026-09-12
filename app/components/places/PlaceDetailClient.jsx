@@ -6,13 +6,14 @@ import Link from "next/link";
 import Navbar from "../Navbar";
 import Footer from "../Footer";
 import { formatRegionName } from "../../lib/placesMeta";
+import { getLocalizedHref } from "../../lib/siteConfig";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { asLocalizedText } from "../../lib/toursFirestore";
 import "../../places/places.css";
 
 function SmallPlaceCard({ place, lang }) {
   return (
-    <Link href={`/places/${place.id}`} className="place-mini-card">
+    <Link href={getLocalizedHref(`/places/${place.id}`, lang)} className="place-mini-card">
       <div className="place-mini-media">
         <Image src={place.img} alt={asLocalizedText(place.title, lang)} fill sizes="180px" style={{ objectFit: "cover" }} />
       </div>
@@ -50,7 +51,7 @@ export default function PlaceDetailClient({ initialPlace = null, initialAllPlace
         <Navbar active="places" />
         <main className="place-detail-state">
           <h1>{t("placeDetail.notFoundTitle")}</h1>
-          <Link href="/places">{t("placeDetail.notFoundBtn")}</Link>
+          <Link href={getLocalizedHref("/places", lang)}>{t("placeDetail.notFoundBtn")}</Link>
         </main>
         <Footer />
       </div>
@@ -65,7 +66,7 @@ export default function PlaceDetailClient({ initialPlace = null, initialAllPlace
           <Image src={place.img} alt={asLocalizedText(place.title, lang)} fill priority sizes="100vw" style={{ objectFit: "cover" }} />
           <div className="place-detail-overlay" />
           <div className="container place-detail-hero-content">
-            <Link href="/places" className="place-back-link">{t("placeDetail.backAll")}</Link>
+            <Link href={getLocalizedHref("/places", lang)} className="place-back-link">{t("placeDetail.backAll")}</Link>
             <span className="places-kicker">{formatRegionName(asLocalizedText(place.region, lang), lang)}</span>
             <h1>{asLocalizedText(place.title, lang)}</h1>
           </div>
@@ -98,7 +99,7 @@ export default function PlaceDetailClient({ initialPlace = null, initialAllPlace
                 <span>{t("placeDetail.statusLabel")}</span>
                 <strong>{place.isPopular ? t("placeDetail.popularPlace") : t("placeDetail.discoverPlace")}</strong>
               </div>
-              <Link href="/places" className="place-aside-action">{t("placeDetail.viewMore")}</Link>
+              <Link href={getLocalizedHref("/places", lang)} className="place-aside-action">{t("placeDetail.viewMore")}</Link>
             </aside>
           </div>
         </section>
@@ -111,7 +112,7 @@ export default function PlaceDetailClient({ initialPlace = null, initialAllPlace
                   <span className="places-kicker">{t("placeDetail.sameRegionKicker")}</span>
                   <h2>{t("placeDetail.similarTitle")}</h2>
                 </div>
-                <Link href={`/places?region=${encodeURIComponent(place.region)}`}>{t("placeDetail.viewAll")}</Link>
+                <Link href={getLocalizedHref(`/places?region=${encodeURIComponent(place.region)}`, lang)}>{t("placeDetail.viewAll")}</Link>
               </div>
               <div className="place-mini-grid">
                 {similar.map((item) => <SmallPlaceCard key={item.id} place={item} lang={lang} />)}

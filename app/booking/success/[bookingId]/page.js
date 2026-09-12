@@ -7,6 +7,7 @@ import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
 import { STATUS_CONFIG, getStatusLabel } from "../../../lib/bookingModel";
 import { WA_LINK } from "../../../lib/shared";
+import { getLocalizedHref } from "../../../lib/siteConfig";
 import { useLanguage } from "../../../lib/i18n/LanguageContext";
 
 export default function BookingSuccessPage() {
@@ -118,7 +119,7 @@ export default function BookingSuccessPage() {
             </h1>
             <p style={{ color: "#64748b", fontSize: "0.95rem", marginBottom: "1.5rem" }}>{error}</p>
             <Link
-              href="/booking/status"
+              href={getLocalizedHref("/booking/status", lang)}
               style={{
                 display: "inline-block",
                 background: "#0d9488",
@@ -285,7 +286,7 @@ export default function BookingSuccessPage() {
 
                 <div style={{ display: "flex", gap: "0.75rem" }}>
                   <Link
-                    href={`/booking/status?id=${encodeURIComponent(booking.bookingId)}`}
+                    href={getLocalizedHref(`/booking/status?id=${encodeURIComponent(booking.bookingId)}`, lang)}
                     style={{
                       flex: 1,
                       textAlign: "center",
@@ -303,7 +304,7 @@ export default function BookingSuccessPage() {
                   </Link>
 
                   <Link
-                    href="/tours"
+                    href={getLocalizedHref("/tours", lang)}
                     style={{
                       flex: 1,
                       textAlign: "center",

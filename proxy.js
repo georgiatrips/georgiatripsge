@@ -133,6 +133,18 @@ export function proxy(request) {
   const cookieLang = request.cookies.get("gt_language")?.value;
   const pathParts = pathname.split("/");
   const pathLang = pathParts[1];
+  const lowerPathLang = pathLang ? pathLang.toLowerCase() : "";
+  const isCaseMismatch = pathLang && pathLang !== lowerPathLang && SUPPORTED_LANGUAGES.includes(lowerPathLang);
+
+  // Normalize uppercase supported locale prefix with a 308 Permanent Redirect (e.g. /EN/tours -> /en/tours)
+  if (isCaseMismatch) {
+    const redirectUrl = request.nextUrl.clone();
+    const newParts = [...pathParts];
+    newParts[1] = lowerPathLang;
+    redirectUrl.pathname = newParts.join("/");
+    return NextResponse.redirect(redirectUrl, { status: 308 });
+  }
+
   const hasLocalePrefix = SUPPORTED_LANGUAGES.includes(pathLang);
   const detectedLang = detectLanguage(request.headers.get("accept-language"));
   const locale = hasLocalePrefix

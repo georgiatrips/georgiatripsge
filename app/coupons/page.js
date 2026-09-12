@@ -8,6 +8,7 @@ import Footer from "../components/Footer";
 import CouponTicket from "../components/CouponTicket";
 import { useAuth } from "../lib/AuthContext";
 import { useLanguage } from "../lib/i18n/LanguageContext";
+import { getLocalizedHref } from "../lib/siteConfig";
 import { getCouponByCode } from "../lib/coupons";
 import "../coupon.css";
 
@@ -38,7 +39,7 @@ const VALID_COUPONS = {
 
 export default function CouponsPage() {
   const { user } = useAuth() ?? {};
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const router = useRouter();
 
   const [addedCoupons, setAddedCoupons] = useState([]);
@@ -159,7 +160,7 @@ export default function CouponsPage() {
             </h2>
             {allMyCoupons.length > 0 && (
               <Link
-                href="/tours"
+                href={getLocalizedHref("/tours", lang)}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -191,7 +192,7 @@ export default function CouponsPage() {
                 დარეგისტრირდით და მიიღეთ 10%-იანი ფასდაკლების კუპონი!
               </p>
               <Link
-                href="/login?tab=signup"
+                href={getLocalizedHref("/login?tab=signup", lang)}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -304,7 +305,7 @@ export default function CouponsPage() {
             </div>
 
             <Link
-              href="/tours"
+              href={getLocalizedHref("/tours", lang)}
               style={{
                 display: "inline-flex",
                 alignItems: "center",

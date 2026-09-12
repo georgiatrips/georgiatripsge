@@ -1,12 +1,14 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
+import { getLocalizedHref } from "../../lib/siteConfig";
 import { formatLocationTag } from "../../lib/toursFirestore";
 import { BrandLogo } from "../../lib/shared";
 
 export default function HomeGallerySection({ posts = [] }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   return (
     <section className="section gallery-bg" id="gallery">
@@ -70,28 +72,28 @@ export default function HomeGallerySection({ posts = [] }) {
                 </div>
 
                 <div className="fb-action-btns">
-                  <a href="/posts" className="fb-action-btn">
+                  <Link href={getLocalizedHref("/posts", lang)} className="fb-action-btn">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
                     </svg>
-                     <span>{t("popular.like")}</span>
-                   </a>
-                   <a href="/posts" className="fb-action-btn">
-                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                     </svg>
-                     <span>{t("popular.comments")}</span>
-                   </a>
-                   <a href="/posts" className="fb-action-btn">
-                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                       <circle cx="18" cy="5" r="3"/>
-                       <circle cx="6" cy="12" r="3"/>
-                       <circle cx="18" cy="19" r="3"/>
-                       <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-                       <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-                     </svg>
-                     <span>{t("popular.shares")}</span>
-                   </a>
+                    <span>{t("popular.like")}</span>
+                  </Link>
+                  <Link href={getLocalizedHref("/posts", lang)} className="fb-action-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    <span>{t("popular.comments")}</span>
+                  </Link>
+                  <Link href={getLocalizedHref("/posts", lang)} className="fb-action-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="18" cy="5" r="3"/>
+                      <circle cx="6" cy="12" r="3"/>
+                      <circle cx="18" cy="19" r="3"/>
+                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                    </svg>
+                    <span>{t("popular.shares")}</span>
+                  </Link>
                 </div>
               </article>
             ))}
@@ -104,12 +106,12 @@ export default function HomeGallerySection({ posts = [] }) {
         )}
 
         <div className="social-feed-more-wrap">
-          <a href="/posts" className="social-feed-more-btn" style={{ textDecoration: "none" }}>
+          <Link href={getLocalizedHref("/posts", lang)} className="social-feed-more-btn" style={{ textDecoration: "none" }}>
             {t("popular.viewAll")}
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M6 9l6 6 6-6" />
             </svg>
-          </a>
+          </Link>
         </div>
       </div>
     </section>

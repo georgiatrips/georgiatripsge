@@ -7,6 +7,7 @@ import Navbar from "../Navbar";
 import Footer from "../Footer";
 import PageHero from "../PageHero";
 import { BrandLogo, WA_LINK, WhatsAppIcon } from "../../lib/shared";
+import { getLocalizedHref } from "../../lib/siteConfig";
 import { useAllTours } from "../../lib/useAllTours";
 import { useAuth } from "../../lib/AuthContext";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
@@ -310,7 +311,7 @@ export default function PostsCatalogClient({ initialPosts = [] }) {
           <aside className="posts-tours-sidebar">
             <div className="posts-sidebar-tour-list">
               {sidebarTours.map((tour) => (
-                <Link key={tour.id} href={"/tours/" + tour.id} className="posts-sidebar-tour">
+                <Link key={tour.id} href={getLocalizedHref("/tours/" + tour.id, lang)} className="posts-sidebar-tour">
                   <span className="posts-sidebar-tour-image">
                     <Image
                       src={tour.img || "/hero.webp"}
