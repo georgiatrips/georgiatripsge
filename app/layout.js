@@ -376,13 +376,13 @@ export default async function RootLayout({ children }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <LanguageProvider initialLang={htmlLang}>
-          <Suspense fallback={null}>
-            <DocumentTitleManager />
-          </Suspense>
           <CurrencyProvider>
             <AuthProvider>
               <CouponProvider>
                 {children}
+                <Suspense fallback={null}>
+                  <DocumentTitleManager />
+                </Suspense>
                 <Suspense fallback={null}>
                   <AnalyticsTracker />
                 </Suspense>
