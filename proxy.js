@@ -4,6 +4,10 @@ import {
   checkRateLimit,
   isStaticAssetRequest,
 } from "./app/lib/security";
+import {
+  checkTourExists,
+  checkPlaceExists,
+} from "./app/lib/server/entityValidator";
 
 const SUPPORTED_LANGUAGES = ["ka", "en", "ru", "tr", "ar"];
 
@@ -43,7 +47,7 @@ const API_LIMITS = {
   "/api/analytics/track": { max: 60, methods: ["GET", "POST"] },
 };
 
-export function proxy(request) {
+export async function proxy(request) {
   const { pathname, searchParams } = request.nextUrl;
 
   // ═══════════════════════════════════════════════════════════════
