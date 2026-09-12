@@ -63,15 +63,26 @@ export const viewport = {
 export async function generateMetadata() {
   const [cookieStore, requestHeaders] = await Promise.all([cookies(), headers()]);
   const headerLang = requestHeaders.get("x-georgiatrips-locale");
+  const currentPath = requestHeaders.get("x-georgiatrips-path") || "";
+  const pathParts = currentPath.split("/").filter(Boolean);
+  const pathLang = pathParts[0];
   const storedLang = cookieStore.get("gt_language")?.value;
+
+  // The URL locale is 100% authoritative:
+  // 1. Explicit locale from x-georgiatrips-locale (set by proxy from URL prefix)
+  // 2. Explicit locale in x-georgiatrips-path prefix
+  // 3. Cookie storedLang only when URL has no explicit locale
+  // 4. Default "ka"
   const lang = SUPPORTED_LANGUAGES.includes(headerLang)
     ? headerLang
-    : SUPPORTED_LANGUAGES.includes(storedLang)
-      ? storedLang
-      : "ka";
-  const currentPath = requestHeaders.get("x-georgiatrips-path") || `/${lang}`;
-  const canonicalUrl = getCanonicalUrl(currentPath, lang);
-  const alternateLanguages = getAlternateLanguages(currentPath);
+    : (pathLang && SUPPORTED_LANGUAGES.includes(pathLang))
+      ? pathLang
+      : (storedLang && SUPPORTED_LANGUAGES.includes(storedLang))
+        ? storedLang
+        : "ka";
+  const finalPath = currentPath || `/${lang}`;
+  const canonicalUrl = getCanonicalUrl(finalPath, lang);
+  const alternateLanguages = getAlternateLanguages(finalPath);
 
   const metaByLang = {
     ka: {
@@ -304,12 +315,23 @@ function buildStructuredData() {
 export default async function RootLayout({ children }) {
   const [cookieStore, requestHeaders] = await Promise.all([cookies(), headers()]);
   const headerLang = requestHeaders.get("x-georgiatrips-locale");
+  const currentPath = requestHeaders.get("x-georgiatrips-path") || "";
+  const pathParts = currentPath.split("/").filter(Boolean);
+  const pathLang = pathParts[0];
   const storedLang = cookieStore.get("gt_language")?.value;
+
+  // The URL locale is 100% authoritative:
+  // 1. Explicit locale from x-georgiatrips-locale (set by proxy from URL prefix)
+  // 2. Explicit locale in x-georgiatrips-path prefix
+  // 3. Cookie storedLang only when URL has no explicit locale
+  // 4. Default "ka"
   const htmlLang = SUPPORTED_LANGUAGES.includes(headerLang)
     ? headerLang
-    : SUPPORTED_LANGUAGES.includes(storedLang)
-      ? storedLang
-      : "ka";
+    : (pathLang && SUPPORTED_LANGUAGES.includes(pathLang))
+      ? pathLang
+      : (storedLang && SUPPORTED_LANGUAGES.includes(storedLang))
+        ? storedLang
+        : "ka";
   const htmlDir = isRtlLanguage(htmlLang) ? "rtl" : "ltr";
   const jsonLd = buildStructuredData(htmlLang);
 

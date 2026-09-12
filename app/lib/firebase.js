@@ -54,19 +54,21 @@ export async function signInWithFacebook() {
 // ── Email Sign Up ────────────────────────────────────────────
 export async function signUpWithEmail(email, password, displayName) {
   const result = await createUserWithEmailAndPassword(auth, email, password);
-  await updateProfile(result.user, { displayName });
-  await sendEmailVerification(result.user);
-  await signOut(auth);
-  return null; // signed out until email verified
+  if (displayName) {
+    try {
+      await updateProfile(result.user, { displayName });
+    } catch (_) {}
+  }
+  // Try sending verification email non-blockingly
+  try {
+    sendEmailVerification(result.user).catch(() => {});
+  } catch (_) {}
+  return result.user;
 }
 
 // ── Email Sign In ────────────────────────────────────────────
 export async function signInWithEmail(email, password) {
   const result = await signInWithEmailAndPassword(auth, email, password);
-  if (!result.user.emailVerified) {
-    await signOut(auth);
-    throw Object.assign(new Error("email-not-verified"), { code: "auth/email-not-verified" });
-  }
   return result.user;
 }
 

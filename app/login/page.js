@@ -57,7 +57,7 @@ function getErrorMessage(code, t) {
 
 // ── Main Component ────────────────────────────────────────────
 export default function LoginPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [tab, setTab] = useState("signin"); // "signin" | "signup"
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -98,7 +98,7 @@ export default function LoginPage() {
       await signInWithGoogle();
       claimWelcomeCoupon();
       showSuccess(t("loginPage.welcomeRedirect"));
-      setTimeout(() => router.push("/"), 900);
+      setTimeout(() => router.push(getLocalizedHref("/", lang)), 900);
     } catch (e) {
       showError(getErrorMessage(e.code, t));
     } finally {
@@ -113,7 +113,7 @@ export default function LoginPage() {
       await signInWithFacebook();
       claimWelcomeCoupon();
       showSuccess(t("loginPage.welcomeRedirect"));
-      setTimeout(() => router.push("/"), 900);
+      setTimeout(() => router.push(getLocalizedHref("/", lang)), 900);
     } catch (e) {
       showError(getErrorMessage(e.code, t));
     } finally {
@@ -130,7 +130,7 @@ export default function LoginPage() {
       await signInWithEmail(siEmail, siPassword);
       claimWelcomeCoupon();
       showSuccess(t("loginPage.welcomeRedirect"));
-      setTimeout(() => router.push("/"), 900);
+      setTimeout(() => router.push(getLocalizedHref("/", lang)), 900);
     } catch (e) {
       showError(getErrorMessage(e.code, t));
     } finally {
@@ -146,8 +146,8 @@ export default function LoginPage() {
     try {
       await signUpWithEmail(suEmail, suPassword, suName);
       claimWelcomeCoupon();
-      showSuccess(t("loginPage.accountCreatedVerify"));
-      setTimeout(() => setTab("signin"), 3000);
+      showSuccess(t("loginPage.welcomeRedirect") || "წარმატებით დარეგისტრირდით!");
+      setTimeout(() => router.push(getLocalizedHref("/", lang)), 900);
     } catch (e) {
       showError(getErrorMessage(e.code, t));
     } finally {

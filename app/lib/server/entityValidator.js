@@ -1,26 +1,7 @@
 import { db } from "../firebase";
 import { getDoc, doc, getDocs, collection } from "firebase/firestore";
 
-const STATIC_TOUR_IDS = new Set([
-  "promethe-martvili",
-  "adjara-mountains",
-  "kazbegi-gergeti",
-  "mtirala",
-  "tbilisi-mcxeta",
-  "mestia-ushguli",
-  "kakheti-wine",
-  "machakhela",
-  "khulo-goderdzi",
-  "heli-caucasus",
-  "vip-villas",
-  "batumi-yacht",
-  "gudauri-panoramic",
-  "family-seasonal",
-  "tskaltubo-kutaisi",
-  "martvili-ureki",
-]);
-
-const validTourIds = new Set(STATIC_TOUR_IDS);
+const validTourIds = new Set();
 const invalidTourIds = new Set();
 const validPlaceIds = new Set();
 const invalidPlaceIds = new Set();

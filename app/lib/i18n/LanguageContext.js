@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
+import { usePathname } from "next/navigation";
 import { isRtlLanguage, SUPPORTED_LANGUAGES } from "./locale";
 
 import { ka } from "./locales/ka";
@@ -13,54 +14,13 @@ const LanguageContext = createContext(null);
 const dictionaries = { ka, en, ru, tr, ar };
 const STORAGE_KEY = "gt_language";
 
-function detectBrowserLanguage() {
-  if (typeof navigator === "undefined") return "ka";
-  const browserLangs = navigator.languages || [navigator.language || ""];
-  for (const rawLang of browserLangs) {
-    if (!rawLang) continue;
-    const code = rawLang.toLowerCase().split("-")[0];
-    if (SUPPORTED_LANGUAGES.includes(code)) {
-      return code;
-    }
-    if (["uk", "be", "kk", "ky", "uz"].includes(code)) return "ru";
-    if (["az"].includes(code)) return "tr";
+function getLocaleFromPathname(pathname) {
+  if (!pathname || typeof pathname !== "string") return null;
+  const segment = pathname.split("/").filter(Boolean)[0];
+  if (segment && SUPPORTED_LANGUAGES.includes(segment.toLowerCase())) {
+    return segment.toLowerCase();
   }
-  return "en";
-}
-
-function getInitialLanguage(fallback = "ka") {
-  if (typeof window === "undefined") return fallback;
-
-  // 1. Check URL query param ?lang=ru
-  try {
-    const params = new URLSearchParams(window.location.search);
-    const qLang = params.get("lang");
-    if (qLang && SUPPORTED_LANGUAGES.includes(qLang)) return qLang;
-  } catch (_) {}
-
-  // 2. Check path segment e.g. /ru/...
-  try {
-    const pathLang = window.location.pathname.split("/").filter(Boolean)[0];
-    if (pathLang && SUPPORTED_LANGUAGES.includes(pathLang)) return pathLang;
-  } catch (_) {}
-
-  // 3. Check document.cookie
-  try {
-    const match = document.cookie.match(/(?:^|;\s*)gt_language=([^;]+)/);
-    if (match && SUPPORTED_LANGUAGES.includes(match[1])) {
-      return match[1];
-    }
-  } catch (_) {}
-
-  // 4. Check localStorage
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved && SUPPORTED_LANGUAGES.includes(saved)) {
-      return saved;
-    }
-  } catch (_) {}
-
-  return fallback;
+  return null;
 }
 
 /**
@@ -78,20 +38,33 @@ function getNestedValue(obj, path) {
 }
 
 export function LanguageProvider({ children, initialLang = "ka" }) {
-  const [lang, setLangState] = useState(initialLang);
+  const pathname = usePathname();
+  const urlLocale = getLocaleFromPathname(pathname);
+
+  // Authoritative language rule:
+  // 1. Explicit valid locale in URL pathname ALWAYS wins
+  // 2. Initial server language (from proxy request headers)
+  // 3. Fallback "ka"
+  const activeLang = urlLocale || (SUPPORTED_LANGUAGES.includes(initialLang) ? initialLang : "ka");
+
+  const [lang, setLangState] = useState(activeLang);
   const [hydrated, setHydrated] = useState(false);
 
+  // Keep state synchronized with the URL whenever pathname changes
   useEffect(() => {
-    const detected = getInitialLanguage(initialLang);
-    if (detected && detected !== lang) {
-      setLangState(detected);
+    if (urlLocale && urlLocale !== lang) {
+      setLangState(urlLocale);
     }
+  }, [urlLocale, lang]);
+
+  // Sync preference cookie & localStorage whenever the effective language changes
+  useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, detected || initialLang);
-      document.cookie = `gt_language=${detected || initialLang};path=/;max-age=31536000;samesite=lax`;
+      localStorage.setItem(STORAGE_KEY, lang);
+      document.cookie = `gt_language=${lang};path=/;max-age=31536000;samesite=lax`;
     } catch (_) {}
     setHydrated(true);
-  }, [initialLang]);
+  }, [lang]);
 
   // Sync DOM attributes (<html lang> and <html dir>) whenever lang changes
   useEffect(() => {
@@ -158,21 +131,24 @@ export function LanguageProvider({ children, initialLang = "ka" }) {
     [lang]
   );
 
-  const value = {
-    lang,
-    setLang: changeLanguage,
-    t,
-    hydrated,
-    isRtl: isRtlLanguage(lang),
-    isRTL: isRtlLanguage(lang),
-    dir: isRtlLanguage(lang) ? "rtl" : "ltr",
-    // Convenience flags
-    isGeorgian: lang === "ka",
-    isEnglish: lang === "en",
-    isRussian: lang === "ru",
-    isTurkish: lang === "tr",
-    isArabic: lang === "ar",
-  };
+  const value = useMemo(
+    () => ({
+      lang,
+      setLang: changeLanguage,
+      t,
+      hydrated,
+      isRtl: isRtlLanguage(lang),
+      isRTL: isRtlLanguage(lang),
+      dir: isRtlLanguage(lang) ? "rtl" : "ltr",
+      // Convenience flags
+      isGeorgian: lang === "ka",
+      isEnglish: lang === "en",
+      isRussian: lang === "ru",
+      isTurkish: lang === "tr",
+      isArabic: lang === "ar",
+    }),
+    [lang, changeLanguage, t, hydrated]
+  );
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }

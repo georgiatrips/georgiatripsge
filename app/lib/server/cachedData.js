@@ -1,6 +1,5 @@
 import { unstable_cache } from "next/cache";
 import { listFirestoreTours, getFirestoreTourById } from "../toursFirestore";
-import { ALL_TOURS as staticTours } from "../toursData";
 import { listPlaces } from "../placesFirestore";
 import { listPostSummaries } from "../postsFirestore";
 import { listHotels } from "../hotelsFirestore";
@@ -43,33 +42,28 @@ export function serializeForClient(data) {
 
 /**
  * Cached getter for all Tours across the site.
- * Cached for 1 hour, tagged with 'tours'.
+ * Only returns real tours from Firebase Firestore.
  */
 export const getCachedTours = unstable_cache(
   async () => {
     try {
       const fsTours = (await listFirestoreTours()) || [];
-      const fsTourIds = new Set(fsTours.map((t) => t.id));
-      const merged = [
-        ...fsTours,
-        ...staticTours.filter((st) => !fsTourIds.has(st.id)),
-      ];
-      return serializeForClient(merged);
+      return serializeForClient(fsTours);
     } catch (err) {
       console.error("[getCachedTours] Error:", err);
-      return serializeForClient(staticTours);
+      return [];
     }
   },
   ["all-tours-cache"],
   {
-    revalidate: 3600, // 1 hour
+    revalidate: 60,
     tags: ["tours"],
   }
 );
 
 /**
  * Cached getter for a single Tour by ID.
- * Cached for 1 hour, tagged with 'tours' and `tour-${id}`.
+ * Only returns real tour from Firebase Firestore.
  */
 export const getCachedTourById = (tourId) =>
   unstable_cache(
@@ -78,20 +72,17 @@ export const getCachedTourById = (tourId) =>
         let tour = await getFirestoreTourById(tourId);
         if (!tour) {
           const all = await listFirestoreTours();
-          tour = all.find((t) => t.id === tourId) || null;
-        }
-        if (!tour) {
-          tour = staticTours.find((t) => t.id === tourId) || null;
+          tour = all.find((t) => t.id === tourId || t.slug === tourId) || null;
         }
         return serializeForClient(tour);
       } catch (err) {
         console.error(`[getCachedTourById] Error for ${tourId}:`, err);
-        return serializeForClient(staticTours.find((t) => t.id === tourId) || null);
+        return null;
       }
     },
     [`tour-detail-${tourId}`],
     {
-      revalidate: 3600,
+      revalidate: 60,
       tags: ["tours", `tour-${tourId}`],
     }
   )();
