@@ -177,8 +177,24 @@ export async function proxy(request) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-georgiatrips-locale", locale);
   requestHeaders.set("x-georgiatrips-path", pathname);
+
+  let routePath = `/${pathParts.slice(2).join("/")}`.replace(/\/$/, "") || "/";
+
+  // Check validity for dynamic entities so nonexistent tours/places return true HTTP 404
+  if (pathParts[2] === "tours" && pathParts[3]) {
+    const tourExists = await checkTourExists(pathParts[3]);
+    if (!tourExists) {
+      routePath = "/_not-found";
+    }
+  } else if (pathParts[2] === "places" && pathParts[3]) {
+    const placeExists = await checkPlaceExists(pathParts[3]);
+    if (!placeExists) {
+      routePath = "/_not-found";
+    }
+  }
+
   const rewriteUrl = request.nextUrl.clone();
-  rewriteUrl.pathname = `/${pathParts.slice(2).join("/")}`.replace(/\/$/, "") || "/";
+  rewriteUrl.pathname = routePath;
   const response = NextResponse.rewrite(rewriteUrl, {
     request: { headers: requestHeaders },
   });
