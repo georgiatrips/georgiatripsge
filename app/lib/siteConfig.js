@@ -20,11 +20,11 @@ export const LANGUAGE_LOCALES = {
 };
 
 export const HREFLANG_MAP = {
-  ka: "ka-GE",
-  en: "en-US",
-  ru: "ru-RU",
-  tr: "tr-TR",
-  ar: "ar-SA",
+  ka: "ka",
+  en: "en",
+  ru: "ru",
+  tr: "tr",
+  ar: "ar",
 };
 
 /**
@@ -50,12 +50,19 @@ export function getCanonicalUrl(path = "/", lang = DEFAULT_LANGUAGE) {
 
 /**
  * Returns hreflang alternates dictionary suitable for Next.js metadata.alternates.languages
+ * Includes both broad universal language tags (en, ru, tr, ar, ka) and regional tags
+ * to ensure maximum discovery for international tourists browsing inside Georgia.
  */
 export function getAlternateLanguages(path = "/") {
   const cleanPath = stripLocaleFromPath(path);
   const normalizedPath = cleanPath === "/" ? "" : cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
   
   return {
+    ka: `${SITE_URL}/ka${normalizedPath}`,
+    en: `${SITE_URL}/en${normalizedPath}`,
+    ru: `${SITE_URL}/ru${normalizedPath}`,
+    tr: `${SITE_URL}/tr${normalizedPath}`,
+    ar: `${SITE_URL}/ar${normalizedPath}`,
     "ka-GE": `${SITE_URL}/ka${normalizedPath}`,
     "en-US": `${SITE_URL}/en${normalizedPath}`,
     "ru-RU": `${SITE_URL}/ru${normalizedPath}`,
