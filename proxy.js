@@ -139,85 +139,89 @@ export async function proxy(request) {
   const urlLang = searchParams.get("lang");
   const cookieLang = request.cookies.get("gt_language")?.value;
   const pathParts = pathname.split("/");
-  const pathLang = pathParts[1];
-  const lowerPathLang = pathLang ? pathLang.toLowerCase() : "";
-  const isCaseMismatch = pathLang && pathLang !== lowerPathLang && SUPPORTED_LANGUAGES.includes(lowerPathLang);
+  const pathLang = pathParts[1] || "";
+  const lowerPathLang = pathLang.toLowerCase();
+  const isSupportedLocale = SUPPORTED_LANGUAGES.includes(lowerPathLang);
 
-  // Normalize uppercase supported locale prefix with a 308 Permanent Redirect (e.g. /EN/tours -> /en/tours)
-  if (isCaseMismatch) {
-    const redirectUrl = request.nextUrl.clone();
-    const newParts = [...pathParts];
-    newParts[1] = lowerPathLang;
-    redirectUrl.pathname = newParts.join("/");
-    return NextResponse.redirect(redirectUrl, { status: 308 });
-  }
+  if (isSupportedLocale) {
+    // Check if the URL has uppercase/mixed-case locale or legacy /transport route
+    const isCaseMismatch = pathLang !== lowerPathLang;
+    const isLegacyTransport = pathParts[2] === "transport";
 
-  const hasLocalePrefix = SUPPORTED_LANGUAGES.includes(pathLang);
-  const detectedLang = detectLanguage(request.headers.get("accept-language"));
-  const locale = hasLocalePrefix
-    ? pathLang
-    : urlLang && SUPPORTED_LANGUAGES.includes(urlLang)
-      ? urlLang
-      : cookieLang && SUPPORTED_LANGUAGES.includes(cookieLang)
-        ? cookieLang
-        : detectedLang;
+    if (isCaseMismatch || isLegacyTransport) {
+      const redirectUrl = request.nextUrl.clone();
+      const newParts = [...pathParts];
+      newParts[1] = lowerPathLang;
+      if (isLegacyTransport) {
+        newParts[2] = "transfers";
+      }
+      redirectUrl.pathname = newParts.join("/");
+      const response = NextResponse.redirect(redirectUrl, { status: 308 });
+      response.cookies.set("gt_language", lowerPathLang, {
+        path: "/",
+        maxAge: 31536000,
+        sameSite: "lax",
+      });
+      return response;
+    }
 
-  // Keep legacy links working while making every public page addressable and
-  // indexable under a stable language prefix.
-  if (!hasLocalePrefix) {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = `/${locale}${pathname === "/" ? "" : pathname}`;
-    redirectUrl.searchParams.delete("lang");
-    const isRootPermanent = pathname === "/" && !cookieLang && !urlLang;
-    const response = NextResponse.redirect(redirectUrl, { status: isRootPermanent ? 308 : 307 });
-    response.cookies.set("gt_language", locale, {
-      path: "/",
-      maxAge: 31536000,
-      sameSite: "lax",
+    const locale = lowerPathLang;
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-georgiatrips-locale", locale);
+    requestHeaders.set("x-georgiatrips-path", pathname);
+
+    let routePath = `/${pathParts.slice(2).join("/")}`.replace(/\/$/, "") || "/";
+
+    // Check validity for dynamic entities so nonexistent tours/places return true HTTP 404
+    if (pathParts[2] === "tours" && pathParts[3]) {
+      const tourExists = await checkTourExists(pathParts[3]);
+      if (!tourExists) {
+        routePath = "/_not-found";
+      }
+    } else if (pathParts[2] === "places" && pathParts[3]) {
+      const placeExists = await checkPlaceExists(pathParts[3]);
+      if (!placeExists) {
+        routePath = "/_not-found";
+      }
+    }
+
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = routePath;
+    const response = NextResponse.rewrite(rewriteUrl, {
+      request: { headers: requestHeaders },
     });
+
+    if (cookieLang !== locale) {
+      response.cookies.set("gt_language", locale, {
+        path: "/",
+        maxAge: 31536000,
+        sameSite: "lax",
+      });
+    }
+
     return response;
   }
 
-  // Handle legacy /transport under locale prefix (e.g. /ka/transport -> /ka/transfers)
-  if (pathParts[2] === "transport") {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = `/${pathParts[1]}/transfers`;
-    return NextResponse.redirect(redirectUrl, { status: 308 });
-  }
+  // Handle unprefixed requests (e.g. /, /tours, /transport, /places)
+  const detectedLang = detectLanguage(request.headers.get("accept-language"));
+  const targetLocale = (urlLang && SUPPORTED_LANGUAGES.includes(urlLang.toLowerCase()))
+    ? urlLang.toLowerCase()
+    : (cookieLang && SUPPORTED_LANGUAGES.includes(cookieLang.toLowerCase()))
+      ? cookieLang.toLowerCase()
+      : detectedLang;
 
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-georgiatrips-locale", locale);
-  requestHeaders.set("x-georgiatrips-path", pathname);
+  const redirectUrl = request.nextUrl.clone();
+  let normalizedPath = pathname === "/transport" ? "/transfers" : (pathname.startsWith("/transport/") ? `/transfers${pathname.slice(10)}` : pathname);
+  redirectUrl.pathname = `/${targetLocale}${normalizedPath === "/" ? "" : normalizedPath}`;
+  redirectUrl.searchParams.delete("lang");
 
-  let routePath = `/${pathParts.slice(2).join("/")}`.replace(/\/$/, "") || "/";
-
-  // Check validity for dynamic entities so nonexistent tours/places return true HTTP 404
-  if (pathParts[2] === "tours" && pathParts[3]) {
-    const tourExists = await checkTourExists(pathParts[3]);
-    if (!tourExists) {
-      routePath = "/_not-found";
-    }
-  } else if (pathParts[2] === "places" && pathParts[3]) {
-    const placeExists = await checkPlaceExists(pathParts[3]);
-    if (!placeExists) {
-      routePath = "/_not-found";
-    }
-  }
-
-  const rewriteUrl = request.nextUrl.clone();
-  rewriteUrl.pathname = routePath;
-  const response = NextResponse.rewrite(rewriteUrl, {
-    request: { headers: requestHeaders },
+  const isPermanent = Boolean(urlLang) || pathname === "/" || pathname.startsWith("/transport");
+  const response = NextResponse.redirect(redirectUrl, { status: isPermanent ? 308 : 307 });
+  response.cookies.set("gt_language", targetLocale, {
+    path: "/",
+    maxAge: 31536000,
+    sameSite: "lax",
   });
-
-  if (cookieLang !== locale) {
-    response.cookies.set("gt_language", locale, {
-      path: "/",
-      maxAge: 31536000,
-      sameSite: "lax",
-    });
-  }
-
   return response;
 }
 

@@ -22,20 +22,6 @@ const nextConfig = {
       },
     ],
   },
-  async redirects() {
-    return [
-      {
-        source: '/:lang(ka|en|ru|tr|ar)/transport',
-        destination: '/:lang/transfers',
-        permanent: true,
-      },
-      {
-        source: '/transport',
-        destination: '/transfers',
-        permanent: true,
-      },
-    ];
-  },
 };
 
 export default nextConfig;
