@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "../lib/i18n/LanguageContext";
-import { getLocalizedHref } from "../lib/siteConfig";
 import { BrandLogo, WA_LINK, PHONE_DISPLAY, TELEGRAM_LINK, INSTAGRAM_LINK, FACEBOOK_LINK, YOUTUBE_LINK, TIKTOK_LINK, LINKEDIN_LINK } from "../lib/shared";
 import { listFirestoreTours, asLocalizedText } from "../lib/toursFirestore";
+import { getLocalizedHref } from "../lib/siteConfig";
 
 export default function Footer() {
   const { t, lang } = useLanguage();
@@ -103,7 +103,7 @@ export default function Footer() {
               <li><Link href={getLocalizedHref("/hotels", lang)}>{t("nav.hotels")}</Link></li>
               <li><Link href={getLocalizedHref("/transfers", lang)}>{t("nav.transport")}</Link></li>
               <li><Link href={getLocalizedHref("/posts", lang)}>{t("nav.articles")}</Link></li>
-              <li><Link href={getLocalizedHref("/booking/status", lang)}>{lang === "ka" ? "ჯავშნის სტატუსი" : (lang === "ru" ? "Статус брони" : (lang === "tr" ? "Rezervasyon Durumu" : (lang === "ar" ? "حالة الحجز" : "Booking Status")))}</Link></li>
+              <li><Link href="/booking/status">{lang === "ka" ? "ჯავშნის სტატუსი" : (lang === "ru" ? "Статус брони" : (lang === "tr" ? "Rezervasyon Durumu" : (lang === "ar" ? "حالة الحجز" : "Booking Status")))}</Link></li>
               <li><Link href={getLocalizedHref("/#booking", lang)}>{t("footer.bookingLink")}</Link></li>
             </ul>
           </div>

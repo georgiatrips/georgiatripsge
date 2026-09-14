@@ -1,8 +1,9 @@
+"use client";
+
 import Link from "next/link";
-import { headers } from "next/headers";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import { getLocalizedHref, SUPPORTED_LANGUAGES } from "./lib/siteConfig";
+import { useLanguage } from "./lib/i18n/LanguageContext";
 
 const NOT_FOUND_TEXTS = {
   ka: {
@@ -47,10 +48,8 @@ const NOT_FOUND_TEXTS = {
   },
 };
 
-export default async function NotFound() {
-  const reqHeaders = await headers();
-  const headerLang = reqHeaders.get("x-georgiatrips-locale");
-  const lang = SUPPORTED_LANGUAGES.includes(headerLang) ? headerLang : "ka";
+export default function NotFound() {
+  const { lang } = useLanguage();
   const t = NOT_FOUND_TEXTS[lang] || NOT_FOUND_TEXTS.ka;
 
   return (
@@ -125,7 +124,7 @@ export default async function NotFound() {
             }}
           >
             <Link
-              href={getLocalizedHref("/", lang)}
+              href="/"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -144,7 +143,7 @@ export default async function NotFound() {
             </Link>
 
             <Link
-              href={getLocalizedHref("/tours", lang)}
+              href="/ka/tours"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -163,7 +162,7 @@ export default async function NotFound() {
             </Link>
 
             <Link
-              href={getLocalizedHref("/transfers", lang)}
+              href="/ka/transfers"
               style={{
                 display: "inline-flex",
                 alignItems: "center",

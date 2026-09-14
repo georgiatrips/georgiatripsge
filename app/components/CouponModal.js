@@ -3,10 +3,11 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "../lib/i18n/LanguageContext";
+import { getLocalizedHref } from "../lib/siteConfig";
 import CouponTicket from "./CouponTicket";
 
 export default function CouponModal({ isOpen, onClose }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const router = useRouter();
 
   // Close on Escape key press
@@ -83,7 +84,7 @@ export default function CouponModal({ isOpen, onClose }) {
             className="gt-coupon-modal-btn-explore"
             onClick={() => {
               onClose();
-              router.push("/tours");
+              router.push(getLocalizedHref("/tours", lang));
             }}
           >
             <span>{t("coupon.exploreToursBtn") || "ტურების დათვალიერება და დაჯავშნა"}</span>

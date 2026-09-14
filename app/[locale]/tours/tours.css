@@ -1,0 +1,898 @@
+/* ============================================================
+   TOURS CATALOG, FILTERS & SEARCH STYLES BUNDLE (GeorgiaTrips)
+   ============================================================ */
+
+/* Catalog Main Layout */
+.tours-catalog-section {
+  padding: 3rem 1.5rem 5rem;
+  background: #f8fafc;
+  min-height: 70vh;
+}
+
+.tours-catalog-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 310px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 992px) {
+  .tours-catalog-inner {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Filter Panel */
+.tours-filter-panel {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 12px 35px rgba(13, 35, 58, 0.05);
+  color: #0d233a;
+  position: sticky;
+  top: 90px;
+  z-index: 10;
+}
+
+.filter-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.filter-panel-header h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0d233a;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-panel-header h3 svg {
+  color: #29b2b7;
+}
+
+.btn-reset-filters {
+  background: rgba(41, 178, 183, 0.1);
+  border: 1px solid rgba(41, 178, 183, 0.2);
+  color: #29b2b7;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-reset-filters:hover {
+  background: rgba(41, 178, 183, 0.2);
+  border-color: #29b2b7;
+}
+
+.filter-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.filter-group label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.filter-input-wrap,
+.filter-select-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.filter-input-wrap svg,
+.filter-select-wrap svg {
+  position: absolute;
+  left: 12px;
+  color: #29b2b7;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.filter-input-wrap input,
+.filter-select-wrap select {
+  width: 100%;
+  padding: 0.7rem 0.8rem 0.7rem 2.4rem;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  color: #0d233a;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.filter-select-wrap select {
+  appearance: none;
+  cursor: pointer;
+  padding-right: 2rem;
+}
+
+.filter-select-wrap::after {
+  content: '▼';
+  font-size: 0.65rem;
+  color: #64748b;
+  position: absolute;
+  right: 12px;
+  pointer-events: none;
+}
+
+.filter-input-wrap input:focus,
+.filter-select-wrap select:focus {
+  border-color: #29b2b7;
+  background: #ffffff;
+}
+
+.filter-select-wrap select option {
+  background: #ffffff;
+  color: #0d233a;
+}
+
+/* DatePicker Inside Filter Group Style */
+.filter-group .dp-trigger {
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  color: #0d233a;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.filter-group .dp-trigger .dp-icon {
+  color: #29b2b7;
+  flex-shrink: 0;
+}
+
+.filter-group .dp-trigger:hover,
+.filter-group .dp-trigger--open {
+  border-color: #29b2b7;
+  background: #ffffff;
+}
+
+/* Results Section */
+.tours-results-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.tours-results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.tours-results-header h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #0d233a;
+}
+
+.tours-results-header h2 strong {
+  color: #29b2b7;
+}
+
+.active-filter-tags {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-tag {
+  background: rgba(41, 178, 183, 0.12);
+  border: 1px solid rgba(41, 178, 183, 0.3);
+  color: #0d233a;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-tag button {
+  background: none;
+  border: none;
+  color: #0d233a;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+/* Catalog Cards Grid */
+.tours-grid-catalog {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.tours-page-card {
+  height: 440px !important;
+  min-height: 440px !important;
+}
+
+.tours-card-type-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #29b2b7;
+  margin-bottom: 0.3rem;
+  letter-spacing: 0.02em;
+}
+
+.tours-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.8rem;
+
+}
+
+.btn-book-tour-card {
+  background: linear-gradient(135deg, #29b2b7 0%, #1e969b 100%);
+  color: #ffffff;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 7px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-book-tour-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(41, 178, 183, 0.4);
+}
+
+/* Empty State */
+.tours-empty-state {
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 20px;
+  padding: 4rem 2rem;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.tours-empty-state h3 {
+  font-size: 1.25rem;
+  color: #0d233a;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.tours-empty-state p {
+  color: #64748b;
+  font-size: 0.9rem;
+  max-width: 450px;
+  margin: 0 auto 1.5rem;
+}
+
+.btn-empty-reset {
+  background: #0d233a;
+  color: #ffffff;
+  border: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 10px 22px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-empty-reset:hover {
+  background: #29b2b7;
+}
+
+
+/* ============================================================
+   HERO SEARCH BAR — ICON & ARROW TEXT OVERLAY FIXES
+   ============================================================ */
+
+/* 1. Prevent double icons inside hero search DatePicker */
+.hero-search-field .dp-wrap .dp-trigger .dp-icon {
+  display: none !important;
+}
+
+.hero-search-field .dp-wrap .dp-trigger {
+  padding-left: 0 !important;
+}
+
+.hero-search-field .dp-wrap .dp-trigger-value {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.hero-search-field .dp-wrap .dp-trigger-value--placeholder {
+  color: rgba(255, 255, 255, 0.65) !important;
+  font-weight: 400 !important;
+}
+
+/* 2. Custom arrow positioning & text truncation so text never touches the arrow */
+.hero-search-select,
+.filter-select-wrap select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%232EC4B6' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: calc(100% - 4px) center !important;
+  padding-right: 24px !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  max-width: 100% !important;
+}
+
+/* Move the dropdown pseudo arrow on filter-select-wrap further right */
+.filter-select-wrap::after {
+  right: 8px !important;
+  display: none !important;
+  /* using background-image arrow instead for crisp alignment */
+}
+
+
+/* ============================================================
+   TRANSPORT SECTION — REDESIGNED TWO-COLUMN LAYOUT
+   ============================================================ */
+
+.transport-section {
+  background: linear-gradient(135deg, #0d1f33 0%, #0a1826 60%, #081420 100%);
+  overflow: hidden;
+  position: relative;
+}
+
+.transport-section::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -80px;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(41, 178, 183, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.transport-section-layout {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 5rem 2rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .transport-section-layout {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    padding: 3rem 1.5rem;
+  }
+}
+
+/* Text Column */
+.transport-text-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.transport-eyebrow {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #29b2b7;
+  background: rgba(41, 178, 183, 0.1);
+  border: 1px solid rgba(41, 178, 183, 0.3);
+  padding: 4px 14px;
+  border-radius: 50px;
+}
+
+.transport-main-title {
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.25;
+  font-family: var(--font-main);
+  letter-spacing: -0.02em;
+}
+
+.transport-desc {
+  font-size: 0.97rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.75;
+  max-width: 480px;
+}
+
+.transport-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.transport-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.transport-badge:hover {
+  border-color: rgba(41, 178, 183, 0.35);
+  background: rgba(41, 178, 183, 0.06);
+}
+
+.transport-badge-icon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.transport-badge div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.transport-badge strong {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.transport-badge span {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.transport-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #29b2b7 0%, #1e969b 100%);
+  color: #ffffff;
+  border: none;
+  font-size: 0.92rem;
+  font-weight: 700;
+  padding: 0.85rem 1.75rem;
+  border-radius: 12px;
+  cursor: pointer;
+  width: fit-content;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-family: var(--font-main);
+}
+
+.transport-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(41, 178, 183, 0.4);
+}
+
+/* Slider Column */
+.transport-slider-col {
+  position: relative;
+}
+
+/* Car label overlay */
+.transport-car-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.85) 0%, transparent 100%);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 1.2rem 0.75rem 0.6rem;
+  text-align: center;
+  border-radius: 0 0 14px 14px;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+}
+
+.transport-photo {
+  position: relative !important;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+}
+
+.transport-photo:hover .transport-car-label {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+
+/* ============================================================
+   MINIMALIST & ELEGANT TRANSPORT SECTION HEADER STYLES
+   ============================================================ */
+
+.transport-header {
+  margin-bottom: 2rem !important;
+  text-align: left !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.5rem !important;
+}
+
+.transport-eyebrow {
+  display: inline-block !important;
+  font-size: 0.76rem !important;
+  font-weight: 700 !important;
+  color: #29b2b7 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+.transport-subdesc {
+  font-size: clamp(0.9rem, 1.2vw, 1.02rem) !important;
+  color: #475569 !important;
+  line-height: 1.6 !important;
+  max-width: 620px !important;
+  margin-top: 0.2rem !important;
+}
+
+.transport-tags-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  flex-wrap: wrap !important;
+  margin-top: 0.8rem !important;
+}
+
+.transport-tag-chip {
+  background: rgba(41, 178, 183, 0.08) !important;
+  border: 1px solid rgba(41, 178, 183, 0.22) !important;
+  color: #0d233a !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  padding: 5px 14px !important;
+  border-radius: 50px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  transition: all 0.2s ease !important;
+}
+
+.transport-tag-chip:hover {
+  background: rgba(41, 178, 183, 0.16) !important;
+  border-color: #29b2b7 !important;
+}
+
+
+/* ============================================================
+   DATEPICKER UPWARDS DIRECTION & MOBILE FILTER DRAWER STYLES
+   ============================================================ */
+
+/* Upwards opening popover for DatePicker */
+.dp-popover--up {
+  transform-origin: bottom center !important;
+}
+
+/* Mobile Filter Bar & Drawer */
+.mobile-filter-bar-wrap {
+  display: none;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.mobile-filter-trigger-btn {
+  width: 100%;
+  padding: 0.85rem 1.2rem;
+  background: #0d233a;
+  border: 1px solid rgba(41, 178, 183, 0.4);
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(13, 35, 58, 0.15);
+  transition: all 0.2s ease;
+}
+
+.mobile-filter-trigger-btn svg {
+  color: #29b2b7;
+}
+
+.mobile-filter-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #29b2b7;
+  display: inline-block;
+  margin-left: 4px;
+}
+
+.filter-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-close-mobile-filter {
+  display: none;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #ffffff;
+  font-size: 1rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-apply-mobile-filter {
+  display: none;
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 0.85rem;
+  background: linear-gradient(135deg, #29b2b7 0%, #1e969b 100%);
+  color: #ffffff;
+  border: none;
+  font-size: 0.92rem;
+  font-weight: 700;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.mobile-filter-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9998;
+}
+
+/* Mobile Screens Adjustments */
+@media (max-width: 992px) {
+  .mobile-filter-bar-wrap {
+    display: flex;
+  }
+
+  .btn-close-mobile-filter {
+    display: inline-flex;
+  }
+
+  .btn-apply-mobile-filter {
+    display: block;
+  }
+
+  .tours-filter-panel {
+    display: none;
+  }
+
+  .tours-filter-panel.mobile-open {
+    display: block !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+    border-radius: 24px 24px 0 0 !important;
+    z-index: 9999 !important;
+    animation: slideUpMobile 0.35s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5) !important;
+  }
+}
+
+@keyframes slideUpMobile {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* ── Tours Catalog Mobile Perfection ── */
+@media (max-width: 768px) {
+  .tours-catalog-section {
+    padding: 2rem 1rem 4rem;
+  }
+
+  .tours-catalog-inner {
+    gap: 1.5rem;
+  }
+
+  .tours-results-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .tours-results-header h2 {
+    font-size: 1.15rem;
+  }
+
+  .tours-grid-catalog {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem;
+  }
+
+  .tours-grid-catalog .tb-card {
+    width: 100% !important;
+    max-width: none !important;
+    height: 340px !important;
+    min-height: 340px !important;
+  }
+
+  .tb-card-body {
+    padding: 1rem 1.1rem !important;
+  }
+
+  .tb-card-title {
+    font-size: 1.1rem !important;
+  }
+
+  .tb-card-annotation {
+    font-size: 0.75rem !important;
+    -webkit-line-clamp: 2 !important;
+  }
+
+  .tb-card-facilities {
+    font-size: 0.72rem !important;
+    gap: 10px !important;
+  }
+
+  .tb-badge {
+    font-size: 0.62rem !important;
+    padding: 3px 9px !important;
+  }
+
+  .tb-price-tag {
+    font-size: 0.68rem !important;
+    padding: 3px 8px !important;
+  }
+
+  .tb-price-tag small {
+    font-size: 0.6rem !important;
+  }
+
+  .tb-price-tag strong {
+    font-size: 0.75rem !important;
+  }
+
+  .tb-date-chip {
+    font-size: 0.58rem !important;
+    padding: 2px 5px !important;
+  }
+
+  .catalog-pagination {
+    gap: 0.35rem;
+    margin-top: 1.5rem;
+  }
+
+  .catalog-pagination button {
+    width: 34px;
+    height: 34px;
+    font-size: 0.85rem;
+  }
+
+  .tours-empty-state {
+    padding: 2.5rem 1.25rem;
+  }
+
+  .tours-empty-state h3 {
+    font-size: 1.1rem;
+  }
+
+  .tours-empty-state p {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .tours-catalog-section {
+    padding: 1.5rem 0.75rem 3.5rem;
+  }
+
+  .tours-grid-catalog .tb-card {
+    height: 320px !important;
+    min-height: 320px !important;
+  }
+
+  .tb-card-body {
+    padding: 0.9rem 1rem !important;
+  }
+
+  .tb-card-title {
+    font-size: 1.05rem !important;
+  }
+
+  .tb-card-annotation {
+    font-size: 0.72rem !important;
+  }
+
+  .tb-card-facilities {
+    font-size: 0.68rem !important;
+    gap: 8px !important;
+  }
+
+  .tb-overlay-right {
+    top: 10px !important;
+    right: 10px !important;
+    gap: 4px !important;
+  }
+
+  .tb-badge {
+    top: 10px !important;
+    left: 10px !important;
+  }
+
+  .tours-filter-panel {
+    padding: 1.25rem;
+    border-radius: 16px;
+  }
+
+  .filter-form-grid {
+    gap: 1rem;
+  }
+
+  .filter-group label {
+    font-size: 0.75rem;
+  }
+
+  .filter-input-wrap input,
+  .filter-select-wrap select {
+    font-size: 0.85rem;
+    padding: 0.65rem 0.7rem 0.65rem 2.2rem;
+  }
+}

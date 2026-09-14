@@ -4,8 +4,8 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
-import { getLocalizedHref } from "../../lib/siteConfig";
 import { asLocalizedText, translateDuration, translateLocation } from "../../lib/toursFirestore";
+import { getLocalizedHref } from "../../lib/siteConfig";
 import { ClockIcon, LocationIcon } from "../Icons";
 import TourPrice from "../TourPrice";
 

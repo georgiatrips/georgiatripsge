@@ -44,10 +44,9 @@ export function useAllTours() {
     cachePromise = (async () => {
       try {
         const list = await listFirestoreTours();
-        const tours = list || [];
-        cachedRawTours = tours;
+        cachedRawTours = list;
         cacheTimestamp = Date.now();
-        return tours;
+        return list;
       } catch (err) {
         console.error("Firestore tours load failed:", err);
         return [];

@@ -4,8 +4,8 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
-import { getLocalizedHref } from "../../lib/siteConfig";
 import { asLocalizedText } from "../../lib/toursFirestore";
+import { getLocalizedHref } from "../../lib/siteConfig";
 
 export default function TourDetailRouteMap({ tour, openLightbox }) {
   const { t, lang } = useLanguage();
@@ -58,7 +58,7 @@ export default function TourDetailRouteMap({ tour, openLightbox }) {
                   onMouseLeave={() => setHoveredStop(null)}
                   onClick={() => {
                     if (item.placeId) {
-                      window.location.href = getLocalizedHref("/places/" + item.placeId, lang);
+                      window.location.href = "/places/" + item.placeId;
                       return;
                     }
                     const galIdx = tour.gallery?.indexOf(stopImg);

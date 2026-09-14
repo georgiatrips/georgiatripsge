@@ -3,8 +3,14 @@
  * Single source of truth for base URLs, supported languages, and SEO helpers.
  */
 
+// NOTE: standardized on the non-www apex domain because that is what
+// robots.js, sitemap.js, the root layout's Search Console/Yandex/Facebook
+// verification tags, and the site-wide JSON-LD all already use. If DNS/Vercel
+// is actually serving www.georgiatrips.ge as canonical, set
+// NEXT_PUBLIC_SITE_URL and add a redirect the other direction — don't let the
+// two diverge, that's a duplicate-content risk.
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL || "https://www.georgiatrips.ge"
+  process.env.NEXT_PUBLIC_SITE_URL || "https://georgiatrips.ge"
 ).replace(/\/+$/, "");
 
 export const SUPPORTED_LANGUAGES = ["ka", "en", "ru", "tr", "ar"];
@@ -120,4 +126,59 @@ export function getLocalizedHref(href, lang = DEFAULT_LANGUAGE) {
   const normalizedPath = cleanPath === "/" ? "" : cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
 
   return `/${currentLang}${normalizedPath}${query}${hash}`;
+}
+
+/**
+ * Resolves the current locale from the request. Prefers the `[locale]` route
+ * param (pass it directly when available — it's the URL, the real SEO source
+ * of truth). Falls back to the `x-georgiatrips-locale` header that
+ * middleware.js sets from the URL for code that only has access to
+ * `headers()` (e.g. the un-parameterized root layout).
+ */
+export function getRequestLocale(headersOrLocale) {
+  if (typeof headersOrLocale === "string") {
+    return SUPPORTED_LANGUAGES.includes(headersOrLocale) ? headersOrLocale : DEFAULT_LANGUAGE;
+  }
+  const fromHeader = headersOrLocale?.get?.("x-georgiatrips-locale");
+  return SUPPORTED_LANGUAGES.includes(fromHeader) ? fromHeader : DEFAULT_LANGUAGE;
+}
+
+/**
+ * Standard Next.js Metadata object for a localized page: locale-correct
+ * title/description, reciprocal hreflang alternates (all 5 locales +
+ * x-default), and matching OpenGraph/Twitter tags. Every page under
+ * `app/[locale]/...` should build its metadata through this so canonical and
+ * hreflang stay consistent site-wide.
+ */
+export function buildLocalizedMetadata({ path = "/", lang = DEFAULT_LANGUAGE, title, description, image }) {
+  const currentLang = SUPPORTED_LANGUAGES.includes(lang) ? lang : DEFAULT_LANGUAGE;
+  const imageUrl = image
+    ? image.startsWith("http")
+      ? image
+      : `${SITE_URL}${image.startsWith("/") ? "" : "/"}${image}`
+    : `${SITE_URL}/hero.webp`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: getCanonicalUrl(path, currentLang),
+      languages: getAlternateLanguages(path),
+    },
+    openGraph: {
+      title,
+      description,
+      url: getCanonicalUrl(path, currentLang),
+      siteName: "GeorgiaTrips",
+      images: [{ url: imageUrl, width: 1200, height: 630, alt: title }],
+      locale: LANGUAGE_LOCALES[currentLang],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [imageUrl],
+    },
+  };
 }

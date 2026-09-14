@@ -264,7 +264,7 @@ export const tr = {
     "cat4Title": "Transferler",
     "cat4Desc": "7/24 konforlu ulaşım.",
     "sectionPopular": "Gürcistan'ın Turistik Yerleri",
-    "sectionNature": "Dağ Turları",
+    "sectionNature": "Dağ Turları ve Doğa",
     "sectionCulture": "Batum Şehir Turu",
     "sectionTaste": "Şarap Programları",
     "sectionAdventure": "Egzotik Parklar ve Doğa",

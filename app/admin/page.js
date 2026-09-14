@@ -1922,7 +1922,7 @@ export default function AdminPage() {
                           </div>
                         </div>
                         <div className="admin-entry-actions">
-                          <Link href={`/tours/${tItem.id}`} className="admin-action-btn link" target="_blank">
+                          <Link href={`/ka/tours/${tItem.id}`} className="admin-action-btn link" target="_blank">
                             საიტზე ნახვა →
                           </Link>
                           <div style={{ display: "flex", gap: "0.4rem" }}>

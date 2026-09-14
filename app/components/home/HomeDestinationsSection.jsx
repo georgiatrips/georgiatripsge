@@ -1,6 +1,7 @@
+"use client";
+
 import React from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { asLocalizedText, translateLocation } from "../../lib/toursFirestore";
 import { getLocalizedHref } from "../../lib/siteConfig";
@@ -21,12 +22,7 @@ export default function HomeDestinationsSection({ popularPlaces = [], latestPlac
           <div className="pop-cards-col">
             <div className="pop-cards-wrapper">
               {popularPlaces.map((place, index) => (
-                <Link
-                  key={place.id}
-                  href={getLocalizedHref(`/places/${place.id}`, lang)}
-                  className={"pop-card" + (index === 1 ? " pop-card-staggered" : "")}
-                  style={{ textDecoration: "none" }}
-                >
+                <a key={place.id} href={getLocalizedHref("/places/" + place.id, lang)} className={"pop-card" + (index === 1 ? " pop-card-staggered" : "")}>
                   <div className="pop-card-img-wrap">
                     <Image src={place.img} alt={asLocalizedText(place.title, lang)} fill sizes="(max-width: 768px) 100vw, 30vw" style={{ objectFit: "cover" }} loading="lazy" />
                     <div className="pop-card-badge">{t("popular.topPopularBadge").replace("{index}", index + 1)}</div>
@@ -36,7 +32,7 @@ export default function HomeDestinationsSection({ popularPlaces = [], latestPlac
                       <span className="pop-card-sub">{translateLocation(place.region, lang) || t("common.georgia")}</span>
                     </div>
                   </div>
-                </Link>
+                </a>
               ))}
             </div>
 
@@ -53,21 +49,16 @@ export default function HomeDestinationsSection({ popularPlaces = [], latestPlac
 
             <div className="pop-attractions-grid">
               {latestPlaces.map((place) => (
-                <Link
-                  key={place.id}
-                  href={getLocalizedHref(`/places/${place.id}`, lang)}
-                  className="pop-attraction-item"
-                  style={{ textDecoration: "none" }}
-                >
+                <a key={place.id} href={getLocalizedHref("/places/" + place.id, lang)} className="pop-attraction-item">
                   <span className="pop-name">{asLocalizedText(place.title, lang)}</span>
                   <span className="pop-pin" aria-hidden="true">📍</span>
-                </Link>
+                </a>
               ))}
             </div>
 
-            <Link href={getLocalizedHref("/places", lang)} className="pop-all-btn">
+            <a href={getLocalizedHref("/places", lang)} className="pop-all-btn">
               {t("popular.allLocations")} <span>→</span>
-            </Link>
+            </a>
           </div>
         </div>
       </div>

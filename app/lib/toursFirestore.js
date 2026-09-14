@@ -879,9 +879,9 @@ export function normalizeFirestoreTour(tour, lang = "ka", customPlaces = []) {
     asLocalizedText(tour.destinationLabel, lang) || asLocalizedText(tour.destination, lang) || "";
   const badgeRaw = asLocalizedText(tour.badge, lang);
   const tourSection =
-    typeof tour.tourSection === "string" ? tour.tourSection : "";
+    typeof tour.tourSection === "string" ? tour.tourSection : tour.category || "";
   const tourSectionLabel =
-    asLocalizedText(tour.tourSectionLabel, lang) || (tourSection ? getTourSectionLabel(tourSection) : "");
+    asLocalizedText(tour.tourSectionLabel, lang) || getTourSectionLabel(tourSection);
 
   const itinerary = (Array.isArray(tour.itinerary) ? tour.itinerary : []).map((item) => ({
     placeId: typeof item?.placeId === "string" ? item.placeId : "",
@@ -997,6 +997,6 @@ export function normalizeFirestoreTour(tour, lang = "ka", customPlaces = []) {
       const [, mm, dd] = iso.split("-");
       return `${mm}.${dd}`;
     }).filter(Boolean),
-    category: tourSection || "",
+    category: tourSection || tour.category || "popular",
   };
 }

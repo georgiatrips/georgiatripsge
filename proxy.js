@@ -4,34 +4,16 @@ import {
   checkRateLimit,
   isStaticAssetRequest,
 } from "./app/lib/security";
-import {
-  checkTourExists,
-  checkPlaceExists,
-} from "./app/lib/server/entityValidator";
 
 const SUPPORTED_LANGUAGES = ["ka", "en", "ru", "tr", "ar"];
 
-function detectLanguage(acceptLanguageHeader) {
-  if (!acceptLanguageHeader) return "en";
-  const languages = acceptLanguageHeader
-    .split(",")
-    .map((item) => {
-      const [lang, q] = item.trim().split(";q=");
-      return {
-        code: lang.trim().toLowerCase(),
-        quality: q ? parseFloat(q) : 1.0,
-      };
-    })
-    .sort((a, b) => b.quality - a.quality);
-
-  for (const { code } of languages) {
-    const baseCode = code.split("-")[0];
-    if (SUPPORTED_LANGUAGES.includes(baseCode)) return baseCode;
-    if (["uk", "be", "kk", "ky", "uz"].includes(baseCode)) return "ru";
-    if (["az"].includes(baseCode)) return "tr";
-  }
-  return "en";
-}
+// The locale un-prefixed legacy URLs (indexed pre-migration) redirect to.
+// "ka" because that is the language Googlebot has actually been crawling and
+// indexing so far — redirecting there preserves ranking continuity for the
+// existing index while /en, /ru, /tr, /ar are discovered as new, independent
+// URLs via the sitemap and hreflang, each backed by a real app/[locale]/...
+// route segment (not a rewrite-masked single-language page).
+const LEGACY_REDIRECT_LOCALE = "ka";
 
 // API routes-ის ბოტებისგან დაცვა
 function isApiRequest(pathname) {
@@ -47,8 +29,8 @@ const API_LIMITS = {
   "/api/analytics/track": { max: 60, methods: ["GET", "POST"] },
 };
 
-export async function proxy(request) {
-  const { pathname, searchParams } = request.nextUrl;
+export function proxy(request) {
+  const { pathname } = request.nextUrl;
 
   // ═══════════════════════════════════════════════════════════════
   // 1. ბოტების გამოვლენა და დაბლოკვა
@@ -64,24 +46,21 @@ export async function proxy(request) {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // 2. Rate Limiting მომხმარებლებისთვის (საძიებო სისტემის ბოტები გათავისუფლებულია გვერდის ლიმიტისგან)
+  // 2. Rate Limiting ყველა მომხმარებლისთვის (მათ შორის ბოტებისთვის)
   // ═══════════════════════════════════════════════════════════════
   // API routes-ზე ზოგად ლიმიტს არ ვუშვებთ - მათ ცალკე ლიმიტი აქვთ
   if (!isApiRequest(pathname) && !isStaticAssetRequest(request)) {
-    // Only apply human page rate limiting if not a verified search engine crawler
-    if (!botInfo?.isSearchCrawler) {
-      const { rateLimited, retryAfter } = checkRateLimit(request);
+    const { rateLimited, retryAfter } = checkRateLimit(request);
 
-      if (rateLimited) {
-        return new NextResponse("Too many requests", {
-          status: 429,
-          headers: {
-            "Retry-After": String(retryAfter || 60),
-            "X-RateLimit-Limit": "120",
-            "X-RateLimit-Remaining": "0",
-          },
-        });
-      }
+    if (rateLimited) {
+      return new NextResponse("Too many requests", {
+        status: 429,
+        headers: {
+          "Retry-After": String(retryAfter || 60),
+          "X-RateLimit-Limit": "120",
+          "X-RateLimit-Remaining": "0",
+        },
+      });
     }
   }
 
@@ -134,95 +113,38 @@ export async function proxy(request) {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // 4. ენის გადამისამართება / rewrite (არსებული ლოგიკა)
+  // 4. Locale routing: real app/[locale]/... segments, not a rewrite mask.
   // ═══════════════════════════════════════════════════════════════
-  const urlLang = searchParams.get("lang");
-  const cookieLang = request.cookies.get("gt_language")?.value;
-  const pathParts = pathname.split("/");
-  const pathLang = pathParts[1] || "";
-  const lowerPathLang = pathLang.toLowerCase();
-  const isSupportedLocale = SUPPORTED_LANGUAGES.includes(lowerPathLang);
-
-  if (isSupportedLocale) {
-    // Check if the URL has uppercase/mixed-case locale or legacy /transport route
-    const isCaseMismatch = pathLang !== lowerPathLang;
-    const isLegacyTransport = pathParts[2] === "transport";
-
-    if (isCaseMismatch || isLegacyTransport) {
-      const redirectUrl = request.nextUrl.clone();
-      const newParts = [...pathParts];
-      newParts[1] = lowerPathLang;
-      if (isLegacyTransport) {
-        newParts[2] = "transfers";
-      }
-      redirectUrl.pathname = newParts.join("/");
-      const response = NextResponse.redirect(redirectUrl, { status: 308 });
-      response.cookies.set("gt_language", lowerPathLang, {
-        path: "/",
-        maxAge: 31536000,
-        sameSite: "lax",
-      });
-      return response;
-    }
-
-    const locale = lowerPathLang;
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set("x-georgiatrips-locale", locale);
-    requestHeaders.set("x-georgiatrips-path", pathname);
-
-    let routePath = `/${pathParts.slice(2).join("/")}`.replace(/\/$/, "") || "/";
-
-    // Check validity for dynamic entities so nonexistent tours/places return true HTTP 404
-    if (pathParts[2] === "tours" && pathParts[3]) {
-      const tourExists = await checkTourExists(pathParts[3]);
-      if (!tourExists) {
-        routePath = "/_not-found";
-      }
-    } else if (pathParts[2] === "places" && pathParts[3]) {
-      const placeExists = await checkPlaceExists(pathParts[3]);
-      if (!placeExists) {
-        routePath = "/_not-found";
-      }
-    }
-
-    const rewriteUrl = request.nextUrl.clone();
-    rewriteUrl.pathname = routePath;
-    const response = NextResponse.rewrite(rewriteUrl, {
-      request: { headers: requestHeaders },
-    });
-
-    if (cookieLang !== locale) {
-      response.cookies.set("gt_language", locale, {
-        path: "/",
-        maxAge: 31536000,
-        sameSite: "lax",
-      });
-    }
-
-    return response;
+  // Transactional/account surfaces have no [locale] segment at all — leave
+  // them alone entirely (no redirect, no locale header).
+  if (
+    pathname === "/admin" || pathname.startsWith("/admin/") ||
+    pathname === "/login" ||
+    pathname === "/coupons" ||
+    pathname === "/booking" || pathname.startsWith("/booking/")
+  ) {
+    return NextResponse.next();
   }
 
-  // Handle unprefixed requests (e.g. /, /tours, /transport, /places)
-  const detectedLang = detectLanguage(request.headers.get("accept-language"));
-  const targetLocale = (urlLang && SUPPORTED_LANGUAGES.includes(urlLang.toLowerCase()))
-    ? urlLang.toLowerCase()
-    : (cookieLang && SUPPORTED_LANGUAGES.includes(cookieLang.toLowerCase()))
-      ? cookieLang.toLowerCase()
-      : detectedLang;
+  const pathParts = pathname.split("/");
+  const pathLang = pathParts[1];
+  const hasLocalePrefix = SUPPORTED_LANGUAGES.includes(pathLang);
 
+  if (hasLocalePrefix) {
+    // Already under a real /[locale]/... route: just forward the resolved
+    // locale via a header so the un-parameterized root layout (<html lang>)
+    // can read it with headers() instead of falling back to cookie state.
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-georgiatrips-locale", pathLang);
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  }
+
+  // Legacy / unlocalized URL (including "/"): 308 permanent redirect to the
+  // same path under the legacy default locale so existing indexed URLs keep
+  // resolving to equivalent content at their new canonical location.
   const redirectUrl = request.nextUrl.clone();
-  let normalizedPath = pathname === "/transport" ? "/transfers" : (pathname.startsWith("/transport/") ? `/transfers${pathname.slice(10)}` : pathname);
-  redirectUrl.pathname = `/${targetLocale}${normalizedPath === "/" ? "" : normalizedPath}`;
-  redirectUrl.searchParams.delete("lang");
-
-  const isPermanent = Boolean(urlLang) || pathname === "/" || pathname.startsWith("/transport");
-  const response = NextResponse.redirect(redirectUrl, { status: isPermanent ? 308 : 307 });
-  response.cookies.set("gt_language", targetLocale, {
-    path: "/",
-    maxAge: 31536000,
-    sameSite: "lax",
-  });
-  return response;
+  redirectUrl.pathname = `/${LEGACY_REDIRECT_LOCALE}${pathname === "/" ? "" : pathname}`;
+  return NextResponse.redirect(redirectUrl, 308);
 }
 
 export const config = {

@@ -1,0 +1,443 @@
+/* ==========================================================================
+   GeorgiaTrips — High-Value Landing Pages CSS (Batumi Excursions & Guides)
+   ========================================================================== */
+
+.landing-container {
+  min-height: 100vh;
+  background-color: #071524;
+  color: #f8fafc;
+  font-family: inherit;
+  overflow-x: hidden;
+}
+
+/* ── Hero Section ── */
+.landing-hero {
+  position: relative;
+  padding: 8rem 1.5rem 4.5rem;
+  background: radial-gradient(circle at 50% 20%, rgba(41, 178, 183, 0.15) 0%, rgba(7, 21, 36, 0.95) 75%),
+              linear-gradient(180deg, #071524 0%, #0d233a 100%);
+  text-align: center;
+  border-bottom: 1px solid rgba(41, 178, 183, 0.15);
+}
+
+.landing-hero-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+.landing-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  background: rgba(41, 178, 183, 0.12);
+  border: 1px solid rgba(41, 178, 183, 0.35);
+  border-radius: 9999px;
+  color: #29b2b7;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 1.25rem;
+}
+
+.landing-title {
+  font-size: clamp(2rem, 4.5vw, 3.25rem);
+  font-weight: 800;
+  line-height: 1.18;
+  color: #ffffff;
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+.landing-title span {
+  color: #29b2b7;
+}
+
+.landing-subtitle {
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  line-height: 1.6;
+  color: #94a3b8;
+  max-width: 780px;
+  margin: 0 auto 2rem;
+}
+
+.landing-hero-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.landing-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.75rem;
+  background: linear-gradient(135deg, #29b2b7 0%, #158085 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(41, 178, 183, 0.35);
+}
+
+.landing-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(41, 178, 183, 0.5);
+  color: #ffffff;
+}
+
+.landing-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.25s ease;
+}
+
+.landing-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(41, 178, 183, 0.4);
+}
+
+/* ── Breadcrumbs ── */
+.landing-breadcrumbs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 1.5rem;
+}
+
+.landing-breadcrumbs a {
+  color: #94a3b8;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.landing-breadcrumbs a:hover {
+  color: #29b2b7;
+}
+
+.landing-breadcrumbs span.sep {
+  color: #475569;
+}
+
+/* ── Content Sections ── */
+.landing-section {
+  padding: 4.5rem 1.5rem;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.landing-section-header {
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto 3.5rem;
+}
+
+.landing-section-tag {
+  color: #29b2b7;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.5rem;
+}
+
+.landing-section-title {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 1rem;
+}
+
+.landing-section-desc {
+  color: #94a3b8;
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+/* ── Highlights / Feature Grid ── */
+.landing-features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.75rem;
+  margin-bottom: 3.5rem;
+}
+
+.landing-feature-card {
+  background: rgba(13, 35, 58, 0.6);
+  border: 1px solid rgba(41, 178, 183, 0.18);
+  border-radius: 16px;
+  padding: 2rem;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(10px);
+}
+
+.landing-feature-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(41, 178, 183, 0.4);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+}
+
+.landing-feature-icon {
+  font-size: 2.25rem;
+  margin-bottom: 1.25rem;
+  display: inline-block;
+}
+
+.landing-feature-card h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-bottom: 0.75rem;
+}
+
+.landing-feature-card p {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+/* ── Tour Cards Grid ── */
+.landing-tours-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+.landing-tour-card {
+  background: #0d233a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  text-decoration: none;
+  color: inherit;
+}
+
+.landing-tour-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(41, 178, 183, 0.4);
+  box-shadow: 0 16px 36px rgba(41, 178, 183, 0.15);
+}
+
+.landing-tour-img-wrap {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  background: #1e293b;
+  overflow: hidden;
+}
+
+.landing-tour-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.landing-tour-card:hover .landing-tour-img {
+  transform: scale(1.05);
+}
+
+.landing-tour-price-badge {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(13, 35, 58, 0.9);
+  border: 1px solid rgba(41, 178, 183, 0.4);
+  color: #29b2b7;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  backdrop-filter: blur(6px);
+}
+
+.landing-tour-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.landing-tour-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.75rem;
+  line-height: 1.35;
+}
+
+.landing-tour-desc {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+  flex-grow: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.landing-tour-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.landing-tour-cta {
+  color: #29b2b7;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* ── Transfer / Pricing Table ── */
+.landing-table-wrap {
+  background: rgba(13, 35, 58, 0.7);
+  border: 1px solid rgba(41, 178, 183, 0.2);
+  border-radius: 16px;
+  overflow-x: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  margin-bottom: 3rem;
+}
+
+.landing-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+.landing-table th {
+  background: rgba(7, 21, 36, 0.8);
+  color: #29b2b7;
+  font-weight: 700;
+  padding: 1.15rem 1.5rem;
+  border-bottom: 1px solid rgba(41, 178, 183, 0.2);
+  text-transform: uppercase;
+  font-size: 0.82rem;
+  letter-spacing: 0.05em;
+}
+
+.landing-table td {
+  padding: 1.15rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #cbd5e1;
+}
+
+.landing-table tr:hover td {
+  background: rgba(41, 178, 183, 0.05);
+}
+
+.landing-table .price-val {
+  color: #f59e0b;
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+/* ── FAQ Section ── */
+.landing-faq-grid {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.landing-faq-item {
+  background: rgba(13, 35, 58, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.landing-faq-item:hover {
+  border-color: rgba(41, 178, 183, 0.3);
+}
+
+.landing-faq-q {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.landing-faq-a {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* ── CTA Banner ── */
+.landing-cta-banner {
+  background: linear-gradient(135deg, rgba(41, 178, 183, 0.15) 0%, rgba(13, 35, 58, 0.9) 100%);
+  border: 1px solid rgba(41, 178, 183, 0.3);
+  border-radius: 20px;
+  padding: 3.5rem 2rem;
+  text-align: center;
+  margin-top: 4rem;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+}
+
+.landing-cta-banner h2 {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 1rem;
+}
+
+.landing-cta-banner p {
+  color: #94a3b8;
+  font-size: 1.1rem;
+  max-width: 680px;
+  margin: 0 auto 2rem;
+  line-height: 1.6;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .landing-hero {
+    padding: 6.5rem 1rem 3.5rem;
+  }
+  .landing-section {
+    padding: 3rem 1rem;
+  }
+  .landing-tours-grid {
+    grid-template-columns: 1fr;
+  }
+  .landing-table th, .landing-table td {
+    padding: 0.85rem 1rem;
+  }
+}

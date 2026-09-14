@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -51,11 +53,10 @@ export default function HomePopularToursSection({
                 {popularTourPairs.map((pair, pIdx) => (
                   <div key={pIdx} className="mini-cards-pair-slide">
                     {pair.map((tour, index) => (
-                      <Link
+                      <article
                         key={tour.id}
-                        href={getLocalizedHref(`/tours/${tour.id}`, lang)}
                         className="pop-fc"
-                        style={{ textDecoration: "none" }}
+                        onClick={() => handleTourClick(tour)}
                       >
                         {/* Full-bleed Image */}
                         <Image
@@ -119,10 +120,10 @@ export default function HomePopularToursSection({
                                 </div>
                               )}
                             </div>
-                            <span className="pop-fc-btn">{t("popular.book")} →</span>
+                            <button className="pop-fc-btn">{t("popular.book")} →</button>
                           </div>
                         </div>
-                      </Link>
+                      </article>
                     ))}
                   </div>
                 ))}
@@ -146,7 +147,7 @@ export default function HomePopularToursSection({
                 {sec.tours.map((tour) => (
                   <Link
                     key={tour.id}
-                    href={getLocalizedHref(`/tours/${tour.id}`, lang)}
+                    href={getLocalizedHref(`/tours/${encodeURIComponent(tour.id)}`, lang)}
                     className="tb-card"
                     style={{ textDecoration: "none" }}
                   >

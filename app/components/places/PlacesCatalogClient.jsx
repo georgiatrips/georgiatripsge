@@ -7,18 +7,17 @@ import Navbar from "../Navbar";
 import Footer from "../Footer";
 import PageHero from "../PageHero";
 import { GEORGIA_REGIONS, formatRegionName } from "../../lib/placesMeta";
-import { getLocalizedHref } from "../../lib/siteConfig";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
-import { asLocalizedText, matchesMultiLang, extractImageUrl } from "../../lib/toursFirestore";
+import { asLocalizedText, matchesMultiLang } from "../../lib/toursFirestore";
+import { getLocalizedHref } from "../../lib/siteConfig";
 import { SearchIcon } from "../Icons";
 
 function PlaceCard({ place, lang }) {
-  const imgSrc = extractImageUrl(place.img) || (Array.isArray(place.gallery) && extractImageUrl(place.gallery[0])) || "/tbilisi.webp";
   return (
     <Link href={getLocalizedHref(`/places/${place.id}`, lang)} className="place-card">
       <div className="place-card-media">
         <Image
-          src={imgSrc}
+          src={place.img}
           alt={asLocalizedText(place.title, lang)}
           fill
           sizes="(max-width: 760px) 100vw, 33vw"

@@ -6,11 +6,9 @@ import Link from "next/link";
 import Image from "next/image";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import CouponTicket from "../components/CouponTicket";
 import { useAuth } from "../lib/AuthContext";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 import { useCoupon } from "../lib/CouponContext";
-import { getLocalizedHref } from "../lib/siteConfig";
 import {
   signInWithGoogle,
   signInWithFacebook,
@@ -18,8 +16,6 @@ import {
   signInWithEmail,
   resetPassword,
 } from "../lib/firebase";
-import "./login.css";
-import "../coupon.css";
 
 // ── Icons ─────────────────────────────────────────────────────
 const GoogleIcon = () => (
@@ -57,7 +53,7 @@ function getErrorMessage(code, t) {
 
 // ── Main Component ────────────────────────────────────────────
 export default function LoginPage() {
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
   const [tab, setTab] = useState("signin"); // "signin" | "signup"
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -98,7 +94,7 @@ export default function LoginPage() {
       await signInWithGoogle();
       claimWelcomeCoupon();
       showSuccess(t("loginPage.welcomeRedirect"));
-      setTimeout(() => router.push(getLocalizedHref("/", lang)), 900);
+      setTimeout(() => router.push("/"), 900);
     } catch (e) {
       showError(getErrorMessage(e.code, t));
     } finally {
@@ -113,7 +109,7 @@ export default function LoginPage() {
       await signInWithFacebook();
       claimWelcomeCoupon();
       showSuccess(t("loginPage.welcomeRedirect"));
-      setTimeout(() => router.push(getLocalizedHref("/", lang)), 900);
+      setTimeout(() => router.push("/"), 900);
     } catch (e) {
       showError(getErrorMessage(e.code, t));
     } finally {
@@ -130,7 +126,7 @@ export default function LoginPage() {
       await signInWithEmail(siEmail, siPassword);
       claimWelcomeCoupon();
       showSuccess(t("loginPage.welcomeRedirect"));
-      setTimeout(() => router.push(getLocalizedHref("/", lang)), 900);
+      setTimeout(() => router.push("/"), 900);
     } catch (e) {
       showError(getErrorMessage(e.code, t));
     } finally {
@@ -146,8 +142,8 @@ export default function LoginPage() {
     try {
       await signUpWithEmail(suEmail, suPassword, suName);
       claimWelcomeCoupon();
-      showSuccess(t("loginPage.welcomeRedirect") || "წარმატებით დარეგისტრირდით!");
-      setTimeout(() => router.push(getLocalizedHref("/", lang)), 900);
+      showSuccess(t("loginPage.accountCreatedVerify"));
+      setTimeout(() => setTab("signin"), 3000);
     } catch (e) {
       showError(getErrorMessage(e.code, t));
     } finally {
@@ -221,7 +217,7 @@ export default function LoginPage() {
               </div>
 
               <div style={{ display: "flex", gap: "10px", width: "100%", marginTop: "1.5rem" }}>
-                <Link href={getLocalizedHref("/tours", lang)} className="lp-btn-primary" style={{ flex: 1, display: "inline-flex", justifyContent: "center", alignItems: "center", textDecoration: "none" }}>
+                <Link href="/tours" className="lp-btn-primary" style={{ flex: 1, display: "inline-flex", justifyContent: "center", alignItems: "center", textDecoration: "none" }}>
                   {t("loginPage.exploreTours")}
                 </Link>
               </div>
@@ -369,9 +365,9 @@ export default function LoginPage() {
               {/* ── Footer note ── */}
               <p className="lp-footer-note">
                 {t("loginPage.termsNoticePre")}
-                <Link href={getLocalizedHref("/terms", lang)}>{t("loginPage.terms")}</Link>
+                <Link href="/terms">{t("loginPage.terms")}</Link>
                 {t("loginPage.termsAnd")}
-                <Link href={getLocalizedHref("/privacy-policy", lang)}>{t("loginPage.privacy")}</Link>.
+                <Link href="/privacy-policy">{t("loginPage.privacy")}</Link>.
               </p>
             </>
           )}

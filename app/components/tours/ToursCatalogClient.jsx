@@ -9,14 +9,14 @@ import Navbar from "../Navbar";
 import Footer from "../Footer";
 import PageHero from "../PageHero";
 import DatePicker from "../DatePicker";
-import { getLocalizedHref } from "../../lib/siteConfig";
 import { DESTINATIONS } from "../../lib/toursData";
 import { formatRegionName } from "../../lib/placesMeta";
-import { asLocalizedText, translateDuration, translateLocation, formatLocationStr, matchesMultiLang, normalizeFirestoreTour } from "../../lib/toursFirestore";
+import { asLocalizedText, translateDuration, translateLocation, formatLocationStr, matchesMultiLang } from "../../lib/toursFirestore";
 import { WA_LINK } from "../../lib/shared";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { useCurrency } from "../../lib/currency/CurrencyContext";
 import { formatPriceStr } from "../../lib/i18n/formatPriceStr";
+import { getLocalizedHref } from "../../lib/siteConfig";
 import TourPrice from "../TourPrice";
 import { SearchIcon, LocationIcon, ClockIcon, UsersIcon, CalendarIcon } from "../Icons";
 
@@ -31,6 +31,7 @@ export default function ToursCatalogClient({ initialTours = [] }) {
   const [selectedFormat, setSelectedFormat] = useState("all"); // "all" | "individual" | "group"
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [showMobileFilterTrigger, setShowMobileFilterTrigger] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [mounted, setMounted] = useState(false);
   const filterPanelRef = useRef(null);
@@ -39,21 +40,19 @@ export default function ToursCatalogClient({ initialTours = [] }) {
     setMounted(true);
   }, []);
 
-  // Lock body scroll when mobile filter drawer is open
   useEffect(() => {
-    if (mobileFilterOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
+    const handleScroll = () => {
+      if (!filterPanelRef.current) return;
+      const rect = filterPanelRef.current.getBoundingClientRect();
+      setShowMobileFilterTrigger(rect.top <= 20);
     };
-  }, [mobileFilterOpen]);
 
-  const allTours = useMemo(() => {
-    return (initialTours || []).map((tour) => normalizeFirestoreTour(tour, lang)).filter(Boolean);
-  }, [initialTours, lang]);
+    window.addEventListener("scroll", handleScroll, { capture: true, passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll, true);
+  }, []);
+
+  const allTours = initialTours;
 
   const allAvailableDates = useMemo(() => {
     const datesSet = new Set();
@@ -141,17 +140,7 @@ export default function ToursCatalogClient({ initialTours = [] }) {
     setSearchQuery("");
   };
 
-  const hasActiveFilters = selectedDestination !== "all" || selectedType !== "all" || selectedFormat !== "all" || Boolean(selectedDate) || Boolean(searchQuery.trim());
-
-  const activeFiltersCount = useMemo(() => {
-    let count = 0;
-    if (selectedDestination !== "all") count++;
-    if (selectedType !== "all") count++;
-    if (selectedFormat !== "all") count++;
-    if (selectedDate) count++;
-    if (searchQuery.trim()) count++;
-    return count;
-  }, [selectedDestination, selectedType, selectedFormat, selectedDate, searchQuery]);
+  const hasActiveFilters = selectedDestination !== "all" || selectedType !== "all" || selectedFormat !== "all" || selectedDate || searchQuery;
 
   return (
     <>
@@ -171,20 +160,18 @@ export default function ToursCatalogClient({ initialTours = [] }) {
         <div className="tours-catalog-inner">
 
           {/* Floating Mobile Filter Trigger Button via Portal */}
-          {mounted && typeof document !== "undefined" && createPortal(
-            <div className={`mobile-floating-filter-wrap ${mobileFilterOpen ? "is-hidden" : ""}`}>
+          {mounted && showMobileFilterTrigger && typeof document !== "undefined" && createPortal(
+            <div className="mobile-filter-bar-wrap">
               <button
                 type="button"
-                className="mobile-floating-filter-btn"
+                className="mobile-filter-trigger-btn"
                 onClick={() => setMobileFilterOpen(true)}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
                 </svg>
                 <span>{t("toursPage.openFilters")}</span>
-                {activeFiltersCount > 0 && (
-                  <span className="mobile-filter-badge">{activeFiltersCount}</span>
-                )}
+                {hasActiveFilters && <span className="mobile-filter-dot" />}
               </button>
             </div>,
             document.body
@@ -197,7 +184,6 @@ export default function ToursCatalogClient({ initialTours = [] }) {
 
           {/* Filter Bar Panel */}
           <aside ref={filterPanelRef} className={"tours-filter-panel " + (mobileFilterOpen ? "mobile-open " : "")}>
-            <div className="mobile-drawer-handle" />
             <div className="filter-panel-header">
               <h3>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -230,16 +216,6 @@ export default function ToursCatalogClient({ initialTours = [] }) {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      className="mobile-search-clear-btn"
-                      onClick={() => setSearchQuery("")}
-                      style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)" }}
-                    >
-                      ✕
-                    </button>
-                  )}
                 </div>
               </div>
 
@@ -318,42 +294,6 @@ export default function ToursCatalogClient({ initialTours = [] }) {
 
           {/* Results Summary & Cards Grid */}
           <div className="tours-results-wrap">
-            {/* Mobile in-flow Filter & Search Bar */}
-            <div className="mobile-catalog-top-bar">
-              <div className="mobile-catalog-search-box">
-                <SearchIcon size={16} />
-                <input
-                  type="text"
-                  placeholder={t("toursPage.searchPlaceholder")}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    className="mobile-search-clear-btn"
-                    onClick={() => setSearchQuery("")}
-                    aria-label="Clear search"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-              <button
-                type="button"
-                className={`mobile-filter-open-btn ${hasActiveFilters ? "has-filters" : ""}`}
-                onClick={() => setMobileFilterOpen(true)}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-                </svg>
-                <span>{t("toursPage.filterTitle") || "ფილტრი"}</span>
-                {activeFiltersCount > 0 && (
-                  <span className="mobile-filter-badge">{activeFiltersCount}</span>
-                )}
-              </button>
-            </div>
-
             <div className="tours-results-header">
               <h2>
                 {(() => {

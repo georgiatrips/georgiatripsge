@@ -3,7 +3,6 @@
 import React, { useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "./lib/i18n/LanguageContext";
-import { getLocalizedHref } from "./lib/siteConfig";
 
 const ERROR_TEXTS = {
   ka: {
@@ -44,10 +43,7 @@ export default function Error({ error, reset }) {
 
   useEffect(() => {
     console.error("App Error Boundary caught:", error);
-    if (typeof document !== "undefined" && t?.title) {
-      document.title = `${t.title} | GeorgiaTrips`;
-    }
-  }, [error, t]);
+  }, [error]);
 
   return (
     <div
@@ -94,7 +90,7 @@ export default function Error({ error, reset }) {
             {t.retryBtn}
           </button>
           <Link
-            href={getLocalizedHref("/", lang)}
+            href="/"
             style={{
               padding: "0.75rem 1.5rem",
               background: "rgba(13, 35, 58, 0.08)",

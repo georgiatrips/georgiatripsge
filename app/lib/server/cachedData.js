@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { listFirestoreTours, getFirestoreTourById } from "../toursFirestore";
+import { ALL_TOURS as staticTours } from "../toursData";
 import { listPlaces } from "../placesFirestore";
 import { listPostSummaries } from "../postsFirestore";
 import { listHotels } from "../hotelsFirestore";
@@ -42,28 +43,31 @@ export function serializeForClient(data) {
 
 /**
  * Cached getter for all Tours across the site.
- * Only returns real tours from Firebase Firestore.
+ * Cached for 1 hour, tagged with 'tours'.
  */
 export const getCachedTours = unstable_cache(
   async () => {
     try {
-      const fsTours = (await listFirestoreTours()) || [];
-      return serializeForClient(fsTours);
+      const fsTours = await listFirestoreTours();
+      if (Array.isArray(fsTours) && fsTours.length > 0) {
+        return serializeForClient(fsTours);
+      }
+      return serializeForClient(staticTours);
     } catch (err) {
       console.error("[getCachedTours] Error:", err);
-      return [];
+      return serializeForClient(staticTours);
     }
   },
   ["all-tours-cache"],
   {
-    revalidate: 15,
+    revalidate: 3600, // 1 hour
     tags: ["tours"],
   }
 );
 
 /**
  * Cached getter for a single Tour by ID.
- * Only returns real tour from Firebase Firestore.
+ * Cached for 1 hour, tagged with 'tours' and `tour-${id}`.
  */
 export const getCachedTourById = (tourId) =>
   unstable_cache(
@@ -72,24 +76,27 @@ export const getCachedTourById = (tourId) =>
         let tour = await getFirestoreTourById(tourId);
         if (!tour) {
           const all = await listFirestoreTours();
-          tour = all.find((t) => t.id === tourId || t.slug === tourId) || null;
+          tour = all.find((t) => t.id === tourId) || null;
+        }
+        if (!tour) {
+          tour = staticTours.find((t) => t.id === tourId) || null;
         }
         return serializeForClient(tour);
       } catch (err) {
         console.error(`[getCachedTourById] Error for ${tourId}:`, err);
-        return null;
+        return serializeForClient(staticTours.find((t) => t.id === tourId) || null);
       }
     },
     [`tour-detail-${tourId}`],
     {
-      revalidate: 15,
+      revalidate: 3600,
       tags: ["tours", `tour-${tourId}`],
     }
   )();
 
 /**
  * Cached getter for all Places.
- * Tagged with 'places'.
+ * Cached for 1 hour, tagged with 'places'.
  */
 export const getCachedPlaces = unstable_cache(
   async () => {
@@ -103,14 +110,14 @@ export const getCachedPlaces = unstable_cache(
   },
   ["all-places-cache"],
   {
-    revalidate: 15,
+    revalidate: 3600,
     tags: ["places"],
   }
 );
 
 /**
  * Cached getter for Blog Posts.
- * Tagged with 'posts'.
+ * Cached for 1 hour, tagged with 'posts'.
  */
 export const getCachedPosts = (limitCount = 6) =>
   unstable_cache(
@@ -125,14 +132,14 @@ export const getCachedPosts = (limitCount = 6) =>
     },
     [`all-posts-cache-${limitCount}`],
     {
-      revalidate: 15,
+      revalidate: 3600,
       tags: ["posts"],
     }
   )();
 
 /**
  * Cached getter for Hotels.
- * Tagged with 'hotels'.
+ * Cached for 1 hour, tagged with 'hotels'.
  */
 export const getCachedHotels = unstable_cache(
   async () => {
@@ -146,7 +153,7 @@ export const getCachedHotels = unstable_cache(
   },
   ["all-hotels-cache"],
   {
-    revalidate: 15,
+    revalidate: 3600,
     tags: ["hotels"],
   }
 );

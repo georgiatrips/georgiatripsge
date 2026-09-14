@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "../lib/i18n/LanguageContext";
+import { getLocalizedHref } from "../lib/siteConfig";
 
 const COOKIE_CONSENT_KEY = "gt_cookie_consent";
 
@@ -127,7 +128,7 @@ export default function CookieConsent() {
       </div>
       <p style={{ fontSize: "0.82rem", color: "rgba(255, 255, 255, 0.88)", lineHeight: 1.45, margin: "0 0 0.85rem 0" }}>
         {t.desc}
-        <Link href="/privacy-policy" style={{ color: "#5eead4", textDecoration: "underline" }}>
+        <Link href={getLocalizedHref("/privacy-policy", lang)} style={{ color: "#5eead4", textDecoration: "underline" }}>
           {t.privacy}
         </Link>.
       </p>

@@ -4,12 +4,12 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { BrandLogo } from "../lib/shared";
-import { getLocalizedHref } from "../lib/siteConfig";
 import { useAuth } from "../lib/AuthContext";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 import { useCurrency, CURRENCY_RATES } from "../lib/currency/CurrencyContext";
 import { FlagGeorgia, FlagUK, FlagRussia, FlagTurkey, FlagArabic } from "./Flags";
 import CouponModal from "./CouponModal";
+import { getLocalizedHref } from "../lib/siteConfig";
 
 // Shared site navigation. `active` highlights the current top-level item.
 // Supported active values: "home" | "tours" | "transport" | "posts" | "hotels" | "admin" | "about" | "contact"
@@ -24,18 +24,15 @@ export default function Navbar({ active = "home" }) {
   const { currency, setCurrency } = useCurrency();
   const { user, logOut } = useAuth() ?? {};
   const router = useRouter();
-  const pathname = usePathname() || "/";
+  const pathname = usePathname();
   const { lang, setLang, t, isGeorgian, isEnglish, isRussian } = useLanguage();
 
-  const getLanguageSwitchUrl = (targetLang) => {
-    let search = "";
-    let hash = "";
-    if (typeof window !== "undefined") {
-      search = window.location.search || "";
-      hash = window.location.hash || "";
-    }
-    const fullPath = `${pathname}${search}${hash}`;
-    return getLocalizedHref(fullPath, targetLang);
+  // Switching language must move to the localized URL (the SEO source of
+  // truth), not just flip client state — otherwise the visible language and
+  // the indexable URL would drift apart again.
+  const handleLanguageChange = (code) => {
+    setLang(code);
+    router.push(getLocalizedHref(pathname, code));
   };
 
   useEffect(() => {
@@ -118,7 +115,7 @@ export default function Navbar({ active = "home" }) {
         <li><Link href={getLocalizedHref("/transfers", lang)} className={active === "transfers" || active === "transport" ? "active" : ""}>{t("nav.transport")}</Link></li>
         <li><Link href={getLocalizedHref("/posts", lang)} className={active === "posts" || active === "articles" ? "active" : ""}>{t("nav.articles")}</Link></li>
         {user?.isAdmin && (
-          <li><Link href={getLocalizedHref("/admin", lang)} className={active === "admin" ? "active" : ""}>{t("nav.admin")}</Link></li>
+          <li><Link href="/admin" className={active === "admin" ? "active" : ""}>{t("nav.admin")}</Link></li>
         )}
       </ul>
 
@@ -135,19 +132,15 @@ export default function Navbar({ active = "home" }) {
           {langDropdownOpen && (
             <div className="nav-dropdown nav-dropdown-sm nav-lang-dropdown">
               {languages.map((l) => (
-                <Link
+                <button
                   key={l.code}
-                  href={getLanguageSwitchUrl(l.code)}
                   className={`nav-dropdown-item ${lang === l.code ? "active" : ""}`}
-                  onClick={() => {
-                    setLang(l.code);
-                    setLangDropdownOpen(false);
-                  }}
-                  style={{ display: "flex", alignItems: "center", gap: "8px", textDecoration: "none" }}
+                  onClick={() => { handleLanguageChange(l.code); setLangDropdownOpen(false); }}
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
                 >
                   <span className="nav-lang-flag">{l.flag}</span>
                   <span>{l.label}</span>
-                </Link>
+                </button>
               ))}
             </div>
           )}
@@ -217,14 +210,14 @@ export default function Navbar({ active = "home" }) {
             </button>
             {userDropdownOpen && (
               <div className="nav-dropdown" style={{ right: 0, left: "auto", minWidth: 175 }}>
-                <button className="nav-dropdown-item" onClick={() => { router.push(getLocalizedHref("/login", lang)); setUserDropdownOpen(false); }}>
+                <button className="nav-dropdown-item" onClick={() => { router.push("/login"); setUserDropdownOpen(false); }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}>
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
                   </svg>
                   <span>{t("nav.profile")}</span>
                 </button>
                 <Link
-                   href={getLocalizedHref("/coupons", lang)}
+                   href="/coupons"
                    className="nav-dropdown-item nav-dropdown-coupon-btn"
                    onClick={() => setUserDropdownOpen(false)}
                    style={{ display: "flex", alignItems: "center", gap: "6px" }}
@@ -237,7 +230,7 @@ export default function Navbar({ active = "home" }) {
                  </Link>
                 <button
                   className="nav-dropdown-item"
-                  onClick={async () => { await logOut?.(); setUserDropdownOpen(false); router.push(getLocalizedHref("/", lang)); }}
+                  onClick={async () => { await logOut?.(); setUserDropdownOpen(false); router.push("/"); }}
                   style={{ color: "#f87171" }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}>
@@ -251,7 +244,7 @@ export default function Navbar({ active = "home" }) {
             )}
           </div>
         ) : (
-          <Link href={getLocalizedHref("/login", lang)} className="nav-login-btn">
+          <Link href="/login" className="nav-login-btn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
             </svg>
@@ -281,7 +274,7 @@ export default function Navbar({ active = "home" }) {
         <Link href={getLocalizedHref("/transfers", lang)} onClick={() => setMobileMenuOpen(false)}>{t("nav.transport")}</Link>
         <Link href={getLocalizedHref("/posts", lang)} onClick={() => setMobileMenuOpen(false)}>{t("nav.articles")}</Link>
         {user?.isAdmin && (
-          <Link href={getLocalizedHref("/admin", lang)} onClick={() => setMobileMenuOpen(false)}>{t("nav.admin")}</Link>
+          <Link href="/admin" onClick={() => setMobileMenuOpen(false)}>{t("nav.admin")}</Link>
         )}
         <div className="nav-mobile-controls">
           {/* Mobile Language Switcher */}
@@ -292,20 +285,18 @@ export default function Navbar({ active = "home" }) {
             </span>
             <div className="nav-mobile-lang-grid">
               {languages.map((l) => (
-                <Link
+                <button
                   key={l.code}
-                  href={getLanguageSwitchUrl(l.code)}
                   className={`nav-mobile-lang-card ${lang === l.code ? "active" : ""}`}
                   onClick={() => {
-                    setLang(l.code);
+                    handleLanguageChange(l.code);
                     setMobileMenuOpen(false);
                   }}
-                  style={{ textDecoration: "none" }}
                 >
                   <span className="nav-mobile-flag">{l.flag}</span>
                   <span className="nav-mobile-lang-name">{l.label}</span>
                   {lang === l.code && <span className="nav-mobile-active-dot">✓</span>}
-                </Link>
+                </button>
               ))}
             </div>
           </div>
@@ -345,11 +336,11 @@ export default function Navbar({ active = "home" }) {
               <span>{displayName}</span>
             </div>
             <div className="nav-mobile-user-actions">
-              <Link href={getLocalizedHref("/login", lang)} className="nav-mobile-user-btn" onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/login" className="nav-mobile-user-btn" onClick={() => setMobileMenuOpen(false)}>
                 {t("nav.profile")}
               </Link>
               <Link
-                href={getLocalizedHref("/coupons", lang)}
+                href="/coupons"
                 className="nav-mobile-user-btn nav-mobile-coupon-btn"
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -357,14 +348,14 @@ export default function Navbar({ active = "home" }) {
               </Link>
               <button
                 className="nav-mobile-user-btn nav-mobile-logout"
-                onClick={async () => { await logOut?.(); setMobileMenuOpen(false); router.push(getLocalizedHref("/", lang)); }}
+                onClick={async () => { await logOut?.(); setMobileMenuOpen(false); router.push("/"); }}
               >
                 {t("nav.logout")}
               </button>
             </div>
           </div>
         ) : (
-          <Link href={getLocalizedHref("/login", lang)} className="nav-mobile-login" onClick={() => setMobileMenuOpen(false)}>
+          <Link href="/login" className="nav-mobile-login" onClick={() => setMobileMenuOpen(false)}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
             </svg>

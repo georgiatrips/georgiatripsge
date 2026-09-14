@@ -326,7 +326,7 @@ export default function PlaceManager({ onPlacesCountChange }) {
                     </div>
                   </div>
                   <div className="admin-entry-actions">
-                    <Link href={`/places/${place.id}`} className="admin-action-btn link" target="_blank">
+                    <Link href={`/ka/places/${place.id}`} className="admin-action-btn link" target="_blank">
                       👁️ ნახვა ↗
                     </Link>
                     <div style={{ display: "flex", gap: "0.5rem" }}>
