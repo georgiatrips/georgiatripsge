@@ -8,20 +8,16 @@ import { PhoneIcon, WhatsAppIcon } from "../Icons";
 
 // Persistent contact bar for phones (CSS shows it at <=768px only). The
 // spacer reserves the same height at the end of the page so the bar never
-// covers the last piece of content.
-export default function MobileContactBar() {
+// covers the last piece of content. The third slot is the page's primary
+// action (tours by default; the homepage points it at the trip planner).
+export default function MobileContactBar({ primaryHref = "/tours", primaryLabel }) {
   const { t, lang } = useLanguage();
 
   return (
     <>
       <div className="gt-mobile-bar-spacer" aria-hidden="true" />
       <nav className="gt-mobile-bar" aria-label={t("site.mobileBar")}>
-        <a
-          href={whatsappHref(t("site.generalWa"))}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="gt-mobile-bar-item is-wa"
-        >
+        <a href={whatsappHref(t("site.generalWa"))} target="_blank" rel="noopener noreferrer" className="gt-mobile-bar-item is-wa">
           <WhatsAppIcon size={19} />
           <span>WhatsApp</span>
         </a>
@@ -29,8 +25,8 @@ export default function MobileContactBar() {
           <PhoneIcon size={18} />
           <span>{t("site.call")}</span>
         </a>
-        <Link href={getLocalizedHref("/#plan", lang)} className="gt-mobile-bar-item is-primary" prefetch={false}>
-          {t("site.planShort")}
+        <Link href={getLocalizedHref(primaryHref, lang)} className="gt-mobile-bar-item is-primary" prefetch={false}>
+          {primaryLabel || t("site.viewTours")}
         </Link>
       </nav>
     </>
