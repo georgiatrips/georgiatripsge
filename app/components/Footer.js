@@ -10,15 +10,15 @@ import {
 import { getLocalizedHref, SUPPORTED_LANGUAGES } from "../lib/siteConfig";
 import { LocationIcon, MailIcon, PhoneIcon, WhatsAppIcon } from "./Icons";
 import { FacebookGlyph, InstagramGlyph, LinkedInGlyph, TelegramGlyph, TikTokGlyph, YouTubeGlyph, WhatsAppGlyph } from "./SocialIcons";
-import MobileContactBar from "./site/MobileContactBar";
+import MobileTabBar from "./site/MobileTabBar";
 
 const LANGUAGE_NAMES = { ka: "ქართული", en: "English", ru: "Русский", tr: "Türkçe", ar: "العربية" };
 
 // Static site footer: every link is a known route or contact, so it renders
-// instantly with no Firestore round-trip. `contactBar` adds the fixed
-// WhatsApp / call / tours bar on phones (pages with their own sticky booking
-// bar leave it off).
-export default function Footer({ contactBar = false, primaryHref, primaryLabel }) {
+// instantly with no Firestore round-trip. On phones it also adds the fixed
+// navigation bar (tours, destinations, transfers, account); pages with their
+// own bottom bar, such as the tour page's booking bar, pass mobileNav={false}.
+export default function Footer({ mobileNav = true }) {
   const { t, lang } = useLanguage();
   const pathname = usePathname() || "/";
   const href = (path) => getLocalizedHref(path, lang);
@@ -73,7 +73,7 @@ export default function Footer({ contactBar = false, primaryHref, primaryLabel }
 
   return (
     <>
-      {contactBar && <MobileContactBar primaryHref={primaryHref} primaryLabel={primaryLabel} />}
+      {mobileNav && <MobileTabBar />}
       <footer className="gt-footer">
         <div className="gt-container">
           <div className="gt-footer-grid">

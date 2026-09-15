@@ -32,6 +32,7 @@ import TourDetailSchedule from "../tour-detail/TourDetailSchedule";
 import TourDetailGallery from "../tour-detail/TourDetailGallery";
 import TourBookingSidebar from "../tour-detail/TourBookingSidebar";
 import TourDetailSimilarTours from "../tour-detail/TourDetailSimilarTours";
+import TourMobileBookingBar from "../tour-detail/TourMobileBookingBar";
 import TourDetailPromoBanners from "../tour-detail/TourDetailPromoBanners";
 import TourDetailFaq from "../tour-detail/TourDetailFaq";
 
@@ -67,55 +68,14 @@ export default function TourDetailClient({
   const [couponSuccess, setCouponSuccess] = useState("");
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
   const [lightboxImgIndex, setLightboxImgIndex] = useState(null);
-  const [isHeroInView, setIsHeroInView] = useState(true);
-  const [isFormInView, setIsFormInView] = useState(false);
   const [bookingSubmitting, setBookingSubmitting] = useState(false);
   const [bookingSubmitted, setBookingSubmitted] = useState(false);
   const bookingSidebarRef = useRef(null);
 
-  // IntersectionObserver to show mobile sticky bar only when hero is scrolled past AND booking form is not visible
-  useEffect(() => {
-    let heroObserver, formObserver;
-
-    const heroEl = document.querySelector(".tdp-hero");
-    const formEl = document.getElementById("tour-booking-form") || document.getElementById("mobile-booking-target") || bookingSidebarRef.current;
-
-    if (heroEl && typeof IntersectionObserver !== "undefined") {
-      heroObserver = new IntersectionObserver(
-        ([entry]) => {
-          setIsHeroInView(entry.isIntersecting);
-        },
-        { threshold: 0.1 }
-      );
-      heroObserver.observe(heroEl);
-    }
-
-    if (formEl && typeof IntersectionObserver !== "undefined") {
-      formObserver = new IntersectionObserver(
-        ([entry]) => {
-          setIsFormInView(entry.isIntersecting);
-        },
-        { threshold: 0.15 }
-      );
-      formObserver.observe(formEl);
-    }
-
-    const handleScroll = () => {
-      const scrollY = window.scrollY || document.documentElement.scrollTop;
-      if (scrollY > 320 && isHeroInView) {
-        setIsHeroInView(false);
-      } else if (scrollY <= 320 && !isHeroInView) {
-        setIsHeroInView(true);
-      }
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-
-    return () => {
-      heroObserver?.disconnect();
-      formObserver?.disconnect();
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, [tourId, isHeroInView]);
+  // The phone booking bar tracks the hero and the booking form itself
+  // (TourMobileBookingBar). This page used to do it with a scroll listener
+  // and two observers that disagreed and re-created each other on every
+  // flip, re-rendering the whole page while the visitor scrolled.
 
   useEffect(() => {
     if (initialTour) return;
@@ -536,7 +496,6 @@ export default function TourDetailClient({
   const waMsg = interpolate(t("tourCard.waMessage"), { title: tourLocalizedTitle });
   const waUrl = `${WA_LINK}?text=${encodeURIComponent(waMsg)}`;
 
-  const showMobileStickyBar = !isHeroInView && !isFormInView;
 
   return (
     <div className="tdp-layout">
@@ -691,46 +650,17 @@ export default function TourDetailClient({
         </div>
       )}
 
-      {/* Sticky Mobile Floating Booking Bar */}
-      {showMobileStickyBar && (
-        <aside
-          className="tdp-mobile-floating-bar"
-          aria-label="Quick Tour Booking Bar"
-          dir={lang === "ar" ? "rtl" : "ltr"}
-        >
-          <div className="mobile-floating-price">
-            <small className="mobile-floating-price-label">{priceTypeLabel}</small>
-            <div className="mobile-floating-price-val">
-              <TourPrice price={activePrice} lang={lang} variant="card" />
-            </div>
-          </div>
+      {/* Booking bar for phones: price, WhatsApp and a jump to the booking form */}
+      <TourMobileBookingBar
+        price={activePrice}
+        label={priceTypeLabel}
+        waUrl={waUrl}
+        bookLabel={bookBtnText}
+        onBook={scrollToBooking}
+      />
 
-          <div className="mobile-floating-actions">
-            <a
-              href={waUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-mobile-floating-wa"
-              aria-label="Contact via WhatsApp"
-            >
-              <WhatsAppIcon width={20} height={20} />
-            </a>
-
-            <button
-              type="button"
-              className="btn-mobile-floating-book"
-              onClick={scrollToBooking}
-            >
-              <span>{bookBtnText}</span>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: lang === "ar" ? "scaleX(-1)" : "none" }}>
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-              </svg>
-            </button>
-          </div>
-        </aside>
-      )}
-
-      <Footer />
+      {/* No site navigation bar here: the booking bar owns the bottom of the screen. */}
+      <Footer mobileNav={false} />
     </div>
   );
 }

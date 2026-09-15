@@ -19,6 +19,9 @@ export default function TourPrice({
   variant = "default",
   showBadge = true,
   showOld = true,
+  // Drops a trailing unit such as "/კაცი" for tight spaces where the unit is
+  // already shown as a label (the phone booking bar).
+  compact = false,
 }) {
   const { lang: contextLang } = useLanguage() || { lang: "ka" };
   const lang = propLang || contextLang || "ka";
@@ -28,12 +31,11 @@ export default function TourPrice({
     return null;
   }
 
-  const {
-    originalFormatted,
-    discountedFormatted,
-    discountPercent,
-    isDiscounted,
-  } = calculatePrice(price, lang);
+  const prices = calculatePrice(price, lang);
+  const trim = (value) => (compact ? String(value ?? "").replace(/\s*\/\s*[^/\d\s][^/]*$/, "") : value);
+  const originalFormatted = trim(prices.originalFormatted);
+  const discountedFormatted = trim(prices.discountedFormatted);
+  const { discountPercent, isDiscounted } = prices;
 
   if (isDiscounted && hasActiveCoupon) {
     return (

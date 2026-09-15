@@ -24,7 +24,8 @@ export default function TourDetailHero({
           src={tour.img || "/hero.webp"}
           alt={asLocalizedText(tour.title, lang)}
           fill
-          priority
+          loading="eager"
+          fetchPriority="high"
           sizes="100vw"
           style={{ objectFit: "cover" }}
         />

@@ -4,13 +4,19 @@
    hero search bar, the catalog filters and the booking form.
    ========================================================================== */
 
-.dp-wrap { position: relative; width: 100%; }
+/* min-width: 0 on the wrapper and the trigger: inside grid and flex fields a
+   long placeholder must shorten with an ellipsis, never push the field wider
+   than its column. */
+.dp-wrap { position: relative; width: 100%; min-width: 0; }
 
 .dp-trigger {
   display: flex;
   align-items: center;
   gap: 0.55rem;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
   min-height: 48px;
   padding: 0.55rem 0.8rem;
   border: 1.5px solid var(--gt-line-strong, #cbd5e1);
@@ -50,7 +56,7 @@
   white-space: nowrap;
 }
 
-.dp-trigger-value--placeholder { color: var(--gt-muted, #5b6b7d); font-weight: 500; }
+.dp-trigger-value--placeholder { color: var(--gt-muted, #5b6b7d); font-size: 0.88rem; font-weight: 500; }
 
 .dp-chevron { flex: none; color: var(--gt-muted, #5b6b7d); transition: transform 0.2s ease; }
 .dp-trigger--open .dp-chevron { transform: rotate(180deg); }

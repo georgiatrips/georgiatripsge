@@ -399,7 +399,7 @@ export default function ToursCatalogClient({ initialTours = [] }) {
           </div>
         </section>
       </main>
-      <Footer contactBar primaryHref="/#plan" primaryLabel={t("site.planShort")} />
+      <Footer />
     </>
   );
 }

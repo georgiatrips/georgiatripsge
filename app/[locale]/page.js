@@ -627,7 +627,7 @@ export default async function HomePage({ params }) {
         </section>
       </main>
 
-      <Footer contactBar primaryHref="/#plan" primaryLabel={t("site.planShort")} />
+      <Footer />
     </>
   );
 }

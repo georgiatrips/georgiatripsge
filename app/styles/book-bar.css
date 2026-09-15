@@ -1,0 +1,97 @@
+/* Tour page booking bar for phones (TourMobileBookingBar.jsx).
+   Light, like the site's other bars: price on the start side, WhatsApp and the
+   booking action on the end side. It slides with transform only and uses no
+   backdrop blur, so scrolling stays smooth on low-end phones. */
+
+.gt-book-bar { display: none; }
+
+@media (max-width: 768px) {
+  .gt-book-bar {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: 9980;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.6rem 0.85rem calc(0.6rem + env(safe-area-inset-bottom, 0px));
+    border-block-start: 1px solid var(--gt-line);
+    background: #fff;
+    color: var(--gt-ink);
+    box-shadow: 0 -14px 32px -20px rgba(13, 35, 58, 0.55);
+    transform: translateY(110%);
+    transition: transform 0.35s var(--gt-ease-out);
+  }
+
+  .gt-book-bar.is-visible { transform: none; }
+
+  .gt-book-bar-price { display: grid; gap: 0.1rem; min-width: 0; }
+
+  .gt-book-bar-price small {
+    overflow: hidden;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--gt-muted);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .gt-book-bar .gt-price-box {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.05rem 0.4rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .gt-book-bar .gt-price-current {
+    font-family: var(--gt-font-body);
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--gt-navy-900);
+  }
+
+  .gt-book-bar .gt-price-old { font-size: 0.78rem; font-weight: 600; color: var(--gt-muted); }
+
+  .gt-book-bar .gt-price-badge {
+    padding: 0.1rem 0.35rem;
+    border-radius: 6px;
+    background: rgba(250, 180, 24, 0.2);
+    color: #7a4f00;
+    font-size: 0.7rem;
+    font-weight: 800;
+  }
+
+  .gt-book-bar-wa {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border: 1.5px solid rgba(14, 124, 102, 0.35);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--gt-wa);
+  }
+
+  .gt-book-bar-wa:active { background: rgba(14, 124, 102, 0.08); }
+  .gt-book-bar-wa:focus-visible { outline: 3px solid var(--gt-teal); outline-offset: 2px; }
+
+  .gt-book-bar-cta { min-height: 48px; padding-inline: 1.1rem; white-space: nowrap; }
+
+  body:has(.gt-book-bar.is-visible) .gt-floating-coupon-widget { bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important; }
+}
+
+@media (max-width: 360px) {
+  .gt-book-bar-cta svg { display: none; }
+  .gt-book-bar-cta { padding-inline: 0.85rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gt-book-bar { transition: none; }
+}

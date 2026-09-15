@@ -471,57 +471,81 @@ html[dir="rtl"] .gt-drawer { animation-name: gt-drawer-in-rtl; }
   .gt-footer-dev { justify-self: start; white-space: normal; }
 }
 
-/* ---------- Mobile contact bar ---------- */
+/* ---------- Mobile navigation bar (MobileTabBar.jsx) ---------- */
 
-.gt-mobile-bar,
-.gt-mobile-bar-spacer { display: none; }
+.gt-tabbar,
+.gt-tabbar-spacer { display: none; }
 
 @media (max-width: 768px) {
-  body:has(.gt-mobile-bar) { --gt-mobile-bar-offset: calc(70px + env(safe-area-inset-bottom, 0px)); }
+  body:has(.gt-tabbar) { --gt-tabbar-offset: calc(64px + env(safe-area-inset-bottom, 0px)); }
 
-  .gt-mobile-bar {
+  .gt-tabbar {
     position: fixed;
     inset-inline: 0;
     inset-block-end: 0;
     z-index: 9980;
-    display: grid;
-    /* Contact buttons size to their label; the page's primary action takes the rest. */
-    grid-template-columns: auto auto minmax(0, 1fr);
-    gap: 0.45rem;
-    padding: 0.55rem 0.75rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
-    background: rgba(255, 255, 255, 0.98);
+    display: block;
+    padding-block-end: env(safe-area-inset-bottom, 0px);
     border-block-start: 1px solid var(--gt-line);
-    box-shadow: 0 -10px 30px -18px rgba(13, 35, 58, 0.45);
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 -10px 30px -20px rgba(13, 35, 58, 0.45);
   }
 
-  .gt-mobile-bar-spacer { display: block; block-size: var(--gt-mobile-bar-offset); background: var(--gt-navy-950); }
+  /* Each tab is at least as wide as its label (Georgian "მიმართულებები" needs
+     ~104px while four equal tabs on a 375px phone get ~86px); the space left
+     over is shared equally. */
+  .gt-tabbar ul { display: grid; grid-template-columns: repeat(4, minmax(max-content, 1fr)); margin: 0; padding: 0; list-style: none; }
 
-  .gt-mobile-bar-item {
+  .gt-tabbar-item {
+    position: relative;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.4rem;
-    min-height: 48px;
-    padding: 0 0.7rem;
-    border: 1.5px solid var(--gt-line-strong);
-    border-radius: 10px;
-    background: #fff;
-    color: var(--gt-navy-900);
+    gap: 0.22rem;
+    min-height: 64px;
+    padding: 0.35rem 0.2rem;
+    color: var(--gt-muted);
     font-family: var(--gt-font-body);
-    font-size: 0.88rem;
+    font-size: 0.72rem;
     font-weight: 700;
+    line-height: 1.2;
     text-align: center;
     text-decoration: none;
-    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.2s ease, background-color 0.2s ease;
   }
 
-  .gt-mobile-bar-item svg { flex: none; }
-  .gt-mobile-bar-item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .gt-tabbar-item span { max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .gt-tabbar-item svg { flex: none; }
 
-  .gt-mobile-bar-item.is-wa { background: var(--gt-wa); border-color: transparent; color: #fff; }
-  .gt-mobile-bar-item.is-primary { background: var(--gt-gold); border-color: transparent; color: var(--gt-navy-900); }
+  /* Gold marker above the current section. */
+  .gt-tabbar-item::before {
+    content: "";
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 28%;
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+    background: var(--gt-gold);
+    transform: scaleX(0);
+    transition: transform 0.25s var(--gt-ease-out);
+  }
 
-  body:has(.gt-mobile-bar) .gt-floating-coupon-widget { bottom: calc(12px + var(--gt-mobile-bar-offset)) !important; }
+  .gt-tabbar-item.is-active { color: var(--gt-navy-900); }
+  .gt-tabbar-item.is-active svg { color: var(--gt-teal-700); }
+  .gt-tabbar-item.is-active::before { transform: scaleX(1); }
+  .gt-tabbar-item:active { background: var(--gt-paper); }
+  .gt-tabbar-item:focus-visible { outline: 3px solid var(--gt-teal); outline-offset: -3px; }
+
+  .gt-tabbar-spacer { display: block; block-size: var(--gt-tabbar-offset); background: var(--gt-navy-950); }
+
+  body:has(.gt-tabbar) .gt-floating-coupon-widget { bottom: calc(12px + var(--gt-tabbar-offset)) !important; }
+}
+
+/* Very narrow phones (320–359px): slightly smaller labels so all four fit. */
+@media (max-width: 359px) {
+  .gt-tabbar-item { padding-inline: 0.1rem; font-size: 0.64rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
