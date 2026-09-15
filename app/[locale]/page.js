@@ -578,16 +578,21 @@ export default async function HomePage({ params }) {
         <section className="gt-section gt-section--stone" id="faq" aria-labelledby="faq-title">
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
           <div className="gt-container gt-faq">
-            <div data-reveal="left">
+            <div className="gt-faq-aside" data-reveal="left">
               <p className="gt-eyebrow">{t("homepage.faqEyebrow")}</p>
               <h2 id="faq-title" className="gt-h2">{t("homepage.faqTitle")}</h2>
-              <div className="gt-faq-help">
-                <strong>{t("homepage.faqHelpTitle")}</strong>
-                <p>{t("homepage.faqHelpText")}</p>
-                <a href={generalWa} target="_blank" rel="noopener noreferrer" className="gt-btn gt-btn--wa">
-                  <WhatsAppIcon size={18} />
-                  {t("site.chatWhatsapp")}
-                </a>
+              <div className="gt-faq-visual">
+                <div className="gt-faq-photo">
+                  <Image src="/profile1.jpg" alt="" fill sizes="(max-width: 900px) 100vw, 420px" />
+                </div>
+                <div className="gt-faq-help">
+                  <strong>{t("homepage.faqHelpTitle")}</strong>
+                  <p>{t("homepage.faqHelpText")}</p>
+                  <a href={generalWa} target="_blank" rel="noopener noreferrer" className="gt-btn gt-btn--wa">
+                    <WhatsAppIcon size={18} />
+                    {t("site.chatWhatsapp")}
+                  </a>
+                </div>
               </div>
             </div>
             <div className="gt-faq-list" data-reveal-group>

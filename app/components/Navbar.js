@@ -77,19 +77,17 @@ export default function Navbar({ active = "home", overlay }) {
     setMounted(true);
     if (overlay === undefined) setHasHero(Boolean(document.querySelector(HERO_SELECTOR)));
 
-    let frame = 0;
-    const onScroll = () => {
-      if (frame) return;
-      frame = requestAnimationFrame(() => {
-        frame = 0;
-        setScrolled(window.scrollY > 24);
-      });
-    };
+    // Set directly on every scroll: React skips the render when the value does
+    // not change, and without waiting for an animation frame a page opened at
+    // an anchor (/#plan) or a restored position never keeps a see-through
+    // header over light content.
+    const onScroll = () => setScrolled(window.scrollY > 24);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("hashchange", onScroll);
     return () => {
       window.removeEventListener("scroll", onScroll);
-      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("hashchange", onScroll);
     };
   }, [overlay]);
 

@@ -16,6 +16,11 @@
   --gt-navy-900: #0d233a;
   --gt-navy-800: #14314d;
   --gt-navy-700: #1d4266;
+  /* Deep ocean blue for large coloured blocks (map panel, planner, CTAs):
+     dark enough for white text, lighter and warmer than the navy above. */
+  --gt-ocean-700: #1570a3;
+  --gt-ocean-800: #0f5d89;
+  --gt-ocean-900: #0b4a6e;
   --gt-blue: #106da4;
   --gt-blue-700: #0b5a88;
   --gt-teal: #29b2b7;
