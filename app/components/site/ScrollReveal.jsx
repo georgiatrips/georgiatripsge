@@ -53,12 +53,19 @@ export default function ScrollReveal() {
     if (typeof window === "undefined" || !("IntersectionObserver" in window)) return undefined;
     document.documentElement.classList.add("gt-js");
 
+    const pending = new Set();
+
     const reveal = (el) => {
       if (el.hasAttribute("data-reveal-group")) {
         [...el.children].forEach((child, index) => child.style.setProperty("--gt-i", String(index)));
       }
       el.classList.add("is-in");
+      pending.delete(el);
     };
+
+    // On screen or already scrolled past (anchor jumps, restored scroll
+    // position), so scrolling back up never meets an empty block.
+    const inView = (el) => el.getBoundingClientRect().top < window.innerHeight * 0.92;
 
     const io = new IntersectionObserver(
       (entries) => {
@@ -76,11 +83,11 @@ export default function ScrollReveal() {
       document.querySelectorAll(SELECTOR).forEach((el) => {
         if (el.dataset.gtObserved) return;
         el.dataset.gtObserved = "1";
-        const rect = el.getBoundingClientRect();
         // Already on screen at load: show at once so nothing flickers.
-        if (rect.top < window.innerHeight * 0.9 && rect.bottom > 0 && document.readyState !== "loading" && performance.now() < 4000) {
+        if (inView(el) && document.readyState !== "loading" && performance.now() < 4000) {
           reveal(el);
         } else {
+          pending.add(el);
           io.observe(el);
         }
       });
@@ -88,25 +95,58 @@ export default function ScrollReveal() {
 
     scan();
 
-    let frame = 0;
+    // Timers instead of requestAnimationFrame: browsers pause frames in
+    // background tabs and some embedded views, and a paused frame must not
+    // leave new content unobserved.
+    let scanTimer = 0;
     const mo = new MutationObserver(() => {
-      if (frame) return;
-      frame = requestAnimationFrame(() => {
-        frame = 0;
+      if (scanTimer) return;
+      scanTimer = window.setTimeout(() => {
+        scanTimer = 0;
         scan();
-      });
+      }, 60);
     });
     mo.observe(document.body, { childList: true, subtree: true });
 
-    // Safety net: never leave content hidden if an element is never intersected
-    // (for example when printing or on very tall screens).
+    // Safety net: if the observer misses an element (throttled rendering,
+    // anchor jumps, restored scroll position), a cheap rect check on scroll,
+    // resize and tab return reveals whatever is on screen.
+    let checkTimer = 0;
+    const check = () => {
+      checkTimer = 0;
+      pending.forEach((el) => {
+        if (!el.isConnected) {
+          pending.delete(el);
+        } else if (inView(el)) {
+          io.unobserve(el);
+          reveal(el);
+        }
+      });
+    };
+    const scheduleCheck = () => {
+      if (!checkTimer) checkTimer = window.setTimeout(check, 150);
+    };
     const onBeforePrint = () => document.querySelectorAll(SELECTOR).forEach(reveal);
+
+    window.addEventListener("scroll", scheduleCheck, { passive: true });
+    window.addEventListener("resize", scheduleCheck);
+    window.addEventListener("pageshow", scheduleCheck);
+    window.addEventListener("focus", scheduleCheck);
+    document.addEventListener("visibilitychange", scheduleCheck);
     window.addEventListener("beforeprint", onBeforePrint);
+    const settleTimer = window.setTimeout(check, 1200);
 
     return () => {
       io.disconnect();
       mo.disconnect();
-      if (frame) cancelAnimationFrame(frame);
+      window.clearTimeout(scanTimer);
+      window.clearTimeout(checkTimer);
+      window.clearTimeout(settleTimer);
+      window.removeEventListener("scroll", scheduleCheck);
+      window.removeEventListener("resize", scheduleCheck);
+      window.removeEventListener("pageshow", scheduleCheck);
+      window.removeEventListener("focus", scheduleCheck);
+      document.removeEventListener("visibilitychange", scheduleCheck);
       window.removeEventListener("beforeprint", onBeforePrint);
     };
   }, [pathname]);
