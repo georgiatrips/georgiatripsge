@@ -243,7 +243,7 @@ export default async function PrivateToursBatumiPage({ params }) {
           {displayTours.map((tour) => {
             const title = asLocalizedText(tour.title, lang) || asLocalizedText(tour.title, "en") || tour.title;
             const desc = asLocalizedText(tour.desc, lang) || asLocalizedText(tour.desc, "en") || tour.desc;
-            const price = tour.pricePrivate || tour.price || 180;
+            const price = tour.pricePrivate || tour.price || null;
 
             return (
               <Link key={tour.id} href={getLocalizedHref(`/tours/${tour.id}`, lang)} className="landing-tour-card">

@@ -281,7 +281,7 @@ export default async function WaterfallsNearBatumiPage({ params }) {
             {displayTours.map((tour) => {
               const title = asLocalizedText(tour.title, lang) || asLocalizedText(tour.title, "en") || tour.title;
               const desc = asLocalizedText(tour.desc, lang) || asLocalizedText(tour.desc, "en") || tour.desc;
-              const price = tour.pricePrivate || tour.priceGroup || tour.price || 150;
+              const price = tour.pricePrivate || tour.priceGroup || tour.price || null;
 
               return (
                 <Link key={tour.id} href={getLocalizedHref(`/tours/${tour.id}`, lang)} className="landing-tour-card">
@@ -293,7 +293,7 @@ export default async function WaterfallsNearBatumiPage({ params }) {
                       sizes="(max-width: 768px) 100vw, 380px"
                       className="landing-tour-img"
                     />
-                    <div className="landing-tour-price-badge">₾{price}</div>
+                    {price ? <div className="landing-tour-price-badge">₾{price}</div> : null}
                   </div>
                   <div className="landing-tour-body">
                     <h3 className="landing-tour-title">{title}</h3>
