@@ -49,6 +49,11 @@ export function checkRateLimit(request, { max = MAX_REQUESTS_PER_WINDOW, windowM
   }
 
   const ip = getClientIp(request);
+  // Without a client IP every visitor would share one bucket, and a busy
+  // minute would answer everyone with "Too many requests".
+  if (ip === "unknown") {
+    return { rateLimited: false, remaining: max };
+  }
   const key = `rl:${namespace}:${ip}`;
 
   const current = globalThis.__rateLimitStore.get(key);
@@ -77,7 +82,7 @@ export function checkRateLimit(request, { max = MAX_REQUESTS_PER_WINDOW, windowM
 
 // API routes-ის ცალკე, უფრო მკაცრი ლიმიტი
 export function checkApiRateLimit(request) {
-  return checkRateLimit(request, { max: MAX_API_REQUESTS_PER_WINDOW });
+  return checkRateLimit(request, { max: MAX_API_REQUESTS_PER_WINDOW, namespace: "api" });
 }
 
 // ცნობილი ბოტების სია, რომლებსაც არ ვუშვებთ
