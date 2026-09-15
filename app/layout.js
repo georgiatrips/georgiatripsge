@@ -15,6 +15,7 @@ import { SITE_URL, getRequestLocale } from "./lib/siteConfig";
 import CookieConsent from "./components/CookieConsent";
 import AnalyticsTracker from "./components/AnalyticsTracker";
 import WelcomeCouponPopup from "./components/WelcomeCouponPopup";
+import ScrollReveal from "./components/site/ScrollReveal";
 
 // Variable fonts: one file per family/subset instead of one per weight.
 const notoGeorgian = Noto_Sans_Georgian({
@@ -218,6 +219,9 @@ export default async function RootLayout({ children }) {
                 </Suspense>
                 <CookieConsent />
                 <WelcomeCouponPopup />
+                <Suspense fallback={null}>
+                  <ScrollReveal />
+                </Suspense>
               </CouponProvider>
             </AuthProvider>
           </CurrencyProvider>
