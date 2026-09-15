@@ -372,7 +372,11 @@ export const tr = {
       "Cum",
       "Cmt",
       "Paz"
-    ]
+    ],
+    "groupDeparture": "Grup turu",
+    "anyDay": "Özel tur — her gün",
+    "nextGroup": "Sonraki grup: {date}",
+    "done": "Tamam"
   },
   "placesPage": {
     "kicker": "Gürcistan'ı Keşfedin",
@@ -418,8 +422,8 @@ export const tr = {
   },
   "toursPage": {
     "kicker": "Seyahatinizi Seçin",
-    "title": "Gürcistan'da En Popüler Turlar",
-    "subtitle": "Unutulmaz bir seyahat deneyimi yaşayın — günübirlik turlardan tüm Gürcistan'ı kapsayan çok günlük turlara kadar.",
+    "title": "Gürcistan Turları",
+    "subtitle": "Sabit tarihli ve net fiyatlı günübirlik turlar — ya da aynı rota, seçtiğiniz gün özel olarak.",
     "openFilters": "Filtreleri Aç",
     "filterTitle": "Tur Filtresi",
     "reset": "Temizle",
@@ -440,7 +444,15 @@ export const tr = {
     "noToursFoundTitle": "Tur Bulunamadı",
     "noToursFoundDesc": "Maalesef belirtilen filtrelerle eşleşen tur bulunamadı. Filtreleri değiştirmeyi veya temizlemeyi deneyin.",
     "clearFilters": "Tüm Filtreleri Temizle",
-    "bookNow": "Rezervasyon Yap"
+    "bookNow": "Rezervasyon Yap",
+    "groupOnDate": "Bu tarihte grup turu",
+    "privateOnDate": "Bu tarihte özel tur",
+    "filters": "Filtreler",
+    "resultsCount": "{count} tur",
+    "regionsWithTours": "Turların olduğu bölgeler",
+    "otherRegions": "Diğer bölgeler — talep üzerine özel gezi",
+    "emptyRegionTitle": "Bu bölgede henüz hazır tur yok",
+    "emptyRegionText": "Her bölgeye özel gezi düzenliyoruz — bize yazın, size rota ve fiyat önerelim."
   },
   "transfersPage": {
     "kicker": "7/24 Konforlu Ulaşım",
@@ -608,7 +620,16 @@ export const tr = {
     "tourNotFound": "Tur Bulunamadı",
     "backToTours": "← Tur Listesi",
     "phoneError": "Lütfen geçerli bir telefon numarası girin",
-    "loadingTour": "Tur detayları yükleniyor..."
+    "loadingTour": "Tur detayları yükleniyor...",
+    "routeLead": "{count} durak — fotoğraflar ve kısa açıklamalar",
+    "stopLabel": "Durak {n}",
+    "readMore": "Devamını oku",
+    "showLess": "Daha az",
+    "trustCancel": "Turdan 48 saat öncesine kadar ücretsiz iptal",
+    "trustPay": "Tur günü ödeme — ön ödeme yok",
+    "trustConfirm": "WhatsApp veya telefonla onay",
+    "trustPickup": "Otelden alınış",
+    "bookingFallbackWa": "Merhaba! “{title}” turunu rezerve etmek istiyorum — {date}, {people} kişi."
   },
   "postsPage": {
     "heroKicker": "Yolculuğumuzu Takip Edin",
@@ -734,9 +755,9 @@ export const tr = {
     "exploreToursBtn": "Turları İncele ve Rezervasyon Yap"
   },
   "welcomePopup": {
-    "limitedOffer": "Sınırlı Süreli Özel Teklif!",
+    "limitedOffer": "Yeni üyelere özel",
     "title": "%10 İndirim Kuponu Kazanın",
-    "subtitle": "30 dakika içinde hemen kaydolun ve tüm turlarda geçerli %10 indirim kuponu kazanın!",
+    "subtitle": "Ücretsiz hesap oluşturun ve tüm turlarda geçerli %10 indirim kuponu kazanın.",
     "timeRemaining": "Teklifin bitmesine kalan süre:",
     "mins": "dk",
     "secs": "sn",
@@ -1053,7 +1074,10 @@ export const tr = {
     "finalText": "Bir günübirlik tur seçin, havalimanı transferi ayırtın ya da tüm seyahatinizi birlikte planlayalım.",
     "finalTours": "Turları keşfedin",
     "finalPlan": "Özel tur planla",
-    "finalWa": "WhatsApp'tan yazın"
+    "finalWa": "WhatsApp'tan yazın",
+    "searchTitle": "Tur bul",
+    "regionTours": "Tur: {count}",
+    "regionPlaces": "Yer: {count}"
   }
 };
 export default tr;

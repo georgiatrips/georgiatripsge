@@ -372,7 +372,11 @@ export const en = {
       "Fri",
       "Sat",
       "Sun"
-    ]
+    ],
+    "groupDeparture": "Group departure",
+    "anyDay": "Private tour — any day",
+    "nextGroup": "Next group: {date}",
+    "done": "Done"
   },
   "placesPage": {
     "kicker": "Discover Georgia",
@@ -418,8 +422,8 @@ export const en = {
   },
   "toursPage": {
     "kicker": "Choose Your Trip",
-    "title": "Most Popular Tours in Georgia",
-    "subtitle": "Experience unforgettable journeys — from day trips to multi-day tours across Georgia.",
+    "title": "Tours in Georgia",
+    "subtitle": "Day tours with fixed dates and clear prices — or the same route privately, on the day you choose.",
     "openFilters": "Open Filters",
     "filterTitle": "Tour Filters",
     "reset": "Clear",
@@ -440,7 +444,15 @@ export const en = {
     "noToursFoundTitle": "No Tours Found",
     "noToursFoundDesc": "Unfortunately, no tours match your filters. Try changing or clearing filters.",
     "clearFilters": "Clear All Filters",
-    "bookNow": "Book Now"
+    "bookNow": "Book Now",
+    "groupOnDate": "Group tour on this date",
+    "privateOnDate": "Private tour on this date",
+    "filters": "Filters",
+    "resultsCount": "{count} tours",
+    "regionsWithTours": "Regions with tours",
+    "otherRegions": "Other regions — private trip on request",
+    "emptyRegionTitle": "No ready-made tour in this region yet",
+    "emptyRegionText": "We arrange private trips to any region — message us and we'll suggest a route and a price."
   },
   "tourDetail": {
     "crumbsHome": "Home",
@@ -525,7 +537,16 @@ export const en = {
     "tourNotFound": "Tour Not Found",
     "backToTours": "← Back to Tours",
     "phoneError": "Please enter a valid phone number",
-    "loadingTour": "Loading tour details..."
+    "loadingTour": "Loading tour details...",
+    "routeLead": "{count} stops with photos and short descriptions",
+    "stopLabel": "Stop {n}",
+    "readMore": "Read more",
+    "showLess": "Show less",
+    "trustCancel": "Free cancellation up to 48h before the tour",
+    "trustPay": "Pay on the day — no prepayment",
+    "trustConfirm": "Confirmation by WhatsApp or phone",
+    "trustPickup": "Hotel pickup",
+    "bookingFallbackWa": "Hello! I'd like to book “{title}” — {date}, {people} people."
   },
   "postsPage": {
     "heroKicker": "Follow Our Journey",
@@ -734,9 +755,9 @@ export const en = {
     "exploreToursBtn": "Explore & Book Tours"
   },
   "welcomePopup": {
-    "limitedOffer": "Limited Time Exclusive Offer!",
+    "limitedOffer": "Offer for new members",
     "title": "Get a 10% Discount Coupon",
-    "subtitle": "Register now within 30 minutes and instantly get a 10% discount voucher for any tour!",
+    "subtitle": "Create a free account and get a 10% discount coupon for any tour.",
     "timeRemaining": "Time remaining for this offer:",
     "mins": "min",
     "secs": "sec",
@@ -1053,7 +1074,10 @@ export const en = {
     "finalText": "Pick a day tour, book an airport transfer or let us plan the whole trip with you.",
     "finalTours": "Explore tours",
     "finalPlan": "Plan a private trip",
-    "finalWa": "WhatsApp us"
+    "finalWa": "WhatsApp us",
+    "searchTitle": "Find a tour",
+    "regionTours": "Tours: {count}",
+    "regionPlaces": "Places: {count}"
   }
 };
 export default en;
