@@ -1,10 +1,11 @@
 import { Suspense } from "react";
-import { Noto_Sans_Georgian, Noto_Serif_Georgian, Playfair_Display, Noto_Sans_Arabic } from "next/font/google";
+import { Noto_Sans_Georgian, Noto_Serif_Georgian, Playfair_Display, Noto_Sans_Arabic, Noto_Naskh_Arabic } from "next/font/google";
 import { cookies, headers } from "next/headers";
 import Script from "next/script";
 import "./globals.css";
 import "./coupon.css";
 import "./styles/site.css";
+import "./styles/chrome.css";
 import { AuthProvider } from "./lib/AuthContext";
 import { LanguageProvider } from "./lib/i18n/LanguageContext";
 import { CurrencyProvider } from "./lib/currency/CurrencyContext";
@@ -15,10 +16,10 @@ import CookieConsent from "./components/CookieConsent";
 import AnalyticsTracker from "./components/AnalyticsTracker";
 import WelcomeCouponPopup from "./components/WelcomeCouponPopup";
 
+// Variable fonts: one file per family/subset instead of one per weight.
 const notoGeorgian = Noto_Sans_Georgian({
   variable: "--font-noto-georgian",
   subsets: ["georgian"],
-  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
   preload: true,
   adjustFontFallback: true,
@@ -27,7 +28,6 @@ const notoGeorgian = Noto_Sans_Georgian({
 const notoSerifGeorgian = Noto_Serif_Georgian({
   variable: "--font-noto-serif-georgian",
   subsets: ["georgian"],
-  weight: ["600", "700", "800"],
   display: "swap",
   preload: true,
   adjustFontFallback: true,
@@ -36,10 +36,27 @@ const notoSerifGeorgian = Noto_Serif_Georgian({
 const playfair = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin"],
-  weight: ["700", "800"],
   display: "swap",
   preload: true,
   adjustFontFallback: true,
+});
+
+// Separate instance so Russian headings get the serif without every other
+// locale preloading the Cyrillic file; unicode-range keeps it lazy.
+const playfairCyrillic = Playfair_Display({
+  variable: "--font-playfair-cyrillic",
+  subsets: ["cyrillic"],
+  display: "swap",
+  preload: false,
+  adjustFontFallback: false,
+});
+
+const notoNaskhArabic = Noto_Naskh_Arabic({
+  variable: "--font-noto-naskh-arabic",
+  subsets: ["arabic"],
+  display: "swap",
+  preload: false,
+  adjustFontFallback: false,
 });
 
 const notoArabic = Noto_Sans_Arabic({
@@ -137,7 +154,7 @@ export default async function RootLayout({ children }) {
     <html
       lang={htmlLang}
       dir={htmlDir}
-      className={`${notoGeorgian.variable} ${notoSerifGeorgian.variable} ${playfair.variable} ${notoArabic.variable}`}
+      className={`${notoGeorgian.variable} ${notoSerifGeorgian.variable} ${playfair.variable} ${playfairCyrillic.variable} ${notoArabic.variable} ${notoNaskhArabic.variable}`}
     >
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />

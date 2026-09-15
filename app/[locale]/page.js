@@ -1,274 +1,650 @@
-"use client";
-
-import "./home.css";
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import useSWR from "swr";
+import { Fragment } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import HomeHeroSection from "../components/home/HomeHeroSection";
-import HomeAboutSection from "../components/home/HomeAboutSection";
-import HomePopularToursSection from "../components/home/HomePopularToursSection";
-import HomeCategoriesSection from "../components/home/HomeCategoriesSection";
-import HomeDestinationsSection from "../components/home/HomeDestinationsSection";
-import HomeScheduleSection from "../components/home/HomeScheduleSection";
-import HomeFleetSection from "../components/home/HomeFleetSection";
-import HomeGallerySection from "../components/home/HomeGallerySection";
-import HomeMapSection from "../components/home/HomeMapSection";
-import HomeFaqSection from "../components/home/HomeFaqSection";
-import HomeWeatherSection from "../components/home/HomeWeatherSection";
-import { useAllTours } from "../lib/useAllTours";
-import { groupDepartureDates, asLocalizedText } from "../lib/toursFirestore";
-import { listPlaces } from "../lib/placesFirestore";
-import { listPostSummaries } from "../lib/postsFirestore";
-import { useLanguage } from "../lib/i18n/LanguageContext";
-import { getLocalizedHref } from "../lib/siteConfig";
-import { WA_LINK, bookTourOnWhatsApp, getFaqs } from "../lib/shared";
-import { DEFAULT_WEATHER_DATA as WEATHER_DATA } from "../lib/weatherFallback";
+import TourPrice from "../components/TourPrice";
+import TourCard from "../components/site/TourCard";
+import TripPlannerForm from "../components/homepage/TripPlannerForm";
+import { getCachedPlaces, getCachedReviews, getCachedTours } from "../lib/server/cachedData";
+import { formatTourDate, toTourViews } from "../lib/tourView";
+import { getTranslator, interpolate } from "../lib/i18n/translate";
+import { getLocalizedHref, getRequestLocale, SITE_URL } from "../lib/siteConfig";
+import { asLocalizedText } from "../lib/toursFirestore";
+import { INSTAGRAM_LINK, PHONE_DISPLAY, PHONE_TEL, whatsappHref } from "../lib/shared";
+import {
+  ArrowRightIcon, BriefcaseIcon, CalendarIcon, CarIcon, CheckIcon, CompassIcon, HeadsetIcon, HeartIcon,
+  InstagramIcon, LanguagesIcon, LocationIcon, PlaneIcon, PlusIcon, RouteIcon, ShieldCheckIcon, StarIcon,
+  UsersIcon, WalletIcon, WhatsAppIcon,
+} from "../components/Icons";
+import "../styles/home.css";
 
-const fetcher = (url) => fetch(url).then((r) => r.json());
+const HERO_IMAGE = "/mestia.webp";
 
-// Map Firestore tourSection values → home page themed section ids
-const FIREBASE_SECTION_TO_HOME = {
-  "mountains-nature": "nature",
-  "batumi-city": "culture",
-  "wine": "taste",
-  "exotic-parks": "adventure",
-  "sea": "luxury",
-  "seasonal": "seasons",
-};
+// Editorial copy lives in the dictionaries; data (availability, images of
+// region-backed cards) comes from Firestore. Regions without tours are
+// offered honestly as private trips on request — never with invented prices.
+const DESTINATIONS = [
+  { key: "Adjara", region: "აჭარა", image: "/batumi.webp", large: true },
+  { key: "Martvili", region: "სამეგრელო-ზემო სვანეთი", large: true },
+  { key: "Kazbegi", image: "/gudauri.webp" },
+  { key: "Tbilisi", image: "/tbilisi.webp" },
+  { key: "Kakheti", image: "/kakheti.webp" },
+];
 
-export default function Home() {
-  const router = useRouter();
-  const { t, lang } = useLanguage();
-  const [navScrolled, setNavScrolled] = useState(false);
-  const [activeMapRegion, setActiveMapRegion] = useState(null);
-  const [activeWeatherTab, setActiveWeatherTab] = useState("tbilisi");
-  const [openFaq, setOpenFaq] = useState(0);
-  const [popTourSlide, setPopTourSlide] = useState(0);
-  const [places, setPlaces] = useState([]);
-  const [posts, setPosts] = useState([]);
+const EXPERIENCES = [
+  { id: "YIf1fcOfsd9ZqtmUCP2i", theme: "themeWaterfall" },
+  { id: "VRkDXUdauIj1PJZ6egHg", theme: "themeCanyon" },
+  { id: "xZyxVy23YUkQma2HzERv", theme: "themeCave" },
+  { id: "scXrVIBzocf6Uz2VSAF6", theme: "themeFortress" },
+  { id: "7KJqeUVeupxZYBoBOZ31", theme: "themeBridge" },
+  { id: "vOFTdOn6pi5ixb8WB6UB", theme: "themeSea" },
+];
 
-  const faqs = useMemo(() => getFaqs(lang), [lang]);
+const LOCAL_PLACES = ["951HRNyT4ZnM6g941Zdj", "iF4vA204CjLac5IeYWqD", "yuKnw68R7Ds14dRTg4x1", "DPlmvqINdZC4D8Pj6rcp"];
 
-  useEffect(() => {
-    let active = true;
-    listPlaces()
-      .then((items) => { if (active) setPlaces(items); })
-      .catch((error) => console.error("Failed to load places for homepage", error));
-    return () => { active = false; };
-  }, []);
+const FAQ_KEYS = [
+  ["homepage.faqQ7", "homepage.faqA7"],
+  ["faq.q1", "faq.a1"],
+  ["faq.q3", "faq.a3"],
+  ["faq.q6", "faq.a6"],
+  ["homepage.faqQ8", "homepage.faqA8"],
+  ["homepage.faqQ9", "homepage.faqA9"],
+  ["faq.q5", "faq.a5"],
+  ["homepage.faqQ11", "homepage.faqA11"],
+  ["homepage.faqQ10", "homepage.faqA10"],
+  ["faq.q2", "faq.a2"],
+  ["faq.q4", "faq.a4"],
+];
 
-  useEffect(() => {
-    let active = true;
-    listPostSummaries(6)
-      .then((items) => { if (active) setPosts(items); })
-      .catch((error) => console.error("Failed to load posts for homepage", error));
-    return () => { active = false; };
-  }, []);
+// Vehicle classes and capacities as published on the transfers page.
+const FLEET = [
+  { key: "sedan", pax: 3 },
+  { key: "minivan", pax: 6 },
+  { key: "jeep", pax: 4 },
+  { key: "sprinter", pax: 16 },
+];
 
-  const popularPlaces = useMemo(
-    () => places.filter((place) => place.isPopular).slice(0, 2),
-    [places]
-  );
-  const latestPlaces = useMemo(() => {
-    return [...places]
-      .sort((a, b) => {
-        const aTime = a.createdAt?.toMillis?.() || (a.createdAt ? new Date(a.createdAt).getTime() : 0);
-        const bTime = b.createdAt?.toMillis?.() || (b.createdAt ? new Date(b.createdAt).getTime() : 0);
-        return bTime - aTime;
-      })
-      .slice(0, 6);
-  }, [places]);
+const kaText = (value) => (typeof value === "string" ? value : value?.ka || "");
 
-  // Static tours + Firestore tours added from Admin panel
-  const { allTours } = useAllTours();
+// Dictionary strings mark the emphasised word as *word*, so each language
+// keeps its own word order.
+function withEmphasis(text) {
+  return String(text || "")
+    .split(/\*(.+?)\*/g)
+    .map((part, index) => (index % 2 ? <em key={index}>{part}</em> : <Fragment key={index}>{part}</Fragment>));
+}
 
-  const allAvailableDates = useMemo(() => {
-    const datesSet = new Set();
-    allTours.forEach((tour) => {
-      if (tour.dates) tour.dates.forEach((d) => datesSet.add(d));
-      if (tour.departureDates) tour.departureDates.forEach((entry) => {
-        const iso = typeof entry === "string" ? entry : entry?.date;
-        if (iso) datesSet.add(iso);
-      });
-    });
-    return Array.from(datesSet);
-  }, [allTours]);
+export default async function HomePage({ params }) {
+  const { locale } = await params;
+  const lang = getRequestLocale(locale);
+  const t = getTranslator(lang);
+  const href = (path) => getLocalizedHref(path, lang);
 
-  const popularTours = useMemo(() => allTours.filter((tour) => tour.isPopular), [allTours]);
-  const popularTourPairs = useMemo(() => {
-    const pairs = [];
-    for (let i = 0; i < popularTours.length; i += 2) {
-      pairs.push(popularTours.slice(i, i + 2));
-    }
-    return pairs;
-  }, [popularTours]);
+  const [rawTours, rawPlaces, rawReviews] = await Promise.all([getCachedTours(), getCachedPlaces(), getCachedReviews()]);
+  const places = Array.isArray(rawPlaces) ? rawPlaces : [];
+  const placeById = new Map(places.map((place) => [place.id, place]));
+  const placeTitle = (place) => asLocalizedText(place?.title, lang);
 
-  const sectionsData = useMemo(() => [
-    { id: "popular", title: t("home.sectionPopular"), tours: [] },
-    { id: "nature", title: t("home.sectionNature"), tours: [] },
-    { id: "culture", title: t("home.sectionCulture"), tours: [] },
-    { id: "taste", title: t("home.sectionTaste"), tours: [] },
-    { id: "adventure", title: t("home.sectionAdventure"), tours: [] },
-    { id: "luxury", title: t("home.sectionLuxury"), tours: [] },
-    { id: "seasons", title: t("home.sectionSeasons"), tours: [] },
-  ], [t]);
+  const tours = toTourViews(rawTours, lang, places).sort((a, b) => {
+    if (a.isPopular !== b.isPopular) return a.isPopular ? -1 : 1;
+    return (a.nextDeparture?.date || "9999").localeCompare(b.nextDeparture?.date || "9999");
+  });
 
-  const dynamicSections = useMemo(() => {
-    const map = new Map(sectionsData.map((s) => [s.id, { ...s, tours: [] }]));
-    allTours.forEach((tour) => {
-      let targetSectionId = FIREBASE_SECTION_TO_HOME[tour.tourSection] || "popular";
-      if (!map.has(targetSectionId)) targetSectionId = "popular";
-      map.get(targetSectionId).tours.push(tour);
-    });
-    return Array.from(map.values()).filter((s) => s.tours.length > 0);
-  }, [allTours, sectionsData]);
+  const departures = tours
+    .filter((tour) => tour.nextDeparture && tour.groupPrice)
+    .sort((a, b) => a.nextDeparture.date.localeCompare(b.nextDeparture.date))
+    .slice(0, 3);
 
-  const scheduleTours = useMemo(() => {
-    return allTours.map((tour) => {
-      let months = [];
-      if (tour.departureDates && tour.departureDates.length > 0) {
-        months = groupDepartureDates(tour.departureDates, lang).map((m) => ({
-          monthName: m.monthName,
-          dates: m.dates.map((d) => d.chip),
-        }));
-      } else if (tour.dates && tour.dates.length > 0) {
-        months = [{ monthName: "იანვარი", dates: tour.dates }];
-      }
-      return {
-        id: tour.id,
-        title: tour.title,
-        desc: tour.desc,
-        locationShort: tour.destinationLabel || tour.destination || tour.location || "",
-        priceGroup: tour.priceGroup || tour.price || 0,
-        priceNote: tour.priceNote || t("popular.perPerson") || "1 ადამიანზე",
-        months,
-      };
-    }).filter((t) => t.months.length > 0);
-  }, [allTours, lang, t]);
-
-  // Live weather from Open-Meteo API
-  const { data: liveWeather, error: weatherError, isLoading: weatherLoading } = useSWR(
-    "/api/weather",
-    fetcher,
-    { revalidateOnFocus: false, revalidateIfStale: false, dedupingInterval: 300000 }
-  );
-
-  const weatherData = useMemo(() => {
-    const raw = liveWeather?.data || liveWeather;
-    if (raw && !weatherError && typeof raw === "object" && Object.keys(raw).length > 0 && (raw.tbilisi || raw.batumi)) {
-      return raw;
-    }
-    return WEATHER_DATA;
-  }, [liveWeather, weatherError]);
-
-  const isLiveWeather = !!(
-    !weatherError &&
-    ((liveWeather?.data && typeof liveWeather.data === "object" && Object.keys(liveWeather.data).length > 0) ||
-     (liveWeather && !liveWeather.data && typeof liveWeather === "object" && (liveWeather.tbilisi || liveWeather.batumi)))
-  );
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setNavScrolled(window.scrollY > 400);
+  const destinations = DESTINATIONS.map((destination) => {
+    const regionTours = destination.region
+      ? (Array.isArray(rawTours) ? rawTours : []).filter(
+          (raw) => kaText(raw.destinationLabel) === destination.region || kaText(raw.destination) === destination.region
+        )
+      : [];
+    const tourImage = regionTours.length ? tours.find((tour) => tour.id === regionTours[0].id)?.img : null;
+    const placeImage = destination.region
+      ? places.find((place) => kaText(place.region) === destination.region && place.img)?.img
+      : null;
+    const name = t(`homepage.dest${destination.key}Name`);
+    return {
+      ...destination,
+      name,
+      tagline: t(`homepage.dest${destination.key}Tag`),
+      hasTours: regionTours.length > 0,
+      image: tourImage || placeImage || destination.image || null,
+      link: regionTours.length > 0
+        ? href(`/tours?destination=${encodeURIComponent(destination.region)}`)
+        : whatsappHref(interpolate(t("homepage.destWa"), { place: name })),
     };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  });
 
-  const handleTourClick = useCallback((tour) => {
-    router.push(getLocalizedHref(`/tours/${encodeURIComponent(tour.id)}`, lang));
-  }, [router, lang]);
+  const experiences = EXPERIENCES.map((item) => ({ ...item, place: placeById.get(item.id) })).filter((item) => item.place?.img);
+  const localPhotos = LOCAL_PLACES.map((id) => placeById.get(id)).filter((place) => place?.img);
 
-  const handleBookNow = useCallback((title, price) => {
-    bookTourOnWhatsApp(title, price, lang);
-  }, [lang]);
+  const reviews = (Array.isArray(rawReviews) ? rawReviews : [])
+    .filter((review) => review && typeof review.text === "string" && review.text.trim() && Number(review.rating) >= 1 && review.hidden !== true && review.approved !== false)
+    .slice(0, 6);
+
+  const faqs = FAQ_KEYS.map(([q, a]) => ({ q: t(q), a: t(a) }));
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "@id": `${SITE_URL}/${lang}#faq`,
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.q,
+      acceptedAnswer: { "@type": "Answer", text: faq.a },
+    })),
+  };
+
+  const generalWa = whatsappHref(t("site.generalWa"));
+  const heroRoute = t("homepage.heroRoute");
+  const route = Array.isArray(heroRoute) ? heroRoute : [];
+
+  const trustItems = [
+    { n: 1, icon: <CompassIcon size={20} /> },
+    { n: 2, icon: <UsersIcon size={20} /> },
+    { n: 3, icon: <LocationIcon size={20} /> },
+    { n: 4, icon: <WalletIcon size={20} /> },
+    { n: 5, icon: <LanguagesIcon size={20} /> },
+    { n: 6, icon: <HeadsetIcon size={20} /> },
+  ];
+
+  const whyItems = [
+    { n: 1, icon: <CompassIcon size={22} /> },
+    { n: 2, icon: <CalendarIcon size={22} /> },
+    { n: 3, icon: <CarIcon size={22} /> },
+    { n: 4, icon: <LanguagesIcon size={22} /> },
+    { n: 5, icon: <HeadsetIcon size={22} /> },
+    { n: 6, icon: <HeartIcon size={22} /> },
+  ];
+
+  const transferPerks = [
+    { title: "transfersPage.p1Title", text: "transfersPage.p1Desc", icon: <PlaneIcon size={18} /> },
+    { title: "transfersPage.p2Title", text: "transfersPage.p2Desc", icon: <ShieldCheckIcon size={18} /> },
+    { title: "transfersPage.p4Title", text: "transfersPage.p4Desc", icon: <UsersIcon size={18} /> },
+  ];
 
   return (
     <>
       <Navbar active="home" />
 
-      {/* 1. Hero Section */}
-      <HomeHeroSection allAvailableDates={allAvailableDates} />
+      <main>
+        {/* 1. Hero */}
+        <section className="gt-hero" aria-labelledby="hero-title">
+          <Image
+            src={HERO_IMAGE}
+            alt={t("homepage.heroAlt")}
+            fill
+            sizes="100vw"
+            loading="eager"
+            fetchPriority="high"
+            className="gt-hero-img"
+          />
+          <div className="gt-hero-scrim" aria-hidden="true" />
 
-      {/* 2. About Us Section */}
-      <HomeAboutSection />
+          <div className="gt-container gt-hero-inner">
+            <div className="gt-hero-copy">
+              <p className="gt-hero-eyebrow">{t("homepage.heroEyebrow")}</p>
+              <h1 id="hero-title" className="gt-display gt-hero-title">{withEmphasis(t("homepage.heroTitle"))}</h1>
+              <p className="gt-hero-lead">{t("homepage.heroLead")}</p>
+              <div className="gt-hero-actions">
+                <Link href={href("/tours")} className="gt-btn gt-btn--gold gt-btn--lg">
+                  {t("homepage.ctaTours")}
+                  <ArrowRightIcon size={18} />
+                </Link>
+                <a href="#plan" className="gt-btn gt-btn--ghost-light gt-btn--lg">{t("homepage.ctaPlan")}</a>
+              </div>
+              <a href={generalWa} target="_blank" rel="noopener noreferrer" className="gt-hero-wa">
+                <WhatsAppIcon size={18} />
+                {t("homepage.ctaWhatsapp")}
+              </a>
+            </div>
 
-      {/* 3. Popular Tours & Themed Sections */}
-      <HomePopularToursSection
-        popularTourPairs={popularTourPairs}
-        dynamicSections={dynamicSections}
-        popTourSlide={popTourSlide}
-        setPopTourSlide={setPopTourSlide}
-        handleTourClick={handleTourClick}
-      />
+            {route.length > 0 && (
+              <div className="gt-hero-route">
+                <p className="gt-hero-route-label" id="hero-route-label">{t("homepage.heroRouteLabel")}</p>
+                <ul className="gt-hero-route-list" aria-labelledby="hero-route-label">
+                  {route.map((name) => <li key={name}>{name}</li>)}
+                </ul>
+                <Link href={href("/places")} className="gt-hero-route-link" prefetch={false}>
+                  {t("homepage.heroRouteLink")}
+                  <ArrowRightIcon size={16} />
+                </Link>
+                <p className="gt-hero-place">
+                  <LocationIcon size={14} />
+                  {t("homepage.heroPlace")}
+                </p>
+              </div>
+            )}
 
-      {/* 4. Tour Categories */}
-      <HomeCategoriesSection />
+            {departures.length > 0 && (
+              <aside className="gt-hero-card" aria-labelledby="hero-departures-title">
+                <h2 id="hero-departures-title" className="gt-hero-card-title">
+                  <CalendarIcon size={18} />
+                  {t("homepage.departuresTitle")}
+                </h2>
+                <ul className="gt-departure-list">
+                  {departures.map((tour) => (
+                    <li key={tour.id}>
+                      <Link href={href(`/tours/${tour.id}`)} className="gt-departure">
+                        <span className="gt-departure-date" aria-hidden="true">
+                          <b>{formatTourDate(tour.nextDeparture.date, lang, { day: "numeric" })}</b>
+                          <small>{formatTourDate(tour.nextDeparture.date, lang, { month: "short" })}</small>
+                        </span>
+                        <span className="gt-departure-title">
+                          {tour.title}
+                          <small>
+                            <span className="gt-sr-only">
+                              {formatTourDate(tour.nextDeparture.date, lang, { day: "numeric", month: "long" })} ·{" "}
+                            </span>
+                            {[tour.duration, tour.region].filter(Boolean).join(" · ")}
+                          </small>
+                        </span>
+                        <span className="gt-departure-price">
+                          <TourPrice price={tour.groupPrice} lang={lang} variant="card" showBadge={false} />
+                          <small>{t("tourCard.perPerson")}</small>
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                <p className="gt-hero-card-note">{t("homepage.departuresNote")}</p>
+                <Link href={href("/tours")} className="gt-link">
+                  {t("homepage.departuresAll")}
+                  <ArrowRightIcon size={16} />
+                </Link>
+              </aside>
+            )}
+          </div>
+        </section>
 
-      {/* 5. Popular Destinations */}
-      <HomeDestinationsSection
-        popularPlaces={popularPlaces}
-        latestPlaces={latestPlaces}
-      />
+        {/* 2. Trust */}
+        <section className="gt-trust" aria-labelledby="trust-title">
+          <div className="gt-container">
+            <h2 id="trust-title" className="gt-sr-only">{t("homepage.trustTitle")}</h2>
+            <ul className="gt-trust-list">
+              {trustItems.map((item) => (
+                <li key={item.n} className="gt-trust-item">
+                  <span className="gt-icon-badge">{item.icon}</span>
+                  <span>
+                    <strong>{t(`trust.t${item.n}Title`)}</strong>
+                    <span>{t(`trust.t${item.n}Text`)}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
 
-      {/* 6. Tour Schedule & Free Dates */}
-      <HomeScheduleSection
-        scheduleTours={scheduleTours}
-        handleTourClick={handleTourClick}
-        handleBookNow={handleBookNow}
-      />
+        {/* 3. Tours */}
+        <section className="gt-section gt-section--paper" id="tours" aria-labelledby="tours-title">
+          <div className="gt-container">
+            <div className="gt-section-head gt-section-head--split">
+              <div>
+                <p className="gt-eyebrow">{t("homepage.toursEyebrow")}</p>
+                <h2 id="tours-title" className="gt-h2">{t("homepage.toursTitle")}</h2>
+                <p className="gt-lead">{t("homepage.toursLead")}</p>
+              </div>
+              <Link href={href("/tours")} className="gt-link">
+                {t("homepage.toursAll")}
+                <ArrowRightIcon size={16} />
+              </Link>
+            </div>
 
-      {/* 7. Transport & Fleet Section */}
-      <HomeFleetSection handleBookNow={handleBookNow} />
+            <div className="gt-tour-grid">
+              {tours.map((tour) => (
+                <TourCard key={tour.id} tour={tour} lang={lang} t={t} />
+              ))}
+              <article className="gt-custom-card">
+                <div>
+                  <span className="gt-icon-badge"><RouteIcon size={22} /></span>
+                  <h3 className="gt-h3">{t("homepage.customTitle")}</h3>
+                  <p>{t("homepage.customText")}</p>
+                </div>
+                <a href="#plan" className="gt-btn gt-btn--gold gt-btn--block">
+                  {t("homepage.customCta")}
+                  <ArrowRightIcon size={18} />
+                </a>
+              </article>
+            </div>
+          </div>
+        </section>
 
-      {/* 8. Gallery & Facebook Posts */}
-      <HomeGallerySection posts={posts} />
+        {/* 4. Destinations */}
+        <section className="gt-section gt-section--white" id="destinations" aria-labelledby="dest-title">
+          <div className="gt-container">
+            <div className="gt-section-head">
+              <p className="gt-eyebrow">{t("homepage.destEyebrow")}</p>
+              <h2 id="dest-title" className="gt-h2">{t("homepage.destTitle")}</h2>
+              <p className="gt-lead">{t("homepage.destLead")}</p>
+            </div>
 
-      {/* 9. Interactive Georgia Map */}
-      <HomeMapSection
-        activeMapRegion={activeMapRegion}
-        setActiveMapRegion={setActiveMapRegion}
-      />
+            <ul className="gt-dest-grid">
+              {destinations.map((destination) => (
+                <li key={destination.key} className={`gt-dest-card${destination.large ? " gt-dest-card--lg" : ""}`}>
+                  {destination.image && (
+                    <Image
+                      src={destination.image}
+                      alt=""
+                      fill
+                      sizes={destination.large ? "(max-width: 980px) 100vw, 50vw" : "(max-width: 600px) 100vw, (max-width: 980px) 50vw, 33vw"}
+                      className="gt-dest-img"
+                    />
+                  )}
+                  <div className="gt-dest-body">
+                    <span className={`gt-chip ${destination.hasTours ? "gt-chip--gold" : "gt-chip--light"}`}>
+                      {destination.hasTours ? t("homepage.destToursAvailable") : t("homepage.destOnRequest")}
+                    </span>
+                    <h3 className="gt-dest-name">{destination.name}</h3>
+                    <p>{destination.tagline}</p>
+                    {destination.hasTours ? (
+                      <Link href={destination.link} className="gt-dest-link gt-stretched">
+                        {t("homepage.destViewTours")}
+                        <ArrowRightIcon size={16} />
+                      </Link>
+                    ) : (
+                      <a href={destination.link} target="_blank" rel="noopener noreferrer" className="gt-dest-link gt-stretched">
+                        {t("homepage.destAsk")}
+                        <WhatsAppIcon size={16} />
+                      </a>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
 
-      {/* 10. FAQ Section */}
-      <HomeFaqSection
-        faqs={faqs}
-        openFaq={openFaq}
-        setOpenFaq={setOpenFaq}
-      />
+            <p className="gt-dest-also">
+              <strong>{t("homepage.destAlsoLabel")}</strong> {t("homepage.destAlsoList")}
+            </p>
+          </div>
+        </section>
 
-      {/* 11. Weather Section */}
-      <HomeWeatherSection
-        weatherData={weatherData}
-        isLiveWeather={isLiveWeather}
-        weatherLoading={weatherLoading}
-        activeWeatherTab={activeWeatherTab}
-        setActiveWeatherTab={setActiveWeatherTab}
-      />
+        {/* 5. Experiences — real stops from current routes */}
+        {experiences.length >= 3 && (
+          <section className="gt-section gt-section--stone" aria-labelledby="exp-title">
+            <div className="gt-container">
+              <div className="gt-section-head gt-section-head--split">
+                <div>
+                  <p className="gt-eyebrow">{t("homepage.expEyebrow")}</p>
+                  <h2 id="exp-title" className="gt-h2">{t("homepage.expTitle")}</h2>
+                  <p className="gt-lead">{t("homepage.expLead")}</p>
+                </div>
+                <Link href={href("/places")} className="gt-link">
+                  {t("homepage.expAll")}
+                  <ArrowRightIcon size={16} />
+                </Link>
+              </div>
 
-      {/* Back to top button */}
-      <button
-        className={`back-to-top ${navScrolled ? "visible" : ""}`}
-        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        aria-label={t("popular.backToTop")}
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 19V5M5 12l7-7 7 7" />
-        </svg>
-      </button>
+              <ul className="gt-exp-grid">
+                {experiences.map(({ place, theme }) => (
+                  <li key={place.id}>
+                    <Link href={href(`/places/${place.id}`)} className="gt-exp-tile" prefetch={false}>
+                      <Image src={place.img} alt="" fill sizes="(max-width: 560px) 78vw, (max-width: 900px) 50vw, 33vw" />
+                      <span className="gt-chip gt-chip--light">{t(`homepage.${theme}`)}</span>
+                      <strong>{placeTitle(place)}</strong>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
 
-      {/* Floating WhatsApp button */}
-      <div className="floating-wa">
-        <span className="floating-wa-tooltip">{t("popular.whatsappTooltip")}</span>
-        <a href={WA_LINK} target="_blank" rel="noopener noreferrer" className="floating-wa-btn" aria-label="WhatsApp — GeorgiaTrips">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-            <path d="M12.003 2C6.477 2 2 6.477 2 12c0 1.989.574 3.842 1.563 5.406L2 22l4.682-1.528A9.956 9.956 0 0012.003 22C17.529 22 22 17.523 22 12S17.529 2 12.003 2zm0 18c-1.676 0-3.26-.455-4.627-1.247l-.331-.198-3.454 1.128 1.156-3.366-.215-.348A7.957 7.957 0 014.003 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8z" />
-          </svg>
-        </a>
-      </div>
+        {/* 6. Why GeorgiaTrips */}
+        <section className="gt-section gt-section--paper" id="why" aria-labelledby="why-title">
+          <div className="gt-container gt-why">
+            <div className="gt-why-intro">
+              <p className="gt-eyebrow">{t("homepage.whyEyebrow")}</p>
+              <h2 id="why-title" className="gt-h2">{t("homepage.whyTitle")}</h2>
+              <p className="gt-lead">{t("homepage.whyLead")}</p>
+              <div className="gt-address-card">
+                <span className="gt-icon-badge"><LocationIcon size={20} /></span>
+                <div>
+                  <strong>{t("homepage.officeLabel")}</strong>
+                  <p>{t("footer.address")}</p>
+                  <a href={`tel:${PHONE_TEL}`} dir="ltr">{PHONE_DISPLAY}</a>
+                </div>
+              </div>
+            </div>
+            <ul className="gt-why-points">
+              {whyItems.map((item) => (
+                <li key={item.n} className="gt-why-point">
+                  <span className="gt-icon-badge">{item.icon}</span>
+                  <h3>{t(`homepage.why${item.n}Title`)}</h3>
+                  <p>{t(`homepage.why${item.n}Text`)}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        {/* 7. Private / custom trips */}
+        <section className="gt-section gt-section--stone" id="plan" aria-labelledby="plan-title">
+          <div className="gt-container gt-plan">
+            <div className="gt-plan-copy">
+              <p className="gt-eyebrow">{t("homepage.planEyebrow")}</p>
+              <h2 id="plan-title" className="gt-h2">{t("homepage.planTitle")}</h2>
+              <p className="gt-lead">{t("homepage.planLead")}</p>
+              <ul className="gt-plan-includes">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <li key={n}>
+                    <CheckIcon size={18} />
+                    <span>{t(`homepage.planInc${n}`)}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="gt-plan-call">
+                {t("homepage.planCall")}{" "}
+                <a href={`tel:${PHONE_TEL}`} dir="ltr">{PHONE_DISPLAY}</a>
+              </p>
+            </div>
+            <TripPlannerForm />
+          </div>
+        </section>
+
+        {/* 8. Transfers */}
+        <section className="gt-section gt-section--paper" id="transfers" aria-labelledby="transfers-title">
+          <div className="gt-container">
+            <div className="gt-section-head gt-section-head--split">
+              <div>
+                <p className="gt-eyebrow">{t("homepage.transfersEyebrow")}</p>
+                <h2 id="transfers-title" className="gt-h2">{t("homepage.transfersTitle")}</h2>
+                <p className="gt-lead">{t("homepage.transfersLead")}</p>
+              </div>
+            </div>
+
+            <div className="gt-transfer">
+              <div>
+                <p className="gt-sublabel">{t("homepage.airportsLabel")}</p>
+                <ul className="gt-airports">
+                  {[["BUS", "airportBatumi"], ["KUT", "airportKutaisi"], ["TBS", "airportTbilisi"]].map(([code, key]) => (
+                    <li key={code} className="gt-airport">
+                      <span className="gt-airport-code">{code}</span>
+                      <span>{t(`homepage.${key}`)}</span>
+                    </li>
+                  ))}
+                </ul>
+                <ul className="gt-transfer-perks">
+                  {transferPerks.map((perk) => (
+                    <li key={perk.title}>
+                      <span className="gt-icon-badge gt-icon-badge--sm">{perk.icon}</span>
+                      <div>
+                        <strong>{t(perk.title)}</strong>
+                        <p>{t(perk.text)}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <p className="gt-sublabel">{t("homepage.routesLabel")}</p>
+                <ul className="gt-routes">
+                  {[1, 2, 3, 4, 5, 6].map((n) => (
+                    <li key={n} className="gt-route">
+                      <RouteIcon size={16} />
+                      <span>{t(`homepage.route${n}`)}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="gt-sublabel gt-sublabel--spaced">{t("homepage.fleetLabel")}</p>
+                <ul className="gt-fleet">
+                  {FLEET.map((vehicle) => (
+                    <li key={vehicle.key} className="gt-fleet-item">
+                      <CarIcon size={20} />
+                      <strong>{t(`transfersPage.vehicles.${vehicle.key}.name`)}</strong>
+                      <small>{interpolate(t("transfersPage.capacityPax"), { count: vehicle.pax })}</small>
+                    </li>
+                  ))}
+                </ul>
+                <div className="gt-transfer-actions">
+                  <Link href={href("/transfers")} className="gt-btn gt-btn--navy">
+                    <PlaneIcon size={18} />
+                    {t("homepage.transfersCta")}
+                  </Link>
+                  <a href={whatsappHref(t("homepage.transfersWa"))} target="_blank" rel="noopener noreferrer" className="gt-btn gt-btn--outline">
+                    <WhatsAppIcon size={18} />
+                    {t("homepage.transfersQuote")}
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 9. VIP & corporate */}
+        <section className="gt-section gt-section--navy" id="vip" aria-labelledby="vip-title">
+          <div className="gt-container gt-vip">
+            <div>
+              <p className="gt-eyebrow">{t("homepage.vipEyebrow")}</p>
+              <h2 id="vip-title" className="gt-h2">{t("homepage.vipTitle")}</h2>
+              <p className="gt-lead">{t("homepage.vipLead")}</p>
+              <ul className="gt-vip-list">
+                {[1, 2, 3, 4].map((n) => (
+                  <li key={n}>
+                    <CheckIcon size={18} />
+                    <span>{t(`homepage.vip${n}`)}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="gt-vip-actions">
+                <a href={whatsappHref(t("homepage.vipWa"))} target="_blank" rel="noopener noreferrer" className="gt-btn gt-btn--gold gt-btn--lg">
+                  <BriefcaseIcon size={18} />
+                  {t("homepage.vipCta")}
+                </a>
+                <Link href={href("/transfers")} className="gt-btn gt-btn--ghost-light gt-btn--lg">{t("homepage.vipSecondary")}</Link>
+              </div>
+            </div>
+            <div className="gt-vip-media">
+              <Image src="/2car.webp" alt={t("homepage.vipAlt")} width={1536} height={1024} sizes="(max-width: 900px) 100vw, 50vw" />
+            </div>
+          </div>
+        </section>
+
+        {/* 10. Reviews — only when real reviews exist */}
+        {reviews.length > 0 && (
+          <section className="gt-section gt-section--white" aria-labelledby="reviews-title">
+            <div className="gt-container">
+              <div className="gt-section-head">
+                <p className="gt-eyebrow">{t("homepage.reviewsEyebrow")}</p>
+                <h2 id="reviews-title" className="gt-h2">{t("homepage.reviewsTitle")}</h2>
+              </div>
+              <ul className="gt-review-grid">
+                {reviews.map((review) => (
+                  <li key={review.id} className="gt-review">
+                    <span className="gt-stars" role="img" aria-label={`${Math.round(Number(review.rating))}/5`}>
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <StarIcon key={n} size={16} fill={n <= Math.round(Number(review.rating)) ? "currentColor" : "none"} color="currentColor" />
+                      ))}
+                    </span>
+                    <blockquote>{review.text}</blockquote>
+                    <div className="gt-review-author">
+                      <strong>{review.name}</strong>
+                      {review.source === "google" && <small>{t("homepage.reviewGoogle")}</small>}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
+
+        {/* 11. Local Georgia */}
+        {localPhotos.length >= 3 && (
+          <section className="gt-section gt-section--white" aria-labelledby="local-title">
+            <div className="gt-container gt-local">
+              <div>
+                <p className="gt-eyebrow">{t("homepage.localEyebrow")}</p>
+                <h2 id="local-title" className="gt-h2">{t("homepage.localTitle")}</h2>
+                <p className="gt-lead">{t("homepage.localLead")}</p>
+                <a href={INSTAGRAM_LINK} target="_blank" rel="noopener noreferrer" className="gt-btn gt-btn--outline">
+                  <InstagramIcon size={18} />
+                  {t("homepage.localCta")}
+                </a>
+              </div>
+              <ul className="gt-local-mosaic">
+                {localPhotos.map((place) => (
+                  <li key={place.id} className="gt-local-photo">
+                    <Link href={href(`/places/${place.id}`)} prefetch={false}>
+                      <Image src={place.img} alt="" fill sizes="(max-width: 900px) 50vw, 30vw" />
+                      <span className="gt-local-caption">{placeTitle(place)}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
+
+        {/* 12. FAQ */}
+        <section className="gt-section gt-section--paper" id="faq" aria-labelledby="faq-title">
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+          <div className="gt-container gt-faq">
+            <div>
+              <p className="gt-eyebrow">{t("homepage.faqEyebrow")}</p>
+              <h2 id="faq-title" className="gt-h2">{t("homepage.faqTitle")}</h2>
+              <div className="gt-faq-help">
+                <strong>{t("homepage.faqHelpTitle")}</strong>
+                <p>{t("homepage.faqHelpText")}</p>
+                <a href={generalWa} target="_blank" rel="noopener noreferrer" className="gt-btn gt-btn--wa">
+                  <WhatsAppIcon size={18} />
+                  {t("site.chatWhatsapp")}
+                </a>
+              </div>
+            </div>
+            <div className="gt-faq-list">
+              {faqs.map((faq, index) => (
+                <details key={faq.q} className="gt-faq-item" open={index === 0}>
+                  <summary>
+                    <span>{faq.q}</span>
+                    <PlusIcon size={20} />
+                  </summary>
+                  <p>{faq.a}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 13. Final CTA */}
+        <section className="gt-final" aria-labelledby="final-title">
+          <Image src="/hero.webp" alt="" fill sizes="100vw" className="gt-final-img" />
+          <div className="gt-container">
+            <h2 id="final-title" className="gt-h2">{t("homepage.finalTitle")}</h2>
+            <p>{t("homepage.finalText")}</p>
+            <div className="gt-final-actions">
+              <Link href={href("/tours")} className="gt-btn gt-btn--gold gt-btn--lg">{t("homepage.finalTours")}</Link>
+              <a href="#plan" className="gt-btn gt-btn--ghost-light gt-btn--lg">{t("homepage.finalPlan")}</a>
+              <a href={generalWa} target="_blank" rel="noopener noreferrer" className="gt-btn gt-btn--wa gt-btn--lg">
+                <WhatsAppIcon size={18} />
+                {t("homepage.finalWa")}
+              </a>
+            </div>
+          </div>
+        </section>
+      </main>
 
       <Footer />
     </>

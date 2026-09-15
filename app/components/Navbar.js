@@ -1,370 +1,495 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
-import { BrandLogo } from "../lib/shared";
+import { usePathname, useRouter } from "next/navigation";
+import { BrandLogo, PHONE_DISPLAY, PHONE_TEL, whatsappHref } from "../lib/shared";
 import { useAuth } from "../lib/AuthContext";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 import { useCurrency, CURRENCY_RATES } from "../lib/currency/CurrencyContext";
-import { FlagGeorgia, FlagUK, FlagRussia, FlagTurkey, FlagArabic } from "./Flags";
-import CouponModal from "./CouponModal";
-import { getLocalizedHref } from "../lib/siteConfig";
+import { getLocalizedHref, SUPPORTED_LANGUAGES } from "../lib/siteConfig";
+import {
+  BedIcon, BriefcaseIcon, CarIcon, ChevronDownIcon, ChevronRightIcon, CloseIcon, GlobeIcon,
+  MenuIcon, PhoneIcon, PlaneIcon, UserIcon, UsersIcon, WhatsAppIcon,
+} from "./Icons";
 
-// Shared site navigation. `active` highlights the current top-level item.
-// Supported active values: "home" | "tours" | "transport" | "posts" | "hotels" | "admin" | "about" | "contact"
+const LANGUAGE_NAMES = { ka: "ქართული", en: "English", ru: "Русский", tr: "Türkçe", ar: "العربية" };
+
+// Routes that have no [locale] segment: switching language there must only
+// change the stored preference, never navigate to a non-existent /xx/... URL.
+const UNLOCALIZED_PREFIXES = ["/admin", "/login", "/coupons", "/booking"];
+
+const HERO_SELECTOR = ".gt-hero, .hero, .tours-page-hero, .transfers-hero, .posts-hero, .page-header, .page-hero, .tdp-hero, .tdp-hero2, .hotels-hero, .admin-hero";
+
+function isUnlocalizedPath(pathname = "") {
+  return UNLOCALIZED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
+function useDismiss(ref, open, onClose) {
+  useEffect(() => {
+    if (!open) return undefined;
+    const onPointer = (event) => {
+      if (ref.current && !ref.current.contains(event.target)) onClose();
+    };
+    const onKey = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [ref, open, onClose]);
+}
+
+// `active` keeps the legacy prop contract used by every page:
+// "home" | "tours" | "places" | "transfers" | "transport" | "posts" | "hotels" | "admin"
 export default function Navbar({ active = "home" }) {
-  const [mounted, setMounted] = useState(false);
-  const [navScrolled, setNavScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
-  const [currencyDropdownOpen, setCurrencyDropdownOpen] = useState(false);
-  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
-  const [couponModalOpen, setCouponModalOpen] = useState(false);
+  const pathname = usePathname() || "/";
+  const router = useRouter();
+  const { lang, setLang, t } = useLanguage();
   const { currency, setCurrency } = useCurrency();
   const { user, logOut } = useAuth() ?? {};
-  const router = useRouter();
-  const pathname = usePathname();
-  const { lang, setLang, t, isGeorgian, isEnglish, isRussian } = useLanguage();
 
-  // Switching language must move to the localized URL (the SEO source of
-  // truth), not just flip client state — otherwise the visible language and
-  // the indexable URL would drift apart again.
-  const handleLanguageChange = (code) => {
-    setLang(code);
-    router.push(getLocalizedHref(pathname, code));
-  };
+  const [mounted, setMounted] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [hasHero, setHasHero] = useState(false);
+  const [openMenu, setOpenMenu] = useState(null); // "services" | "language" | "currency" | "account" | null
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const servicesRef = useRef(null);
+  const languageRef = useRef(null);
+  const currencyRef = useRef(null);
+  const accountRef = useRef(null);
+  const drawerRef = useRef(null);
+  const drawerTriggerRef = useRef(null);
+  const menuIds = { services: useId(), language: useId(), currency: useId(), account: useId(), drawer: useId() };
+
+  const href = useCallback((path) => getLocalizedHref(path, lang), [lang]);
+  const closeMenus = useCallback(() => setOpenMenu(null), []);
+
+  useDismiss(servicesRef, openMenu === "services", closeMenus);
+  useDismiss(languageRef, openMenu === "language", closeMenus);
+  useDismiss(currencyRef, openMenu === "currency", closeMenus);
+  useDismiss(accountRef, openMenu === "account", closeMenus);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    setHasHero(Boolean(document.querySelector(HERO_SELECTOR)));
 
-  const displayName =
-    user?.displayName ||
-    user?.email?.split("@")[0] ||
-    null;
-
-  // Hover-intent: keep a dropdown open briefly after the cursor leaves the
-  // trigger so it doesn't close while moving toward the menu items.
-  const closeTimers = useRef({});
-  const openDropdown = (setter) => {
-    Object.values(closeTimers.current).forEach(clearTimeout);
-    closeTimers.current = {};
-    setter(true);
-  };
-  const scheduleClose = (key, setter) => {
-    clearTimeout(closeTimers.current[key]);
-    closeTimers.current[key] = setTimeout(() => setter(false), 220);
-  };
-
-  // Pages with a dark full-width hero can afford a fully transparent navbar
-  // at the very top; light pages keep the solid background for readability.
-  const [hasHero, setHasHero] = useState(false);
-
-  useEffect(() => {
-    setHasHero(!!document.querySelector(".hero, .tours-page-hero, .transfers-hero, .posts-hero, .page-header, .page-hero, .tdp-hero, .tdp-hero2, .hotels-hero, .admin-hero"));
-
-    // Throttle scroll handler with rAF to avoid excessive re-renders
-    let raf = 0;
-    const handleScroll = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        setNavScrolled(window.scrollY > 20);
+    let frame = 0;
+    const onScroll = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        setScrolled(window.scrollY > 24);
       });
     };
-
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
-      window.removeEventListener("scroll", handleScroll);
-      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll);
+      if (frame) cancelAnimationFrame(frame);
     };
   }, []);
 
-  const isTransparent = hasHero && !navScrolled && !mobileMenuOpen;
+  useEffect(() => {
+    setDrawerOpen(false);
+    setOpenMenu(null);
+  }, [pathname]);
 
-  // Language options with SVG flags
-  const languages = [
-    { code: "ka", label: "ქართული", flag: <FlagGeorgia width={22} height={15} /> },
-    { code: "en", label: "English", flag: <FlagUK width={22} height={15} /> },
-    { code: "ru", label: "Русский", flag: <FlagRussia width={22} height={15} /> },
-    { code: "tr", label: "Türkçe", flag: <FlagTurkey width={22} height={15} /> },
-    { code: "ar", label: "العربية", flag: <FlagArabic width={22} height={15} /> },
+  const closeDrawer = useCallback(() => {
+    setDrawerOpen(false);
+    drawerTriggerRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (!drawerOpen) return undefined;
+    const root = document.documentElement;
+    const previousOverflow = root.style.overflow;
+    root.style.overflow = "hidden";
+
+    const panel = drawerRef.current;
+    panel?.querySelector("button, a")?.focus();
+
+    const onKey = (event) => {
+      if (event.key === "Escape") {
+        closeDrawer();
+        return;
+      }
+      if (event.key !== "Tab" || !panel) return;
+      const focusable = panel.querySelectorAll('a[href], button:not([disabled])');
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      root.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [drawerOpen, closeDrawer]);
+
+  const changeLanguage = (code) => {
+    setOpenMenu(null);
+    if (code === lang) return;
+    setLang(code);
+    if (isUnlocalizedPath(pathname)) return;
+    const suffix = typeof window !== "undefined" ? `${window.location.search}${window.location.hash}` : "";
+    router.push(`${getLocalizedHref(pathname, code)}${suffix}`);
+  };
+
+  const toggle = (name) => setOpenMenu((current) => (current === name ? null : name));
+
+  const isTransparent = hasHero && !scrolled && !drawerOpen;
+  const displayName = user?.displayName || user?.email?.split("@")[0] || "";
+  const showUser = mounted && user;
+
+  const navItems = [
+    { key: "tours", label: t("site.tours"), path: "/tours", match: ["tours"] },
+    { key: "destinations", label: t("site.destinations"), path: "/places", match: ["places"] },
+    { key: "transfers", label: t("site.transfers"), path: "/transfers", match: ["transfers", "transport"] },
   ];
 
-  const currentLang = languages.find((l) => l.code === lang) || languages[0];
+  const services = [
+    { icon: <UsersIcon size={20} />, title: t("site.svcPrivate"), desc: t("site.svcPrivateDesc"), href: href("/tours?format=individual") },
+    { icon: <CarIcon size={20} />, title: t("site.svcGroup"), desc: t("site.svcGroupDesc"), href: href("/tours?format=group") },
+    { icon: <PlaneIcon size={20} />, title: t("site.svcTransfer"), desc: t("site.svcTransferDesc"), href: href("/transfers") },
+    { icon: <BedIcon size={20} />, title: t("site.svcHotel"), desc: t("site.svcHotelDesc"), href: whatsappHref(t("site.hotelWa")), external: true },
+    { icon: <BriefcaseIcon size={20} />, title: t("site.svcVip"), desc: t("site.svcVipDesc"), href: href("/#vip") },
+  ];
+
+  const renderServiceLink = (item, onNavigate) => {
+    const inner = (
+      <>
+        <span className="gt-icon-badge gt-icon-badge--sm">{item.icon}</span>
+        <span>
+          <strong>{item.title}</strong>
+          <small>{item.desc}</small>
+        </span>
+      </>
+    );
+    return item.external ? (
+      <a key={item.title} href={item.href} target="_blank" rel="noopener noreferrer" className="gt-menu-item" onClick={onNavigate}>{inner}</a>
+    ) : (
+      <Link key={item.title} href={item.href} className="gt-menu-item" onClick={onNavigate} prefetch={false}>{inner}</Link>
+    );
+  };
 
   return (
-    <nav className={`nav ${navScrolled || mobileMenuOpen ? "scrolled" : ""} ${isTransparent ? "transparent" : ""}`}>
-      {/* Logo */}
-      <Link href={getLocalizedHref("/", lang)} className="nav-logo" aria-label={`GeorgiaTrips — ${t("nav.home")}`}>
-        <BrandLogo priority />
-        <span className="nav-wordmark">
-          <span className="nav-wordmark-georgia">Georgia</span>
-          <span className="nav-wordmark-trips">Trips</span>
-        </span>
-      </Link>
-
-      {/* Desktop Links */}
-      <ul className="nav-links">
-        <li><Link href={getLocalizedHref("/", lang)}>{t("nav.home")}</Link></li>
-        <li><Link href={getLocalizedHref("/tours", lang)} className={active === "tours" ? "active" : ""}>{t("nav.tours")}</Link></li>
-        <li><Link href={getLocalizedHref("/places", lang)} className={active === "places" ? "active" : ""}>{t("nav.places")}</Link></li>
-        <li><Link href={getLocalizedHref("/hotels", lang)} className={active === "hotels" ? "active" : ""}>{t("nav.hotels")}</Link></li>
-        <li><Link href={getLocalizedHref("/transfers", lang)} className={active === "transfers" || active === "transport" ? "active" : ""}>{t("nav.transport")}</Link></li>
-        <li><Link href={getLocalizedHref("/posts", lang)} className={active === "posts" || active === "articles" ? "active" : ""}>{t("nav.articles")}</Link></li>
-        {user?.isAdmin && (
-          <li><Link href="/admin" className={active === "admin" ? "active" : ""}>{t("nav.admin")}</Link></li>
-        )}
-      </ul>
-
-      {/* Right Side Controls */}
-      <div className="nav-right">
-        {/* Language Switcher */}
-        <div className="nav-control-wrap" onMouseEnter={() => openDropdown(setLangDropdownOpen)} onMouseLeave={() => scheduleClose("lang", setLangDropdownOpen)}>
-          <button className="nav-control-btn nav-lang-btn" aria-label={t("nav.language")} style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-            <span className="nav-lang-flag" style={{ display: "inline-flex", alignItems: "center" }}>{currentLang.flag}</span>
-            <svg className={`nav-chevron ${langDropdownOpen ? "open" : ""}`} width="10" height="10" viewBox="0 0 12 12" fill="none">
-              <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          {langDropdownOpen && (
-            <div className="nav-dropdown nav-dropdown-sm nav-lang-dropdown">
-              {languages.map((l) => (
-                <button
-                  key={l.code}
-                  className={`nav-dropdown-item ${lang === l.code ? "active" : ""}`}
-                  onClick={() => { handleLanguageChange(l.code); setLangDropdownOpen(false); }}
-                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
-                >
-                  <span className="nav-lang-flag">{l.flag}</span>
-                  <span>{l.label}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Currency Switcher */}
-        <div className="nav-control-wrap" onMouseEnter={() => openDropdown(setCurrencyDropdownOpen)} onMouseLeave={() => scheduleClose("currency", setCurrencyDropdownOpen)}>
-          <button className="nav-control-btn" aria-label={t("nav.currency")}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" /><path d="M12 6v12M9 8h4.5a2.5 2.5 0 0 1 0 5H9m0 0h4.5a2.5 2.5 0 0 1 0 5H9" />
-            </svg>
-            <span>{currency}</span>
-            <svg className={`nav-chevron ${currencyDropdownOpen ? "open" : ""}`} width="10" height="10" viewBox="0 0 12 12" fill="none">
-              <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          {currencyDropdownOpen && (
-            <div className="nav-dropdown nav-dropdown-sm">
-              {Object.keys(CURRENCY_RATES).map((cur) => {
-                const item = CURRENCY_RATES[cur];
-                return (
-                  <button
-                    key={cur}
-                    className={`nav-dropdown-item ${currency === cur ? "active" : ""}`}
-                    onClick={() => {
-                      setCurrency(cur);
-                      setCurrencyDropdownOpen(false);
-                    }}
-                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" }}
-                  >
-                    <span style={{ fontWeight: 800, color: "var(--teal)", minWidth: "24px", fontSize: "0.95rem" }}>
-                      {item.icon || item.symbol}
-                    </span>
-                    <span style={{ fontWeight: 700, fontSize: "0.86rem" }}>{cur}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* User / Login Button */}
-        {mounted && user ? (
-          <div
-            className="nav-control-wrap"
-            onMouseEnter={() => openDropdown(setUserDropdownOpen)}
-            onMouseLeave={() => scheduleClose("user", setUserDropdownOpen)}
-          >
-            <button className="nav-login-btn nav-user-badge">
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
-              </svg>
-              <span style={{ maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</span>
-              <svg className={`nav-chevron ${userDropdownOpen ? "open" : ""}`} width="10" height="10" viewBox="0 0 12 12" fill="none">
-                <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-            {userDropdownOpen && (
-              <div className="nav-dropdown" style={{ right: 0, left: "auto", minWidth: 175 }}>
-                <button className="nav-dropdown-item" onClick={() => { router.push("/login"); setUserDropdownOpen(false); }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}>
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
-                  </svg>
-                  <span>{t("nav.profile")}</span>
-                </button>
-                <Link
-                   href="/coupons"
-                   className="nav-dropdown-item nav-dropdown-coupon-btn"
-                   onClick={() => setUserDropdownOpen(false)}
-                   style={{ display: "flex", alignItems: "center", gap: "6px" }}
-                 >
-                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                     <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-                     <line x1="7" y1="7" x2="7.01" y2="7" />
-                   </svg>
-                   <span>{t("nav.coupons") || "ჩემი კუპონები"}</span>
-                 </Link>
-                <button
-                  className="nav-dropdown-item"
-                  onClick={async () => { await logOut?.(); setUserDropdownOpen(false); router.push("/"); }}
-                  style={{ color: "#f87171" }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}>
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                    <polyline points="16 17 21 12 16 7" />
-                    <line x1="21" y1="12" x2="9" y2="12" />
-                  </svg>
-                  <span>{t("nav.logout")}</span>
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <Link href="/login" className="nav-login-btn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
-            </svg>
-            {t("nav.login")}
+    <>
+      <a className="gt-skip-link" href="#gt-content">{t("site.skip")}</a>
+      <header className={`gt-header${isTransparent ? " is-transparent" : ""}${scrolled ? " is-scrolled" : ""}`}>
+        <div className="gt-header-bar">
+          <Link href={href("/")} className="gt-brand" aria-label={`GeorgiaTrips — ${t("nav.home")}`}>
+            <BrandLogo width={40} height={40} priority />
+            <span className="gt-brand-text" aria-hidden="true">
+              <span className="gt-brand-word">Georgia<b>Trips</b></span>
+              <span className="gt-brand-tag">{t("site.brandTagline")}</span>
+            </span>
           </Link>
-        )}
-      </div>
 
-      {/* Mobile Hamburger */}
-      <button
-        className="nav-hamburger"
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        aria-label="Menu"
-        aria-expanded={mobileMenuOpen}
-      >
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-
-      {/* Mobile Navigation Dropdown */}
-      <div className={`nav-mobile ${mobileMenuOpen ? "open" : ""}`}>
-        <Link href={getLocalizedHref("/", lang)} onClick={() => setMobileMenuOpen(false)}>{t("nav.home")}</Link>
-        <Link href={getLocalizedHref("/tours", lang)} onClick={() => setMobileMenuOpen(false)}>{t("nav.tours")}</Link>
-        <Link href={getLocalizedHref("/places", lang)} onClick={() => setMobileMenuOpen(false)}>{t("nav.places")}</Link>
-        <Link href={getLocalizedHref("/hotels", lang)} onClick={() => setMobileMenuOpen(false)}>{t("nav.hotels")}</Link>
-        <Link href={getLocalizedHref("/transfers", lang)} onClick={() => setMobileMenuOpen(false)}>{t("nav.transport")}</Link>
-        <Link href={getLocalizedHref("/posts", lang)} onClick={() => setMobileMenuOpen(false)}>{t("nav.articles")}</Link>
-        {user?.isAdmin && (
-          <Link href="/admin" onClick={() => setMobileMenuOpen(false)}>{t("nav.admin")}</Link>
-        )}
-        <div className="nav-mobile-controls">
-          {/* Mobile Language Switcher */}
-          <div className="nav-mobile-ctrl-section">
-            <span className="nav-mobile-ctrl-title">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-              {t("nav.language") || "ენა"}
-            </span>
-            <div className="nav-mobile-lang-grid">
-              {languages.map((l) => (
-                <button
-                  key={l.code}
-                  className={`nav-mobile-lang-card ${lang === l.code ? "active" : ""}`}
-                  onClick={() => {
-                    handleLanguageChange(l.code);
-                    setMobileMenuOpen(false);
-                  }}
-                >
-                  <span className="nav-mobile-flag">{l.flag}</span>
-                  <span className="nav-mobile-lang-name">{l.label}</span>
-                  {lang === l.code && <span className="nav-mobile-active-dot">✓</span>}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Mobile Currency Switcher */}
-          <div className="nav-mobile-ctrl-section">
-            <span className="nav-mobile-ctrl-title">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 8h4.5a2.5 2.5 0 0 1 0 5H9m0 0h4.5a2.5 2.5 0 0 1 0 5H9"/></svg>
-              {t("nav.currency") || "ვალუტა"}
-            </span>
-            <div className="nav-mobile-curr-grid">
-              {Object.keys(CURRENCY_RATES).map((cur) => {
-                const item = CURRENCY_RATES[cur];
+          <nav className="gt-nav" aria-label={t("site.mainNav")}>
+            <ul className="gt-nav-list">
+              {navItems.map((item) => {
+                const isActive = item.match.includes(active);
                 return (
-                  <button
-                    key={cur}
-                    className={`nav-mobile-curr-card ${currency === cur ? "active" : ""}`}
-                    onClick={() => {
-                      setCurrency(cur);
-                      setMobileMenuOpen(false);
-                    }}
-                  >
-                    <span className="nav-mobile-curr-sym">{item.icon || item.symbol}</span>
-                    <span className="nav-mobile-curr-code">{cur}</span>
-                  </button>
+                  <li key={item.key}>
+                    <Link href={href(item.path)} className={`gt-nav-link${isActive ? " is-active" : ""}`} aria-current={isActive ? "page" : undefined}>
+                      {item.label}
+                    </Link>
+                  </li>
                 );
               })}
+              <li className="gt-has-menu" ref={servicesRef}>
+                <button
+                  type="button"
+                  className="gt-nav-link"
+                  aria-expanded={openMenu === "services"}
+                  aria-controls={menuIds.services}
+                  onClick={() => toggle("services")}
+                >
+                  {t("site.services")}
+                  <ChevronDownIcon size={14} className={`gt-caret${openMenu === "services" ? " is-open" : ""}`} />
+                </button>
+                {openMenu === "services" && (
+                  <div className="gt-menu gt-menu--wide" id={menuIds.services}>
+                    {services.map((item) => renderServiceLink(item, closeMenus))}
+                  </div>
+                )}
+              </li>
+              <li className="gt-nav-why">
+                <Link href={href("/#why")} className="gt-nav-link">{t("site.why")}</Link>
+              </li>
+            </ul>
+          </nav>
+
+          <div className="gt-header-actions">
+            <a href={`tel:${PHONE_TEL}`} className="gt-header-phone">
+              <PhoneIcon size={18} />
+              <span>
+                <small>{t("site.callUs")}</small>
+                <strong dir="ltr">{PHONE_DISPLAY}</strong>
+              </span>
+            </a>
+
+            <div className="gt-has-menu" ref={languageRef}>
+              <button
+                type="button"
+                className="gt-pill-btn"
+                aria-expanded={openMenu === "language"}
+                aria-controls={menuIds.language}
+                aria-label={`${t("nav.language")}: ${LANGUAGE_NAMES[lang]}`}
+                onClick={() => toggle("language")}
+              >
+                <GlobeIcon size={17} />
+                <span>{lang.toUpperCase()}</span>
+              </button>
+              {openMenu === "language" && (
+                <ul className="gt-menu gt-menu--end" id={menuIds.language}>
+                  {SUPPORTED_LANGUAGES.map((code) => (
+                    <li key={code}>
+                      <button
+                        type="button"
+                        className={`gt-menu-option${code === lang ? " is-active" : ""}`}
+                        aria-current={code === lang ? "true" : undefined}
+                        lang={code}
+                        dir={code === "ar" ? "rtl" : "ltr"}
+                        onClick={() => changeLanguage(code)}
+                      >
+                        {LANGUAGE_NAMES[code]}
+                        <span className="gt-menu-code">{code.toUpperCase()}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
+
+            <div className="gt-has-menu gt-desktop-only" ref={currencyRef}>
+              <button
+                type="button"
+                className="gt-pill-btn"
+                aria-expanded={openMenu === "currency"}
+                aria-controls={menuIds.currency}
+                aria-label={`${t("nav.currency")}: ${currency}`}
+                onClick={() => toggle("currency")}
+              >
+                <span aria-hidden="true">{CURRENCY_RATES[currency]?.symbol}</span>
+                <span>{currency}</span>
+              </button>
+              {openMenu === "currency" && (
+                <ul className="gt-menu gt-menu--end" id={menuIds.currency}>
+                  {Object.keys(CURRENCY_RATES).map((code) => (
+                    <li key={code}>
+                      <button
+                        type="button"
+                        className={`gt-menu-option${code === currency ? " is-active" : ""}`}
+                        aria-current={code === currency ? "true" : undefined}
+                        onClick={() => { setCurrency(code); closeMenus(); }}
+                      >
+                        {CURRENCY_RATES[code].label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="gt-has-menu gt-desktop-only" ref={accountRef}>
+              {showUser ? (
+                <>
+                  <button
+                    type="button"
+                    className="gt-icon-btn"
+                    aria-expanded={openMenu === "account"}
+                    aria-controls={menuIds.account}
+                    aria-label={`${t("site.account")}: ${displayName}`}
+                    onClick={() => toggle("account")}
+                  >
+                    <UserIcon size={20} />
+                  </button>
+                  {openMenu === "account" && (
+                    <ul className="gt-menu gt-menu--end" id={menuIds.account}>
+                      <li className="gt-menu-heading">{displayName}</li>
+                      <li><Link href="/login" className="gt-menu-option" onClick={closeMenus}>{t("nav.profile")}</Link></li>
+                      <li><Link href="/coupons" className="gt-menu-option" onClick={closeMenus}>{t("nav.coupons")}</Link></li>
+                      {user?.isAdmin && <li><Link href="/admin" className="gt-menu-option" onClick={closeMenus}>{t("nav.admin")}</Link></li>}
+                      <li>
+                        <button
+                          type="button"
+                          className="gt-menu-option is-danger"
+                          onClick={async () => { closeMenus(); await logOut?.(); router.push(href("/")); }}
+                        >
+                          {t("nav.logout")}
+                        </button>
+                      </li>
+                    </ul>
+                  )}
+                </>
+              ) : (
+                <Link href="/login" className="gt-icon-btn" aria-label={t("nav.loginRegister")} prefetch={false}>
+                  <UserIcon size={20} />
+                </Link>
+              )}
+            </div>
+
+            <a
+              href={whatsappHref(t("site.generalWa"))}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="gt-icon-btn gt-mobile-only"
+              aria-label={t("site.chatWhatsapp")}
+            >
+              <WhatsAppIcon size={21} />
+            </a>
+
+            <Link href={href("/#plan")} className="gt-btn gt-btn--gold gt-btn--sm gt-header-cta">
+              {t("site.planTrip")}
+            </Link>
+
+            <button
+              ref={drawerTriggerRef}
+              type="button"
+              className="gt-icon-btn gt-menu-toggle"
+              aria-expanded={drawerOpen}
+              aria-controls={menuIds.drawer}
+              aria-label={t("site.openMenu")}
+              onClick={() => { setOpenMenu(null); setDrawerOpen(true); }}
+            >
+              <MenuIcon size={24} />
+            </button>
           </div>
         </div>
-        {mounted && user ? (
-          <div className="nav-mobile-user">
-            <div className="nav-mobile-user-info">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
-              </svg>
-              <span>{displayName}</span>
-            </div>
-            <div className="nav-mobile-user-actions">
-              <Link href="/login" className="nav-mobile-user-btn" onClick={() => setMobileMenuOpen(false)}>
-                {t("nav.profile")}
-              </Link>
-              <Link
-                href="/coupons"
-                className="nav-mobile-user-btn nav-mobile-coupon-btn"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <span>{t("nav.coupons") || "ჩემი კუპონები"}</span>
-              </Link>
-              <button
-                className="nav-mobile-user-btn nav-mobile-logout"
-                onClick={async () => { await logOut?.(); setMobileMenuOpen(false); router.push("/"); }}
-              >
-                {t("nav.logout")}
+      </header>
+      <div id="gt-content" tabIndex={-1} />
+
+      {drawerOpen && (
+        <>
+          <div className="gt-drawer-backdrop" onClick={closeDrawer} aria-hidden="true" />
+          <div
+            ref={drawerRef}
+            id={menuIds.drawer}
+            className="gt-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("site.menu")}
+          >
+            <div className="gt-drawer-head">
+              <span className="gt-brand gt-brand--static">
+                <BrandLogo width={34} height={34} />
+                <span className="gt-brand-text">
+                  <span className="gt-brand-word">Georgia<b>Trips</b></span>
+                  <span className="gt-brand-tag">{t("site.brandTagline")}</span>
+                </span>
+              </span>
+              <button type="button" className="gt-icon-btn" aria-label={t("site.closeMenu")} onClick={closeDrawer}>
+                <CloseIcon size={24} />
               </button>
             </div>
-          </div>
-        ) : (
-          <Link href="/login" className="nav-mobile-login" onClick={() => setMobileMenuOpen(false)}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
-            </svg>
-            {t("nav.loginRegister")}
-          </Link>
-        )}
-      </div>
 
-      <CouponModal isOpen={couponModalOpen} onClose={() => setCouponModalOpen(false)} />
-    </nav>
+            <nav className="gt-drawer-section" aria-label={t("site.mainNav")}>
+              {navItems.map((item) => (
+                <Link key={item.key} href={href(item.path)} className="gt-drawer-link" onClick={() => setDrawerOpen(false)}>
+                  {item.label}
+                  <ChevronRightIcon size={18} />
+                </Link>
+              ))}
+              <Link href={href("/#why")} className="gt-drawer-link" onClick={() => setDrawerOpen(false)}>
+                {t("site.why")}
+                <ChevronRightIcon size={18} />
+              </Link>
+            </nav>
+
+            <div className="gt-drawer-section">
+              <p className="gt-drawer-label">{t("site.services")}</p>
+              <div className="gt-drawer-services">
+                {services.map((item) => renderServiceLink(item, () => setDrawerOpen(false)))}
+              </div>
+            </div>
+
+            <div className="gt-drawer-section gt-drawer-cta">
+              <Link href={href("/#plan")} className="gt-btn gt-btn--gold gt-btn--block" onClick={() => setDrawerOpen(false)}>
+                {t("site.planTrip")}
+              </Link>
+              <a href={whatsappHref(t("site.generalWa"))} target="_blank" rel="noopener noreferrer" className="gt-btn gt-btn--wa gt-btn--block">
+                <WhatsAppIcon size={19} /> {t("site.chatWhatsapp")}
+              </a>
+              <a href={`tel:${PHONE_TEL}`} className="gt-btn gt-btn--outline gt-btn--block">
+                <PhoneIcon size={18} /> {t("site.call")}
+              </a>
+            </div>
+
+            <div className="gt-drawer-section">
+              <p className="gt-drawer-label">{t("nav.language")}</p>
+              <div className="gt-choice-grid">
+                {SUPPORTED_LANGUAGES.map((code) => (
+                  <button
+                    key={code}
+                    type="button"
+                    className={`gt-choice${code === lang ? " is-active" : ""}`}
+                    aria-pressed={code === lang}
+                    lang={code}
+                    onClick={() => changeLanguage(code)}
+                  >
+                    {LANGUAGE_NAMES[code]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="gt-drawer-section">
+              <p className="gt-drawer-label">{t("nav.currency")}</p>
+              <div className="gt-choice-grid">
+                {Object.keys(CURRENCY_RATES).map((code) => (
+                  <button
+                    key={code}
+                    type="button"
+                    className={`gt-choice${code === currency ? " is-active" : ""}`}
+                    aria-pressed={code === currency}
+                    onClick={() => setCurrency(code)}
+                  >
+                    {CURRENCY_RATES[code].label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="gt-drawer-section gt-drawer-account">
+              {showUser ? (
+                <>
+                  <p className="gt-drawer-label">{displayName}</p>
+                  <Link href="/login" className="gt-drawer-link" onClick={() => setDrawerOpen(false)}>{t("nav.profile")}<ChevronRightIcon size={18} /></Link>
+                  <Link href="/coupons" className="gt-drawer-link" onClick={() => setDrawerOpen(false)}>{t("nav.coupons")}<ChevronRightIcon size={18} /></Link>
+                  {user?.isAdmin && (
+                    <Link href="/admin" className="gt-drawer-link" onClick={() => setDrawerOpen(false)}>{t("nav.admin")}<ChevronRightIcon size={18} /></Link>
+                  )}
+                  <button
+                    type="button"
+                    className="gt-drawer-link is-danger"
+                    onClick={async () => { setDrawerOpen(false); await logOut?.(); router.push(href("/")); }}
+                  >
+                    {t("nav.logout")}
+                  </button>
+                </>
+              ) : (
+                <Link href="/login" className="gt-drawer-link" onClick={() => setDrawerOpen(false)}>
+                  {t("nav.loginRegister")}
+                  <ChevronRightIcon size={18} />
+                </Link>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </>
   );
 }

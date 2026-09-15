@@ -4,6 +4,7 @@ import { ALL_TOURS as staticTours } from "../toursData";
 import { listPlaces } from "../placesFirestore";
 import { listPostSummaries } from "../postsFirestore";
 import { listHotels } from "../hotelsFirestore";
+import { listReviews } from "../reviewsFirestore";
 
 /**
  * Recursively converts Firestore Timestamp instances, Dates, and non-plain objects
@@ -155,5 +156,27 @@ export const getCachedHotels = unstable_cache(
   {
     revalidate: 3600,
     tags: ["hotels"],
+  }
+);
+
+/**
+ * Cached getter for site-wide reviews (admin-entered or synced from Google).
+ * Cached for 1 hour, tagged with 'reviews'. Returns [] when none exist, so
+ * pages can simply omit review UI instead of showing placeholders.
+ */
+export const getCachedReviews = unstable_cache(
+  async () => {
+    try {
+      const reviews = await listReviews();
+      return serializeForClient(Array.isArray(reviews) ? reviews : []);
+    } catch (err) {
+      console.error("[getCachedReviews] Error:", err);
+      return [];
+    }
+  },
+  ["site-reviews-cache"],
+  {
+    revalidate: 3600,
+    tags: ["reviews"],
   }
 );

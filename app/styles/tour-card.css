@@ -1,0 +1,122 @@
+/* Tour card — shared by the homepage, catalog and landing pages. */
+
+.gt-tour-card { height: 100%; }
+
+.gt-tour-card-media { aspect-ratio: 3 / 2; }
+
+.gt-tour-card-media img { object-fit: cover; }
+
+.gt-tour-card-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(7, 23, 36, 0.62) 0%, rgba(7, 23, 36, 0) 48%);
+  pointer-events: none;
+}
+
+.gt-tour-card-badge {
+  position: absolute;
+  inset-block-start: 0.8rem;
+  inset-inline-start: 0.8rem;
+  z-index: 1;
+}
+
+.gt-tour-card-region {
+  position: absolute;
+  inset-block-end: 0.75rem;
+  inset-inline-start: 0.85rem;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
+}
+
+.gt-tour-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.1rem 1.15rem 1.2rem;
+}
+
+.gt-tour-card-title { margin: 0; }
+.gt-tour-card-title a { color: inherit; text-decoration: none; }
+.gt-tour-card:hover .gt-tour-card-title a { color: var(--gt-blue-700); }
+.gt-tour-card-title a:focus-visible { outline: none; }
+.gt-tour-card:has(.gt-tour-card-title a:focus-visible) { outline: 3px solid var(--gt-teal); outline-offset: 3px; }
+
+.gt-tour-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.95rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--gt-ink-2);
+}
+
+.gt-tour-facts li { display: inline-flex; align-items: center; gap: 0.32rem; }
+.gt-tour-facts svg { color: var(--gt-teal-700); flex: none; }
+
+.gt-tour-card-desc {
+  margin: 0;
+  font-size: 0.93rem;
+  line-height: 1.55;
+  color: var(--gt-muted);
+}
+
+.gt-tour-card-dates { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+.gt-tour-card-foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-block-start: auto;
+  padding-block-start: 0.9rem;
+  border-block-start: 1px solid var(--gt-line);
+}
+
+.gt-tour-price { display: grid; gap: 0.2rem; min-width: 0; }
+
+.gt-tour-price-main { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.45rem; }
+.gt-tour-price-main strong { font-size: 1.5rem; font-weight: 800; line-height: 1.1; color: var(--gt-navy-900); }
+.gt-tour-price-main small { font-size: 0.78rem; font-weight: 600; color: var(--gt-muted); }
+
+.gt-tour-price-alt { font-size: 0.82rem; color: var(--gt-ink-2); }
+.gt-tour-price-alt strong { font-weight: 800; color: var(--gt-navy-900); }
+
+/* TourPrice (coupon-aware) renders its own spans; make them inherit the card type scale. */
+.gt-tour-price .gt-price-box,
+.gt-departure-price .gt-price-box {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  color: inherit;
+  font: inherit;
+}
+
+.gt-tour-price .gt-price-current,
+.gt-departure-price .gt-price-current { font: inherit; color: inherit; }
+.gt-tour-price .gt-price-old,
+.gt-departure-price .gt-price-old { font-size: 0.72em; font-weight: 600; color: var(--gt-muted); }
+.gt-tour-price .gt-price-badge,
+.gt-departure-price .gt-price-badge { font-size: 0.62em; }
+
+.gt-tour-card-wa { position: relative; z-index: 2; flex: none; }
+
+@media (max-width: 380px) {
+  .gt-tour-card-foot { flex-direction: column; align-items: stretch; }
+  .gt-tour-card-wa { width: 100%; }
+}

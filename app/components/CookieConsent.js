@@ -105,7 +105,7 @@ export default function CookieConsent() {
       aria-label="Cookie Consent"
       style={{
         position: "fixed",
-        bottom: "1rem",
+        bottom: "calc(1rem + var(--gt-mobile-bar-offset, 0px))",
         left: "1rem",
         right: "1rem",
         maxWidth: "440px",
@@ -115,10 +115,10 @@ export default function CookieConsent() {
         backdropFilter: "blur(14px)",
         WebkitBackdropFilter: "blur(14px)",
         color: "#ffffff",
-        padding: "1.1rem 1.35rem",
-        borderRadius: "16px",
+        padding: "1rem 1.2rem",
+        borderRadius: "10px",
         boxShadow: "0 20px 45px rgba(0, 0, 0, 0.35)",
-        border: "1px solid rgba(255, 255, 255, 0.15)",
+        border: "1px solid rgba(200, 154, 60, 0.5)",
         animation: "fadeUp 0.35s ease forwards",
       }}
     >
@@ -128,7 +128,7 @@ export default function CookieConsent() {
       </div>
       <p style={{ fontSize: "0.82rem", color: "rgba(255, 255, 255, 0.88)", lineHeight: 1.45, margin: "0 0 0.85rem 0" }}>
         {t.desc}
-        <Link href={getLocalizedHref("/privacy-policy", lang)} style={{ color: "#5eead4", textDecoration: "underline" }}>
+        <Link href={getLocalizedHref("/privacy-policy", lang)} style={{ color: "#f5c85a", textDecoration: "underline" }}>
           {t.privacy}
         </Link>.
       </p>
@@ -139,8 +139,9 @@ export default function CookieConsent() {
             background: "transparent",
             color: "#ffffff",
             border: "1px solid rgba(255, 255, 255, 0.35)",
+            minHeight: "44px",
             padding: "0.45rem 0.9rem",
-            borderRadius: "8px",
+            borderRadius: "6px",
             fontSize: "0.82rem",
             fontWeight: 600,
             cursor: "pointer",
@@ -151,15 +152,15 @@ export default function CookieConsent() {
         <button
           onClick={handleAccept}
           style={{
-            background: "#0d9488",
-            color: "#ffffff",
+            background: "#fab418",
+            color: "#0d233a",
             border: "none",
+            minHeight: "44px",
             padding: "0.45rem 1.15rem",
-            borderRadius: "8px",
+            borderRadius: "6px",
             fontSize: "0.82rem",
             fontWeight: 700,
             cursor: "pointer",
-            boxShadow: "0 4px 12px rgba(13, 148, 136, 0.4)",
           }}
         >
           {t.accept}

@@ -6,6 +6,11 @@ import Image from "next/image";
 export const WA_NUMBER = "995504220020";
 export const WA_LINK = `https://wa.me/${WA_NUMBER}`;
 export const PHONE_DISPLAY = "+995 504 22 00 20";
+export const PHONE_TEL = "+995504220020";
+
+export function whatsappHref(message = "") {
+  return message ? `${WA_LINK}?text=${encodeURIComponent(message)}` : WA_LINK;
+}
 export const TELEGRAM_HANDLE = "+995504220020";
 export const TELEGRAM_LINK = `https://t.me/${TELEGRAM_HANDLE}`;
 export const INSTAGRAM_HANDLE = "georgiatrips.ge";
@@ -170,7 +175,7 @@ export const BrandLogo = ({ width = 48, height = 48, priority = false }) => (
     alt="GeorgiaTrips"
     width={width}
     height={height}
-    priority={priority}
+    loading={priority ? "eager" : "lazy"}
     className="brand-logo-img"
     style={{ width, height, objectFit: "contain" }}
   />

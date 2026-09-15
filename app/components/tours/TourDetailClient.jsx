@@ -721,7 +721,7 @@ export default function TourDetailClient({
         </aside>
       )}
 
-      <Footer />
+      <Footer contactBar={false} />
     </div>
   );
 }

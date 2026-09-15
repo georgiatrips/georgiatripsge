@@ -23,8 +23,9 @@ export async function POST(request) {
     }
 
     // Default revalidate all core tags
-    ["tours", "places", "posts", "hotels"].forEach((t) => revalidateTag(t));
-    return NextResponse.json({ success: true, revalidatedTags: ["tours", "places", "posts", "hotels"], now: Date.now() });
+    const coreTags = ["tours", "places", "posts", "hotels", "reviews"];
+    coreTags.forEach((t) => revalidateTag(t));
+    return NextResponse.json({ success: true, revalidatedTags: coreTags, now: Date.now() });
   } catch (error) {
     console.error("[api/admin/revalidate] Error:", error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
