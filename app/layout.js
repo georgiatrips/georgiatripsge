@@ -8,6 +8,7 @@ import "./styles/site.css";
 import "./styles/chrome.css";
 import "./styles/datepicker.css";
 import "./styles/page-hero.css";
+import "./styles/motion.css";
 import { AuthProvider } from "./lib/AuthContext";
 import { LanguageProvider } from "./lib/i18n/LanguageContext";
 import { CurrencyProvider } from "./lib/currency/CurrencyContext";

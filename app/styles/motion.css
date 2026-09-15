@@ -1,0 +1,167 @@
+/* ==========================================================================
+   Motion system.
+
+   Principles: motion explains structure (what enters, in which order) and
+   never blocks reading. Only opacity, transform, translate and scale are
+   animated (compositor-only, no layout shift). Content is hidden only after
+   ScrollReveal adds html.gt-js, so crawlers and no-JS visitors see everything.
+
+   prefers-reduced-motion: movement is removed (no translate, scale, parallax
+   or Ken Burns) but gentle opacity fades stay, so the page still feels alive
+   without triggering vestibular discomfort.
+   ========================================================================== */
+
+/* ---------- Scroll reveal ---------- */
+
+html.gt-js [data-reveal] {
+  opacity: 0;
+  translate: 0 32px;
+  transition:
+    opacity 0.8s var(--gt-ease-out),
+    translate 1s var(--gt-ease-out),
+    scale 1s var(--gt-ease-out);
+  transition-delay: var(--gt-delay, 0s);
+}
+
+html.gt-js [data-reveal="fade"] { translate: none; }
+html.gt-js [data-reveal="left"] { translate: -44px 0; }
+html.gt-js [data-reveal="right"] { translate: 44px 0; }
+html[dir="rtl"].gt-js [data-reveal="left"] { translate: 44px 0; }
+html[dir="rtl"].gt-js [data-reveal="right"] { translate: -44px 0; }
+html.gt-js [data-reveal="scale"] { translate: none; scale: 0.94; }
+
+html.gt-js [data-reveal].is-in {
+  opacity: 1;
+  translate: none;
+  scale: none;
+}
+
+/* Photo blocks: the frame fades in while the photo settles from a slight zoom. */
+html.gt-js [data-reveal="image"] { translate: none; }
+html.gt-js [data-reveal="image"] img { scale: 1.14; transition: scale 1.6s var(--gt-ease-out); }
+html.gt-js [data-reveal="image"].is-in img { scale: 1; }
+
+/* Groups: children rise one after another. ScrollReveal sets --gt-i. */
+html.gt-js [data-reveal-group] > * {
+  opacity: 0;
+  translate: 0 28px;
+  transition:
+    opacity 0.7s var(--gt-ease-out),
+    translate 0.9s var(--gt-ease-out);
+  transition-delay: calc(min(var(--gt-i, 0), 8) * 0.085s);
+}
+
+html.gt-js [data-reveal-group].is-in > * { opacity: 1; translate: none; }
+
+/* Section eyebrows draw their accent line after the heading appears. */
+html.gt-js [data-reveal] .gt-eyebrow::before {
+  scale: 0 1;
+  transform-origin: left center;
+  transition: scale 0.8s var(--gt-ease-out) 0.25s;
+}
+
+html[dir="rtl"].gt-js [data-reveal] .gt-eyebrow::before { transform-origin: right center; }
+html.gt-js [data-reveal].is-in .gt-eyebrow::before { scale: 1 1; }
+
+/* ---------- Page entrance (first viewport, CSS only) ---------- */
+
+@keyframes gt-rise {
+  from { opacity: 0; translate: 0 26px; }
+  to { opacity: 1; translate: none; }
+}
+
+@keyframes gt-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes gt-settle {
+  from { scale: 1.1; }
+  to { scale: 1; }
+}
+
+@keyframes gt-drift {
+  from { translate: 0 0; }
+  to { translate: 0 14vh; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gt-hero-eyebrow,
+  .gt-hero .gt-display,
+  .gt-hero-lead,
+  .gt-search,
+  .gt-hero-assurances,
+  .gt-hero-card,
+  .page-hero-kicker,
+  .page-hero-title,
+  .page-hero-sub {
+    animation: gt-rise 0.9s var(--gt-ease-out) both;
+  }
+
+  .gt-hero .gt-display,
+  .page-hero-title { animation-delay: 0.08s; }
+  .gt-hero-lead,
+  .page-hero-sub { animation-delay: 0.18s; }
+  .gt-search { animation-delay: 0.28s; }
+  .gt-hero-assurances { animation-delay: 0.38s; }
+  .gt-hero-card { animation-delay: 0.48s; }
+
+  .gt-hero-img,
+  .page-hero-bg img { animation: gt-settle 2.6s var(--gt-ease-out) both; }
+
+  /* Subtle depth on scroll where the browser supports scroll timelines. */
+  @supports (animation-timeline: scroll()) {
+    .gt-hero-img,
+    .page-hero-bg img {
+      animation: gt-settle 2.6s var(--gt-ease-out) both, gt-drift linear both;
+      animation-timeline: auto, scroll(root);
+      animation-range: normal, 0 100vh;
+    }
+  }
+}
+
+/* ---------- Micro-interactions ---------- */
+
+.gt-btn svg.gt-flip-rtl { transition: translate 0.25s var(--gt-ease); }
+.gt-btn:hover svg.gt-flip-rtl { translate: 3px 0; }
+html[dir="rtl"] .gt-btn:hover svg.gt-flip-rtl { translate: -3px 0; }
+
+.gt-btn--gold:hover { box-shadow: 0 16px 30px -12px rgba(250, 180, 24, 0.85); }
+.gt-btn--wa:hover { box-shadow: 0 14px 28px -14px rgba(14, 124, 102, 0.9); }
+
+/* ---------- Reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html.gt-js [data-reveal],
+  html.gt-js [data-reveal-group] > * {
+    translate: none !important;
+    scale: none !important;
+    transition: opacity 0.6s ease !important;
+  }
+
+  html.gt-js [data-reveal-group] > * { transition-delay: calc(min(var(--gt-i, 0), 6) * 0.05s) !important; }
+  html.gt-js [data-reveal="image"] img { scale: none !important; transition: none !important; }
+  html.gt-js [data-reveal] .gt-eyebrow::before { scale: 1 1 !important; transition: none !important; }
+
+  .gt-hero-eyebrow,
+  .gt-hero .gt-display,
+  .gt-hero-lead,
+  .gt-search,
+  .gt-hero-assurances,
+  .gt-hero-card,
+  .page-hero-kicker,
+  .page-hero-title,
+  .page-hero-sub { animation: gt-fade-in 0.7s ease both; }
+
+  .gt-btn,
+  .gt-card,
+  .gt-card-media img,
+  .gt-link svg,
+  .gt-skip-link,
+  .gt-btn svg.gt-flip-rtl { transition: none; }
+  .gt-btn:hover,
+  .gt-card--interactive:hover { transform: none; }
+  .gt-card--interactive:hover .gt-card-media img,
+  .gt-link:hover svg,
+  .gt-btn:hover svg.gt-flip-rtl { transform: none; translate: none; }
+}
