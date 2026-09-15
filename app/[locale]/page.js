@@ -252,16 +252,18 @@ export default async function HomePage({ params }) {
         {/* 2. Bookable tours */}
         <section className="gt-section gt-section--paper" id="tours" aria-labelledby="tours-title">
           <div className="gt-container">
-            <div className="gt-section-head gt-section-head--split" data-reveal>
+            <div className="gt-section-head gt-section-head--duo" data-reveal>
               <div>
                 <p className="gt-eyebrow">{t("homepage.toursEyebrow")}</p>
                 <h2 id="tours-title" className="gt-h2">{t("homepage.toursTitle")}</h2>
-                <p className="gt-lead">{t("homepage.toursLead")}</p>
               </div>
-              <Link href={href("/tours")} className="gt-link">
-                {t("homepage.toursAll")}
-                <ArrowRightIcon size={16} />
-              </Link>
+              <div className="gt-section-head-aside">
+                <p className="gt-lead">{t("homepage.toursLead")}</p>
+                <Link href={href("/tours")} className="gt-link">
+                  {t("homepage.toursAll")}
+                  <ArrowRightIcon size={16} />
+                </Link>
+              </div>
             </div>
 
             {tours.length > 0 && (
@@ -295,29 +297,25 @@ export default async function HomePage({ params }) {
         {/* 3. Regions map */}
         <section className="gt-section gt-section--white" id="destinations" aria-labelledby="regions-title">
           <div className="gt-container">
-            <div className="gt-section-head" data-reveal>
-              <p className="gt-eyebrow">{t("homepage.destEyebrow")}</p>
-              <h2 id="regions-title" className="gt-h2">{t("homepage.destTitle")}</h2>
-              <p className="gt-lead">{t("homepage.destLead")}</p>
+            <div className="gt-section-head gt-section-head--duo" data-reveal>
+              <div>
+                <p className="gt-eyebrow">{t("homepage.destEyebrow")}</p>
+                <h2 id="regions-title" className="gt-h2">{t("homepage.destTitle")}</h2>
+              </div>
+              <div className="gt-section-head-aside">
+                <p className="gt-lead">{t("homepage.destLead")}</p>
+              </div>
             </div>
             <GeorgiaMap regions={mapRegions} />
           </div>
         </section>
 
         {/* 4. Local team */}
-        <section className="gt-section gt-section--paper" id="why" aria-labelledby="why-title">
+        <section className="gt-section gt-section--paper gt-why-section" id="why" aria-labelledby="why-title">
           <div className="gt-container gt-why">
             <div className="gt-why-media" data-reveal="image">
               <div className="gt-why-photo">
-                <Image src="/profile.png" alt={t("about.altText")} fill sizes="(max-width: 900px) 100vw, 40vw" />
-              </div>
-              <div className="gt-why-badge">
-                <span className="gt-icon-badge gt-icon-badge--sm"><LocationIcon size={18} /></span>
-                <div>
-                  <strong>{t("trust.t1Title")}</strong>
-                  <p>{t("footer.address")}</p>
-                  <a href={`tel:${PHONE_TEL}`} dir="ltr">{PHONE_DISPLAY}</a>
-                </div>
+                <Image src="/profile.png" alt={t("about.altText")} fill sizes="(max-width: 900px) 100vw, 50vw" />
               </div>
             </div>
 
@@ -346,16 +344,18 @@ export default async function HomePage({ params }) {
         {routePlaces.length >= 3 && (
           <section className="gt-section gt-section--white" aria-labelledby="places-title">
             <div className="gt-container">
-              <div className="gt-section-head gt-section-head--split" data-reveal>
+              <div className="gt-section-head gt-section-head--duo" data-reveal>
                 <div>
                   <p className="gt-eyebrow">{t("homepage.expEyebrow")}</p>
                   <h2 id="places-title" className="gt-h2">{t("homepage.expTitle")}</h2>
-                  <p className="gt-lead">{t("homepage.expLead")}</p>
                 </div>
-                <Link href={href("/places")} className="gt-link" prefetch={false}>
-                  {t("homepage.expAll")}
-                  <ArrowRightIcon size={16} />
-                </Link>
+                <div className="gt-section-head-aside">
+                  <p className="gt-lead">{t("homepage.expLead")}</p>
+                  <Link href={href("/places")} className="gt-link" prefetch={false}>
+                    {t("homepage.expAll")}
+                    <ArrowRightIcon size={16} />
+                  </Link>
+                </div>
               </div>
 
               <ul className={`gt-places gt-places--${routePlaces.length}`} data-reveal-group>
@@ -428,10 +428,14 @@ export default async function HomePage({ params }) {
         {/* 7. Transfers & fleet */}
         <section className="gt-section gt-section--paper" id="transfers" aria-labelledby="transfers-title">
           <div className="gt-container">
-            <div className="gt-section-head" data-reveal>
-              <p className="gt-eyebrow">{t("homepage.transfersEyebrow")}</p>
-              <h2 id="transfers-title" className="gt-h2">{t("homepage.transfersTitle")}</h2>
-              <p className="gt-lead">{t("homepage.transfersLead")}</p>
+            <div className="gt-section-head gt-section-head--duo" data-reveal>
+              <div>
+                <p className="gt-eyebrow">{t("homepage.transfersEyebrow")}</p>
+                <h2 id="transfers-title" className="gt-h2">{t("homepage.transfersTitle")}</h2>
+              </div>
+              <div className="gt-section-head-aside">
+                <p className="gt-lead">{t("homepage.transfersLead")}</p>
+              </div>
             </div>
 
             <div className="gt-fleet-block">

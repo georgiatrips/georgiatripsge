@@ -461,14 +461,37 @@ html.gt-js .gt-map-figure.is-in .gt-map-badge { opacity: 1; }
 
 /* ---------- Local team ---------- */
 
+/* The glow behind the photo reaches past the column; clip it sideways so it
+   never adds horizontal scroll. */
+.gt-why-section { overflow-x: clip; }
+
 .gt-why {
   display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.35fr);
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  align-items: start;
   gap: clamp(2rem, 5vw, 4.5rem);
 }
 
-.gt-why-media { position: relative; }
+.gt-why-media { position: relative; isolation: isolate; }
+
+/* The text column is taller than the portrait; the photo travels with the
+   reader instead of floating in empty space. */
+@media (min-width: 901px) {
+  .gt-why-media { position: sticky; inset-block-start: calc(var(--gt-header-h) + 1.5rem); }
+}
+
+/* Soft light behind the portrait: warm gold top-start, teal bottom-end. */
+.gt-why-media::before {
+  content: "";
+  position: absolute;
+  inset: 6% -7% -7% -7%;
+  z-index: -1;
+  border-radius: 40%;
+  background:
+    radial-gradient(60% 55% at 22% 18%, rgba(250, 180, 24, 0.55), transparent 70%),
+    radial-gradient(65% 60% at 82% 88%, rgba(41, 178, 183, 0.5), transparent 72%);
+  filter: blur(44px);
+}
 
 .gt-why-photo {
   position: relative;
@@ -476,28 +499,25 @@ html.gt-js .gt-map-figure.is-in .gt-map-badge { opacity: 1; }
   overflow: hidden;
   border-radius: var(--gt-radius-xl);
   background: var(--gt-stone);
-  box-shadow: var(--gt-shadow-lg);
+  box-shadow:
+    0 50px 90px -40px rgba(13, 35, 58, 0.55),
+    0 18px 36px -18px rgba(13, 35, 58, 0.35);
 }
 
 .gt-why-photo img { object-fit: cover; object-position: 50% 30%; }
 
-.gt-why-badge {
+/* Light falls from the top corner and fades into shadow at the bottom. */
+.gt-why-photo::after {
+  content: "";
   position: absolute;
-  inset-inline: 1rem;
-  inset-block-end: 1rem;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.85rem 1rem;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: var(--gt-shadow);
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, transparent 38%),
+    linear-gradient(to top, rgba(7, 23, 36, 0.32) 0%, transparent 45%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+  pointer-events: none;
 }
-
-.gt-why-badge strong { display: block; font-size: 0.95rem; }
-.gt-why-badge p { margin: 0.1rem 0; font-size: 0.88rem; color: var(--gt-muted); }
-.gt-why-badge a { font-weight: 800; color: var(--gt-blue-700); text-decoration: none; }
-.gt-why-badge a:hover { text-decoration: underline; }
 
 .gt-why-points {
   display: grid;
@@ -514,8 +534,7 @@ html.gt-js .gt-map-figure.is-in .gt-map-badge { opacity: 1; }
 
 @media (max-width: 900px) {
   .gt-why { grid-template-columns: minmax(0, 1fr); }
-  .gt-why-media { max-width: 30rem; }
-  .gt-why-photo { aspect-ratio: 1 / 1; }
+  .gt-why-media { width: 100%; max-width: 34rem; margin-inline: auto; }
 }
 
 @media (max-width: 560px) { .gt-why-points { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; } }
