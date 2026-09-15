@@ -10,90 +10,63 @@ const COOKIE_CONSENT_KEY = "gt_cookie_consent";
 const TEXTS = {
   ka: {
     title: "ჩვენ ვიყენებთ Cookie ფაილებს",
-    desc: "საიტის საუკეთესო გამოცდილების, ანალიტიკისა და პერსონალიზაციის უზრუნველსაყოფად ჩვენ ვიყენებთ cookies. გაგრძელებით თქვენ ეთანხმებით ჩვენს ",
-    privacy: "კონფიდენციალობის პოლიტიკას",
+    desc: "საიტის საუკეთესო გამოცდილების, ანალიტიკისა და პერსონალიზაციის უზრუნველსაყოფად ჩვენ ვიყენებთ cookies. დეტალები: ",
+    privacy: "კონფიდენციალობის პოლიტიკა",
     accept: "ყველას მიღება",
     decline: "უარყოფა",
   },
   en: {
     title: "We use cookies",
-    desc: "To provide the best user experience, analytics, and personalization, we use cookies. By continuing, you agree to our ",
+    desc: "We use cookies for analytics and to improve your experience. Details: ",
     privacy: "Privacy Policy",
     accept: "Accept All",
     decline: "Decline",
   },
   ru: {
     title: "Мы используем файлы cookie",
-    desc: "Для обеспечения наилучшего опыта, аналитики и персонализации мы используем cookie. Продолжая, вы соглашаетесь с нашей ",
-    privacy: "Политикой конфиденциальности",
+    desc: "Мы используем cookie для аналитики и улучшения работы сайта. Подробнее: ",
+    privacy: "Политика конфиденциальности",
     accept: "Принять все",
     decline: "Отклонить",
   },
   tr: {
     title: "Çerezleri kullanıyoruz",
-    desc: "En iyi kullanıcı deneyimini, analitiği ve kişiselleştirmeyi sağlamak için çerezler kullanıyoruz. Devam ederek ",
-    privacy: "Gizlilik Politikamızı",
+    desc: "Analiz ve deneyiminizi iyileştirmek için çerezler kullanıyoruz. Ayrıntılar: ",
+    privacy: "Gizlilik Politikası",
     accept: "Tümünü Kabul Et",
     decline: "Reddet",
   },
   ar: {
     title: "نحن نستخدم ملفات تعريف الارتباط (Cookies)",
-    desc: "لضمان أفضل تجربة استخدام وتحليلات مخصصة، نستخدم ملفات تعريف الارتباط. بمتابعة التصفح فإنك توافق على ",
+    desc: "نستخدم ملفات تعريف الارتباط للتحليلات ولتحسين تجربتك. التفاصيل: ",
     privacy: "سياسة الخصوصية",
     accept: "قبول الكل",
     decline: "رفض",
   },
 };
 
+// Consent is only ever recorded from an explicit click. The previous mobile
+// behaviour auto-accepted after 10 seconds, which is not consent.
 export default function CookieConsent() {
   const { lang } = useLanguage();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     try {
-      const consent = localStorage.getItem(COOKIE_CONSENT_KEY);
-      if (!consent) {
-        // Small delay for smooth entry
+      if (!localStorage.getItem(COOKIE_CONSENT_KEY)) {
         const timer = setTimeout(() => setVisible(true), 800);
         return () => clearTimeout(timer);
       }
     } catch (_) {}
+    return undefined;
   }, []);
 
-  // On Mobile: Auto-dismiss cookie banner strictly after 10 seconds
-  useEffect(() => {
-    if (!visible) return;
-
-    const isMobile = typeof window !== "undefined" && window.innerWidth <= 768;
-    if (isMobile) {
-      const autoDismissTimer = setTimeout(() => {
-        handleAccept();
-      }, 10000); // 10 seconds auto-dismiss on mobile
-
-      return () => clearTimeout(autoDismissTimer);
-    }
-  }, [visible]);
-
-  const notifyDismissed = () => {
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("gt_cookie_dismissed"));
-    }
-  };
-
-  const handleAccept = () => {
+  const decide = (value) => {
     try {
-      localStorage.setItem(COOKIE_CONSENT_KEY, "accepted");
+      localStorage.setItem(COOKIE_CONSENT_KEY, value);
     } catch (_) {}
     setVisible(false);
-    notifyDismissed();
-  };
-
-  const handleDecline = () => {
-    try {
-      localStorage.setItem(COOKIE_CONSENT_KEY, "declined");
-    } catch (_) {}
-    setVisible(false);
-    notifyDismissed();
+    window.dispatchEvent(new CustomEvent("gt_cookie_dismissed"));
   };
 
   if (!visible) return null;
@@ -102,10 +75,10 @@ export default function CookieConsent() {
 
   return (
     <aside
-      aria-label="Cookie Consent"
+      aria-label={t.title}
       style={{
         position: "fixed",
-        bottom: "1rem",
+        bottom: "calc(1rem + var(--gt-mobile-bar-offset, 0px))",
         left: "1rem",
         right: "1rem",
         maxWidth: "440px",
@@ -115,33 +88,32 @@ export default function CookieConsent() {
         backdropFilter: "blur(14px)",
         WebkitBackdropFilter: "blur(14px)",
         color: "#ffffff",
-        padding: "1.1rem 1.35rem",
-        borderRadius: "16px",
+        padding: "1rem 1.2rem",
+        borderRadius: "14px",
         boxShadow: "0 20px 45px rgba(0, 0, 0, 0.35)",
-        border: "1px solid rgba(255, 255, 255, 0.15)",
-        animation: "fadeUp 0.35s ease forwards",
+        border: "1px solid rgba(255, 255, 255, 0.14)",
+        animation: "gt-fade-up 0.35s ease both",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.4rem" }}>
-        <span style={{ fontSize: "1.2rem" }}>🍪</span>
-        <strong style={{ fontSize: "0.95rem", fontWeight: 700 }}>{t.title}</strong>
-      </div>
-      <p style={{ fontSize: "0.82rem", color: "rgba(255, 255, 255, 0.88)", lineHeight: 1.45, margin: "0 0 0.85rem 0" }}>
+      <strong style={{ display: "block", fontSize: "0.95rem", fontWeight: 700, marginBottom: "0.35rem" }}>{t.title}</strong>
+      <p style={{ fontSize: "0.84rem", color: "rgba(255, 255, 255, 0.88)", lineHeight: 1.5, margin: "0 0 0.85rem 0" }}>
         {t.desc}
-        <Link href={getLocalizedHref("/privacy-policy", lang)} style={{ color: "#5eead4", textDecoration: "underline" }}>
+        <Link href={getLocalizedHref("/privacy-policy", lang)} style={{ color: "#f5c85a", textDecoration: "underline" }}>
           {t.privacy}
-        </Link>.
+        </Link>
       </p>
-      <div style={{ display: "flex", gap: "0.65rem", justifyContent: "flex-end" }}>
+      <div style={{ display: "flex", gap: "0.6rem", justifyContent: "flex-end" }}>
         <button
-          onClick={handleDecline}
+          type="button"
+          onClick={() => decide("declined")}
           style={{
             background: "transparent",
             color: "#ffffff",
-            border: "1px solid rgba(255, 255, 255, 0.35)",
-            padding: "0.45rem 0.9rem",
-            borderRadius: "8px",
-            fontSize: "0.82rem",
+            border: "1px solid rgba(255, 255, 255, 0.4)",
+            minHeight: "44px",
+            padding: "0 1rem",
+            borderRadius: "9px",
+            fontSize: "0.86rem",
             fontWeight: 600,
             cursor: "pointer",
           }}
@@ -149,17 +121,18 @@ export default function CookieConsent() {
           {t.decline}
         </button>
         <button
-          onClick={handleAccept}
+          type="button"
+          onClick={() => decide("accepted")}
           style={{
-            background: "#0d9488",
-            color: "#ffffff",
+            background: "#fab418",
+            color: "#0d233a",
             border: "none",
-            padding: "0.45rem 1.15rem",
-            borderRadius: "8px",
-            fontSize: "0.82rem",
+            minHeight: "44px",
+            padding: "0 1.2rem",
+            borderRadius: "9px",
+            fontSize: "0.86rem",
             fontWeight: 700,
             cursor: "pointer",
-            boxShadow: "0 4px 12px rgba(13, 148, 136, 0.4)",
           }}
         >
           {t.accept}

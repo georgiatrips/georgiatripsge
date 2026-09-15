@@ -3,180 +3,114 @@
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../lib/AuthContext";
-import { useLanguage } from "../lib/i18n/LanguageContext";
 import { useCoupon } from "../lib/CouponContext";
 import { getCouponSettings, isIpClaimed, recordClaimedIp } from "../lib/couponSettings";
 import CouponTicket from "./CouponTicket";
 
-const COUNTDOWN_DURATION_MS = 30 * 60 * 1000; // 30 minutes in ms
-
+// Welcome coupon for visitors who are not signed in.
+//
+// The previous version showed a 30-minute countdown that silently restarted
+// whenever it reached zero — a fake deadline. The offer itself is real (10%
+// WELCOME10), so it stays, but without invented urgency. It also no longer
+// appears on tour pages, where it covered the booking form mid-decision.
 export default function WelcomeCouponPopup() {
   const { user } = useAuth() ?? {};
-  const { t } = useLanguage();
   const { claimWelcomeCoupon } = useCoupon();
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() || "";
 
   const [isOpen, setIsOpen] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(COUNTDOWN_DURATION_MS);
-  const [mounted, setMounted] = useState(false);
   const [clientIp, setClientIp] = useState("");
 
   useEffect(() => {
-    setMounted(true);
-
-    // If user is already logged in or on login/admin page, do not show
-    if (user || pathname?.startsWith("/admin") || pathname?.startsWith("/login")) {
-      return;
+    const suppressed =
+      user ||
+      pathname.startsWith("/admin") ||
+      pathname.startsWith("/login") ||
+      pathname.startsWith("/booking") ||
+      /^\/[a-z]{2}\/tours\/[^/]+/.test(pathname);
+    if (suppressed) {
+      setIsOpen(false);
+      return undefined;
     }
 
-    // Check if dismissed in this browser session
     try {
-      const dismissed = sessionStorage.getItem("gt_welcome_popup_dismissed");
-      if (dismissed === "true") return;
+      if (sessionStorage.getItem("gt_welcome_popup_dismissed") === "true") return undefined;
+      localStorage.removeItem("gt_urgency_timer_start");
     } catch (_) {}
 
-    let isCancelled = false;
+    let cancelled = false;
+    let timer = 0;
 
-    async function setupWelcomePopup() {
+    const show = (delayMs) => {
+      timer = window.setTimeout(() => {
+        if (!cancelled) setIsOpen(true);
+      }, delayMs);
+    };
+
+    (async () => {
       try {
-        // 1. Fetch current IP (check session cache first to avoid extra network requests)
         let ip = "";
         try {
-          const cachedGeo = sessionStorage.getItem("gt_geo_cache");
-          if (cachedGeo) {
-            const parsed = JSON.parse(cachedGeo);
-            ip = parsed.ip || "";
-          }
+          const cached = sessionStorage.getItem("gt_geo_cache");
+          if (cached) ip = JSON.parse(cached).ip || "";
           if (!ip) {
             const res = await fetch("/api/analytics/track");
             if (res.ok) {
               const data = await res.json();
               ip = data.ip || "";
-              try {
-                sessionStorage.setItem("gt_geo_cache", JSON.stringify(data));
-              } catch (_) {}
+              sessionStorage.setItem("gt_geo_cache", JSON.stringify(data));
             }
-          }
-          if (ip && !isCancelled) {
-            setClientIp(ip);
           }
         } catch (_) {}
+        if (cancelled) return;
+        if (ip) setClientIp(ip);
 
-        if (isCancelled) return;
-
-        // 2. Fetch admin coupon settings
         const settings = await getCouponSettings();
+        if (settings.limitOnePerIp && ip && (await isIpClaimed(ip))) return;
+        if (cancelled) return;
 
-        // 3. If 1-IP limit is enabled in admin panel, verify if this IP already claimed
-        if (settings.limitOnePerIp && ip) {
-          const alreadyClaimed = await isIpClaimed(ip);
-          if (alreadyClaimed) {
-            return;
-          }
-        }
-
-        // 4. Initialize 30-min timer
-        let startTime = null;
-        try {
-          const savedStart = localStorage.getItem("gt_urgency_timer_start");
-          if (savedStart) {
-            startTime = parseInt(savedStart, 10);
-          } else {
-            startTime = Date.now();
-            localStorage.setItem("gt_urgency_timer_start", String(startTime));
-          }
-        } catch (_) {
-          startTime = Date.now();
-        }
-
-        const elapsed = Date.now() - startTime;
-        const remaining = Math.max(0, COUNTDOWN_DURATION_MS - (elapsed % COUNTDOWN_DURATION_MS));
-        if (!isCancelled) setTimeLeft(remaining);
-
-        // 5. Trigger logic based on Cookie Consent
-        const isMobile = typeof window !== "undefined" && window.innerWidth <= 768;
-        const hasCookieConsent = typeof localStorage !== "undefined" && localStorage.getItem("gt_cookie_consent");
-
-        const triggerCoupon = (delayMs = 1200) => {
-          setTimeout(() => {
-            if (!isCancelled && !user) {
-              setIsOpen(true);
-            }
-          }, delayMs);
-        };
-
-        if (isMobile) {
-          if (hasCookieConsent) {
-            // Cookie already dismissed previously -> Show coupon after 2s
-            triggerCoupon(2000);
-          } else {
-            // Listen for cookie banner dismissal event (either user clicked or 10s auto-dismiss occurred)
-            const handleCookieDismissed = () => {
-              triggerCoupon(1200);
-              window.removeEventListener("gt_cookie_dismissed", handleCookieDismissed);
-            };
-            window.addEventListener("gt_cookie_dismissed", handleCookieDismissed);
-          }
+        const isMobile = window.innerWidth <= 768;
+        const consentGiven = Boolean(localStorage.getItem("gt_cookie_consent"));
+        if (!isMobile) {
+          show(20000);
+        } else if (consentGiven) {
+          show(8000);
         } else {
-          // Desktop: standard 10s trigger
-          triggerCoupon(10000);
+          const onConsent = () => {
+            window.removeEventListener("gt_cookie_dismissed", onConsent);
+            show(4000);
+          };
+          window.addEventListener("gt_cookie_dismissed", onConsent);
         }
       } catch (err) {
         console.warn("Coupon popup error:", err);
       }
-    }
-
-    setupWelcomePopup();
+    })();
 
     return () => {
-      isCancelled = true;
+      cancelled = true;
+      window.clearTimeout(timer);
     };
   }, [user, pathname]);
 
-  // Countdown interval while popup is open
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1000) {
-          try {
-            localStorage.setItem("gt_urgency_timer_start", String(Date.now()));
-          } catch (_) {}
-          return COUNTDOWN_DURATION_MS;
-        }
-        return prev - 1000;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isOpen]);
-
-  const handleClose = (e) => {
-    e?.stopPropagation?.();
+  const handleClose = (event) => {
+    event?.stopPropagation?.();
     setIsOpen(false);
     try {
       sessionStorage.setItem("gt_welcome_popup_dismissed", "true");
     } catch (_) {}
   };
 
-  const handleClaim = (e) => {
-    e?.stopPropagation?.();
+  const handleClaim = (event) => {
+    event?.stopPropagation?.();
     claimWelcomeCoupon();
     handleClose();
-    if (clientIp) {
-      recordClaimedIp(clientIp, "");
-    }
+    if (clientIp) recordClaimedIp(clientIp, "");
     router.push("/login?tab=signup");
   };
 
-  if (!mounted || !isOpen || user) return null;
-
-  const minutes = Math.floor((timeLeft / 1000 / 60) % 60);
-  const seconds = Math.floor((timeLeft / 1000) % 60);
-  const formattedMinutes = String(minutes).padStart(2, "0");
-  const formattedSeconds = String(seconds).padStart(2, "0");
+  if (!isOpen || user) return null;
 
   return (
     <div className="gt-floating-coupon-widget" aria-live="polite">
@@ -184,10 +118,9 @@ export default function WelcomeCouponPopup() {
         code="WELCOME10"
         discountPercent={10}
         isUsed={false}
-        compact={true}
-        showCopy={true}
-        showUseBtn={true}
-        timeLeftText={`${formattedMinutes}:${formattedSeconds}`}
+        compact
+        showCopy
+        showUseBtn
         onClose={handleClose}
         onUse={handleClaim}
       />
