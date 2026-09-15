@@ -629,7 +629,11 @@ export const ru = {
     "trustPay": "Оплата в день тура — без предоплаты",
     "trustConfirm": "Подтверждение в WhatsApp или по телефону",
     "trustPickup": "Выезд от вашего отеля",
-    "bookingFallbackWa": "Здравствуйте! Хочу забронировать тур «{title}» — {date}, человек: {people}."
+    "bookingFallbackWa": "Здравствуйте! Хочу забронировать тур «{title}» — {date}, человек: {people}.",
+    "showAllPhotos": "Все фото ({count})",
+    "showFewerPhotos": "Свернуть фото",
+    "morePhotos": "+{count} фото",
+    "openGallery": "Открыть фото"
   },
   "postsPage": {
     "heroKicker": "Следите за нашим путешествием",

@@ -20,8 +20,9 @@ export default function TourMobileBookingBar({ price, label, waUrl, bookLabel, o
     if (typeof IntersectionObserver === "undefined") return undefined;
     const observers = [];
 
-    // TourDetailHero renders .tdp-hero2 (.tdp-hero is the older markup).
-    const hero = document.querySelector(".tdp-hero2, .tdp-hero");
+    // TourDetailHero renders .tdp-hero3 (title, photos and facts); the other
+    // classes are older markups.
+    const hero = document.querySelector(".tdp-hero3, .tdp-hero2, .tdp-hero");
     if (hero) {
       // Root = lower half of the screen: the hero counts as gone once its
       // bottom edge has moved above the middle.

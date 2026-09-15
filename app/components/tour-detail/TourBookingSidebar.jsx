@@ -366,6 +366,32 @@ export default function TourBookingSidebar({
           </div>
         </div>
       </div>
+
+      {/* Desktop only (tour-hero.css): follows the reader once the form has scrolled away. */}
+      <div className="tdp-book-summary">
+        <p className="tdp-book-summary-title">{tourTitle}</p>
+        {(tour.priceGroup || tour.pricePrivate) && (
+          <div className="tdp-book-summary-price">
+            <small>{tourType === "private" ? t("tourCard.privateLabel") : t("tourCard.perPersonGroup")}</small>
+            <TourPrice
+              price={tourType === "private" ? tour.pricePrivate || tour.priceGroup : tour.priceGroup || tour.pricePrivate}
+              lang={lang}
+              variant="bar"
+              compact
+            />
+          </div>
+        )}
+        <a href="#tour-booking-form" className="gt-btn gt-btn--gold gt-btn--block">{t("tourDetail.bookNow")}</a>
+        <a
+          href={whatsappHref(interpolate(t("tourCard.waMessage"), { title: tourTitle }))}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="gt-btn gt-btn--outline gt-btn--block"
+        >
+          <WhatsAppIcon size={18} />
+          WhatsApp
+        </a>
+      </div>
     </aside>
   );
 }

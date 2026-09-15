@@ -27,7 +27,12 @@ export default function GeorgiaMap({ regions = [] }) {
   const [hover, setHover] = useState(null);
   const [pinFocus, setPinFocus] = useState(null);
 
-  const shown = byCode[hover || active];
+  // The panel follows the selected region only. Hover just highlights a region
+  // and shows a label on the map: when hover also swapped the panel, panels of
+  // different heights moved the map under the pointer, which picked another
+  // region, which swapped the panel again (the flicker over the tour badges).
+  const shown = byCode[active];
+  const hovered = hover ? byCode[hover] : null;
 
   const locations = useMemo(
     () =>
@@ -107,6 +112,22 @@ export default function GeorgiaMap({ regions = [] }) {
                 );
               })}
           </g>
+
+          {hovered && REGION_CENTERS[hovered.code]?.[0] != null && (() => {
+            const label = hovered.tourCount > 0
+              ? `${hovered.name} · ${interpolate(t("homepage.regionTours"), { count: hovered.tourCount })}`
+              : hovered.name;
+            const width = label.length * 8 + 28;
+            const [rawX, cy] = REGION_CENTERS[hovered.code];
+            const cx = Math.min(Math.max(rawX, width / 2), 800 - width / 2);
+            const y = cy - (hovered.tourCount > 0 ? 20 : 4);
+            return (
+              <g className="gt-map-tip" transform={`translate(${cx} ${y})`} aria-hidden="true">
+                <rect x={-width / 2} y={-32} width={width} height={26} rx={13} />
+                <text y={-19}>{label}</text>
+              </g>
+            );
+          })()}
 
           <g className="gt-map-pins">
             {locations.map((loc) => {

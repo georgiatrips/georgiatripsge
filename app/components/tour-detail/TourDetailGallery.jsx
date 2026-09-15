@@ -1,21 +1,27 @@
 "use client";
 
-import React from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
+import { interpolate } from "../../lib/i18n/translate";
 import { asLocalizedText } from "../../lib/toursFirestore";
 
-export default function TourDetailGallery({
-  tour,
-  resolvePhotoPlaceTitle,
-  openLightbox,
-}) {
-  const { t, lang } = useLanguage();
+// Long galleries (some tours have 20+ photos) start with six photos, which fill
+// whole rows at two and three columns, and open fully on request.
+const INITIAL_PHOTOS = 6;
 
-  if (!tour.gallery || tour.gallery.length === 0) return null;
+export default function TourDetailGallery({ tour, resolvePhotoPlaceTitle, openLightbox }) {
+  const { t, lang } = useLanguage();
+  const [expanded, setExpanded] = useState(false);
+
+  const photos = Array.isArray(tour.gallery) ? tour.gallery : [];
+  if (!photos.length) return null;
+
+  const title = asLocalizedText(tour.title, lang);
+  const visible = expanded ? photos : photos.slice(0, INITIAL_PHOTOS);
 
   return (
-    <article className="tdp-card-block">
+    <article className="tdp-card-block" id="tour-gallery">
       <div className="tdp-card-header">
         <div>
           <h2>{t("tourDetail.galleryTitle")}</h2>
@@ -25,51 +31,34 @@ export default function TourDetailGallery({
 
       <div className="tdp-card-body">
         <div className="tdp-gallery-grid">
-          {tour.gallery.map((gImg, idx) => {
-            const locTitle = resolvePhotoPlaceTitle(gImg, idx);
+          {visible.map((src, idx) => {
+            const place = resolvePhotoPlaceTitle(src, idx);
             return (
-              <div
-                key={idx}
+              <button
+                key={`${src}-${idx}`}
+                type="button"
                 className="tdp-gallery-item"
-                onClick={() => openLightbox(idx)}
                 style={{ position: "relative" }}
+                onClick={() => openLightbox(idx)}
+                aria-label={`${place || `${title} ${idx + 1}`} — ${t("tourDetail.enlarge")}`}
               >
-                <Image
-                  src={gImg}
-                  alt={`${asLocalizedText(tour.title, lang)} ${idx + 1}`}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 33vw"
-                  style={{ objectFit: "cover" }}
-                />
-                {locTitle && (
-                  <div style={{ position: "absolute", top: "10px", left: "10px", zIndex: 2, pointerEvents: "none", maxWidth: "calc(100% - 20px)" }}>
-                    <span style={{ 
-                      background: "rgba(13, 35, 58, 0.8)", 
-                      backdropFilter: "blur(6px)", 
-                      color: "#ffffff", 
-                      fontSize: "0.78rem", 
-                      fontWeight: 700, 
-                      padding: "4px 10px", 
-                      borderRadius: "6px",
-                      border: "1px solid rgba(255,255,255,0.2)",
-                      display: "inline-block",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      maxWidth: "100%",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.3)"
-                    }}>
-                      📍 {locTitle}
-                    </span>
-                  </div>
-                )}
-                <div className="gallery-zoom-badge">
-                  <span>{t("tourDetail.enlarge")}</span>
-                </div>
-              </div>
+                <Image src={src} alt={place || `${title} ${idx + 1}`} fill sizes="(max-width: 768px) 50vw, 300px" style={{ objectFit: "cover" }} />
+                {place && <span className="tdp-gallery-place">{place}</span>}
+              </button>
             );
           })}
         </div>
+
+        {photos.length > INITIAL_PHOTOS && (
+          <button
+            type="button"
+            className="gt-btn gt-btn--outline tdp-gallery-toggle"
+            aria-expanded={expanded}
+            onClick={() => setExpanded((value) => !value)}
+          >
+            {expanded ? t("tourDetail.showFewerPhotos") : interpolate(t("tourDetail.showAllPhotos"), { count: photos.length })}
+          </button>
+        )}
       </div>
     </article>
   );

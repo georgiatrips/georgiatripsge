@@ -546,7 +546,11 @@ export const en = {
     "trustPay": "Pay on the day — no prepayment",
     "trustConfirm": "Confirmation by WhatsApp or phone",
     "trustPickup": "Hotel pickup",
-    "bookingFallbackWa": "Hello! I'd like to book “{title}” — {date}, {people} people."
+    "bookingFallbackWa": "Hello! I'd like to book “{title}” — {date}, {people} people.",
+    "showAllPhotos": "Show all {count} photos",
+    "showFewerPhotos": "Show fewer photos",
+    "morePhotos": "+{count} photos",
+    "openGallery": "Open photo"
   },
   "postsPage": {
     "heroKicker": "Follow Our Journey",

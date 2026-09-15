@@ -629,7 +629,11 @@ export const tr = {
     "trustPay": "Tur günü ödeme — ön ödeme yok",
     "trustConfirm": "WhatsApp veya telefonla onay",
     "trustPickup": "Otelden alınış",
-    "bookingFallbackWa": "Merhaba! “{title}” turunu rezerve etmek istiyorum — {date}, {people} kişi."
+    "bookingFallbackWa": "Merhaba! “{title}” turunu rezerve etmek istiyorum — {date}, {people} kişi.",
+    "showAllPhotos": "Tüm fotoğraflar ({count})",
+    "showFewerPhotos": "Daha az fotoğraf",
+    "morePhotos": "+{count} fotoğraf",
+    "openGallery": "Fotoğrafı aç"
   },
   "postsPage": {
     "heroKicker": "Yolculuğumuzu Takip Edin",

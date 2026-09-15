@@ -203,7 +203,7 @@ export default function Navbar({ active = "home", overlay }) {
               </span>
             </a>
 
-            <div className="gt-has-menu" ref={languageRef}>
+            <div className="gt-has-menu gt-lang-menu" ref={languageRef}>
               <button
                 type="button"
                 className="gt-pill-btn"
@@ -266,18 +266,20 @@ export default function Navbar({ active = "home", overlay }) {
               )}
             </div>
 
-            <div className="gt-has-menu gt-desktop-only" ref={accountRef}>
+            {/* Login with its label, or the signed-in visitor's name (all screen sizes). */}
+            <div className="gt-has-menu" ref={accountRef}>
               {showUser ? (
                 <>
                   <button
                     type="button"
-                    className="gt-icon-btn"
+                    className="gt-account-btn"
                     aria-expanded={openMenu === "account"}
                     aria-controls={menuIds.account}
                     aria-label={`${t("site.account")}: ${displayName}`}
                     onClick={() => toggle("account")}
                   >
-                    <UserIcon size={20} />
+                    <UserIcon size={18} />
+                    <span className="gt-account-label">{displayName}</span>
                   </button>
                   {openMenu === "account" && (
                     <ul className="gt-menu gt-menu--end" id={menuIds.account}>
@@ -298,20 +300,12 @@ export default function Navbar({ active = "home", overlay }) {
                   )}
                 </>
               ) : (
-                <Link href="/login" className="gt-icon-btn" aria-label={t("nav.loginRegister")} prefetch={false}>
-                  <UserIcon size={20} />
+                <Link href="/login" className="gt-account-btn" prefetch={false}>
+                  <UserIcon size={18} />
+                  <span className="gt-account-label">{t("nav.login")}</span>
                 </Link>
               )}
             </div>
-
-            <a href={generalWa} target="_blank" rel="noopener noreferrer" className="gt-icon-btn gt-mobile-only" aria-label={t("site.chatWhatsapp")}>
-              <WhatsAppIcon size={22} />
-            </a>
-
-            <a href={generalWa} target="_blank" rel="noopener noreferrer" className="gt-btn gt-btn--wa gt-btn--sm gt-header-cta">
-              <WhatsAppIcon size={17} />
-              WhatsApp
-            </a>
 
             <button
               ref={drawerTriggerRef}

@@ -508,6 +508,7 @@ export default function TourDetailClient({
         configuredPeopleMin={configuredPeopleMin}
         groupMaxCap={groupMaxCap}
         scrollToBooking={scrollToBooking}
+        openLightbox={openLightbox}
       />
 
       {/* 2. Main Content Grid */}

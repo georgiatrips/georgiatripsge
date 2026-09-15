@@ -253,7 +253,34 @@
 .gt-pill-btn:focus-visible,
 .gt-icon-btn:focus-visible { outline: 3px solid var(--gt-teal); outline-offset: -3px; }
 
-.gt-header-cta { margin-inline-start: 0.4rem; }
+/* Login / account: icon plus "შესვლა", or the signed-in visitor's name. */
+.gt-account-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 40px;
+  max-width: 12rem;
+  margin-inline-start: 0.35rem;
+  padding: 0 0.85rem;
+  border: 1.5px solid var(--gt-line-strong);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--gt-navy-900);
+  font-family: var(--gt-font-body);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.18s var(--gt-ease), background-color 0.18s var(--gt-ease);
+}
+
+.gt-account-btn svg { flex: none; color: var(--gt-teal-700); }
+.gt-account-label { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.gt-account-btn:hover { border-color: var(--gt-navy-900); }
+.gt-account-btn:focus-visible { outline: 3px solid var(--gt-teal); outline-offset: 2px; }
+.gt-header.is-transparent .gt-account-btn { border-color: rgba(255, 255, 255, 0.55); background: rgba(255, 255, 255, 0.12); color: #fff; }
+.gt-header.is-transparent .gt-account-btn svg { color: var(--gt-gold); }
+.gt-header.is-transparent .gt-account-btn:hover { border-color: #fff; background: rgba(255, 255, 255, 0.22); }
 .gt-menu-toggle { display: none; }
 .gt-mobile-only { display: none; }
 
@@ -266,11 +293,22 @@
 @media (max-width: 767px) {
   :root { --gt-header-h: 64px; }
   .gt-mobile-only { display: inline-flex; }
-  .gt-header-cta,
   .gt-header-phone { display: none; }
   .gt-brand-word { font-size: 1.08rem; }
   .gt-brand-tag { display: none; }
   .gt-brand img { inline-size: 36px; block-size: 36px; }
+  .gt-account-btn { min-height: 38px; max-width: 8.5rem; margin-inline-start: 0.1rem; padding: 0 0.7rem; font-size: 0.82rem; }
+}
+
+/* Small phones: the language switch stays in the menu drawer, so the header
+   keeps room for the logo, login and the menu button. */
+@media (max-width: 480px) {
+  .gt-lang-menu { display: none; }
+}
+
+@media (max-width: 359px) {
+  .gt-brand-word { font-size: 0.95rem; }
+  .gt-account-btn { max-width: 6.5rem; padding: 0 0.55rem; }
 }
 
 /* ---------- Drawer ---------- */

@@ -629,7 +629,11 @@ export const ar = {
     "trustPay": "الدفع يوم الجولة — بدون دفع مسبق",
     "trustConfirm": "التأكيد عبر واتساب أو الهاتف",
     "trustPickup": "الاصطحاب من الفندق",
-    "bookingFallbackWa": "مرحباً! أود حجز جولة «{title}» — {date}، عدد الأشخاص: {people}."
+    "bookingFallbackWa": "مرحباً! أود حجز جولة «{title}» — {date}، عدد الأشخاص: {people}.",
+    "showAllPhotos": "عرض كل الصور ({count})",
+    "showFewerPhotos": "عرض صور أقل",
+    "morePhotos": "+{count} صور",
+    "openGallery": "فتح الصورة"
   },
   "postsPage": {
     "heroKicker": "تابع رحلتنا",

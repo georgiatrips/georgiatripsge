@@ -325,7 +325,7 @@ html[dir="rtl"] .gt-hero-scrim {
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   margin: 0;
   padding: clamp(0.75rem, 2.2vw, 1.75rem) clamp(0.75rem, 2.2vw, 1.75rem) 1rem;
   border: 1px solid var(--gt-line);
@@ -365,6 +365,11 @@ html.gt-js .gt-map-figure .gt-map-region { opacity: 0; translate: 0 10px; }
 html.gt-js .gt-map-figure.is-in .gt-map-region { opacity: 1; translate: none; }
 
 .gt-map-badge { pointer-events: none; }
+
+/* Hover label. It never takes the pointer, so it cannot start a hover loop. */
+.gt-map-tip { pointer-events: none; }
+.gt-map-tip rect { fill: var(--gt-navy-900); filter: drop-shadow(0 6px 12px rgba(13, 35, 58, 0.3)); }
+.gt-map-tip text { fill: #fff; font: 700 12px var(--gt-font-body); text-anchor: middle; dominant-baseline: central; }
 .gt-map-badge circle { fill: var(--gt-gold); stroke: #fff; stroke-width: 2.5; filter: drop-shadow(0 3px 6px rgba(13, 35, 58, 0.3)); }
 .gt-map-badge text { fill: var(--gt-navy-900); font: 800 13px var(--gt-font-body); text-anchor: middle; dominant-baseline: central; }
 html.gt-js .gt-map-figure .gt-map-badge { opacity: 0; transition: opacity 0.5s ease 0.8s; }
@@ -458,6 +463,12 @@ html[dir="rtl"] .gt-map-tour > svg { scale: -1 1; }
 .gt-map-locations a:hover { border-color: var(--gt-gold); }
 
 .gt-map-panel .gt-btn { margin-block-start: auto; }
+
+/* Desktop: one fixed panel height for every region, so choosing a region
+   never changes the row height or moves the map and the chips below it. */
+@media (min-width: 981px) {
+  .gt-map-panel { min-height: 34rem; }
+}
 
 /* A region with no tours and no photographed places yet: how a private trip
    there works, in three short steps, above the WhatsApp button. */

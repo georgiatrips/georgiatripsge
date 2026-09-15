@@ -1,62 +1,97 @@
 "use client";
 
-import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
+import { interpolate } from "../../lib/i18n/translate";
 import { asLocalizedText, translateDuration, translateLocation } from "../../lib/toursFirestore";
 import { getLocalizedHref } from "../../lib/siteConfig";
 import TourPrice from "../TourPrice";
+import "../../styles/tour-hero.css";
 
+const KICKERS = {
+  ka: ["ერთდღიანი ექსკურსია", "მრავალდღიანი ექსკურსია"],
+  en: ["One-day excursion", "Multi-day excursion"],
+  ru: ["Однодневная экскурсия", "Многодневная экскурсия"],
+  tr: ["Günübirlik tur", "Çok günlük tur"],
+  ar: ["رحلة يومية", "رحلة متعددة الأيام"],
+};
+
+// Tour page header: breadcrumbs and title, then a mosaic of the tour's own
+// photos, then the key facts. The uploaded photos are about 1000px wide, so
+// they are shown near that size (one large, up to four small) instead of being
+// stretched across the whole screen, where they looked soft. Each photo opens
+// the lightbox. The header above stays solid because the page no longer starts
+// with a dark full-bleed image.
 export default function TourDetailHero({
   tour,
   isFirestoreTour,
   configuredPeopleMin,
   groupMaxCap,
   scrollToBooking,
+  openLightbox,
 }) {
   const { t, lang } = useLanguage();
+  const title = asLocalizedText(tour.title, lang);
+  const isMultiday = tour.type === "multiday" || (typeof tour.tourSectionLabel === "string" && tour.tourSectionLabel.includes("მრავალდღიანი"));
+  const kicker = (KICKERS[lang] || KICKERS.ka)[isMultiday ? 1 : 0];
+  // Only a badge the tour really has; no default "popular" label.
+  const badgeText = asLocalizedText(tour.badge, lang);
+  const badge = badgeText ? (t("tourBadges") || {})[badgeText] || badgeText : "";
+
+  const gallery = Array.isArray(tour.gallery) ? tour.gallery.filter(Boolean) : [];
+  const cover = tour.img || gallery[0] || "/hero.webp";
+  const photos = [cover, ...gallery.filter((src) => src !== cover)];
+  const shown = photos.slice(0, 5);
+  const extra = photos.length - shown.length;
+
+  const open = (src) => {
+    if (!openLightbox || !gallery.length) return;
+    const index = gallery.indexOf(src);
+    openLightbox(index >= 0 ? index : 0);
+  };
 
   return (
-    <section className="tdp-hero2">
-      <div className="tdp-hero2-media">
-        <Image
-          src={tour.img || "/hero.webp"}
-          alt={asLocalizedText(tour.title, lang)}
-          fill
-          loading="eager"
-          fetchPriority="high"
-          sizes="100vw"
-          style={{ objectFit: "cover" }}
-        />
-        <div className="tdp-hero2-scrim" />
+    <section className="tdp-hero3">
+      <div className="container tdp-hero3-head">
+        <nav className="tdp-hero3-crumbs" aria-label={t("tourDetail.crumbsTours")}>
+          <Link href={getLocalizedHref("/", lang)}>{t("tourDetail.crumbsHome")}</Link>
+          <span aria-hidden="true">/</span>
+          <Link href={getLocalizedHref("/tours", lang)}>{t("tourDetail.crumbsTours")}</Link>
+          <span aria-hidden="true">/</span>
+          <span className="is-current" aria-current="page">{title}</span>
+        </nav>
 
-        <div className="container tdp-hero2-topbar">
-          <nav className="tdp-hero2-crumbs" aria-label="ნავიგაცია">
-            <Link href={getLocalizedHref("/", lang)}>{t("tourDetail.crumbsHome")}</Link>
-            <span className="sep">/</span>
-            <Link href={getLocalizedHref("/tours", lang)}>{t("tourDetail.crumbsTours")}</Link>
-            <span className="sep">/</span>
-            <span className="active">{asLocalizedText(tour.title, lang)}</span>
-          </nav>
+        <p className="tdp-hero3-kicker">
+          <span>{kicker}</span>
+          {badge && <span className="tdp-hero3-badge">{badge}</span>}
+        </p>
+        <h1 className="tdp-hero3-title">{title}</h1>
+      </div>
 
-          <span className="tdp-hero2-badge">
-            {(t("tourBadges") || {})[asLocalizedText(tour.badge, lang)] || asLocalizedText(tour.badge, lang) || t("tourDetail.popularBadge")}
-          </span>
-        </div>
-
-        <div className="container tdp-hero2-caption">
-          <span className="tdp-hero2-kicker">
-            {(() => {
-              const isMultiday = tour.type === "multiday" || (tour.tourSectionLabel && tour.tourSectionLabel.includes("მრავალდღიანი"));
-              if (lang === "en") return isMultiday ? "Multi-day Excursion" : "One-day Excursion";
-              if (lang === "ru") return isMultiday ? "Многодневная экскурсия" : "Однодневная экскурсия";
-              if (lang === "tr") return isMultiday ? "Çok Günlük Tur" : "Günübirlik Tur";
-              if (lang === "ar") return isMultiday ? "رحلة متعددة الأيام" : "رحلة يومية";
-              return isMultiday ? "მრავალდღიანი ექსკურსია" : "ერთდღიანი ექსკურსია";
-            })()}
-          </span>
-          <h1 className="tdp-hero2-title">{asLocalizedText(tour.title, lang)}</h1>
+      <div className="container">
+        <div className={`tdp-hero3-gallery is-${shown.length}`}>
+          {shown.map((src, index) => (
+            <button
+              key={`${src}-${index}`}
+              type="button"
+              className="tdp-hero3-photo"
+              onClick={() => open(src)}
+              aria-label={`${t("tourDetail.openGallery")} ${index + 1} / ${photos.length}`}
+            >
+              <Image
+                src={src}
+                alt={index === 0 ? title : ""}
+                fill
+                sizes={index === 0 ? "(max-width: 767px) 88vw, 50vw" : "(max-width: 767px) 88vw, 25vw"}
+                loading={index === 0 ? "eager" : "lazy"}
+                fetchPriority={index === 0 ? "high" : undefined}
+              />
+              {index === shown.length - 1 && extra > 0 && (
+                <span className="tdp-hero3-more">{interpolate(t("tourDetail.morePhotos"), { count: extra })}</span>
+              )}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -89,7 +124,7 @@ export default function TourDetailHero({
 
           <button type="button" className="tdp-hero2-cta" onClick={scrollToBooking}>
             {t("tourDetail.bookNow")}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="gt-flip-rtl">
               <path d="M5 12h14M13 6l6 6-6 6" />
             </svg>
           </button>
