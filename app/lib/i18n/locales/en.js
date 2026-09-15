@@ -1102,7 +1102,10 @@ export const en = {
     "mapLegendPlace": "Location",
     "mapOffice": "GeorgiaTrips office",
     "mapRegionsList": "Regions",
-    "mapLocations": "Locations in this region"
+    "mapLocations": "Locations in this region",
+    "toursEmptyTitle": "Private tours across Georgia",
+    "toursEmptyLead": "No group tour dates are published at the moment. Plan a trip for the day that suits you, and we will suggest a route and a price.",
+    "toursEmptyHelpTitle": "Tell us where you would like to go"
   }
 };
 export default en;

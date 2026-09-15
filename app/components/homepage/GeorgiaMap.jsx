@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { MAP_VIEWBOX, REGION_CENTERS, REGION_PATHS, projectLatLng } from "../../lib/georgiaMap";
 import { MAP_LOCATIONS } from "../../lib/mapLocations";
@@ -145,7 +146,7 @@ export default function GeorgiaMap({ regions = [] }) {
         </svg>
 
         <figcaption className="gt-map-legend">
-          <span><i className="gt-map-swatch is-tours" />{t("homepage.mapLegendTours")}</span>
+          {regions.some((r) => r.tourCount > 0) && <span><i className="gt-map-swatch is-tours" />{t("homepage.mapLegendTours")}</span>}
           <span><i className="gt-map-swatch" />{t("homepage.mapLegendRequest")}</span>
           {locations.length > 0 && <span><i className="gt-map-swatch is-pin" />{t("homepage.mapLegendPlace")}</span>}
         </figcaption>
@@ -161,11 +162,51 @@ export default function GeorgiaMap({ regions = [] }) {
           <h3 className="gt-map-panel-title">{shown.name}</h3>
           {shown.desc && <p className="gt-map-panel-desc">{shown.desc}</p>}
 
-          {(shown.tourCount > 0 || shown.placeCount > 0) && (
-            <ul className="gt-map-stats">
-              {shown.tourCount > 0 && <li>{interpolate(t("homepage.regionTours"), { count: shown.tourCount })}</li>}
-              {shown.placeCount > 0 && <li>{interpolate(t("homepage.regionPlaces"), { count: shown.placeCount })}</li>}
-            </ul>
+          {/* Real tours of the region, or its places when it has no tours yet. */}
+          {shown.tours?.length > 0 ? (
+            <div className="gt-map-list-block">
+              <p className="gt-map-list-title">{interpolate(t("homepage.regionTours"), { count: shown.tourCount })}</p>
+              <ul className="gt-map-tours">
+                {shown.tours.map((tour) => (
+                  <li key={tour.id}>
+                    <Link href={tour.href} className="gt-map-tour" prefetch={false}>
+                      <span className="gt-map-tour-img">
+                        {tour.img && <Image src={tour.img} alt="" fill sizes="64px" />}
+                      </span>
+                      <span className="gt-map-tour-text">
+                        <strong>{tour.title}</strong>
+                        {tour.meta && <small>{tour.meta}</small>}
+                      </span>
+                      <ArrowRightIcon size={16} />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : shown.places?.length > 0 ? (
+            <div className="gt-map-list-block">
+              <p className="gt-map-list-title">{interpolate(t("homepage.regionPlaces"), { count: shown.placeCount })}</p>
+              <ul className="gt-map-places">
+                {shown.places.map((place) => (
+                  <li key={place.id}>
+                    <Link href={place.href} className="gt-map-place" prefetch={false}>
+                      <Image src={place.img} alt="" fill sizes="(max-width: 980px) 45vw, 160px" />
+                      <span>{place.title}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            // No tours and no photographed places yet: how a private trip there works.
+            <ol className="gt-map-steps">
+              {[1, 2, 3].map((n) => (
+                <li key={n}>
+                  <span aria-hidden="true">{n}</span>
+                  {t(`homepage.planStep${n}Title`)}
+                </li>
+              ))}
+            </ol>
           )}
 
           {regionLocations.length > 0 && (

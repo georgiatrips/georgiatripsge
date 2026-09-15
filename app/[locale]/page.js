@@ -4,7 +4,7 @@ import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import TourPrice from "../components/TourPrice";
-import TourCard from "../components/site/TourCard";
+import TourGrid from "../components/site/TourGrid";
 import TripPlannerForm from "../components/homepage/TripPlannerForm";
 import HeroSearch from "../components/homepage/HeroSearch";
 import GeorgiaMap from "../components/homepage/GeorgiaMap";
@@ -109,12 +109,40 @@ export default async function HomePage({ params }) {
     .sort((a, b) => a.departure.date.localeCompare(b.departure.date))
     .slice(0, 3);
 
-  // ---- Regions map
+  // ---- Regions map: counts plus a few real tours and places for each region
+  const toursByRegion = {};
+  for (const tour of tours) {
+    const region = regionOfTour.get(tour.id);
+    if (!region) continue;
+    const next = tour.nextDeparture
+      ? interpolate(t("tourCard.nextGroup"), { date: formatTourDate(tour.nextDeparture.date, lang, { day: "numeric", month: "short" }) })
+      : "";
+    (toursByRegion[region] ||= []).push({
+      id: tour.id,
+      title: tour.title,
+      img: tour.img || "",
+      href: href(`/tours/${tour.id}`),
+      meta: [tour.duration, next].filter(Boolean).join(" · "),
+    });
+  }
+
   const placeCounts = {};
+  const placesByRegion = {};
   for (const place of places) {
     const region = kaText(place.region);
-    if (region) placeCounts[region] = (placeCounts[region] || 0) + 1;
+    if (!region) continue;
+    placeCounts[region] = (placeCounts[region] || 0) + 1;
+    if (place.img) {
+      (placesByRegion[region] ||= []).push({
+        id: place.id,
+        title: asLocalizedText(place.title, lang),
+        img: place.img,
+        href: href(`/places/${place.id}`),
+        popular: Boolean(place.isPopular),
+      });
+    }
   }
+
   const mapRegions = MAP_REGIONS.map(([code, region]) => {
     const name = formatRegionName(region, lang);
     const desc = t(`map.regions.${code}.desc`, "");
@@ -125,6 +153,8 @@ export default async function HomePage({ params }) {
       desc: typeof desc === "string" ? desc : "",
       tourCount,
       placeCount: placeCounts[region] || 0,
+      tours: (toursByRegion[region] || []).slice(0, 3),
+      places: (placesByRegion[region] || []).sort((a, b) => Number(b.popular) - Number(a.popular)).slice(0, 4),
       href: tourCount
         ? href(`/tours?destination=${encodeURIComponent(region)}`)
         : whatsappHref(interpolate(t("homepage.destWa"), { place: name })),
@@ -136,7 +166,7 @@ export default async function HomePage({ params }) {
   const routePlaces = places
     .filter((p) => p.img && routePlaceIds.has(p.id))
     .sort((a, b) => Number(Boolean(b.isPopular)) - Number(Boolean(a.isPopular)))
-    .slice(0, 6);
+    .slice(0, 5);
 
   const reviews = (Array.isArray(rawReviews) ? rawReviews : [])
     .filter((r) => r && typeof r.text === "string" && r.text.trim() && Number(r.rating) >= 1 && r.hidden !== true && r.approved !== false)
@@ -178,7 +208,7 @@ export default async function HomePage({ params }) {
           <Image src={HERO_IMAGE} alt={t("homepage.heroAlt")} fill sizes="100vw" quality={60} loading="eager" fetchPriority="high" className="gt-hero-img" />
           <div className="gt-hero-scrim" aria-hidden="true" />
 
-          <div className="gt-container gt-hero-inner">
+          <div className={`gt-container gt-hero-inner${nextDepartures.length ? "" : " gt-hero-inner--solo"}`}>
             <div className="gt-hero-copy">
               <p className="gt-hero-eyebrow">{t("homepage.heroEyebrow")}</p>
               <h1 id="hero-title" className="gt-display">{withEmphasis(t("homepage.heroTitle"))}</h1>
@@ -254,43 +284,35 @@ export default async function HomePage({ params }) {
           <div className="gt-container">
             <div className="gt-section-head gt-section-head--duo" data-reveal>
               <div>
-                <p className="gt-eyebrow">{t("homepage.toursEyebrow")}</p>
-                <h2 id="tours-title" className="gt-h2">{t("homepage.toursTitle")}</h2>
+                <p className="gt-eyebrow">{t(tours.length ? "homepage.toursEyebrow" : "homepage.planEyebrow")}</p>
+                <h2 id="tours-title" className="gt-h2">{t(tours.length ? "homepage.toursTitle" : "homepage.toursEmptyTitle")}</h2>
               </div>
               <div className="gt-section-head-aside">
-                <p className="gt-lead">{t("homepage.toursLead")}</p>
-                <Link href={href("/tours")} className="gt-link">
-                  {t("homepage.toursAll")}
-                  <ArrowRightIcon size={16} />
-                </Link>
+                <p className="gt-lead">{t(tours.length ? "homepage.toursLead" : "homepage.toursEmptyLead")}</p>
+                {tours.length > 0 && (
+                  <Link href={href("/tours")} className="gt-link">
+                    {t("homepage.toursAll")}
+                    <ArrowRightIcon size={16} />
+                  </Link>
+                )}
               </div>
             </div>
 
-            {tours.length > 0 && (
-              <div className="gt-tour-grid" data-reveal-group>
-                {tours.slice(0, 6).map((tour, index) => (
-                  <TourCard key={tour.id} tour={tour} lang={lang} t={t} eager={index === 0} />
-                ))}
-              </div>
-            )}
-
-            <aside className="gt-help-band" aria-labelledby="custom-title" data-reveal="scale">
-              <span className="gt-icon-badge"><RouteIcon size={22} /></span>
-              <div>
-                <h3 id="custom-title">{t("homepage.customTitle")}</h3>
-                <p>{t("homepage.customText")}</p>
-              </div>
-              <div className="gt-help-actions">
-                <a href="#plan" className="gt-btn gt-btn--gold">
-                  {t("homepage.customCta")}
-                  <ArrowRightIcon size={17} />
-                </a>
-                <a href={generalWa} target="_blank" rel="noopener noreferrer" className="gt-btn gt-btn--ghost-light">
-                  <WhatsAppIcon size={18} />
-                  WhatsApp
-                </a>
-              </div>
-            </aside>
+            {/* The plan-a-trip card fills whatever the last row leaves (0–6 tours). */}
+            <TourGrid
+              items={tours.slice(0, 6).map((tour, index) => ({ tour, eager: index === 0 }))}
+              lang={lang}
+              t={t}
+              reveal
+              help={{
+                id: "custom-title",
+                title: t(tours.length ? "homepage.customTitle" : "homepage.toursEmptyHelpTitle"),
+                text: t("homepage.customText"),
+                ctaLabel: t("homepage.customCta"),
+                planHref: "#plan",
+                waHref: generalWa,
+              }}
+            />
           </div>
         </section>
 
@@ -312,19 +334,25 @@ export default async function HomePage({ params }) {
 
         {/* 4. Local team */}
         <section className="gt-section gt-section--paper gt-why-section" id="why" aria-labelledby="why-title">
-          <div className="gt-container gt-why">
-            <div className="gt-why-media" data-reveal="image">
-              <div className="gt-why-photo">
-                <Image src="/profile.png" alt={t("about.altText")} fill sizes="(max-width: 900px) 100vw, 50vw" />
+          <div className="gt-container">
+            <div className="gt-section-head gt-section-head--duo" data-reveal>
+              <div>
+                <p className="gt-eyebrow">{t("homepage.whyEyebrow")}</p>
+                <h2 id="why-title" className="gt-h2">{t("homepage.whyTitle")}</h2>
+              </div>
+              <div className="gt-section-head-aside">
+                <p className="gt-lead">{t("homepage.whyLead")}</p>
               </div>
             </div>
 
-            <div>
-              <div data-reveal>
-                <p className="gt-eyebrow">{t("homepage.whyEyebrow")}</p>
-                <h2 id="why-title" className="gt-h2">{t("homepage.whyTitle")}</h2>
-                <p className="gt-lead">{t("homepage.whyLead")}</p>
+            {/* Portrait beside the six points; both columns end at about the same height. */}
+            <div className="gt-why">
+              <div className="gt-why-media" data-reveal="image">
+                <div className="gt-why-photo">
+                  <Image src="/profile.png" alt={t("about.altText")} fill sizes="(max-width: 900px) 100vw, 50vw" />
+                </div>
               </div>
+
               <ul className="gt-why-points" data-reveal-group>
                 {whyItems.map((item) => (
                   <li key={item.n} className="gt-why-point">
@@ -526,7 +554,7 @@ export default async function HomePage({ params }) {
                 <p className="gt-eyebrow">{t("homepage.reviewsEyebrow")}</p>
                 <h2 id="reviews-title" className="gt-h2">{t("homepage.reviewsTitle")}</h2>
               </div>
-              <ul className="gt-review-grid" data-reveal-group>
+              <ul className="gt-review-grid" data-count={reviews.length} data-reveal-group>
                 {reviews.map((review) => (
                   <li key={review.id} className="gt-review">
                     <span className="gt-stars" role="img" aria-label={`${Math.round(Number(review.rating))}/5`}>
@@ -583,10 +611,12 @@ export default async function HomePage({ params }) {
             <h2 id="final-title" className="gt-h2">{t("homepage.finalTitle")}</h2>
             <p>{t("homepage.finalText")}</p>
             <div className="gt-final-actions">
-              <Link href={href("/tours")} className="gt-btn gt-btn--gold gt-btn--lg">
-                {t("homepage.finalTours")}
-                <ArrowRightIcon size={18} />
-              </Link>
+              {tours.length > 0 && (
+                <Link href={href("/tours")} className="gt-btn gt-btn--gold gt-btn--lg">
+                  {t("homepage.finalTours")}
+                  <ArrowRightIcon size={18} />
+                </Link>
+              )}
               <a href={generalWa} target="_blank" rel="noopener noreferrer" className="gt-btn gt-btn--wa gt-btn--lg">
                 <WhatsAppIcon size={18} />
                 {t("homepage.finalWa")}

@@ -1102,7 +1102,10 @@ export const tr = {
     "mapLegendPlace": "Konum",
     "mapOffice": "GeorgiaTrips ofisi",
     "mapRegionsList": "Bölgeler",
-    "mapLocations": "Bu bölgedeki konumlar"
+    "mapLocations": "Bu bölgedeki konumlar",
+    "toursEmptyTitle": "Gürcistan genelinde özel turlar",
+    "toursEmptyLead": "Şu anda yayınlanmış bir grup turu tarihi bulunmuyor. Size uygun gün için gezinizi planlayın; size bir rota ve fiyat önerelim.",
+    "toursEmptyHelpTitle": "Nereye gitmek istediğinizi bize yazın"
   }
 };
 export default tr;

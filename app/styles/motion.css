@@ -13,45 +13,41 @@
 
 /* ---------- Scroll reveal ---------- */
 
-html.gt-js [data-reveal] {
-  opacity: 0;
-  translate: 0 32px;
-  transition:
-    opacity 0.8s var(--gt-ease-out),
-    translate 1s var(--gt-ease-out),
-    scale 1s var(--gt-ease-out);
-  transition-delay: var(--gt-delay, 0s);
+/* A target (a [data-reveal] block or one child of a [data-reveal-group]) is
+   hidden only until ScrollReveal marks it .is-in, which happens as soon as its
+   top edge enters the screen, so no blank band trails the content. The
+   entrance is a CSS animation with fill-mode "backwards": once it has played,
+   each component's own hover transitions work untouched. */
+html.gt-js [data-reveal]:not(.is-in),
+html.gt-js [data-reveal-group] > :not(.is-in) { opacity: 0; }
+
+html.gt-js [data-reveal].is-in,
+html.gt-js [data-reveal-group] > .is-in {
+  animation: gt-reveal-up 0.7s var(--gt-ease-out) backwards;
+  animation-delay: calc(var(--gt-i, 0) * 0.08s);
 }
 
-html.gt-js [data-reveal="fade"] { translate: none; }
-html.gt-js [data-reveal="left"] { translate: -44px 0; }
-html.gt-js [data-reveal="right"] { translate: 44px 0; }
-html[dir="rtl"].gt-js [data-reveal="left"] { translate: 44px 0; }
-html[dir="rtl"].gt-js [data-reveal="right"] { translate: -44px 0; }
-html.gt-js [data-reveal="scale"] { translate: none; scale: 0.94; }
+html.gt-js [data-reveal="fade"].is-in,
+html.gt-js [data-reveal="image"].is-in { animation-name: gt-fade-in; }
+html.gt-js [data-reveal="left"].is-in { animation-name: gt-reveal-start; }
+html.gt-js [data-reveal="right"].is-in { animation-name: gt-reveal-end; }
+html.gt-js [data-reveal="scale"].is-in { animation-name: gt-reveal-scale; }
+html[dir="rtl"].gt-js [data-reveal="left"].is-in { animation-name: gt-reveal-end; }
+html[dir="rtl"].gt-js [data-reveal="right"].is-in { animation-name: gt-reveal-start; }
 
-html.gt-js [data-reveal].is-in {
-  opacity: 1;
-  translate: none;
-  scale: none;
-}
+/* Already on screen when the page loaded: shown as is, no entrance. */
+html.gt-js [data-reveal].is-in.gt-instant,
+html.gt-js [data-reveal-group] > .is-in.gt-instant { animation: none !important; }
+
+@keyframes gt-reveal-up { from { opacity: 0; translate: 0 22px; } }
+@keyframes gt-reveal-start { from { opacity: 0; translate: -28px 0; } }
+@keyframes gt-reveal-end { from { opacity: 0; translate: 28px 0; } }
+@keyframes gt-reveal-scale { from { opacity: 0; scale: 0.96; } }
 
 /* Photo blocks: the frame fades in while the photo settles from a slight zoom. */
-html.gt-js [data-reveal="image"] { translate: none; }
-html.gt-js [data-reveal="image"] img { scale: 1.14; transition: scale 1.6s var(--gt-ease-out); }
+html.gt-js [data-reveal="image"] img { scale: 1.1; transition: scale 1.4s var(--gt-ease-out); }
 html.gt-js [data-reveal="image"].is-in img { scale: 1; }
-
-/* Groups: children rise one after another. ScrollReveal sets --gt-i. */
-html.gt-js [data-reveal-group] > * {
-  opacity: 0;
-  translate: 0 28px;
-  transition:
-    opacity 0.7s var(--gt-ease-out),
-    translate 0.9s var(--gt-ease-out);
-  transition-delay: calc(min(var(--gt-i, 0), 8) * 0.085s);
-}
-
-html.gt-js [data-reveal-group].is-in > * { opacity: 1; translate: none; }
+html.gt-js [data-reveal="image"].gt-instant img { transition: none; }
 
 /* Section eyebrows draw their accent line after the heading appears. */
 html.gt-js [data-reveal] .gt-eyebrow::before {
@@ -62,6 +58,7 @@ html.gt-js [data-reveal] .gt-eyebrow::before {
 
 html[dir="rtl"].gt-js [data-reveal] .gt-eyebrow::before { transform-origin: right center; }
 html.gt-js [data-reveal].is-in .gt-eyebrow::before { scale: 1 1; }
+html.gt-js [data-reveal].gt-instant .gt-eyebrow::before { transition: none; }
 
 /* ---------- Page entrance (first viewport, CSS only) ---------- */
 
@@ -132,14 +129,12 @@ html[dir="rtl"] .gt-btn:hover svg.gt-flip-rtl { translate: -3px 0; }
 /* ---------- Reduced motion ---------- */
 
 @media (prefers-reduced-motion: reduce) {
-  html.gt-js [data-reveal],
-  html.gt-js [data-reveal-group] > * {
-    translate: none !important;
-    scale: none !important;
-    transition: opacity 0.6s ease !important;
+  html.gt-js [data-reveal].is-in:not(.gt-instant),
+  html.gt-js [data-reveal-group] > .is-in:not(.gt-instant) {
+    animation-name: gt-fade-in !important;
+    animation-duration: 0.5s !important;
   }
 
-  html.gt-js [data-reveal-group] > * { transition-delay: calc(min(var(--gt-i, 0), 6) * 0.05s) !important; }
   html.gt-js [data-reveal="image"] img { scale: none !important; transition: none !important; }
   html.gt-js [data-reveal] .gt-eyebrow::before { scale: 1 1 !important; transition: none !important; }
 

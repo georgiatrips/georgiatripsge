@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { getLocalizedHref } from "../../lib/siteConfig";
-import TourCard from "../site/TourCard";
+import { whatsappHref } from "../../lib/shared";
+import TourGrid from "../site/TourGrid";
 import { ArrowRightIcon } from "../Icons";
 import "../../styles/tour-card.css";
 
-// Other tours, rendered with the same card as the homepage and catalog so
-// prices, dates and the WhatsApp action look identical everywhere.
+// Other tours, rendered with the same card and grid as the homepage and
+// catalog so prices, dates and the WhatsApp action look identical everywhere.
+// With one or two other tours the plan-a-trip card fills the rest of the row.
 export default function TourDetailSimilarTours({ tours = [] }) {
   const { t, lang } = useLanguage();
   if (!tours.length) return null;
@@ -26,11 +28,20 @@ export default function TourDetailSimilarTours({ tours = [] }) {
             <ArrowRightIcon size={16} />
           </Link>
         </div>
-        <div className="gt-tour-grid" data-reveal-group>
-          {tours.map((tour) => (
-            <TourCard key={tour.id} tour={tour} lang={lang} t={t} />
-          ))}
-        </div>
+        <TourGrid
+          items={tours.map((tour) => ({ tour }))}
+          lang={lang}
+          t={t}
+          reveal
+          help={{
+            id: "similar-help-title",
+            title: t("homepage.customTitle"),
+            text: t("homepage.customText"),
+            ctaLabel: t("homepage.customCta"),
+            planHref: getLocalizedHref("/#plan", lang),
+            waHref: whatsappHref(t("site.generalWa")),
+          }}
+        />
       </div>
     </section>
   );

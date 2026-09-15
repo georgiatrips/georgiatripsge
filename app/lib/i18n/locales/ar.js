@@ -1102,7 +1102,10 @@ export const ar = {
     "mapLegendPlace": "موقع",
     "mapOffice": "مكتب GeorgiaTrips",
     "mapRegionsList": "المناطق",
-    "mapLocations": "مواقع في هذه المنطقة"
+    "mapLocations": "مواقع في هذه المنطقة",
+    "toursEmptyTitle": "جولات خاصة في جميع أنحاء جورجيا",
+    "toursEmptyLead": "لا توجد حاليًا مواعيد منشورة للجولات الجماعية. خططوا لرحلتكم في اليوم الذي يناسبكم، وسنقترح عليكم المسار والسعر.",
+    "toursEmptyHelpTitle": "أخبرونا إلى أين تودّون الذهاب"
   }
 };
 export default ar;

@@ -1102,7 +1102,10 @@ export const ru = {
     "mapLegendPlace": "Локация",
     "mapOffice": "Офис GeorgiaTrips",
     "mapRegionsList": "Регионы",
-    "mapLocations": "Локации в регионе"
+    "mapLocations": "Локации в регионе",
+    "toursEmptyTitle": "Индивидуальные туры по всей Грузии",
+    "toursEmptyLead": "Даты групповых туров сейчас не опубликованы. Запланируйте поездку на удобный вам день — мы предложим маршрут и цену.",
+    "toursEmptyHelpTitle": "Напишите нам, куда вы хотите поехать"
   }
 };
 export default ru;

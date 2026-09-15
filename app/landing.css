@@ -217,9 +217,12 @@
 }
 
 /* ── Tour Cards Grid ── */
+/* auto-fit + a capped track width + centering: one or two tours sit centered
+   instead of leaving empty columns beside them. */
 .landing-tours-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 380px));
+  justify-content: center;
   gap: 2rem;
 }
 

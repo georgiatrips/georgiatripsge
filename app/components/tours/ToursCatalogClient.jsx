@@ -2,12 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 import Navbar from "../Navbar";
 import Footer from "../Footer";
 import PageHero from "../PageHero";
 import DatePicker from "../DatePicker";
-import TourCard from "../site/TourCard";
+import TourGrid, { HelpCard } from "../site/TourGrid";
 import { GEORGIA_REGIONS, formatRegionName } from "../../lib/placesMeta";
 import { matchesMultiLang } from "../../lib/toursFirestore";
 import { toTourView, formatTourDate } from "../../lib/tourView";
@@ -16,7 +15,7 @@ import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { getLocalizedHref } from "../../lib/siteConfig";
 import { whatsappHref } from "../../lib/shared";
 import {
-  ArrowRightIcon, ChevronDownIcon, ClockIcon, CloseIcon, FilterIcon, LocationIcon, RouteIcon, SearchIcon, UsersIcon, WhatsAppIcon,
+  ChevronDownIcon, ClockIcon, CloseIcon, FilterIcon, LocationIcon, RouteIcon, SearchIcon, UsersIcon, WhatsAppIcon,
 } from "../Icons";
 import "../../styles/tour-card.css";
 
@@ -49,6 +48,16 @@ export default function ToursCatalogClient({ initialTours = [] }) {
   const [query, setQuery] = useState(initial.query);
   const [page, setPage] = useState(1);
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  const helpCard = {
+    id: "catalog-help-title",
+    headingLevel: 2,
+    title: t("homepage.customTitle"),
+    text: t("homepage.customText"),
+    ctaLabel: t("homepage.customCta"),
+    planHref: getLocalizedHref("/#plan", lang),
+    waHref: whatsappHref(t("site.generalWa")),
+  };
 
   const entries = useMemo(
     () =>
@@ -339,18 +348,12 @@ export default function ToursCatalogClient({ initialTours = [] }) {
             </div>
 
             {visible.length > 0 ? (
-              <div className="gt-tour-grid">
-                {visible.map((entry, index) => (
-                  <TourCard
-                    key={entry.view.id}
-                    tour={entry.view}
-                    lang={lang}
-                    t={t}
-                    eager={page === 1 && index < 3}
-                    dateMatch={entry.dateMatch}
-                  />
-                ))}
-              </div>
+              <TourGrid
+                items={visible.map((entry, index) => ({ tour: entry.view, eager: page === 1 && index < 3, dateMatch: entry.dateMatch }))}
+                lang={lang}
+                t={t}
+                help={helpCard}
+              />
             ) : (
               <div className="gt-empty">
                 <span className="gt-icon-badge"><RouteIcon size={22} /></span>
@@ -391,23 +394,8 @@ export default function ToursCatalogClient({ initialTours = [] }) {
               </nav>
             )}
 
-            <aside className="gt-help-band" aria-labelledby="catalog-help-title">
-              <span className="gt-icon-badge"><RouteIcon size={22} /></span>
-              <div>
-                <h2 id="catalog-help-title">{t("homepage.customTitle")}</h2>
-                <p>{t("homepage.customText")}</p>
-              </div>
-              <div className="gt-help-actions">
-                <Link href={getLocalizedHref("/#plan", lang)} className="gt-btn gt-btn--gold" prefetch={false}>
-                  {t("homepage.customCta")}
-                  <ArrowRightIcon size={17} />
-                </Link>
-                <a href={whatsappHref(t("site.generalWa"))} target="_blank" rel="noopener noreferrer" className="gt-btn gt-btn--ghost-light">
-                  <WhatsAppIcon size={18} />
-                  WhatsApp
-                </a>
-              </div>
-            </aside>
+            {/* With results the plan card sits inside the grid; with none it follows the empty state. */}
+            {visible.length === 0 && <HelpCard {...helpCard} className="gt-help-card--standalone" />}
           </div>
         </section>
       </main>

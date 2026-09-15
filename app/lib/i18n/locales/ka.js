@@ -1102,7 +1102,10 @@ export const ka = {
     "mapLegendPlace": "ლოკაცია",
     "mapOffice": "GeorgiaTrips-ის ოფისი",
     "mapRegionsList": "რეგიონები",
-    "mapLocations": "ლოკაციები რეგიონში"
+    "mapLocations": "ლოკაციები რეგიონში",
+    "toursEmptyTitle": "ინდივიდუალური ტურები მთელ საქართველოში",
+    "toursEmptyLead": "ჯგუფური ტურების თარიღები ამ ეტაპზე არ არის გამოქვეყნებული. დაგეგმეთ მოგზაურობა თქვენთვის სასურველ დღეს — შემოგთავაზებთ მარშრუტსა და ფასს.",
+    "toursEmptyHelpTitle": "მოგვწერეთ, სად გსურავთ მოგზაურობა"
   }
 };
 export default ka;

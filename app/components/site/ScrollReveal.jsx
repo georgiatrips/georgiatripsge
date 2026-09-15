@@ -28,8 +28,6 @@ const AUTO_GROUP = [
   ".landing-faq-grid",
 ];
 
-const SELECTOR = "[data-reveal]:not(.is-in), [data-reveal-group]:not(.is-in)";
-
 function tagAutoTargets(root) {
   const insideReveal = (el) => el.parentElement?.closest("[data-reveal], [data-reveal-group]");
   root.querySelectorAll(AUTO_SINGLE.join(",")).forEach((el) => {
@@ -40,10 +38,18 @@ function tagAutoTargets(root) {
   });
 }
 
-// Scroll reveal for elements marked data-reveal / data-reveal-group.
-// html.gt-js is added only once an IntersectionObserver exists, so the CSS
-// never hides content for crawlers or when JavaScript fails. Reduced-motion
-// users still get opacity fades (motion.css removes the movement).
+const byDocumentOrder = (a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1);
+
+// Scroll reveal for [data-reveal] blocks and for every child of a
+// [data-reveal-group]. Each target is observed on its own and appears as soon
+// as its top edge enters the screen, so a tall stack of cards on a phone comes
+// in card by card and no blank band trails the content while scrolling.
+// Targets entering together get a short stagger (--gt-i).
+//
+// html.gt-js is added only when IntersectionObserver exists, so the CSS never
+// hides content for crawlers or when JavaScript fails. Bookkeeping lives in
+// this effect run only (no markers left on the DOM), so React StrictMode's
+// double effect run in development cannot leave blocks unobserved and hidden.
 // Mounted once in the root layout; follows client navigations and content
 // rendered later (catalog results, tour data) through a MutationObserver.
 export default function ScrollReveal() {
@@ -53,51 +59,54 @@ export default function ScrollReveal() {
     if (typeof window === "undefined" || !("IntersectionObserver" in window)) return undefined;
     document.documentElement.classList.add("gt-js");
 
+    const seen = new WeakSet();
     const pending = new Set();
+    let io = null;
 
-    const reveal = (el) => {
-      if (el.hasAttribute("data-reveal-group")) {
-        [...el.children].forEach((child, index) => child.style.setProperty("--gt-i", String(index)));
-      }
-      el.classList.add("is-in");
-      pending.delete(el);
+    const revealBatch = (elements, instant = false) => {
+      const list = elements.filter((el) => pending.has(el)).sort(byDocumentOrder);
+      list.forEach((el, index) => {
+        pending.delete(el);
+        io?.unobserve(el);
+        if (instant) el.classList.add("gt-instant");
+        else el.style.setProperty("--gt-i", String(Math.min(index, 6)));
+        el.classList.add("is-in");
+      });
     };
 
-    // On screen or already scrolled past (anchor jumps, restored scroll
-    // position), so scrolling back up never meets an empty block.
-    const inView = (el) => el.getBoundingClientRect().top < window.innerHeight * 0.92;
+    // On screen, or already scrolled past (anchor jump, restored position).
+    const inView = (el) => el.getBoundingClientRect().top < window.innerHeight * 0.94;
 
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
-          reveal(entry.target);
-          io.unobserve(entry.target);
-        }
-      },
-      { rootMargin: "0px 0px -10% 0px", threshold: 0.12 }
+    io = new IntersectionObserver(
+      (entries) => revealBatch(entries.filter((entry) => entry.isIntersecting).map((entry) => entry.target)),
+      { rootMargin: "0px 0px -6% 0px", threshold: 0 }
     );
 
+    let firstScan = true;
     const scan = () => {
       tagAutoTargets(document);
-      document.querySelectorAll(SELECTOR).forEach((el) => {
-        if (el.dataset.gtObserved) return;
-        el.dataset.gtObserved = "1";
-        // Already on screen at load: show at once so nothing flickers.
-        if (inView(el) && document.readyState !== "loading" && performance.now() < 4000) {
-          reveal(el);
-        } else {
+      const fresh = [];
+      document.querySelectorAll("[data-reveal], [data-reveal-group]").forEach((container) => {
+        const targets = container.hasAttribute("data-reveal-group") ? [...container.children] : [container];
+        for (const el of targets) {
+          if (seen.has(el) || el.classList.contains("is-in")) continue;
+          seen.add(el);
           pending.add(el);
           io.observe(el);
+          fresh.push(el);
         }
       });
+      // Content already on screen when the page loads is shown as it is, with
+      // no entrance, so nothing flickers after hydration. Content that arrives
+      // later on screen (new catalog results) gets the entrance.
+      if (fresh.length) revealBatch(fresh.filter(inView), firstScan);
+      firstScan = false;
     };
 
     scan();
 
     // Timers instead of requestAnimationFrame: browsers pause frames in
-    // background tabs and some embedded views, and a paused frame must not
-    // leave new content unobserved.
+    // background tabs and some embedded views.
     let scanTimer = 0;
     const mo = new MutationObserver(() => {
       if (scanTimer) return;
@@ -108,25 +117,22 @@ export default function ScrollReveal() {
     });
     mo.observe(document.body, { childList: true, subtree: true });
 
-    // Safety net: if the observer misses an element (throttled rendering,
-    // anchor jumps, restored scroll position), a cheap rect check on scroll,
-    // resize and tab return reveals whatever is on screen.
+    // Safety net for missed observer callbacks (throttled rendering, hidden
+    // tabs): a cheap position check on scroll, resize and tab return.
     let checkTimer = 0;
     const check = () => {
       checkTimer = 0;
       pending.forEach((el) => {
-        if (!el.isConnected) {
-          pending.delete(el);
-        } else if (inView(el)) {
-          io.unobserve(el);
-          reveal(el);
-        }
+        if (el.isConnected) return;
+        pending.delete(el);
+        io.unobserve(el);
       });
+      revealBatch([...pending].filter(inView));
     };
     const scheduleCheck = () => {
-      if (!checkTimer) checkTimer = window.setTimeout(check, 150);
+      if (!checkTimer) checkTimer = window.setTimeout(check, 120);
     };
-    const onBeforePrint = () => document.querySelectorAll(SELECTOR).forEach(reveal);
+    const onBeforePrint = () => revealBatch([...pending], true);
 
     window.addEventListener("scroll", scheduleCheck, { passive: true });
     window.addEventListener("resize", scheduleCheck);

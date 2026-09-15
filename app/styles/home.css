@@ -59,6 +59,9 @@ html[dir="rtl"] .gt-hero-scrim {
 
 .gt-hero-copy { max-width: 50rem; min-width: 0; }
 
+/* No published departures: the copy and search take the whole hero. */
+.gt-hero-inner--solo { grid-template-columns: minmax(0, 1fr); }
+
 .gt-hero-eyebrow {
   margin: 0;
   font-size: 0.82rem;
@@ -307,10 +310,6 @@ html[dir="rtl"] .gt-hero-scrim {
   .gt-hero-place { display: none; }
 }
 
-/* ---------- Tours ---------- */
-
-.gt-tour-grid + .gt-help-band { margin-block-start: clamp(1.5rem, 3vw, 2.25rem); }
-
 /* ---------- Regions map ---------- */
 
 .gt-mapx {
@@ -324,6 +323,9 @@ html[dir="rtl"] .gt-hero-scrim {
 .gt-map-figure {
   grid-area: map;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   margin: 0;
   padding: clamp(0.75rem, 2.2vw, 1.75rem) clamp(0.75rem, 2.2vw, 1.75rem) 1rem;
   border: 1px solid var(--gt-line);
@@ -411,8 +413,43 @@ html.gt-js .gt-map-figure.is-in .gt-map-badge { opacity: 1; }
 .gt-map-panel-title { margin: 0; font-family: var(--gt-font-display); font-size: clamp(1.6rem, 2.6vw, 2.1rem); line-height: 1.15; text-wrap: balance; }
 .gt-map-panel-desc { margin: 0; line-height: 1.55; color: #b9c8d6; }
 
-.gt-map-stats { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0; padding: 0; list-style: none; }
-.gt-map-stats li { padding: 0.35rem 0.8rem; border-radius: 999px; background: rgba(255, 255, 255, 0.1); font-size: 0.86rem; font-weight: 700; }
+.gt-map-list-block { display: grid; gap: 0.55rem; }
+.gt-map-list-title { margin: 0; font-size: 0.78rem; font-weight: 700; color: #8ea1b2; }
+
+.gt-map-tours { display: grid; gap: 0.45rem; margin: 0; padding: 0; list-style: none; }
+
+.gt-map-tour {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.45rem 0.7rem 0.45rem 0.45rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+html[dir="rtl"] .gt-map-tour { padding: 0.45rem 0.45rem 0.45rem 0.7rem; }
+.gt-map-tour:hover { background: rgba(255, 255, 255, 0.13); }
+.gt-map-tour:focus-visible { outline: 3px solid var(--gt-gold); outline-offset: 2px; }
+.gt-map-tour > svg { color: var(--gt-gold); }
+html[dir="rtl"] .gt-map-tour > svg { scale: -1 1; }
+
+.gt-map-tour-img { position: relative; overflow: hidden; width: 64px; aspect-ratio: 4 / 3; border-radius: 8px; background: rgba(255, 255, 255, 0.1); }
+.gt-map-tour-img img { object-fit: cover; }
+.gt-map-tour-text { display: grid; gap: 0.15rem; min-width: 0; }
+.gt-map-tour-text strong { display: -webkit-box; overflow: hidden; font-size: 0.9rem; line-height: 1.3; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.gt-map-tour-text small { font-size: 0.78rem; color: #b9c8d6; }
+
+.gt-map-places { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.45rem; margin: 0; padding: 0; list-style: none; }
+
+.gt-map-place { position: relative; display: block; overflow: hidden; aspect-ratio: 16 / 10; border-radius: 10px; background: rgba(255, 255, 255, 0.08); color: #fff; text-decoration: none; }
+.gt-map-place img { object-fit: cover; transition: scale 0.5s var(--gt-ease-out); }
+.gt-map-place:hover img { scale: 1.06; }
+.gt-map-place:focus-visible { outline: 3px solid var(--gt-gold); outline-offset: 2px; }
+.gt-map-place span { position: absolute; inset-inline: 0; inset-block-end: 0; padding: 1.3rem 0.55rem 0.45rem; background: linear-gradient(0deg, rgba(7, 23, 36, 0.88), rgba(7, 23, 36, 0)); font-size: 0.78rem; font-weight: 700; line-height: 1.25; }
 
 .gt-map-locations p { margin: 0 0 0.4rem; font-size: 0.78rem; font-weight: 700; color: #8ea1b2; }
 .gt-map-locations ul { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
@@ -421,6 +458,35 @@ html.gt-js .gt-map-figure.is-in .gt-map-badge { opacity: 1; }
 .gt-map-locations a:hover { border-color: var(--gt-gold); }
 
 .gt-map-panel .gt-btn { margin-block-start: auto; }
+
+/* A region with no tours and no photographed places yet: how a private trip
+   there works, in three short steps, above the WhatsApp button. */
+.gt-map-steps { display: grid; gap: 0.5rem; margin: 0.2rem 0 0; padding: 0; list-style: none; }
+
+.gt-map-steps li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.07);
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.gt-map-steps span {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid rgba(250, 180, 24, 0.6);
+  border-radius: 50%;
+  color: var(--gt-gold);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
 
 .gt-map-list { grid-area: list; display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; }
 .gt-map-list-label { margin: 0; font-size: 0.82rem; font-weight: 800; color: var(--gt-muted); }
@@ -465,20 +531,16 @@ html.gt-js .gt-map-figure.is-in .gt-map-badge { opacity: 1; }
    never adds horizontal scroll. */
 .gt-why-section { overflow-x: clip; }
 
+/* Heading above; the portrait and the six points (two columns) side by side,
+   sized so both columns end at about the same height. */
 .gt-why {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-  align-items: start;
+  align-items: center;
   gap: clamp(2rem, 5vw, 4.5rem);
 }
 
 .gt-why-media { position: relative; isolation: isolate; }
-
-/* The text column is taller than the portrait; the photo travels with the
-   reader instead of floating in empty space. */
-@media (min-width: 901px) {
-  .gt-why-media { position: sticky; inset-block-start: calc(var(--gt-header-h) + 1.5rem); }
-}
 
 /* Soft light behind the portrait: warm gold top-start, teal bottom-end. */
 .gt-why-media::before {
@@ -523,7 +585,7 @@ html.gt-js .gt-map-figure.is-in .gt-map-badge { opacity: 1; }
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.5rem 2rem;
-  margin: 2rem 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -552,9 +614,12 @@ html.gt-js .gt-map-figure.is-in .gt-map-badge { opacity: 1; }
 }
 
 .gt-place { position: relative; overflow: hidden; border-radius: 14px; background: var(--gt-stone); }
+/* Mosaic without holes for 3, 4 or 5 photos (the homepage shows at most 5):
+   3 -> wide + two in one taller row; 4 -> big, tall, two stacked; 5 -> big + four. */
 .gt-place:first-child { grid-column: span 2; grid-row: span 2; }
-.gt-places--3 .gt-place:first-child,
-.gt-places--4 .gt-place:first-child { grid-row: span 1; }
+.gt-places--3 { grid-auto-rows: 300px; }
+.gt-places--3 .gt-place:first-child { grid-row: span 1; }
+.gt-places--4 .gt-place:nth-child(2) { grid-row: span 2; }
 
 .gt-place a { position: absolute; inset: 0; display: block; color: #fff; text-decoration: none; }
 .gt-place img { object-fit: cover; transition: transform 0.9s var(--gt-ease-out); }
@@ -588,8 +653,10 @@ html.gt-js .gt-map-figure.is-in .gt-map-badge { opacity: 1; }
 
 @media (max-width: 900px) {
   .gt-places { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 170px; }
-  .gt-places--6 .gt-place:nth-child(6),
-  .gt-places--4 .gt-place:nth-child(4) { display: none; }
+  .gt-places--3 .gt-place:first-child,
+  .gt-places--4 .gt-place:first-child,
+  .gt-places--4 .gt-place:nth-child(2) { grid-row: span 1; }
+  .gt-places--4 .gt-place:nth-child(4) { grid-column: span 2; }
 }
 
 /* ---------- Plan: how it works + three-step planner ---------- */
@@ -887,13 +954,33 @@ html[dir="rtl"] .gt-wizard-body { animation-name: gt-step-in-rtl; }
 
 /* ---------- Reviews ---------- */
 
+/* Only real reviews are shown, so the count varies (1–6): one is a single wide
+   quote, 2 and 4 sit in pairs, 3 and 6 in threes, 5 as three plus two. */
 .gt-review-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+@media (min-width: 640px) {
+  .gt-review-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gt-review-grid[data-count="1"] { grid-template-columns: minmax(0, 46rem); justify-content: center; }
+}
+
+@media (min-width: 640px) and (max-width: 999px) {
+  .gt-review-grid > :last-child:nth-child(odd):not(:only-child) { grid-column: 1 / -1; }
+}
+
+@media (min-width: 1000px) {
+  .gt-review-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .gt-review-grid > * { grid-column: span 2; }
+  .gt-review-grid[data-count="2"] > *,
+  .gt-review-grid[data-count="4"] > *,
+  .gt-review-grid[data-count="5"] > :nth-child(n + 4) { grid-column: span 3; }
+  .gt-review-grid[data-count="1"] > * { grid-column: auto; }
 }
 
 .gt-review {
