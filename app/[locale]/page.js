@@ -7,6 +7,7 @@ import TourPrice from "../components/TourPrice";
 import TourCard from "../components/site/TourCard";
 import TripPlannerForm from "../components/homepage/TripPlannerForm";
 import HeroSearch from "../components/homepage/HeroSearch";
+import GeorgiaMap from "../components/homepage/GeorgiaMap";
 import { getCachedPlaces, getCachedReviews, getCachedTours } from "../lib/server/cachedData";
 import { formatTourDate, isLowSeats, toTourViews } from "../lib/tourView";
 import { getTranslator, interpolate } from "../lib/i18n/translate";
@@ -17,32 +18,32 @@ import { INSTAGRAM_HANDLE, INSTAGRAM_LINK, PHONE_DISPLAY, PHONE_TEL, whatsappHre
 import {
   ArrowRightIcon, BriefcaseIcon, CalendarIcon, CarIcon, CheckIcon, CompassIcon, HeadsetIcon, HeartIcon,
   InstagramIcon, LanguagesIcon, LocationIcon, PhoneIcon, PlaneIcon, PlusIcon, RouteIcon, ShieldCheckIcon,
-  StarIcon, UsersIcon, WalletIcon, WhatsAppIcon,
+  StarIcon, UsersIcon, WhatsAppIcon,
 } from "../components/Icons";
 import "../styles/home.css";
 import "../styles/tour-card.css";
 
 // Server-rendered homepage. Everything shown comes from Firestore (tours,
 // departures, places, reviews) or from the dictionaries; nothing is invented.
-// Sections, in funnel order: hero with search + next departures → trust →
-// bookable tours → regions → local team → places on our routes → private
-// trip planner → transfers → reviews (only if real) → FAQ → final CTA.
+// Funnel order: hero with search + next departures -> bookable tours ->
+// regions map -> local team -> places on our routes -> private trip planner
+// -> transfers and fleet -> reviews (only if real) -> FAQ -> final CTA.
 
 const HERO_IMAGE = "/mestia.webp";
 
-// Regions are the unit of navigation. Card photos come from Firestore places
-// in that region; the static fallbacks are the site's own region photos.
-// Regions without any photo are offered as "private trip on request" chips.
-const REGION_CARDS = [
-  { region: "აჭარა", code: "GE-AJ", fallback: "/batumi.webp" },
-  { region: "სამეგრელო-ზემო სვანეთი", code: "GE-SZ", fallback: "/mestia.webp" },
-  { region: "მცხეთა-მთიანეთი", code: "GE-MM", fallback: "/gudauri.webp" },
-  { region: "თბილისი", code: "GE-TB", fallback: "/tbilisi.webp" },
-  { region: "იმერეთი", code: "GE-IM", fallback: null },
-  { region: "კახეთი", code: "GE-KA", fallback: null },
-  { region: "სამცხე-ჯავახეთი", code: "GE-SJ", fallback: null },
-  { region: "გურია", code: "GE-GU", fallback: null },
-  { region: "რაჭა-ლეჩხუმი და ქვემო სვანეთი", code: "GE-RL", fallback: null },
+// Region code (as in the map SVG) -> region name as stored in Firestore.
+const MAP_REGIONS = [
+  ["GE-AJ", "აჭარა"],
+  ["GE-SZ", "სამეგრელო-ზემო სვანეთი"],
+  ["GE-GU", "გურია"],
+  ["GE-IM", "იმერეთი"],
+  ["GE-RL", "რაჭა-ლეჩხუმი და ქვემო სვანეთი"],
+  ["GE-MM", "მცხეთა-მთიანეთი"],
+  ["GE-SJ", "სამცხე-ჯავახეთი"],
+  ["GE-SK", "შიდა ქართლი"],
+  ["GE-KK", "ქვემო ქართლი"],
+  ["GE-TB", "თბილისი"],
+  ["GE-KA", "კახეთი"],
 ];
 
 const FAQ_KEYS = [
@@ -59,12 +60,12 @@ const FAQ_KEYS = [
   ["faq.q4", "faq.a4"],
 ];
 
-// Vehicle classes and capacities as published on the transfers page.
+// Vehicles, photos and capacities exactly as published on the transfers page.
 const FLEET = [
-  { key: "sedan", pax: 3 },
-  { key: "minivan", pax: 6 },
-  { key: "jeep", pax: 4 },
-  { key: "sprinter", pax: 16 },
+  { key: "sedan", img: "/1car.webp", pax: 3, bags: 2 },
+  { key: "minivan", img: "/2car.webp", pax: 6, bags: 5 },
+  { key: "jeep", img: "/3car.webp", pax: 4, bags: 3 },
+  { key: "sprinter", img: "/4car.webp", pax: 16, bags: 14 },
 ];
 
 const kaText = (value) => (typeof value === "string" ? value : value?.ka || "");
@@ -75,14 +76,6 @@ function withEmphasis(text) {
   return String(text || "")
     .split(/\*(.+?)\*/g)
     .map((part, index) => (index % 2 ? <em key={index}>{part}</em> : <Fragment key={index}>{part}</Fragment>));
-}
-
-// Column span inside a 6-column grid so a row of n cards never leaves a hole.
-function spanFor(index, count) {
-  if (count === 1) return 6;
-  if (count % 3 === 0) return 2;
-  if (count % 2 === 0) return 3;
-  return index >= count - 2 ? 3 : 2;
 }
 
 export default async function HomePage({ params }) {
@@ -116,36 +109,27 @@ export default async function HomePage({ params }) {
     .sort((a, b) => a.departure.date.localeCompare(b.departure.date))
     .slice(0, 3);
 
-  // ---- Regions
-  const placesByRegion = new Map();
+  // ---- Regions map
+  const placeCounts = {};
   for (const place of places) {
     const region = kaText(place.region);
-    if (!region || !place.img) continue;
-    if (!placesByRegion.has(region)) placesByRegion.set(region, []);
-    placesByRegion.get(region).push(place);
+    if (region) placeCounts[region] = (placeCounts[region] || 0) + 1;
   }
-
-  const regionCards = REGION_CARDS.map((card) => {
-    const regionPlaces = placesByRegion.get(card.region) || [];
-    const lead = regionPlaces.find((p) => p.isPopular) || regionPlaces[0];
-    const desc = t(`map.regions.${card.code}.desc`, "");
-    const name = formatRegionName(card.region, lang);
-    const tourCount = regionCounts[card.region] || 0;
+  const mapRegions = MAP_REGIONS.map(([code, region]) => {
+    const name = formatRegionName(region, lang);
+    const desc = t(`map.regions.${code}.desc`, "");
+    const tourCount = regionCounts[region] || 0;
     return {
-      ...card,
+      code,
       name,
       desc: typeof desc === "string" ? desc : "",
       tourCount,
-      placeCount: regionPlaces.length,
-      image: lead?.img || card.fallback,
-      link: tourCount
-        ? href(`/tours?destination=${encodeURIComponent(card.region)}`)
+      placeCount: placeCounts[region] || 0,
+      href: tourCount
+        ? href(`/tours?destination=${encodeURIComponent(region)}`)
         : whatsappHref(interpolate(t("homepage.destWa"), { place: name })),
     };
-  });
-  const featuredRegions = regionCards.filter((c) => c.image && c.tourCount > 0);
-  const requestRegions = regionCards.filter((c) => c.image && c.tourCount === 0);
-  const chipRegions = regionCards.filter((c) => !c.image);
+  }).sort((a, b) => Number(b.tourCount > 0) - Number(a.tourCount > 0));
 
   // ---- Places on our current routes (real itinerary stops with photos)
   const routePlaceIds = new Set(rawList.flatMap((raw) => (Array.isArray(raw.itinerary) ? raw.itinerary : []).map((s) => s?.placeId).filter(Boolean)));
@@ -169,15 +153,6 @@ export default async function HomePage({ params }) {
   const generalWa = whatsappHref(t("site.generalWa"));
   const finalImage = tours.find((tour) => tour.isPopular)?.img || "/gudauri.webp";
 
-  const trustItems = [
-    { n: 1, icon: <CompassIcon size={20} /> },
-    { n: 2, icon: <UsersIcon size={20} /> },
-    { n: 3, icon: <LocationIcon size={20} /> },
-    { n: 4, icon: <WalletIcon size={20} /> },
-    { n: 5, icon: <LanguagesIcon size={20} /> },
-    { n: 6, icon: <HeadsetIcon size={20} /> },
-  ];
-
   const whyItems = [
     { n: 1, icon: <CompassIcon size={21} /> },
     { n: 2, icon: <CalendarIcon size={21} /> },
@@ -192,45 +167,6 @@ export default async function HomePage({ params }) {
     { title: "transfersPage.p2Title", text: "transfersPage.p2Desc", icon: <ShieldCheckIcon size={18} /> },
     { title: "transfersPage.p4Title", text: "transfersPage.p4Desc", icon: <UsersIcon size={18} /> },
   ];
-
-  const regionCard = (card, index, group, large) => (
-    <li
-      key={card.code}
-      className={`gt-region${large ? " gt-region--lg" : ""}`}
-      style={{ "--span": spanFor(index, group.length) }}
-    >
-      <Image
-        src={card.image}
-        alt=""
-        fill
-        sizes={large ? "(max-width: 640px) 85vw, (max-width: 980px) 50vw, 50vw" : "(max-width: 640px) 85vw, (max-width: 980px) 50vw, 33vw"}
-        className="gt-region-img"
-      />
-      <div className="gt-region-body">
-        <div className="gt-region-chips">
-          {card.tourCount > 0 ? (
-            <span className="gt-chip gt-chip--gold-solid">{interpolate(t("homepage.regionTours"), { count: card.tourCount })}</span>
-          ) : (
-            <span className="gt-chip gt-chip--light">{t("homepage.destOnRequest")}</span>
-          )}
-          {card.placeCount > 0 && <span className="gt-chip gt-chip--glass">{interpolate(t("homepage.regionPlaces"), { count: card.placeCount })}</span>}
-        </div>
-        <h3 className="gt-region-name">{card.name}</h3>
-        {card.desc && <p>{card.desc}</p>}
-        {card.tourCount > 0 ? (
-          <Link href={card.link} className="gt-region-link gt-stretched">
-            {t("homepage.destViewTours")}
-            <ArrowRightIcon size={16} />
-          </Link>
-        ) : (
-          <a href={card.link} target="_blank" rel="noopener noreferrer" className="gt-region-link gt-stretched">
-            {t("homepage.destAsk")}
-            <WhatsAppIcon size={16} />
-          </a>
-        )}
-      </div>
-    </li>
-  );
 
   return (
     <>
@@ -313,25 +249,7 @@ export default async function HomePage({ params }) {
           </p>
         </section>
 
-        {/* 2. Trust — six plain facts that remove booking doubts */}
-        <section className="gt-trust" aria-labelledby="trust-title">
-          <div className="gt-container">
-            <h2 id="trust-title" className="gt-sr-only">{t("homepage.trustTitle")}</h2>
-            <ul className="gt-trust-list" data-reveal-group>
-              {trustItems.map((item) => (
-                <li key={item.n} className="gt-trust-item">
-                  <span className="gt-icon-badge">{item.icon}</span>
-                  <span>
-                    <strong>{t(`trust.t${item.n}Title`)}</strong>
-                    <span>{t(`trust.t${item.n}Text`)}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        {/* 3. Bookable tours */}
+        {/* 2. Bookable tours */}
         <section className="gt-section gt-section--paper" id="tours" aria-labelledby="tours-title">
           <div className="gt-container">
             <div className="gt-section-head gt-section-head--split" data-reveal>
@@ -354,7 +272,7 @@ export default async function HomePage({ params }) {
               </div>
             )}
 
-            <aside className="gt-help-band" aria-labelledby="custom-title" data-reveal>
+            <aside className="gt-help-band" aria-labelledby="custom-title" data-reveal="scale">
               <span className="gt-icon-badge"><RouteIcon size={22} /></span>
               <div>
                 <h3 id="custom-title">{t("homepage.customTitle")}</h3>
@@ -374,45 +292,22 @@ export default async function HomePage({ params }) {
           </div>
         </section>
 
-        {/* 4. Regions */}
-        {(featuredRegions.length > 0 || requestRegions.length > 0) && (
-          <section className="gt-section gt-section--white" id="destinations" aria-labelledby="regions-title">
-            <div className="gt-container">
-              <div className="gt-section-head" data-reveal>
-                <p className="gt-eyebrow">{t("homepage.destEyebrow")}</p>
-                <h2 id="regions-title" className="gt-h2">{t("homepage.destTitle")}</h2>
-                <p className="gt-lead">{t("homepage.destLead")}</p>
-              </div>
-
-              <ul className="gt-regions gt-scroller-sm" data-reveal-group>
-                {featuredRegions.map((card, index) => regionCard(card, index, featuredRegions, true))}
-                {requestRegions.map((card, index) => regionCard(card, index, requestRegions, false))}
-              </ul>
-
-              {chipRegions.length > 0 && (
-                <div className="gt-regions-also" data-reveal>
-                  <strong>{t("homepage.destAlsoLabel")}</strong>
-                  <ul>
-                    {chipRegions.map((card) => (
-                      <li key={card.code}>
-                        {card.tourCount > 0 ? (
-                          <Link href={card.link} className="gt-region-chip">{card.name}</Link>
-                        ) : (
-                          <a href={card.link} target="_blank" rel="noopener noreferrer" className="gt-region-chip">{card.name}</a>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+        {/* 3. Regions map */}
+        <section className="gt-section gt-section--white" id="destinations" aria-labelledby="regions-title">
+          <div className="gt-container">
+            <div className="gt-section-head" data-reveal>
+              <p className="gt-eyebrow">{t("homepage.destEyebrow")}</p>
+              <h2 id="regions-title" className="gt-h2">{t("homepage.destTitle")}</h2>
+              <p className="gt-lead">{t("homepage.destLead")}</p>
             </div>
-          </section>
-        )}
+            <GeorgiaMap regions={mapRegions} />
+          </div>
+        </section>
 
-        {/* 5. Local team */}
+        {/* 4. Local team */}
         <section className="gt-section gt-section--paper" id="why" aria-labelledby="why-title">
           <div className="gt-container gt-why">
-            <div className="gt-why-media" data-reveal="fade">
+            <div className="gt-why-media" data-reveal="image">
               <div className="gt-why-photo">
                 <Image src="/profile.png" alt={t("about.altText")} fill sizes="(max-width: 900px) 100vw, 40vw" />
               </div>
@@ -447,7 +342,7 @@ export default async function HomePage({ params }) {
           </div>
         </section>
 
-        {/* 6. Places on our routes */}
+        {/* 5. Places on our routes */}
         {routePlaces.length >= 3 && (
           <section className="gt-section gt-section--white" aria-labelledby="places-title">
             <div className="gt-container">
@@ -488,34 +383,49 @@ export default async function HomePage({ params }) {
           </section>
         )}
 
-        {/* 7. Private / custom trips */}
-        <section className="gt-section gt-section--stone" id="plan" aria-labelledby="plan-title">
+        {/* 6. Private / custom trips: how it works + three-step planner */}
+        <section className="gt-section gt-section--navy gt-plan-section" id="plan" aria-labelledby="plan-title">
+          <Image src="/gudauri.webp" alt="" fill sizes="100vw" quality={60} className="gt-plan-bg" />
           <div className="gt-container gt-plan">
-            <div className="gt-plan-copy" data-reveal>
+            <div className="gt-plan-copy" data-reveal="left">
               <p className="gt-eyebrow">{t("homepage.planEyebrow")}</p>
               <h2 id="plan-title" className="gt-h2">{t("homepage.planTitle")}</h2>
               <p className="gt-lead">{t("homepage.planLead")}</p>
-              <ul className="gt-plan-includes">
+
+              <ol className="gt-plan-steps">
+                {[1, 2, 3].map((n) => (
+                  <li key={n}>
+                    <span className="gt-plan-step-num" aria-hidden="true">{n}</span>
+                    <div>
+                      <strong>{t(`homepage.planStep${n}Title`)}</strong>
+                      <p>{t(`homepage.planStep${n}Text`)}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+
+              <ul className="gt-plan-tags">
                 {[1, 2, 3, 4, 5].map((n) => (
                   <li key={n}>
-                    <CheckIcon size={18} />
-                    <span>{t(`homepage.planInc${n}`)}</span>
+                    <CheckIcon size={14} />
+                    {t(`homepage.planInc${n}`)}
                   </li>
                 ))}
               </ul>
+
               <p className="gt-plan-call">
                 <PhoneIcon size={17} />
                 {t("homepage.planCall")}{" "}
                 <a href={`tel:${PHONE_TEL}`} dir="ltr">{PHONE_DISPLAY}</a>
               </p>
             </div>
-            <div data-reveal="fade">
+            <div className="gt-plan-form" data-reveal="right">
               <TripPlannerForm />
             </div>
           </div>
         </section>
 
-        {/* 8. Transfers & VIP */}
+        {/* 7. Transfers & fleet */}
         <section className="gt-section gt-section--paper" id="transfers" aria-labelledby="transfers-title">
           <div className="gt-container">
             <div className="gt-section-head" data-reveal>
@@ -524,8 +434,31 @@ export default async function HomePage({ params }) {
               <p className="gt-lead">{t("homepage.transfersLead")}</p>
             </div>
 
+            <div className="gt-fleet-block">
+              <p className="gt-sublabel">{t("homepage.fleetLabel")}</p>
+              <ul className="gt-fleet" data-reveal-group>
+                {FLEET.map((vehicle) => (
+                  <li key={vehicle.key}>
+                    <Link href={href("/transfers")} className="gt-fleet-item" prefetch={false}>
+                      <span className="gt-fleet-media">
+                        <Image src={vehicle.img} alt={t(`transfersPage.vehicles.${vehicle.key}.name`)} fill sizes="(max-width: 560px) 50vw, (max-width: 980px) 50vw, 25vw" />
+                      </span>
+                      <span className="gt-fleet-info">
+                        <strong>{t(`transfersPage.vehicles.${vehicle.key}.name`)}</strong>
+                        <small>
+                          <UsersIcon size={14} />
+                          {interpolate(t("transfersPage.capacityPax"), { count: vehicle.pax })}
+                        </small>
+                        <small>{interpolate(t("transfersPage.capacityBags"), { count: vehicle.bags })}</small>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
             <div className="gt-transfer">
-              <div data-reveal>
+              <div data-reveal="left">
                 <p className="gt-sublabel">{t("homepage.airportsLabel")}</p>
                 <ul className="gt-airports">
                   {[["BUS", "airportBatumi"], ["KUT", "airportKutaisi"], ["TBS", "airportTbilisi"]].map(([code, key]) => (
@@ -548,23 +481,13 @@ export default async function HomePage({ params }) {
                 </ul>
               </div>
 
-              <div data-reveal>
+              <div data-reveal="right">
                 <p className="gt-sublabel">{t("homepage.routesLabel")}</p>
                 <ul className="gt-routes">
                   {[1, 2, 3, 4, 5, 6].map((n) => (
                     <li key={n} className="gt-route">
                       <RouteIcon size={16} />
                       <span>{t(`homepage.route${n}`)}</span>
-                    </li>
-                  ))}
-                </ul>
-                <p className="gt-sublabel gt-sublabel--spaced">{t("homepage.fleetLabel")}</p>
-                <ul className="gt-fleet">
-                  {FLEET.map((vehicle) => (
-                    <li key={vehicle.key} className="gt-fleet-item">
-                      <CarIcon size={20} />
-                      <strong>{t(`transfersPage.vehicles.${vehicle.key}.name`)}</strong>
-                      <small>{interpolate(t("transfersPage.capacityPax"), { count: vehicle.pax })}</small>
                     </li>
                   ))}
                 </ul>
@@ -591,7 +514,7 @@ export default async function HomePage({ params }) {
           </div>
         </section>
 
-        {/* 9. Reviews — only when real reviews exist */}
+        {/* 8. Reviews — only when real reviews exist */}
         {reviews.length > 0 && (
           <section className="gt-section gt-section--white" aria-labelledby="reviews-title">
             <div className="gt-container">
@@ -619,11 +542,11 @@ export default async function HomePage({ params }) {
           </section>
         )}
 
-        {/* 10. FAQ */}
+        {/* 9. FAQ */}
         <section className="gt-section gt-section--stone" id="faq" aria-labelledby="faq-title">
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
           <div className="gt-container gt-faq">
-            <div data-reveal>
+            <div data-reveal="left">
               <p className="gt-eyebrow">{t("homepage.faqEyebrow")}</p>
               <h2 id="faq-title" className="gt-h2">{t("homepage.faqTitle")}</h2>
               <div className="gt-faq-help">
@@ -635,7 +558,7 @@ export default async function HomePage({ params }) {
                 </a>
               </div>
             </div>
-            <div className="gt-faq-list">
+            <div className="gt-faq-list" data-reveal-group>
               {faqs.map((faq, index) => (
                 <details key={faq.q} className="gt-faq-item" open={index === 0}>
                   <summary>
@@ -649,10 +572,10 @@ export default async function HomePage({ params }) {
           </div>
         </section>
 
-        {/* 11. Final CTA */}
+        {/* 10. Final CTA */}
         <section className="gt-final" aria-labelledby="final-title">
           <Image src={finalImage} alt="" fill sizes="100vw" quality={60} className="gt-final-img" />
-          <div className="gt-container" data-reveal>
+          <div className="gt-container" data-reveal="scale">
             <h2 id="final-title" className="gt-h2">{t("homepage.finalTitle")}</h2>
             <p>{t("homepage.finalText")}</p>
             <div className="gt-final-actions">

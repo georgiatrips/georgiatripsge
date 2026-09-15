@@ -931,7 +931,19 @@ export const ar = {
     "msgTravelers": "المسافرون",
     "msgInterests": "الاهتمامات",
     "msgName": "الاسم",
-    "msgNotes": "ملاحظات"
+    "msgNotes": "ملاحظات",
+    "stepOf": "الخطوة {n} من {total}",
+    "step1Title": "ما نوع الرحلة التي تخطط لها؟",
+    "step2Title": "متى وكم عدد المسافرين؟",
+    "step3Title": "القليل عن اهتماماتك",
+    "next": "التالي",
+    "back": "رجوع",
+    "fewer": "مسافرون أقل",
+    "more": "مسافرون أكثر",
+    "styleTourDesc": "سيارة مع سائق ليوم كامل",
+    "styleMultiDesc": "عدة أيام، مع الفنادق عند الطلب",
+    "styleTransferDesc": "من المطار أو بين المدن",
+    "styleVipDesc": "سيارات فاخرة ورحلات للشركات"
   },
   "homepage": {
     "heroEyebrow": "جولات · سائق خاص · خدمات توصيل",
@@ -1077,7 +1089,20 @@ export const ar = {
     "finalWa": "راسلنا عبر واتساب",
     "searchTitle": "ابحث عن جولة",
     "regionTours": "الجولات: {count}",
-    "regionPlaces": "الأماكن: {count}"
+    "regionPlaces": "الأماكن: {count}",
+    "planStep1Title": "أخبرنا بخطتك",
+    "planStep1Text": "اختر نوع الرحلة والتواريخ والاهتمامات.",
+    "planStep2Title": "احصل على مسار وسعر",
+    "planStep2Text": "يقترح فريقنا المحلي مساراً مع سائق وسعراً واضحاً.",
+    "planStep3Title": "أكّد عبر واتساب",
+    "planStep3Text": "لا حاجة إلى دفع مسبق للجولات.",
+    "mapHint": "اختر منطقة على الخريطة",
+    "mapLegendTours": "منطقة بها جولات",
+    "mapLegendRequest": "رحلة خاصة عند الطلب",
+    "mapLegendPlace": "موقع",
+    "mapOffice": "مكتب GeorgiaTrips",
+    "mapRegionsList": "المناطق",
+    "mapLocations": "مواقع في هذه المنطقة"
   }
 };
 export default ar;

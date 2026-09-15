@@ -931,7 +931,19 @@ export const en = {
     "msgTravelers": "Travelers",
     "msgInterests": "Interests",
     "msgName": "Name",
-    "msgNotes": "Notes"
+    "msgNotes": "Notes",
+    "stepOf": "Step {n} of {total}",
+    "step1Title": "What kind of trip are you planning?",
+    "step2Title": "When, and how many travelers?",
+    "step3Title": "A little about your interests",
+    "next": "Next",
+    "back": "Back",
+    "fewer": "Fewer travelers",
+    "more": "More travelers",
+    "styleTourDesc": "A car and driver for the day",
+    "styleMultiDesc": "Several days, hotels on request",
+    "styleTransferDesc": "From the airport or between cities",
+    "styleVipDesc": "Premium vehicles and corporate trips"
   },
   "homepage": {
     "heroEyebrow": "Tours · Private drivers · Transfers",
@@ -1077,7 +1089,20 @@ export const en = {
     "finalWa": "WhatsApp us",
     "searchTitle": "Find a tour",
     "regionTours": "Tours: {count}",
-    "regionPlaces": "Places: {count}"
+    "regionPlaces": "Places: {count}",
+    "planStep1Title": "Tell us your plan",
+    "planStep1Text": "Pick the trip type, dates and interests.",
+    "planStep2Title": "Get a route and a price",
+    "planStep2Text": "Our local team suggests a route with a driver and a clear price.",
+    "planStep3Title": "Confirm on WhatsApp",
+    "planStep3Text": "No prepayment is needed for tours.",
+    "mapHint": "Choose a region on the map",
+    "mapLegendTours": "Region with tours",
+    "mapLegendRequest": "Private trip on request",
+    "mapLegendPlace": "Location",
+    "mapOffice": "GeorgiaTrips office",
+    "mapRegionsList": "Regions",
+    "mapLocations": "Locations in this region"
   }
 };
 export default en;

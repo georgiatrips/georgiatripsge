@@ -931,7 +931,19 @@ export const ka = {
     "msgTravelers": "მგზავრები",
     "msgInterests": "ინტერესები",
     "msgName": "სახელი",
-    "msgNotes": "შენიშვნა"
+    "msgNotes": "შენიშვნა",
+    "stepOf": "ნაბიჯი {n} / {total}",
+    "step1Title": "რა ტიპის მოგზაურობა გაინტერესებთ?",
+    "step2Title": "როდის და რამდენი ადამიანი?",
+    "step3Title": "ცოტა რამ თქვენი ინტერესების შესახებ",
+    "next": "შემდეგი",
+    "back": "უკან",
+    "fewer": "ნაკლები მგზავრი",
+    "more": "მეტი მგზავრი",
+    "styleTourDesc": "ავტომობილი და მძღოლი ერთი დღით",
+    "styleMultiDesc": "რამდენიმე დღე, სასტუმროები მოთხოვნით",
+    "styleTransferDesc": "აეროპორტიდან ან ქალაქებს შორის",
+    "styleVipDesc": "პრემიუმ ავტომობილები და კორპორატიული ვიზიტები"
   },
   "homepage": {
     "heroEyebrow": "ტურები · პირადი მძღოლი · ტრანსფერები",
@@ -1077,7 +1089,20 @@ export const ka = {
     "finalWa": "მოგვწერეთ WhatsApp-ზე",
     "searchTitle": "ტურების ძებნა",
     "regionTours": "ტურები: {count}",
-    "regionPlaces": "ადგილები: {count}"
+    "regionPlaces": "ადგილები: {count}",
+    "planStep1Title": "მოგვიყევით თქვენი გეგმის შესახებ",
+    "planStep1Text": "აირჩიეთ ტიპი, თარიღები და ინტერესები.",
+    "planStep2Title": "მიიღეთ მარშრუტი და ფასი",
+    "planStep2Text": "ადგილობრივი გუნდი შემოგთავაზებთ მარშრუტს მძღოლითა და მკაფიო ფასით.",
+    "planStep3Title": "დაადასტურეთ WhatsApp-ზე",
+    "planStep3Text": "ტურებზე წინასწარი გადახდა საჭირო არ არის.",
+    "mapHint": "აირჩიეთ რეგიონი რუკაზე",
+    "mapLegendTours": "რეგიონი ტურებით",
+    "mapLegendRequest": "ინდივიდუალური ტური მოთხოვნით",
+    "mapLegendPlace": "ლოკაცია",
+    "mapOffice": "GeorgiaTrips-ის ოფისი",
+    "mapRegionsList": "რეგიონები",
+    "mapLocations": "ლოკაციები რეგიონში"
   }
 };
 export default ka;

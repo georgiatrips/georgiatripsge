@@ -931,7 +931,19 @@ export const ru = {
     "msgTravelers": "Путешественников",
     "msgInterests": "Интересы",
     "msgName": "Имя",
-    "msgNotes": "Примечания"
+    "msgNotes": "Примечания",
+    "stepOf": "Шаг {n} из {total}",
+    "step1Title": "Какую поездку вы планируете?",
+    "step2Title": "Когда и сколько путешественников?",
+    "step3Title": "Немного о ваших интересах",
+    "next": "Далее",
+    "back": "Назад",
+    "fewer": "Меньше путешественников",
+    "more": "Больше путешественников",
+    "styleTourDesc": "Автомобиль с водителем на день",
+    "styleMultiDesc": "Несколько дней, отели по запросу",
+    "styleTransferDesc": "Из аэропорта или между городами",
+    "styleVipDesc": "Премиум-автомобили и корпоративные поездки"
   },
   "homepage": {
     "heroEyebrow": "Туры · Личный водитель · Трансферы",
@@ -1077,7 +1089,20 @@ export const ru = {
     "finalWa": "Написать в WhatsApp",
     "searchTitle": "Найти тур",
     "regionTours": "Туров: {count}",
-    "regionPlaces": "Мест: {count}"
+    "regionPlaces": "Мест: {count}",
+    "planStep1Title": "Расскажите о своих планах",
+    "planStep1Text": "Выберите тип поездки, даты и интересы.",
+    "planStep2Title": "Получите маршрут и цену",
+    "planStep2Text": "Местная команда предложит маршрут с водителем и понятной ценой.",
+    "planStep3Title": "Подтвердите в WhatsApp",
+    "planStep3Text": "Предоплата за туры не требуется.",
+    "mapHint": "Выберите регион на карте",
+    "mapLegendTours": "Регион с турами",
+    "mapLegendRequest": "Индивидуальная поездка по запросу",
+    "mapLegendPlace": "Локация",
+    "mapOffice": "Офис GeorgiaTrips",
+    "mapRegionsList": "Регионы",
+    "mapLocations": "Локации в регионе"
   }
 };
 export default ru;

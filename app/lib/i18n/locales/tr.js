@@ -931,7 +931,19 @@ export const tr = {
     "msgTravelers": "Kişi sayısı",
     "msgInterests": "İlgi alanları",
     "msgName": "Ad",
-    "msgNotes": "Notlar"
+    "msgNotes": "Notlar",
+    "stepOf": "Adım {n} / {total}",
+    "step1Title": "Nasıl bir gezi planlıyorsunuz?",
+    "step2Title": "Ne zaman ve kaç kişi?",
+    "step3Title": "İlgi alanlarınız hakkında biraz bilgi",
+    "next": "İleri",
+    "back": "Geri",
+    "fewer": "Daha az yolcu",
+    "more": "Daha fazla yolcu",
+    "styleTourDesc": "Bir günlüğüne araç ve şoför",
+    "styleMultiDesc": "Birkaç gün, talep üzerine oteller",
+    "styleTransferDesc": "Havalimanından veya şehirler arası",
+    "styleVipDesc": "Premium araçlar ve kurumsal geziler"
   },
   "homepage": {
     "heroEyebrow": "Turlar · Özel şoför · Transferler",
@@ -1077,7 +1089,20 @@ export const tr = {
     "finalWa": "WhatsApp'tan yazın",
     "searchTitle": "Tur bul",
     "regionTours": "Tur: {count}",
-    "regionPlaces": "Yer: {count}"
+    "regionPlaces": "Yer: {count}",
+    "planStep1Title": "Planınızı anlatın",
+    "planStep1Text": "Gezi türünü, tarihleri ve ilgi alanlarınızı seçin.",
+    "planStep2Title": "Rota ve fiyat alın",
+    "planStep2Text": "Yerel ekibimiz şoförlü bir rota ve net bir fiyat önerir.",
+    "planStep3Title": "WhatsApp'tan onaylayın",
+    "planStep3Text": "Turlar için ön ödeme gerekmez.",
+    "mapHint": "Haritada bir bölge seçin",
+    "mapLegendTours": "Turların olduğu bölge",
+    "mapLegendRequest": "Talep üzerine özel gezi",
+    "mapLegendPlace": "Konum",
+    "mapOffice": "GeorgiaTrips ofisi",
+    "mapRegionsList": "Bölgeler",
+    "mapLocations": "Bu bölgedeki konumlar"
   }
 };
 export default tr;
