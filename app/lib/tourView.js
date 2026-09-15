@@ -1,4 +1,4 @@
-import { normalizeFirestoreTour, translateDuration, translateLocation } from "./toursFirestore";
+import { MONTH_NAMES, normalizeFirestoreTour, translateDuration, translateLocation } from "./toursFirestore";
 import { translate } from "./i18n/translate";
 
 // Presentation model for tour cards and summaries. Pure functions — safe in
@@ -17,13 +17,27 @@ function todayIso() {
 
 const INTL_LOCALE = { ka: "ka-GE", en: "en-GB", ru: "ru-RU", tr: "tr-TR", ar: "ar-u-nu-latn" };
 
+// Some browsers and in-app webviews ship a reduced ICU without Georgian (or
+// other) locale data and silently format in English. When the locale is not
+// supported, fall back to the site's own month names so labels stay in the
+// page language and match the server-rendered HTML.
+function fallbackDate(y, m, d, lang, options) {
+  const names = MONTH_NAMES[lang] || MONTH_NAMES.en;
+  const month = options.month === "short" && lang !== "ar" ? names[m - 1].slice(0, 3) : names[m - 1];
+  if (options.month && options.day) return `${d} ${month}`;
+  if (options.month) return month;
+  return String(d);
+}
+
 export function formatTourDate(iso, lang = "en", options = { day: "numeric", month: "short" }) {
   if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
   const [y, m, d] = iso.split("-").map(Number);
+  const locale = INTL_LOCALE[lang] || "en-GB";
   try {
-    return new Intl.DateTimeFormat(INTL_LOCALE[lang] || "en-GB", { ...options, timeZone: "UTC" }).format(Date.UTC(y, m - 1, d));
+    if (Intl.DateTimeFormat.supportedLocalesOf([locale]).length === 0) return fallbackDate(y, m, d, lang, options);
+    return new Intl.DateTimeFormat(locale, { ...options, timeZone: "UTC" }).format(Date.UTC(y, m - 1, d));
   } catch {
-    return iso;
+    return fallbackDate(y, m, d, lang, options);
   }
 }
 

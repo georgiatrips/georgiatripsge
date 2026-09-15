@@ -268,8 +268,9 @@ html[dir="rtl"] .gt-hero-scrim {
 .gt-departure-title small { display: block; margin-block-start: 0.15rem; font-size: 0.78rem; font-weight: 500; color: var(--gt-muted); }
 .gt-departure-title .gt-departure-seats { color: var(--gt-gold-ink); font-weight: 700; }
 
-.gt-departure-price { display: grid; justify-items: end; font-size: 1.05rem; font-weight: 800; color: var(--gt-navy-900); white-space: nowrap; }
-.gt-departure-price small { font-size: 0.68rem; font-weight: 600; color: var(--gt-muted); }
+.gt-departure-price { display: grid; justify-items: end; max-width: 6.5rem; font-size: 1.05rem; font-weight: 800; color: var(--gt-navy-900); text-align: end; }
+.gt-departure-price .gt-price-box { white-space: nowrap; }
+.gt-departure-price small { font-size: 0.68rem; font-weight: 600; line-height: 1.25; color: var(--gt-muted); }
 
 .gt-hero-card-note { margin: 0 0 0.6rem; font-size: 0.8rem; line-height: 1.45; color: var(--gt-muted); }
 
@@ -560,6 +561,14 @@ html[dir="rtl"] .gt-region:hover .gt-region-link svg { transform: translateX(-3p
   align-items: start;
   gap: clamp(2rem, 5vw, 4.5rem);
 }
+
+/* Grid children default to min-width:auto; long unbreakable words and date
+   inputs would otherwise push the planner wider than a phone screen. */
+.gt-plan > *,
+.gt-planner,
+.gt-planner .gt-field { min-width: 0; }
+.gt-segment-opt,
+.gt-check-chip { overflow-wrap: anywhere; }
 
 .gt-plan-includes { display: grid; gap: 0.75rem; margin: 1.6rem 0; padding: 0; list-style: none; }
 .gt-plan-includes li { display: flex; align-items: flex-start; gap: 0.6rem; font-weight: 600; line-height: 1.45; }

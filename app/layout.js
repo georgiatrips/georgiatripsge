@@ -62,12 +62,14 @@ const notoNaskhArabic = Noto_Naskh_Arabic({
   adjustFontFallback: false,
 });
 
+// Not preloaded: only /ar pages use it, and unicode-range keeps it from
+// downloading elsewhere. Preloading made every Georgian/English page fetch it.
 const notoArabic = Noto_Sans_Arabic({
   variable: "--font-noto-arabic",
   subsets: ["arabic"],
   weight: ["400", "500", "600", "700", "800"],
   display: "swap",
-  preload: true,
+  preload: false,
   adjustFontFallback: true,
 });
 

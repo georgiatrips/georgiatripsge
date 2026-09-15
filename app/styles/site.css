@@ -243,6 +243,11 @@ html[lang="ar"] {
 .gt-btn--ghost-light:hover { background: rgba(255, 255, 255, 0.18); border-color: #fff; }
 
 .gt-btn--lg { min-height: 54px; padding: 0 1.65rem; font-size: 1.02rem; }
+
+/* Long Georgian and Russian labels must wrap on phones instead of overflowing. */
+@media (max-width: 520px) {
+  .gt-btn { white-space: normal; padding-block: 0.55rem; }
+}
 .gt-btn--sm { min-height: 40px; padding: 0 0.95rem; font-size: 0.9rem; border-radius: 9px; }
 .gt-btn--block { width: 100%; }
 

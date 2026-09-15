@@ -156,6 +156,11 @@ button.tdp-stop-media:focus-visible { outline: 3px solid var(--gt-teal, #29b2b7)
 .tdp-stop-more:focus-visible,
 .tdp-stop-link:focus-visible { outline: 3px solid var(--gt-teal, #29b2b7); outline-offset: 2px; border-radius: 4px; }
 
+/* Grid children must be allowed to shrink below their content width on
+   phones, otherwise the single column grows wider than the screen. */
+.tdp-content-col,
+.tdp-sidebar-col { min-width: 0; }
+
 /* ---------- Booking sidebar refinements ---------- */
 
 .tdp-pay-note {

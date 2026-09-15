@@ -485,8 +485,8 @@ html[dir="rtl"] .gt-drawer { animation-name: gt-drawer-in-rtl; }
     inset-block-end: 0;
     z-index: 9980;
     display: grid;
-    grid-template-columns: 1.1fr 0.9fr 1.2fr;
-    gap: 0.5rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
     padding: 0.55rem 0.75rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
     background: rgba(255, 255, 255, 0.98);
     border-block-start: 1px solid var(--gt-line);
@@ -507,14 +507,15 @@ html[dir="rtl"] .gt-drawer { animation-name: gt-drawer-in-rtl; }
     background: #fff;
     color: var(--gt-navy-900);
     font-family: var(--gt-font-body);
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     font-weight: 700;
     text-align: center;
     text-decoration: none;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
+
+  .gt-mobile-bar-item svg { flex: none; }
+  .gt-mobile-bar-item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
   .gt-mobile-bar-item.is-wa { background: var(--gt-wa); border-color: transparent; color: #fff; }
   .gt-mobile-bar-item.is-primary { background: var(--gt-gold); border-color: transparent; color: var(--gt-navy-900); }

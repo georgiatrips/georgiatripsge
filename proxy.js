@@ -54,6 +54,8 @@ export function proxy(request) {
   // budget and answer real visitors with "Too many requests".
   const isPrefetch =
     request.headers.get("next-router-prefetch") === "1" ||
+    // In-app navigations fetch RSC payloads; only full document loads count.
+    request.headers.get("rsc") === "1" ||
     request.headers.get("purpose") === "prefetch" ||
     request.headers.get("sec-purpose")?.includes("prefetch");
   if (!isApiRequest(pathname) && !isStaticAssetRequest(request) && !isPrefetch) {
