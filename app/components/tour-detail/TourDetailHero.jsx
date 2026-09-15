@@ -64,28 +64,26 @@ export default function TourDetailHero({
           <div className="tdp-hero2-facts">
             <div className="tdp-hero2-fact">
               <span className="fact-label">{t("tourDetail.duration")}</span>
-              <strong className="fact-value">
-                {translateDuration(tour.duration, lang) || (lang === "en" ? "1 Day / 0 Nights" : lang === "ru" ? "1 день / 0 ночей" : lang === "tr" ? "1 Gün / 0 Gece" : lang === "ar" ? "1 يوم / 0 ليالي" : "1 დღე / 0 ღამე")}
-              </strong>
+              <strong className="fact-value">{translateDuration(tour.duration, lang) || "—"}</strong>
             </div>
             <div className="tdp-hero2-fact">
               <span className="fact-label">{t("tourDetail.destination")}</span>
-              <strong className="fact-value">{translateLocation(tour.location || tour.destination || t("common.georgia"), lang)}</strong>
+              <strong className="fact-value">{translateLocation(tour.destinationLabel || tour.destination || t("common.georgia"), lang).replace(/^📍\s*/, "")}</strong>
             </div>
-            <div className="tdp-hero2-fact">
-              <span className="fact-label">{t("tourDetail.group")}</span>
-              <strong className="fact-value">
-                {isFirestoreTour
-                  ? `${configuredPeopleMin}-${groupMaxCap} ${t("tourDetail.peopleSuffix")}`
-                  : `1-18 ${t("tourDetail.peopleSuffix")}`}
-              </strong>
-            </div>
-            <div className="tdp-hero2-fact">
-              <span className="fact-label">{t("tourDetail.price")}</span>
-              <strong className="fact-value accent">
-                <TourPrice price={tour.priceGroup || tour.pricePrivate || "₾70"} lang={lang} variant="hero" />
-              </strong>
-            </div>
+            {isFirestoreTour && (
+              <div className="tdp-hero2-fact">
+                <span className="fact-label">{t("tourDetail.group")}</span>
+                <strong className="fact-value">{`${configuredPeopleMin}-${groupMaxCap} ${t("tourDetail.peopleSuffix")}`}</strong>
+              </div>
+            )}
+            {(tour.priceGroup || tour.pricePrivate) && (
+              <div className="tdp-hero2-fact">
+                <span className="fact-label">{t("tourDetail.price")}</span>
+                <strong className="fact-value accent">
+                  <TourPrice price={tour.priceGroup || tour.pricePrivate} lang={lang} variant="hero" />
+                </strong>
+              </div>
+            )}
           </div>
 
           <button type="button" className="tdp-hero2-cta" onClick={scrollToBooking}>

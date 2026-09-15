@@ -22,6 +22,8 @@ import { useCoupon } from "../../lib/CouponContext";
 import { getCouponByCode } from "../../lib/coupons";
 import { trackMetaPurchase, trackMetaViewContent, trackMetaInitiateCheckout, trackEvent } from "../../lib/analytics";
 import { getStoredMarketingAttribution } from "../../lib/utmTracker";
+import { toTourViews } from "../../lib/tourView";
+import { interpolate } from "../../lib/i18n/translate";
 
 import TourDetailHero from "../tour-detail/TourDetailHero";
 import TourDetailRouteMap from "../tour-detail/TourDetailRouteMap";
@@ -212,16 +214,21 @@ export default function TourDetailClient({
         monthIndex: m.monthIndex,
         dates: m.dates.map((d) => d.chip),
         seatsByChip: Object.fromEntries(m.dates.map((d) => [d.chip, d.freeSeats])),
+        isoByChip: Object.fromEntries(m.dates.map((d) => [d.chip, d.date])),
       }))
     : [];
 
   const tourSchedule = firestoreSchedule;
-  const normalizedAllTours = useMemo(() => {
-    return (allFsTours || []).map(t => normalizeFirestoreTour(t, lang, placesList)).filter(Boolean);
-  }, [allFsTours, lang, placesList]);
-
-  const similarTours = normalizedAllTours.filter((t) => t.id !== rawTour?.id).slice(0, 3);
-  const popularTours = normalizedAllTours.filter((t) => t.isPopular && t.id !== rawTour?.id);
+  // Other tours as card view models (popular first). One section only: with a
+  // small catalogue, "similar" and "popular" used to repeat the same tours.
+  const currentTourId = rawTour?.id;
+  const otherTourViews = useMemo(
+    () =>
+      toTourViews((allFsTours || []).filter((item) => item?.id !== currentTourId), lang, placesList)
+        .sort((a, b) => Number(b.isPopular) - Number(a.isPopular))
+        .slice(0, 3),
+    [allFsTours, currentTourId, lang, placesList]
+  );
 
   const tourFaqs = [
     { q: t("faq.q1"), a: t("faq.a1") },
@@ -232,15 +239,11 @@ export default function TourDetailClient({
     { q: t("faq.q6"), a: t("faq.a6") },
   ];
 
-  const groupDatesMMDD = tourSchedule.flatMap((mGroup) =>
-    (mGroup?.dates || []).map((d) => {
-      const [dd, mm] = String(d).split(".");
-      return `${mm}.${dd}`;
-    })
-  );
+  // Upcoming group departures as full ISO dates (no year guessing).
+  const groupDatesIso = tourSchedule.flatMap((mGroup) => Object.values(mGroup?.isoByChip || {})).sort();
   const hasGroupSupport = isFirestoreTour && rawTour ? !!rawTour.hasGroup : true;
   const hasPrivateSupport = isFirestoreTour && rawTour ? !!rawTour.hasPrivate : true;
-  const hasGroupDates = hasGroupSupport && groupDatesMMDD.length > 0;
+  const hasGroupDates = hasGroupSupport && groupDatesIso.length > 0;
 
   const seatsByChip = {};
   if (firestoreSchedule) {
@@ -354,6 +357,8 @@ export default function TourDetailClient({
 
   const scheduleDateToIso = (chipDate) => {
     if (!chipDate) return "";
+    const exact = tourSchedule.find((mGroup) => mGroup?.isoByChip?.[chipDate])?.isoByChip[chipDate];
+    if (exact) return exact;
     const [dd, mm] = String(chipDate).split(".");
     if (!dd || !mm) return "";
     const yr = new Date().getFullYear();
@@ -454,15 +459,24 @@ export default function TourDetailClient({
         createdAt: new Date().toISOString(),
       };
 
-      await createBooking(bookingData);
+      // The success page looks the booking up by its booking ID (plus the
+      // access token / phone kept in localStorage). It previously received
+      // the tour ID, so it could never find the booking.
+      const result = await createBooking(bookingData);
+      const bookingId = result?.bookingId;
+      if (!bookingId) throw new Error("Booking was not saved");
+      try {
+        if (result.accessToken) localStorage.setItem(`gt_token_${bookingId}`, result.accessToken);
+        if (bookingPhone) localStorage.setItem(`gt_phone_${bookingId}`, bookingPhone);
+      } catch (_) {}
       setBookingSubmitted(true);
-      router.push(`/booking/success/${tour.id}`);
+      router.push(`/booking/success/${encodeURIComponent(bookingId)}`);
     } catch (err) {
       console.error("Booking error:", err);
       // Fallback to WhatsApp
       const tourTitle = asLocalizedText(tour.title, lang);
-      const waMsg = `Hello! I would like to book tour: "${tourTitle}" on ${selectedDate} for ${bookingPeople} people.`;
-      window.open(`${WA_LINK}?text=${encodeURIComponent(waMsg)}`, "_blank");
+      const waMsg = interpolate(t("tourDetail.bookingFallbackWa"), { title: tourTitle, date: selectedDate || "—", people: bookingPeople });
+      window.open(`${WA_LINK}?text=${encodeURIComponent(waMsg)}`, "_blank", "noopener,noreferrer");
     } finally {
       setBookingSubmitting(false);
     }
@@ -519,9 +533,7 @@ export default function TourDetailClient({
     : (tour?.priceGroup || tour?.price);
 
   const tourLocalizedTitle = asLocalizedText(tour?.title, lang);
-  const waMsg = lang === "ka"
-    ? `გამარჯობა! მაინტერესებს ტური: "${tourLocalizedTitle}"`
-    : `Hello! I would like more information about the tour: "${tourLocalizedTitle}"`;
+  const waMsg = interpolate(t("tourCard.waMessage"), { title: tourLocalizedTitle });
   const waUrl = `${WA_LINK}?text=${encodeURIComponent(waMsg)}`;
 
   const showMobileStickyBar = !isHeroInView && !isFormInView;
@@ -593,7 +605,7 @@ export default function TourDetailClient({
             hasGroupSupport={hasGroupSupport}
             hasPrivateSupport={hasPrivateSupport}
             hasGroupDates={hasGroupDates}
-            groupDatesMMDD={groupDatesMMDD}
+            groupDatesIso={groupDatesIso}
             tourType={tourType}
             handleTourTypeChange={handleTourTypeChange}
             groupUnitPrice={groupUnitPrice}
@@ -636,10 +648,7 @@ export default function TourDetailClient({
       </section>
 
       {/* 3. Similar & Popular Tours Section */}
-      <TourDetailSimilarTours
-        similarTours={similarTours}
-        popularTours={popularTours}
-      />
+      <TourDetailSimilarTours tours={otherTourViews} />
 
       {/* 4. Special Excursions Contact Banner */}
       <TourDetailPromoBanners />
@@ -655,18 +664,18 @@ export default function TourDetailClient({
       {lightboxImgIndex !== null && tour.gallery && (
         <div className="tdp-lightbox-overlay" onClick={closeLightbox}>
           <div className="tdp-lightbox-content" onClick={(e) => e.stopPropagation()}>
-            <button type="button" className="lb-close" onClick={closeLightbox}>✕</button>
-            <button type="button" className="lb-nav lb-prev" onClick={prevLightboxImg}>‹</button>
+            <button type="button" className="lb-close" onClick={closeLightbox} aria-label={t("common.close")}>✕</button>
+            <button type="button" className="lb-nav lb-prev" onClick={prevLightboxImg} aria-label={t("datePicker.prevMonth")}>‹</button>
             <div className="lb-image-wrapper">
               <Image
                 src={tour.gallery[lightboxImgIndex]}
-                alt="Enlarge"
+                alt={resolvePhotoPlaceTitle(tour.gallery[lightboxImgIndex], lightboxImgIndex) || asLocalizedText(tour.title, lang)}
                 width={1200}
                 height={800}
                 style={{ objectFit: "contain", maxHeight: "85vh", width: "auto" }}
               />
             </div>
-            <button type="button" className="lb-nav lb-next" onClick={nextLightboxImg}>›</button>
+            <button type="button" className="lb-nav lb-next" onClick={nextLightboxImg} aria-label={t("datePicker.nextMonth")}>›</button>
             <div className="lb-counter" style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "center" }}>
               {(() => {
                 const cleanLoc = resolvePhotoPlaceTitle(tour.gallery[lightboxImgIndex], lightboxImgIndex);

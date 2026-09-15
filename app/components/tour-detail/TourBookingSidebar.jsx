@@ -4,9 +4,11 @@ import React from "react";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { useCurrency } from "../../lib/currency/CurrencyContext";
 import { asLocalizedText } from "../../lib/toursFirestore";
-import { WA_LINK, WA_NUMBER } from "../../lib/shared";
+import { interpolate } from "../../lib/i18n/translate";
+import { PHONE_TEL, whatsappHref } from "../../lib/shared";
 import TourPrice from "../TourPrice";
 import DatePicker from "../DatePicker";
+import { LocationIcon, PhoneIcon, ShieldCheckIcon, WalletIcon, WhatsAppIcon } from "../Icons";
 
 export default function TourBookingSidebar({
   tour,
@@ -14,7 +16,7 @@ export default function TourBookingSidebar({
   hasGroupSupport,
   hasPrivateSupport,
   hasGroupDates,
-  groupDatesMMDD,
+  groupDatesIso = [],
   tourType,
   handleTourTypeChange,
   groupUnitPrice,
@@ -54,51 +56,24 @@ export default function TourBookingSidebar({
 }) {
   const { t, lang } = useLanguage();
   const { format } = useCurrency();
+  const tourTitle = asLocalizedText(tour.title, lang);
 
-  const TRUST_LABELS = {
-    ka: {
-      cancellation: "უფასო გაუქმება 24 სთ-ით ადრე",
-      payOnArrival: "გადახდა ადგილზე — წინასწარი გადახდის გარეშე",
-      instantWa: "მყისიერი დასტური WhatsApp-ით",
-      guaranteed: "გარანტირებული ტური & ლოკალური გიდი",
-    },
-    en: {
-      cancellation: "Free cancellation up to 24h before",
-      payOnArrival: "Pay on arrival — no prepayment needed",
-      instantWa: "Instant WhatsApp confirmation",
-      guaranteed: "Guaranteed tour & local guide",
-    },
-    ru: {
-      cancellation: "Бесплатная отмена за 24ч",
-      payOnArrival: "Оплата на месте — без предоплаты",
-      instantWa: "Мгновенное подтверждение в WhatsApp",
-      guaranteed: "Гарантированный тур и местный гид",
-    },
-    tr: {
-      cancellation: "24 saat öncesine kadar ücretsiz iptal",
-      payOnArrival: "Varışta ödeme — ön ödeme gerekmez",
-      instantWa: "WhatsApp ile anında onay",
-      guaranteed: "Garantili tur ve yerel rehber",
-    },
-    ar: {
-      cancellation: "إلغاء مجاني حتى 24 ساعة قبل الموعد",
-      payOnArrival: "الدفع عند الوصول — بدون دفع مسبق",
-      instantWa: "تأكيد فوري عبر واتساب",
-      guaranteed: "جولة مضمونة ومرشد محلي",
-    },
-  };
-  const trustLabels = TRUST_LABELS[lang] || TRUST_LABELS.ka;
+  // Every statement here matches the site FAQ and tour data. Cancellation
+  // uses the FAQ's 48-hour window (the sidebar previously said 24 hours).
+  const trustItems = [
+    { key: "cancel", icon: <ShieldCheckIcon size={16} />, text: t("tourDetail.trustCancel") },
+    { key: "pay", icon: <WalletIcon size={16} />, text: t("tourDetail.trustPay") },
+    { key: "pickup", icon: <LocationIcon size={16} />, text: t("tourDetail.trustPickup") },
+    { key: "confirm", icon: <WhatsAppIcon size={16} />, text: t("tourDetail.trustConfirm") },
+  ];
 
   return (
     <aside className="tdp-sidebar-col" ref={bookingSidebarRef} id="mobile-booking-target">
       <div className="tdp-sticky-card">
-        
-        {/* Pricing Banner Box */}
         <div className="tdp-price-box">
           <span className="price-header-label">{t("tourDetail.priceHeader")}</span>
-          
+
           <div className="price-cards-stack">
-            {/* Group Tour Price */}
             {hasGroupSupport && tour.priceGroup && (
               <button
                 type="button"
@@ -117,7 +92,6 @@ export default function TourBookingSidebar({
               </button>
             )}
 
-            {/* Private Tour Price */}
             {hasPrivateSupport && tour.pricePrivate && (
               <button
                 type="button"
@@ -136,35 +110,22 @@ export default function TourBookingSidebar({
             )}
           </div>
 
-          {/* Payment Notice Badge inside Price Box */}
-          <div style={{ marginTop: "0.85rem" }}>
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.45rem",
-              background: "rgba(255, 255, 255, 0.12)",
-              border: "1px solid rgba(255, 255, 255, 0.22)",
-              borderRadius: "8px",
-              padding: "0.45rem 0.75rem",
-              fontSize: "0.78rem",
-              fontWeight: 600,
-              color: "#ffffff"
-            }}>
-              <span>💵</span>
-              <span>{trustLabels.payOnArrival}</span>
-            </div>
-          </div>
+          <p className="tdp-pay-note">
+            <WalletIcon size={15} />
+            <span>{t("tourDetail.trustPay")}</span>
+          </p>
         </div>
 
-        {/* High Conversion Booking Form */}
         <form className="tdp-booking-form" onSubmit={handleBookingSubmit} id="tour-booking-form">
           <h3>{t("tourDetail.onlineBooking")}</h3>
           <p className="form-sub">{t("tourDetail.formSubtitle")}</p>
 
           <div className="tdp-form-group">
-            <label>{t("tourDetail.yourName")}</label>
+            <label htmlFor="booking-name">{t("tourDetail.yourName")}</label>
             <input
+              id="booking-name"
               type="text"
+              autoComplete="name"
               placeholder={t("tourDetail.namePlaceholder")}
               value={bookingName}
               onChange={(e) => setBookingName(e.target.value)}
@@ -173,8 +134,8 @@ export default function TourBookingSidebar({
           </div>
 
           <div className="tdp-form-group">
-            <label>{t("tourDetail.tourType")}</label>
-            <div className="tdp-tour-type-switch" role="radiogroup" aria-label={t("tourDetail.tourType")}>
+            <span className="tdp-form-label" id="booking-type-label">{t("tourDetail.tourType")}</span>
+            <div className="tdp-tour-type-switch" role="radiogroup" aria-labelledby="booking-type-label">
               {hasGroupSupport && (
                 <button
                   type="button"
@@ -201,31 +162,30 @@ export default function TourBookingSidebar({
                 </button>
               )}
             </div>
-            {hasGroupSupport && !hasGroupDates && (
-              <p className="tdp-no-group-note">
-                {t("tourDetail.noScheduleDesc")}
-              </p>
-            )}
+            {hasGroupSupport && !hasGroupDates && <p className="tdp-no-group-note">{t("tourDetail.noScheduleDesc")}</p>}
           </div>
 
           <div className="tdp-form-group">
-            <label>{t("tourDetail.departureDate")}</label>
+            <label htmlFor="booking-date">{t("tourDetail.departureDate")}</label>
             <DatePicker
+              id="booking-date"
               value={selectedDate}
-              onChange={(dStr) => setSelectedDate(dStr)}
+              onChange={(value) => setSelectedDate(value)}
               placeholder={t("tourDetail.selectDatePlaceholder")}
-              direction="down"
-              availableDates={tourType === "group" ? groupDatesMMDD : null}
+              availableDates={tourType === "group" ? groupDatesIso : null}
+              highlightDates={groupDatesIso}
+              highlightLabel={t("datePicker.groupDeparture")}
+              anyDayLabel={tourType === "private" ? t("datePicker.anyDay") : undefined}
             />
-            {tourType === "private" && (
-              <p className="tdp-type-hint">{t("tourDetail.privateDateHint")}</p>
-            )}
+            {tourType === "private" && <p className="tdp-type-hint">{t("tourDetail.privateDateHint")}</p>}
           </div>
 
           <div className="tdp-form-group">
-            <label>{t("tourDetail.peopleCount")}</label>
+            <label htmlFor="booking-people">{t("tourDetail.peopleCount")}</label>
             <input
+              id="booking-people"
               type="number"
+              inputMode="numeric"
               min={peopleMin}
               max={peopleMax}
               placeholder="2"
@@ -233,47 +193,46 @@ export default function TourBookingSidebar({
               onChange={(e) => {
                 const v = e.target.value;
                 const n = parseInt(v, 10);
-                if (v !== "" && !isNaN(n) && n > peopleMax) {
-                  setBookingPeople(String(peopleMax));
-                } else {
-                  setBookingPeople(v);
-                }
+                if (v !== "" && !isNaN(n) && n > peopleMax) setBookingPeople(String(peopleMax));
+                else setBookingPeople(v);
               }}
               required
             />
             {tourType === "group" && freeSeatsForSelected != null && (
               <p className="tdp-type-hint">
-                {t("tourDetail.groupSeatsHint").replace("{seats}", freeSeatsForSelected).replace("{max}", peopleMax)}
+                {interpolate(t("tourDetail.groupSeatsHint"), { seats: freeSeatsForSelected, max: peopleMax })}
               </p>
             )}
           </div>
 
           <div className="tdp-form-group">
-            <label>{t("tourDetail.phoneLabel")}</label>
+            <label htmlFor="booking-phone">{t("tourDetail.phoneLabel")}</label>
             <input
+              id="booking-phone"
               type="tel"
+              autoComplete="tel"
+              inputMode="tel"
               placeholder="+995 5XX XX XX XX"
               value={bookingPhone}
               onChange={(e) => {
                 setBookingPhone(e.target.value);
                 if (phoneError) setPhoneError("");
               }}
-              style={phoneError ? { borderColor: "#ef4444", boxShadow: "0 0 0 3px rgba(239, 68, 68, 0.2)" } : {}}
+              aria-invalid={phoneError ? "true" : undefined}
+              aria-describedby={phoneError ? "booking-phone-error" : undefined}
+              style={phoneError ? { borderColor: "#b42318", boxShadow: "0 0 0 3px rgba(180, 35, 24, 0.18)" } : undefined}
               required
             />
             {phoneError && (
-              <p style={{ color: "#ef4444", fontSize: "0.82rem", marginTop: "0.35rem", fontWeight: 600 }}>
-                ⚠️ {phoneError}
+              <p id="booking-phone-error" role="alert" style={{ color: "#b42318", fontSize: "0.84rem", marginTop: "0.35rem", fontWeight: 600 }}>
+                {phoneError}
               </p>
             )}
           </div>
 
           <div className="tdp-form-group">
-            <label>{t("tourDetail.preferredContact")}</label>
-            <select
-              value={messengerPref}
-              onChange={(e) => setMessengerPref(e.target.value)}
-            >
+            <label htmlFor="booking-contact">{t("tourDetail.preferredContact")}</label>
+            <select id="booking-contact" value={messengerPref} onChange={(e) => setMessengerPref(e.target.value)}>
               <option value="WhatsApp">WhatsApp</option>
               <option value="Viber">Viber</option>
               <option value="Telegram">Telegram</option>
@@ -282,8 +241,9 @@ export default function TourBookingSidebar({
           </div>
 
           <div className="tdp-form-group">
-            <label>{t("tourDetail.notesLabel")}</label>
+            <label htmlFor="booking-notes">{t("tourDetail.notesLabel")}</label>
             <textarea
+              id="booking-notes"
               rows={2}
               placeholder={t("tourDetail.notesPlaceholder")}
               value={bookingNotes}
@@ -291,46 +251,31 @@ export default function TourBookingSidebar({
             />
           </div>
 
-          {/* Coupon Apply Section */}
           <div className="tdp-coupon-section">
             <div className="tdp-coupon-label-row">
-              <label>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-                  <line x1="7" y1="7" x2="7.01" y2="7" />
-                </svg>
-                <span>{t("bookingCoupon.title") || "ფასდაკლების კუპონი"}</span>
-              </label>
-              {appliedCoupon && (
-                <span className="tdp-coupon-active-badge">
-                  ✓ {appliedCoupon.discount || 10}% OFF
-                </span>
-              )}
+              <label htmlFor="booking-coupon">{t("bookingCoupon.title")}</label>
+              {appliedCoupon && <span className="tdp-coupon-active-badge">✓ {appliedCoupon.discount || 10}% OFF</span>}
             </div>
 
             {appliedCoupon ? (
               <div className="tdp-coupon-applied-box">
                 <div className="tdp-coupon-applied-info">
-                  <span className="tdp-coupon-applied-code">🎟️ {appliedCoupon.code}</span>
+                  <span className="tdp-coupon-applied-code">{appliedCoupon.code}</span>
                   <span className="tdp-coupon-applied-desc">
-                    {t("bookingCoupon.discountApplied") || `${appliedCoupon.discount || 10}%-იანი ფასდაკლება გააქტიურებულია`} (-{format(discountAmount, lang)})
+                    {t("bookingCoupon.discountApplied")} (-{format(discountAmount, lang)})
                   </span>
                 </div>
-                <button
-                  type="button"
-                  className="tdp-coupon-remove-btn"
-                  onClick={handleRemoveCoupon}
-                  aria-label="Remove coupon"
-                >
-                  {t("bookingCoupon.remove") || "გაუქმება"}
+                <button type="button" className="tdp-coupon-remove-btn" onClick={handleRemoveCoupon}>
+                  {t("bookingCoupon.remove")}
                 </button>
               </div>
             ) : (
               <div className="tdp-coupon-input-wrap">
                 <div className="tdp-coupon-input-row">
                   <input
+                    id="booking-coupon"
                     type="text"
-                    placeholder={t("bookingCoupon.placeholder") || "მაგ: WELCOME10"}
+                    placeholder={t("bookingCoupon.placeholder")}
                     value={couponCodeInput}
                     onChange={(e) => {
                       setCouponCodeInput(e.target.value);
@@ -344,27 +289,19 @@ export default function TourBookingSidebar({
                     }}
                     className="tdp-coupon-input"
                   />
-                  <button
-                    type="button"
-                    className="tdp-coupon-apply-btn"
-                    onClick={() => handleApplyCoupon()}
-                  >
-                    {t("bookingCoupon.applyBtn") || "გამოყენება"}
+                  <button type="button" className="tdp-coupon-apply-btn" onClick={() => handleApplyCoupon()}>
+                    {t("bookingCoupon.applyBtn")}
                   </button>
                 </div>
 
                 {user && (
-                  <button
-                    type="button"
-                    className="tdp-coupon-quick-apply"
-                    onClick={() => handleApplyCoupon("WELCOME10")}
-                  >
-                    <span>✨ {t("bookingCoupon.useMyWelcome") || "ჩემი 10%-იანი კუპონი (WELCOME10)"}</span>
-                    <span className="tdp-quick-apply-tag">{t("bookingCoupon.apply") || "გამოყენება"}</span>
+                  <button type="button" className="tdp-coupon-quick-apply" onClick={() => handleApplyCoupon("WELCOME10")}>
+                    <span>{t("bookingCoupon.useMyWelcome")}</span>
+                    <span className="tdp-quick-apply-tag">{t("bookingCoupon.apply")}</span>
                   </button>
                 )}
 
-                {couponError && <p className="tdp-coupon-err-msg">{couponError}</p>}
+                {couponError && <p className="tdp-coupon-err-msg" role="alert">{couponError}</p>}
                 {couponSuccess && <p className="tdp-coupon-success-msg">{couponSuccess}</p>}
               </div>
             )}
@@ -376,7 +313,7 @@ export default function TourBookingSidebar({
                 <span>{t("tourDetail.totalCost")}</span>
                 <small>
                   {tourType === "group"
-                    ? t("tourDetail.groupPriceCalc").replace("{price}", groupUnitPrice).replace("{count}", peopleCount)
+                    ? interpolate(t("tourDetail.groupPriceCalc"), { price: groupUnitPrice, count: peopleCount })
                     : t("tourDetail.privatePriceCalc")}
                 </small>
               </div>
@@ -384,7 +321,7 @@ export default function TourBookingSidebar({
                 {appliedCoupon && discountAmount > 0 ? (
                   <div className="tdp-discounted-price-box">
                     <span className="tdp-old-price">{format(baseTotalPrice, lang)}</span>
-                    <span className="tdp-discount-tag">-10%</span>
+                    <span className="tdp-discount-tag">-{appliedCoupon.discount || 10}%</span>
                     <strong className="total-price-amount">{format(totalPrice, lang)}</strong>
                   </div>
                 ) : (
@@ -394,53 +331,40 @@ export default function TourBookingSidebar({
             </div>
           )}
 
-          <button type="submit" className="btn-tdp-submit" disabled={bookingSubmitting}>
+          <button type="submit" className="btn-tdp-submit" disabled={bookingSubmitting} aria-busy={bookingSubmitting || undefined}>
             <span>
-              {bookingSubmitting
-                ? "..."
-                : `${t("tourDetail.bookNow")}${totalPrice > 0 ? ` — ${format(totalPrice, lang)}` : ""}`}
+              {bookingSubmitting ? "…" : `${t("tourDetail.bookNow")}${totalPrice > 0 ? ` — ${format(totalPrice, lang)}` : ""}`}
             </span>
           </button>
 
-          {/* High-Trust Conversion Badges */}
-          <div className="tdp-trust-badges-grid" dir={lang === "ar" ? "rtl" : "ltr"}>
-            <div className="tdp-trust-badge-item">
-              <span className="tdp-trust-badge-icon">🛡️</span>
-              <span className="tdp-trust-badge-text">{trustLabels.cancellation}</span>
-            </div>
-            <div className="tdp-trust-badge-item">
-              <span className="tdp-trust-badge-icon">💵</span>
-              <span className="tdp-trust-badge-text">{trustLabels.payOnArrival}</span>
-            </div>
-            <div className="tdp-trust-badge-item">
-              <span className="tdp-trust-badge-icon">⚡</span>
-              <span className="tdp-trust-badge-text">{trustLabels.instantWa}</span>
-            </div>
-            <div className="tdp-trust-badge-item">
-              <span className="tdp-trust-badge-icon">🏅</span>
-              <span className="tdp-trust-badge-text">{trustLabels.guaranteed}</span>
-            </div>
-          </div>
+          <ul className="tdp-trust-list">
+            {trustItems.map((item) => (
+              <li key={item.key}>
+                <span className="tdp-trust-icon">{item.icon}</span>
+                <span>{item.text}</span>
+              </li>
+            ))}
+          </ul>
         </form>
 
-        {/* Direct Contacts Box */}
         <div className="tdp-direct-contacts">
           <p>{t("tourDetail.contactDirectly")}</p>
           <div className="contacts-btns-row">
             <a
-              href={`${WA_LINK}?text=${encodeURIComponent(`Hello! I'm interested in tour: "${asLocalizedText(tour.title, lang)}"`)}`}
+              href={whatsappHref(interpolate(t("tourCard.waMessage"), { title: tourTitle }))}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="contact-btn wa"
             >
-              <span>💬 WhatsApp</span>
+              <WhatsAppIcon size={17} />
+              <span>WhatsApp</span>
             </a>
-            <a href={`tel:${WA_NUMBER}`} className="contact-btn phone">
-              <span>{t("tourDetail.callNow")}</span>
+            <a href={`tel:${PHONE_TEL}`} className="contact-btn phone">
+              <PhoneIcon size={16} />
+              <span>{String(t("tourDetail.callNow")).replace(/^📞\s*/, "")}</span>
             </a>
           </div>
         </div>
-
       </div>
     </aside>
   );
