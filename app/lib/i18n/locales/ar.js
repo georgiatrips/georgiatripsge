@@ -340,7 +340,6 @@ export const ar = {
     "duration": "⏱ {duration}",
     "location": "📍 {location}",
     "readMore": "متابعة القراءة",
-    "search": "بحث",
     "close": "إغلاق"
   },
   "datePicker": {
@@ -588,7 +587,7 @@ export const ar = {
     "groupSeatsHint": "متبقي {seats} مقاعد لهذا التاريخ — الحد الأقصى {max} شخص",
     "peopleCount": "عدد المسافرين (أشخاص)",
     "phoneLabel": "الهاتف / واتساب",
-    "invalidPhoneError": "يرجى إدخال رقم هاتف صالح (مثال: 9955XXXXXXXX+)",
+    "invalidPhoneError": "يرجى إدخال رقم هاتف صحيح",
     "preferredContact": "طريقة التواصل المفضلة",
     "phoneCall": "مكالمة هاتفية",
     "notesLabel": "ملاحظات إضافية / أسئلة",
@@ -609,7 +608,6 @@ export const ar = {
     "tourNotFound": "لم يتم العثور على الجولة",
     "backToTours": "← قائمة الجولات",
     "phoneError": "يرجى إدخال رقم هاتف صحيح",
-    "invalidPhoneError": "يرجى إدخال رقم هاتف صحيح",
     "loadingTour": "جاري تحميل تفاصيل الجولة..."
   },
   "postsPage": {
@@ -715,50 +713,49 @@ export const ar = {
       "invalidCredential": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
       "defaultError": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى."
     }
-  }
-,
-  "coupon":   {
-      "statusActive": "نشط • استخدام واحد",
-      "statusUsed": "مستخدم",
-      "verified": "مؤكد",
-      "discountLabel": "DISCOUNT",
-      "offLabel": "OFF",
-      "desc": "خصم 10% على أي جولة سياحية مع GeorgiaTrips",
-      "codeLabel": "رمز الخصم:",
-      "copied": "تم النسخ!",
-      "copy": "نسخ",
-      "useInBooking": "استخدم القسيمة",
-      "myCouponsTitle": "قسائم الخصم الخاصة بي",
-      "myCouponsSub": "لديك قسيمة خصم حصرية من GeorgiaTrips",
-      "howToUseTitle": "كيفية استخدام القسيمة:",
-      "step1": "اختر الجولة المطلوبة من الكتالوج",
-      "step2": "أدخل الرمز WELCOME10 في نموذج الحجز",
-      "step3": "سيتم خصم 10% من السعر الإجمالي فوراً!",
-      "exploreToursBtn": "استكشف واحجز الجولات"
   },
-  "welcomePopup":   {
-      "limitedOffer": "عرض حصري لفترة محدودة!",
-      "title": "احصل على قسيمة خصم 10%",
-      "subtitle": "سجل الآن خلال 30 دقيقة واحصل فوراً على قسيمة خصم 10% على أي جولة سياحية!",
-      "timeRemaining": "الوقت المتبقي لانتهاء العرض:",
-      "mins": "دقيقة",
-      "secs": "ثانية",
-      "registerClaimBtn": "سجل واحصل على القسيمة (خصم 10%)",
-      "dismissBtn": "ربما لاحقاً، شكراً"
+  "coupon": {
+    "statusActive": "نشط • استخدام واحد",
+    "statusUsed": "مستخدم",
+    "verified": "مؤكد",
+    "discountLabel": "DISCOUNT",
+    "offLabel": "OFF",
+    "desc": "خصم 10% على أي جولة سياحية مع GeorgiaTrips",
+    "codeLabel": "رمز الخصم:",
+    "copied": "تم النسخ!",
+    "copy": "نسخ",
+    "useInBooking": "استخدم القسيمة",
+    "myCouponsTitle": "قسائم الخصم الخاصة بي",
+    "myCouponsSub": "لديك قسيمة خصم حصرية من GeorgiaTrips",
+    "howToUseTitle": "كيفية استخدام القسيمة:",
+    "step1": "اختر الجولة المطلوبة من الكتالوج",
+    "step2": "أدخل الرمز WELCOME10 في نموذج الحجز",
+    "step3": "سيتم خصم 10% من السعر الإجمالي فوراً!",
+    "exploreToursBtn": "استكشف واحجز الجولات"
   },
-  "bookingCoupon":   {
-      "title": "قسيمة الخصم",
-      "placeholder": "مثال: WELCOME10",
-      "applyBtn": "تطبيق",
-      "useMyWelcome": "قسيمة 10% الخاصة بي (WELCOME10)",
-      "apply": "تطبيق",
-      "remove": "إلغاء",
-      "enterCode": "الرجاء إدخال رمز القسيمة",
-      "invalidCode": "رمز القسيمة غير صالح",
-      "appliedSuccess": "تم تطبيق خصم 10% بنجاح!",
-      "discountApplied": "تم تطبيق خصم 10%",
-      "success": "تم تطبيق خصم 10% بنجاح!",
-      "invalid": "رمز القسيمة غير صالح"
+  "welcomePopup": {
+    "limitedOffer": "عرض حصري لفترة محدودة!",
+    "title": "احصل على قسيمة خصم 10%",
+    "subtitle": "سجل الآن خلال 30 دقيقة واحصل فوراً على قسيمة خصم 10% على أي جولة سياحية!",
+    "timeRemaining": "الوقت المتبقي لانتهاء العرض:",
+    "mins": "دقيقة",
+    "secs": "ثانية",
+    "registerClaimBtn": "سجل واحصل على القسيمة (خصم 10%)",
+    "dismissBtn": "ربما لاحقاً، شكراً"
+  },
+  "bookingCoupon": {
+    "title": "قسيمة الخصم",
+    "placeholder": "مثال: WELCOME10",
+    "applyBtn": "تطبيق",
+    "useMyWelcome": "قسيمة 10% الخاصة بي (WELCOME10)",
+    "apply": "تطبيق",
+    "remove": "إلغاء",
+    "enterCode": "الرجاء إدخال رمز القسيمة",
+    "invalidCode": "رمز القسيمة غير صالح",
+    "appliedSuccess": "تم تطبيق خصم 10% بنجاح!",
+    "discountApplied": "تم تطبيق خصم 10%",
+    "success": "تم تطبيق خصم 10% بنجاح!",
+    "invalid": "رمز القسيمة غير صالح"
   },
   "bookingSuccess": {
     "loading": "جاري تحميل تفاصيل الحجز...",
@@ -925,7 +922,16 @@ export const ar = {
     "heroAlt": "قرية أوشغولي أسفل جبل شخارا في سفانيتي، جورجيا",
     "heroPlace": "أوشغولي، سفانيتي",
     "heroRouteLabel": "أين نسافر",
-    "heroRoute": ["باتومي", "كوتايسي", "مارتفيلي", "سفانيتي", "بورجومي", "تبليسي", "كازبيغي", "كاخيتي"],
+    "heroRoute": [
+      "باتومي",
+      "كوتايسي",
+      "مارتفيلي",
+      "سفانيتي",
+      "بورجومي",
+      "تبليسي",
+      "كازبيغي",
+      "كاخيتي"
+    ],
     "heroRouteLink": "جميع الوجهات",
     "departuresTitle": "أقرب مواعيد الجولات الجماعية",
     "departuresNote": "سعر الجولة الجماعية للشخص. الجولات الخاصة متاحة في أي يوم.",

@@ -340,7 +340,6 @@ export const tr = {
     "duration": "⏱ {duration}",
     "location": "📍 {location}",
     "readMore": "Okumaya Devam Et",
-    "search": "Ara",
     "close": "Kapat"
   },
   "datePicker": {
@@ -588,7 +587,7 @@ export const tr = {
     "groupSeatsHint": "Bu tarihte {seats} boş koltuk kaldı — maksimum {max} kişi",
     "peopleCount": "Gezgin sayısı (kişi)",
     "phoneLabel": "Telefon / WhatsApp",
-    "invalidPhoneError": "Lütfen geçerli bir telefon numarası girin (ör. +995 5XX XX XX XX)",
+    "invalidPhoneError": "Lütfen geçerli bir telefon numarası girin",
     "preferredContact": "Tercih edilen iletişim yöntemi",
     "phoneCall": "Telefon Araması",
     "notesLabel": "Ek notlar / Sorular",
@@ -609,7 +608,6 @@ export const tr = {
     "tourNotFound": "Tur Bulunamadı",
     "backToTours": "← Tur Listesi",
     "phoneError": "Lütfen geçerli bir telefon numarası girin",
-    "invalidPhoneError": "Lütfen geçerli bir telefon numarası girin",
     "loadingTour": "Tur detayları yükleniyor..."
   },
   "postsPage": {
@@ -715,50 +713,49 @@ export const tr = {
       "invalidCredential": "E-posta veya şifre hatalı.",
       "defaultError": "Bir hata oluştu. Lütfen tekrar deneyin."
     }
-  }
-,
-  "coupon":   {
-      "statusActive": "Aktif • 1 Kullanım",
-      "statusUsed": "Kullanıldı",
-      "verified": "Doğrulandı",
-      "discountLabel": "DISCOUNT",
-      "offLabel": "OFF",
-      "desc": "GeorgiaTrips'te tüm turlarda %10 indirim",
-      "codeLabel": "Promosyon Kodu:",
-      "copied": "Kopyalandı!",
-      "copy": "Kopyala",
-      "useInBooking": "Kuponu Kullan",
-      "myCouponsTitle": "İndirim Kuponlarım",
-      "myCouponsSub": "GeorgiaTrips'ten 1 özel indirim kuponunuz var",
-      "howToUseTitle": "Kupon nasıl kullanılır:",
-      "step1": "Kataloğumuzdan istediğiniz turu seçin",
-      "step2": "Rezervasyon formuna WELCOME10 kodunu girin",
-      "step3": "Toplam fiyata anında %10 indirim uygulanır!",
-      "exploreToursBtn": "Turları İncele ve Rezervasyon Yap"
   },
-  "welcomePopup":   {
-      "limitedOffer": "Sınırlı Süreli Özel Teklif!",
-      "title": "%10 İndirim Kuponu Kazanın",
-      "subtitle": "30 dakika içinde hemen kaydolun ve tüm turlarda geçerli %10 indirim kuponu kazanın!",
-      "timeRemaining": "Teklifin bitmesine kalan süre:",
-      "mins": "dk",
-      "secs": "sn",
-      "registerClaimBtn": "Kayıt Ol ve Kuponu Al (%10 İndirim)",
-      "dismissBtn": "Daha sonra, teşekkürler"
+  "coupon": {
+    "statusActive": "Aktif • 1 Kullanım",
+    "statusUsed": "Kullanıldı",
+    "verified": "Doğrulandı",
+    "discountLabel": "DISCOUNT",
+    "offLabel": "OFF",
+    "desc": "GeorgiaTrips'te tüm turlarda %10 indirim",
+    "codeLabel": "Promosyon Kodu:",
+    "copied": "Kopyalandı!",
+    "copy": "Kopyala",
+    "useInBooking": "Kuponu Kullan",
+    "myCouponsTitle": "İndirim Kuponlarım",
+    "myCouponsSub": "GeorgiaTrips'ten 1 özel indirim kuponunuz var",
+    "howToUseTitle": "Kupon nasıl kullanılır:",
+    "step1": "Kataloğumuzdan istediğiniz turu seçin",
+    "step2": "Rezervasyon formuna WELCOME10 kodunu girin",
+    "step3": "Toplam fiyata anında %10 indirim uygulanır!",
+    "exploreToursBtn": "Turları İncele ve Rezervasyon Yap"
   },
-  "bookingCoupon":   {
-      "title": "İndirim Kuponu",
-      "placeholder": "örn: WELCOME10",
-      "applyBtn": "Uygula",
-      "useMyWelcome": "%10 indirim kuponum (WELCOME10)",
-      "apply": "Uygula",
-      "remove": "Kaldır",
-      "enterCode": "Lütfen bir kupon kodu girin",
-      "invalidCode": "Geçersiz kupon kodu",
-      "appliedSuccess": "%10 indirim başarıyla uygulandı!",
-      "discountApplied": "%10 indirim uygulandı",
-      "success": "%10 indirim başarıyla uygulandı!",
-      "invalid": "Geçersiz kupon kodu"
+  "welcomePopup": {
+    "limitedOffer": "Sınırlı Süreli Özel Teklif!",
+    "title": "%10 İndirim Kuponu Kazanın",
+    "subtitle": "30 dakika içinde hemen kaydolun ve tüm turlarda geçerli %10 indirim kuponu kazanın!",
+    "timeRemaining": "Teklifin bitmesine kalan süre:",
+    "mins": "dk",
+    "secs": "sn",
+    "registerClaimBtn": "Kayıt Ol ve Kuponu Al (%10 İndirim)",
+    "dismissBtn": "Daha sonra, teşekkürler"
+  },
+  "bookingCoupon": {
+    "title": "İndirim Kuponu",
+    "placeholder": "örn: WELCOME10",
+    "applyBtn": "Uygula",
+    "useMyWelcome": "%10 indirim kuponum (WELCOME10)",
+    "apply": "Uygula",
+    "remove": "Kaldır",
+    "enterCode": "Lütfen bir kupon kodu girin",
+    "invalidCode": "Geçersiz kupon kodu",
+    "appliedSuccess": "%10 indirim başarıyla uygulandı!",
+    "discountApplied": "%10 indirim uygulandı",
+    "success": "%10 indirim başarıyla uygulandı!",
+    "invalid": "Geçersiz kupon kodu"
   },
   "bookingSuccess": {
     "loading": "Rezervasyon detayları yükleniyor...",
@@ -925,7 +922,16 @@ export const tr = {
     "heroAlt": "Svaneti'de Şhara Dağı eteklerindeki Uşguli köyü, Gürcistan",
     "heroPlace": "Uşguli, Svaneti",
     "heroRouteLabel": "Nereleri geziyoruz",
-    "heroRoute": ["Batum", "Kutaisi", "Martvili", "Svaneti", "Borjomi", "Tiflis", "Kazbegi", "Kaheti"],
+    "heroRoute": [
+      "Batum",
+      "Kutaisi",
+      "Martvili",
+      "Svaneti",
+      "Borjomi",
+      "Tiflis",
+      "Kazbegi",
+      "Kaheti"
+    ],
     "heroRouteLink": "Tüm destinasyonlar",
     "departuresTitle": "Yaklaşan grup turları",
     "departuresNote": "Grup fiyatı kişi başıdır. Özel turlar her gün yapılabilir.",
