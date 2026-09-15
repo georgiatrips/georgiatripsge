@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { SUPPORTED_LANGUAGES } from "../lib/i18n/locale";
 import { SITE_URL, buildLocalizedMetadata } from "../lib/siteConfig";
-import { SOCIAL_PROFILES } from "../lib/shared";
+import { SOCIAL_PROFILES, FAQS_BY_LANG } from "../lib/shared";
 
 // Plain-string titles (not { default, template }): title is a top-level
 // metadata key, so a { default, template } object here would fully replace
@@ -13,27 +13,27 @@ const HOME_COPY = {
   ka: {
     title: "GeorgiaTrips — პრემიუმ ტურები და ტრანსფერები საქართველოში",
     description:
-      "ერთდღიანი ტურები, ინდივიდუალური მოგზაურობა და აეროპორტის ტრანსფერები მთელ საქართველოში — ბათუმში დაფუძნებული ადგილობრივი გუნდისგან. რეალური თარიღები, მკაფიო ფასები, გადახდა ტურის დღეს და WhatsApp მხარდაჭერა 24/7.",
+      "აღმოაჩინე საქართველო უმაღლესი კომფორტით. ერთდღიანი და მრავალდღიანი ტურები ბათუმში, თბილისში, ყაზბეგში, მარტვილში, კახეთსა და სვანეთში. VIP ტრანსპორტი, გამოცდილი გიდები და 24/7 მხარდაჭერა.",
   },
   en: {
     title: "GeorgiaTrips — Premium Tours, Excursions & Private Transfers in Georgia",
     description:
-      "Day tours, private trips and airport transfers across Georgia with a local team based in Batumi. Real dates, clear prices, pay on the day and WhatsApp support 24/7.",
+      "Discover Georgia in comfort and luxury. Best day trips and multi-day tours from Batumi, Tbilisi, Kazbegi, Martvili Canyon, Kakheti wine region, and Svaneti. VIP transport, certified guides, 24/7 WhatsApp booking.",
   },
   ru: {
     title: "GeorgiaTrips — Премиум экскурсии, туры и трансферы по Грузии",
     description:
-      "Однодневные туры, индивидуальные поездки и трансферы из аэропорта по всей Грузии от местной команды из Батуми. Реальные даты, понятные цены, оплата в день тура и поддержка в WhatsApp 24/7.",
+      "Откройте для себя Грузию с максимальным комфортом. Однодневные и многодневные экскурсии из Батуми и Тбилиси: Казбеги, Кахетия, каньон Мартвили, Сванетия. VIP транспорт, русскоязычные гиды, трансферы 24/7.",
   },
   tr: {
     title: "GeorgiaTrips — Gürcistan'da Premium Turlar, Geziler ve Özel Transferler",
     description:
-      "Batum merkezli yerel ekibimizle Gürcistan genelinde günübirlik turlar, özel seyahatler ve havalimanı transferleri. Gerçek tarihler, net fiyatlar, tur günü ödeme ve 7/24 WhatsApp desteği.",
+      "Gürcistan'ı üstün konforla keşfedin. Batum çıkışlı günübirlik turlar, Tiflis, Kazbegi, Kaheti şarap turları ve Martvili kanyonu. Türkçe rehberler, VIP transferler ve 7/24 destek.",
   },
   ar: {
     title: "GeorgiaTrips — جولات سياحية فاخرة وتوصيل خاص وسائق في جورجيا",
     description:
-      "جولات يومية ورحلات خاصة وتوصيل من المطار في جميع أنحاء جورجيا مع فريق محلي مقره باتومي. مواعيد حقيقية وأسعار واضحة والدفع يوم الجولة ودعم عبر واتساب على مدار الساعة.",
+      "اكتشف جمال وسحر جورجيا بأعلى درجات الراحة والفخامة. جولات يومية مميزة من باتومي وتبليسي: كازبيجي، قوداوري، برجومي، كاخيتي، ومارتفيلي. سيارات خاصة VIP، سائقون محترفون، فنادق ومطاعم حلال، ودعم 24/7.",
   },
 };
 
@@ -54,9 +54,9 @@ export async function generateMetadata({ params }) {
   });
 }
 
-// Site-wide entities only. FAQPage markup lives on the homepage, next to the
-// visible FAQ it describes (Google requires FAQ markup to match on-page Q&A).
 function buildStructuredData(lang = "ka") {
+  const faqs = FAQS_BY_LANG[lang] || FAQS_BY_LANG.ka || [];
+
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -130,6 +130,18 @@ function buildStructuredData(lang = "ka") {
         sameAs: ["https://www.instagram.com/lominadzee10/"],
         jobTitle: "Lead Full-Stack Web Developer & UI/UX Designer",
         knowsAbout: ["Full-Stack Web Development", "Next.js", "React", "UI/UX Engineering", "Search Engine Optimization (SEO)"],
+      },
+      {
+        "@type": "FAQPage",
+        "@id": `${SITE_URL}/${lang}#faq`,
+        mainEntity: faqs.map((faq) => ({
+          "@type": "Question",
+          name: faq.q,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: faq.a,
+          },
+        })),
       },
     ],
   };
