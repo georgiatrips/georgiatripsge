@@ -2,31 +2,10 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { isRtlLanguage, SUPPORTED_LANGUAGES } from "./locale";
-
-import { ka } from "./locales/ka";
-import { en } from "./locales/en";
-import { ru } from "./locales/ru";
-import { tr } from "./locales/tr";
-import { ar } from "./locales/ar";
+import { translate } from "./translate";
 
 const LanguageContext = createContext(null);
-const dictionaries = { ka, en, ru, tr, ar };
 const STORAGE_KEY = "gt_language";
-
-function detectBrowserLanguage() {
-  if (typeof navigator === "undefined") return "ka";
-  const browserLangs = navigator.languages || [navigator.language || ""];
-  for (const rawLang of browserLangs) {
-    if (!rawLang) continue;
-    const code = rawLang.toLowerCase().split("-")[0];
-    if (SUPPORTED_LANGUAGES.includes(code)) {
-      return code;
-    }
-    if (["uk", "be", "kk", "ky", "uz"].includes(code)) return "ru";
-    if (["az"].includes(code)) return "tr";
-  }
-  return "en";
-}
 
 function getInitialLanguage(fallback = "ka") {
   if (typeof window === "undefined") return fallback;
@@ -61,20 +40,6 @@ function getInitialLanguage(fallback = "ka") {
   } catch (_) {}
 
   return fallback;
-}
-
-/**
- * Get a nested value from an object using a dot-notation path.
- * Example: getNestedValue(obj, "nav.home") => obj.nav.home
- */
-function getNestedValue(obj, path) {
-  if (!obj || !path) return undefined;
-  return path.split(".").reduce((acc, key) => {
-    if (acc && typeof acc === "object" && key in acc) {
-      return acc[key];
-    }
-    return undefined;
-  }, obj);
 }
 
 export function LanguageProvider({ children, initialLang = "ka" }) {
@@ -139,24 +104,7 @@ export function LanguageProvider({ children, initialLang = "ka" }) {
    * Translation function.
    * Usage: t("nav.home") => "Home" (if lang is "en")
    */
-  const t = useCallback(
-    (key, fallback) => {
-      if (!key) return "";
-      const currentDict = dictionaries[lang] || dictionaries.ka;
-      let value = getNestedValue(currentDict, key);
-      if (value !== undefined && value !== null) return value;
-
-      // Fallback to Georgian if missing in current language
-      if (lang !== "ka") {
-        value = getNestedValue(dictionaries.ka, key);
-        if (value !== undefined && value !== null) return value;
-      }
-
-      if (fallback !== undefined && fallback !== null) return fallback;
-      return key;
-    },
-    [lang]
-  );
+  const t = useCallback((key, fallback) => translate(lang, key, fallback), [lang]);
 
   const value = {
     lang,
@@ -183,12 +131,7 @@ export function useLanguage() {
     return {
       lang: "ka",
       setLang: () => {},
-      t: (key, fallback) => {
-        if (!key) return "";
-        let value = getNestedValue(dictionaries.ka, key);
-        if (value !== undefined && value !== null) return value;
-        return fallback !== undefined ? fallback : key;
-      },
+      t: (key, fallback) => translate("ka", key, fallback),
       hydrated: false,
       isRtl: false,
       isRTL: false,

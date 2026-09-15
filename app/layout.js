@@ -4,6 +4,7 @@ import { cookies, headers } from "next/headers";
 import Script from "next/script";
 import "./globals.css";
 import "./coupon.css";
+import "./styles/site.css";
 import { AuthProvider } from "./lib/AuthContext";
 import { LanguageProvider } from "./lib/i18n/LanguageContext";
 import { CurrencyProvider } from "./lib/currency/CurrencyContext";
