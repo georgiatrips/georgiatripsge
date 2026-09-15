@@ -10,7 +10,9 @@ import "../../styles/tour-card.css";
 
 // Renders on the server (homepage, landing pages) or inside client components
 // (catalog). Takes a view model from toTourView() and a translate function.
-export default function TourCard({ tour, lang, t, headingLevel = 3, eager = false, sizes }) {
+// `dateMatch` ("group" | "private") is set by the catalog when a date filter is
+// active, so the card explains why it matches that day.
+export default function TourCard({ tour, lang, t, headingLevel = 3, eager = false, sizes, dateMatch = null }) {
   const Heading = `h${headingLevel}`;
   const tourHref = getLocalizedHref(`/tours/${tour.id}`, lang);
   const waHref = whatsappHref(interpolate(t("tourCard.waMessage"), { title: tour.title }));
@@ -52,10 +54,17 @@ export default function TourCard({ tour, lang, t, headingLevel = 3, eager = fals
 
         {tour.desc && <p className="gt-tour-card-desc">{excerpt(tour.desc, 150)}</p>}
 
-        {(nextDate || tour.hasPrivate) && (
+        {dateMatch ? (
+          <div className="gt-tour-card-dates">
+            <span className={`gt-chip ${dateMatch === "group" ? "gt-chip--gold" : "gt-chip--teal"}`}>
+              <CalendarIcon size={13} />
+              {t(dateMatch === "group" ? "toursPage.groupOnDate" : "toursPage.privateOnDate")}
+            </span>
+          </div>
+        ) : (nextDate || tour.hasPrivate) && (
           <div className="gt-tour-card-dates">
             {nextDate && (
-              <span className="gt-chip gt-chip--teal">
+              <span className="gt-chip gt-chip--gold">
                 <CalendarIcon size={13} />
                 {interpolate(t("tourCard.nextGroup"), { date: nextDate })}
               </span>

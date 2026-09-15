@@ -1,5 +1,11 @@
 /* Tour card — shared by the homepage, catalog and landing pages. */
 
+.gt-tour-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19.5rem), 1fr));
+  gap: clamp(1rem, 2.2vw, 1.5rem);
+}
+
 .gt-tour-card { height: 100%; }
 
 .gt-tour-card-media { aspect-ratio: 3 / 2; }

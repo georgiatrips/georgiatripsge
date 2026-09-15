@@ -1,94 +1,36 @@
-"use client";
-
-import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 
+// Inner-page hero (tours, places, transfers, hotels, articles).
+//
+// The previous version ran a scroll-linked parallax in JavaScript over a
+// 12%-oversized, scaled background, which forced the browser to download a
+// very wide image and repaint it on every scroll frame. The image is now a
+// plain decorative background under a scrim, sized to the viewport and capped
+// by next.config deviceSizes, so the title (the LCP element) paints fast.
+//
+// `compact` is for catalog pages where the results, not the banner, are the
+// point: the header stays short so filters and the first cards are visible.
 export default function PageHero({
   kicker = "",
   title = "",
   subtitle = "",
-  image = "/hero.png",
-  alt = "GeorgiaTrips",
+  image = "/mestia.webp",
+  alt = "",
   children = null,
-  align = "left",
+  compact = false,
 }) {
-  const bgRef = useRef(null);
-  const contentRef = useRef(null);
-
-  useEffect(() => {
-    const bg = bgRef.current;
-    const content = contentRef.current;
-    if (!bg || !content) return undefined;
-
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const isMobile = window.innerWidth < 768;
-
-    if (prefersReducedMotion || isMobile) {
-      return undefined;
-    }
-
-    let raf = 0;
-    let isVisible = false;
-
-    const onScroll = () => {
-      if (raf || !isVisible) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        const top = bg.getBoundingClientRect().top;
-        const height = bg.offsetHeight;
-        const offset = Math.min(0, Math.max(-height * 0.15, top * 0.22));
-        bg.style.transform = `translate3d(0, ${offset}px, 0) scale(1.08)`;
-        content.style.transform = `translate3d(0, ${top * 0.04}px, 0)`;
-      });
-    };
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        isVisible = entries[0]?.isIntersecting ?? false;
-        if (isVisible) onScroll();
-      },
-      { threshold: 0.05 }
-    );
-    observer.observe(bg);
-
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll, { passive: true });
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, []);
-
   return (
-    <header className={`page-hero page-hero--${align}`}>
-      <div className="page-hero-bg" ref={bgRef}>
-        <Image
-          src={image}
-          alt={alt}
-          fill
-          priority
-          sizes="100vw"
-          style={{ objectFit: "cover" }}
-        />
+    <header className={`page-hero${compact ? " page-hero--compact" : ""}`}>
+      <div className="page-hero-bg" aria-hidden={alt ? undefined : "true"}>
+        <Image src={image} alt={alt} fill sizes="100vw" quality={60} loading="eager" fetchPriority="high" />
       </div>
-      <div className="page-hero-overlay" aria-hidden="true" />
-      <div className="page-hero-grain" aria-hidden="true" />
+      <div className="page-hero-scrim" aria-hidden="true" />
 
-      <div className="page-hero-inner" ref={contentRef}>
+      <div className="page-hero-inner">
         <div className="page-hero-content">
-          {kicker && (
-            <span className="page-hero-kicker">
-              <span className="page-hero-kicker-dot" />
-              {kicker}
-            </span>
-          )}
+          {kicker && <p className="page-hero-kicker">{kicker}</p>}
           <h1 className="page-hero-title">{title}</h1>
           {subtitle && <p className="page-hero-sub">{subtitle}</p>}
-          <div className="page-hero-accent" aria-hidden="true" />
           {children}
         </div>
       </div>

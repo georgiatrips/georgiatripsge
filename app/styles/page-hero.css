@@ -1,0 +1,109 @@
+/* ==========================================================================
+   Inner-page hero (tours, places, transfers, hotels, articles).
+   A static, scrimmed photo with the page title as the LCP element — no
+   scroll-linked parallax. Content aligns with .gt-container below it.
+   ========================================================================== */
+
+.page-hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: flex-end;
+  min-height: clamp(360px, 52vh, 480px);
+  padding-block: calc(var(--gt-header-h) + 2.5rem) clamp(2.5rem, 5vw, 3.5rem);
+  overflow: hidden;
+  background: var(--gt-navy-950);
+  color: #fff;
+}
+
+.page-hero--compact {
+  min-height: clamp(300px, 40vh, 380px);
+  padding-block-end: clamp(4rem, 6vw, 5rem);
+}
+
+.page-hero-bg { position: absolute; inset: 0; z-index: -2; }
+.page-hero-bg img { object-fit: cover; }
+
+.page-hero-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, rgba(7, 23, 36, 0.85) 0%, rgba(7, 23, 36, 0.55) 50%, rgba(7, 23, 36, 0.25) 100%),
+    linear-gradient(0deg, rgba(7, 23, 36, 0.7) 0%, rgba(7, 23, 36, 0) 60%),
+    linear-gradient(180deg, rgba(7, 23, 36, 0.5) 0%, rgba(7, 23, 36, 0) 30%);
+}
+
+html[dir="rtl"] .page-hero-scrim {
+  background:
+    linear-gradient(270deg, rgba(7, 23, 36, 0.85) 0%, rgba(7, 23, 36, 0.55) 50%, rgba(7, 23, 36, 0.25) 100%),
+    linear-gradient(0deg, rgba(7, 23, 36, 0.7) 0%, rgba(7, 23, 36, 0) 60%),
+    linear-gradient(180deg, rgba(7, 23, 36, 0.5) 0%, rgba(7, 23, 36, 0) 30%);
+}
+
+.page-hero-inner {
+  width: 100%;
+  max-width: var(--gt-container);
+  margin-inline: auto;
+  padding-inline: var(--gt-gutter);
+}
+
+.page-hero-content { max-width: 46rem; }
+
+.page-hero-kicker {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gt-gold);
+}
+
+:lang(ka) .page-hero-kicker,
+:lang(ar) .page-hero-kicker { letter-spacing: 0.02em; }
+
+.page-hero-title {
+  margin: 0;
+  font-family: var(--gt-font-display);
+  font-size: clamp(2rem, 4.4vw, 3.4rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.3);
+}
+
+:lang(ka) .page-hero-title,
+:lang(ru) .page-hero-title { font-size: clamp(1.75rem, 3.8vw, 2.9rem); line-height: 1.15; letter-spacing: 0; }
+:lang(ar) .page-hero-title { line-height: 1.3; letter-spacing: 0; }
+.page-hero--compact .page-hero-title { font-size: clamp(1.8rem, 3.6vw, 2.8rem); }
+
+.page-hero-sub {
+  max-width: 40rem;
+  margin: 0.8rem 0 0;
+  font-size: clamp(0.98rem, 1.3vw, 1.12rem);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+/* Search field passed as children (hotels page) */
+.page-hero-content .hm-search {
+  min-width: 340px;
+  margin-block-start: 1.5rem;
+  background: rgba(13, 35, 58, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  color: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+.page-hero-content .hm-search input { color: #fff; }
+.page-hero-content .hm-search input::placeholder { color: rgba(255, 255, 255, 0.68); }
+.page-hero-content .hm-search:focus-within { border-color: var(--gt-teal); box-shadow: 0 0 0 3px rgba(41, 178, 183, 0.25), 0 8px 30px rgba(0, 0, 0, 0.2); }
+
+@media (max-width: 640px) {
+  .page-hero { min-height: 300px; padding-block-start: calc(var(--gt-header-h) + 1.75rem); }
+  .page-hero--compact { min-height: 270px; }
+  .page-hero-content .hm-search { min-width: 100%; width: 100%; }
+}
