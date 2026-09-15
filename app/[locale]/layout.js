@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { SUPPORTED_LANGUAGES } from "../lib/i18n/locale";
 import { SITE_URL, buildLocalizedMetadata } from "../lib/siteConfig";
-import { SOCIAL_PROFILES, FAQS_BY_LANG } from "../lib/shared";
+import { SOCIAL_PROFILES, FAQS_BY_LANG, EMAIL } from "../lib/shared";
 
 // Plain-string titles (not { default, template }): title is a top-level
 // metadata key, so a { default, template } object here would fully replace
@@ -70,7 +70,7 @@ function buildStructuredData(lang = "ka") {
         image: `${SITE_URL}/hero.webp`,
         description: "Premium tours, private excursions, and VIP transfers in Georgia (Tbilisi, Batumi, Kazbegi, Kakheti, Svaneti).",
         telephone: "+995504220020",
-        email: "info@georgiatrips.ge",
+        email: EMAIL,
         priceRange: "$$",
         currenciesAccepted: "GEL, USD, EUR",
         paymentAccepted: "Cash, Credit Card, Bank Transfer, Online Payment",

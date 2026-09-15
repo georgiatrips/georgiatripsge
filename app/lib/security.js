@@ -4,7 +4,10 @@
 // ყურადღება: In-Memory ლიმიტი მუშაობს ერთ ინსტანციაზე.
 // მრავალ ინსტანციურ დეპლოიმენტზე გამოიყენეთ Redis ან Vercel/KV.
 const WINDOW_MS = 60 * 1000; // 1 წუთიანი ფანჯარა
-const MAX_REQUESTS_PER_WINDOW = 120; // მაქს. 120 მოთხოვნა/წუთი IP-ზე
+// Page navigations only (prefetches and static assets are not counted). Kept
+// generous: users behind one office/hotel NAT share an IP, and a real visitor
+// browsing several catalog pages per minute must never be blocked.
+const MAX_REQUESTS_PER_WINDOW = 300; // მაქს. 300 მოთხოვნა/წუთი IP-ზე
 const MAX_API_REQUESTS_PER_WINDOW = 30; // მაქს. 30 API მოთხოვნა/წუთი
 
 if (!globalThis.__rateLimitStore) {

@@ -48,8 +48,15 @@ export function proxy(request) {
   // ═══════════════════════════════════════════════════════════════
   // 2. Rate Limiting ყველა მომხმარებლისთვის (მათ შორის ბოტებისთვის)
   // ═══════════════════════════════════════════════════════════════
-  // API routes-ზე ზოგად ლიმიტს არ ვუშვებთ - მათ ცალკე ლიმიტი აქვთ
-  if (!isApiRequest(pathname) && !isStaticAssetRequest(request)) {
+  // API routes-ზე ზოგად ლიმიტს არ ვუშვებთ - მათ ცალკე ლიმიტი აქვთ.
+  // Router prefetches are not user page views: a single homepage visit can
+  // prefetch dozens of <Link> targets, which used to exhaust the per-IP
+  // budget and answer real visitors with "Too many requests".
+  const isPrefetch =
+    request.headers.get("next-router-prefetch") === "1" ||
+    request.headers.get("purpose") === "prefetch" ||
+    request.headers.get("sec-purpose")?.includes("prefetch");
+  if (!isApiRequest(pathname) && !isStaticAssetRequest(request) && !isPrefetch) {
     const { rateLimited, retryAfter } = checkRateLimit(request);
 
     if (rateLimited) {

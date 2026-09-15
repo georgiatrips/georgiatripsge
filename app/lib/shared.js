@@ -11,10 +11,14 @@ export const PHONE_TEL = "+995504220020";
 export function whatsappHref(message = "") {
   return message ? `${WA_LINK}?text=${encodeURIComponent(message)}` : WA_LINK;
 }
+// Single public mailbox. The dictionaries' footer.email and the site JSON-LD
+// used to disagree; both now read from here.
+export const EMAIL = "infogeorgiatrips@gmail.com";
+export const ADDRESS_KA = "ბათუმი, ქუთაისის 27";
 export const TELEGRAM_HANDLE = "+995504220020";
 export const TELEGRAM_LINK = `https://t.me/${TELEGRAM_HANDLE}`;
-export const INSTAGRAM_HANDLE = "georgiatrips.ge";
-export const INSTAGRAM_LINK = `https://instagram.com/${INSTAGRAM_HANDLE}`;
+export const INSTAGRAM_HANDLE = "batumi_vip_travel";
+export const INSTAGRAM_LINK = `https://www.instagram.com/${INSTAGRAM_HANDLE}/`;
 export const FACEBOOK_LINK = "https://www.facebook.com/profile.php?id=61588059054976";
 export const TIKTOK_LINK = "https://www.tiktok.com/@travell_company";
 export const YOUTUBE_LINK = "https://www.youtube.com/@GeorgiaTrips";
