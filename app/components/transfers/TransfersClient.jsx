@@ -7,6 +7,7 @@ import Footer from "../Footer";
 import PageHero from "../PageHero";
 import DatePicker from "../DatePicker";
 import { WA_LINK, WhatsAppIcon } from "../../lib/shared";
+import { CheckIcon } from "../Icons";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { createBooking } from "../../lib/bookingsFirestore";
 import { isValidPhone } from "../../lib/bookingModel";
@@ -243,7 +244,7 @@ export default function TransfersClient() {
       />
 
       {/* SECTION 2: LUXURY FLEET */}
-      <section className="section" style={{ background: "#f8fafc" }}>
+      <section className="section">
         <div className="container">
           <div className="section-header" style={{ textAlign: "center", marginBottom: "2.5rem" }}>
             <span className="section-eyebrow">{t("transfersPage.fleetEyebrow")}</span>
@@ -303,7 +304,7 @@ export default function TransfersClient() {
       </section>
 
       {/* SECTION 3: VIP PERKS */}
-      <section className="section" style={{ background: "#ffffff" }}>
+      <section className="section">
         <div className="container">
           <div className="section-header" style={{ textAlign: "center", marginBottom: "2.5rem" }}>
             <span className="section-eyebrow">{t("transfersPage.perksEyebrow")}</span>
@@ -327,7 +328,7 @@ export default function TransfersClient() {
       </section>
 
       {/* SECTION 4: HIGH-CONVERSION BOOKING FORM */}
-      <section className="section" id="transfer-booking-form" style={{ background: "#f8fafc" }}>
+      <section className="section" id="transfer-booking-form">
         <div className="container" style={{ maxWidth: "840px" }}>
           <div className="transfers-form-wrapper">
             <h2 className="transfers-form-title">{t("transfersPage.formTitle")}</h2>
@@ -398,7 +399,6 @@ export default function TransfersClient() {
                   value={selectedVehicleKey}
                   onChange={(e) => setSelectedVehicleKey(e.target.value)}
                   className="tf-input-styled"
-                  style={{ background: "#0f172a" }}
                 >
                   {fleetKeys.map((key) => (
                     <option key={key} value={key}>
@@ -460,19 +460,19 @@ export default function TransfersClient() {
                 {/* High-Trust Conversion Badges */}
                 <div className="tf-trust-badges-grid" dir={lang === "ar" ? "rtl" : "ltr"}>
                   <div className="tf-trust-badge-item">
-                    <span className="tf-trust-badge-icon">🛡️</span>
+                    <span className="tf-trust-badge-icon"><CheckIcon size={16} /></span>
                     <span className="tf-trust-badge-text">{transferTrustLabels.cancellation}</span>
                   </div>
                   <div className="tf-trust-badge-item">
-                    <span className="tf-trust-badge-icon">💵</span>
+                    <span className="tf-trust-badge-icon"><CheckIcon size={16} /></span>
                     <span className="tf-trust-badge-text">{transferTrustLabels.payOnArrival}</span>
                   </div>
                   <div className="tf-trust-badge-item">
-                    <span className="tf-trust-badge-icon">⚡</span>
+                    <span className="tf-trust-badge-icon"><CheckIcon size={16} /></span>
                     <span className="tf-trust-badge-text">{transferTrustLabels.instantWa}</span>
                   </div>
                   <div className="tf-trust-badge-item">
-                    <span className="tf-trust-badge-icon">🏅</span>
+                    <span className="tf-trust-badge-icon"><CheckIcon size={16} /></span>
                     <span className="tf-trust-badge-text">{transferTrustLabels.guaranteed}</span>
                   </div>
                 </div>

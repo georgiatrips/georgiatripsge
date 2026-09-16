@@ -262,26 +262,6 @@ export default function GeorgiaMap({ regions = [] }) {
         </aside>
       )}
 
-      <div className="gt-map-list">
-        <p className="gt-map-list-label">{t("homepage.mapRegionsList")}</p>
-        <ul>
-          {regions.map((r) => (
-            <li key={r.code}>
-              <button
-                type="button"
-                className={`gt-map-chip${active === r.code ? " is-active" : ""}${r.tourCount > 0 ? " has-tours" : ""}`}
-                aria-pressed={active === r.code}
-                onClick={() => select(r.code)}
-                onMouseEnter={() => setHover(r.code)}
-                onMouseLeave={() => setHover(null)}
-              >
-                {r.name}
-                {r.tourCount > 0 && <span>{r.tourCount}</span>}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
     </div>
   );
 }

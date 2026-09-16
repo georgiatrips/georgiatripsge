@@ -444,8 +444,8 @@ export default function TourDetailClient({
 
   if (fsLoading && !tour) {
     return (
-      <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc" }}>
-        <div style={{ textAlign: "center", color: "#0d233a" }}>
+      <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--gt-paper)" }}>
+        <div style={{ textAlign: "center", color: "#1f2d3d" }}>
           <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>🏔️</div>
           <h3>{t("tourDetail.loadingTour") || "ტური იტვირთება..."}</h3>
         </div>
@@ -455,11 +455,11 @@ export default function TourDetailClient({
 
   if (!tour) {
     return (
-      <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc" }}>
-        <div style={{ textAlign: "center", color: "#0d233a" }}>
+      <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--gt-paper)" }}>
+        <div style={{ textAlign: "center", color: "#1f2d3d" }}>
           <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>🔍</div>
           <h3>{t("tourDetail.tourNotFound") || "ტური ვერ მოიძებნა"}</h3>
-          <Link href={getLocalizedHref("/tours", lang)} style={{ color: "var(--teal)", textDecoration: "underline", marginTop: "1rem", display: "inline-block" }}>
+          <Link href={getLocalizedHref("/tours", lang)} style={{ color: "var(--gt-primary)", textDecoration: "underline", marginTop: "1rem", display: "inline-block" }}>
             {t("tourDetail.backToTours") || "ყველა ტურის ნახვა"}
           </Link>
         </div>
@@ -527,7 +527,16 @@ export default function TourDetailClient({
                 </div>
               </div>
               <div className="tdp-card-body">
-                <p className="tdp-about-lead">{asLocalizedText(tour.desc, lang)}</p>
+                {/* The description is stored with blank lines between paragraphs. */}
+                <div className="tdp-about-text">
+                  {String(asLocalizedText(tour.desc, lang) || "")
+                    .split(/\n\s*\n/)
+                    .map((para) => para.trim())
+                    .filter(Boolean)
+                    .map((para, index) => (
+                      <p key={index} className={index === 0 ? "tdp-about-lead" : undefined}>{para}</p>
+                    ))}
+                </div>
               </div>
             </article>
 
@@ -640,7 +649,7 @@ export default function TourDetailClient({
               {(() => {
                 const cleanLoc = resolvePhotoPlaceTitle(tour.gallery[lightboxImgIndex], lightboxImgIndex);
                 return cleanLoc ? (
-                  <span style={{ color: "var(--teal, #29b2b7)", fontWeight: 700, fontSize: "0.95rem" }}>
+                  <span style={{ color: "var(--gt-primary, #2a6592)", fontWeight: 700, fontSize: "0.95rem" }}>
                     📍 {cleanLoc}
                   </span>
                 ) : null;

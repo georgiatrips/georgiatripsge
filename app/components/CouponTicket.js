@@ -22,6 +22,7 @@ export default function CouponTicket({
   timeLeftText = null,
   onClose = null,
   onUse = null,
+  useLabel = null,
 }) {
   const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
@@ -95,7 +96,7 @@ export default function CouponTicket({
         {/* Action Button if enabled */}
         {showUseBtn && onUse && (
           <button type="button" className="gt-ticket-claim-btn" onClick={onUse}>
-            <span>{t("welcomePopup.registerClaimBtn") || "რეგისტრაცია და აღება"} →</span>
+            <span>{useLabel || t("welcomePopup.registerClaimBtn")} →</span>
           </button>
         )}
       </div>

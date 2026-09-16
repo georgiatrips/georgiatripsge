@@ -424,7 +424,7 @@ html[dir="rtl"] .gt-drawer { animation-name: gt-drawer-in-rtl; }
 
 .gt-footer {
   padding-block-start: clamp(3rem, 6vw, 4.5rem);
-  background: var(--gt-navy-950);
+  background: var(--gt-footer-bg);
   color: #b8c6d3;
   font-family: var(--gt-font-body);
 }
@@ -576,7 +576,7 @@ html[dir="rtl"] .gt-drawer { animation-name: gt-drawer-in-rtl; }
   .gt-tabbar-item:active { background: var(--gt-paper); }
   .gt-tabbar-item:focus-visible { outline: 3px solid var(--gt-teal); outline-offset: -3px; }
 
-  .gt-tabbar-spacer { display: block; block-size: var(--gt-tabbar-offset); background: var(--gt-navy-950); }
+  .gt-tabbar-spacer { display: block; block-size: var(--gt-tabbar-offset); background: var(--gt-footer-bg); }
 
   body:has(.gt-tabbar) .gt-floating-coupon-widget { bottom: calc(12px + var(--gt-tabbar-offset)) !important; }
 }

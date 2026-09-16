@@ -1,36 +1,34 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GeorgiaTrips
 
-## Getting Started
+Tours, transfers and hotels across Georgia — Next.js 16 (App Router, Turbopack)
+with Firebase (Firestore, Auth) and Cloudinary uploads. Five languages: ka, en,
+ru, tr, ar (RTL).
 
-First, run the development server:
+## Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000. Environment variables live in `.env.local`
+(not committed): Firebase, Cloudinary, Google (Business Profile / Places) and
+analytics IDs.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm run start
+```
 
-## Learn More
+## Where things are
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `app/[locale]/` — public pages per language
+- `app/admin/` — admin panel
+- `app/api/` — server routes (bookings, uploads, reviews sync, analytics)
+- `app/components/` — shared UI; `app/styles/` — design system CSS
+- `app/lib/i18n/locales/` — all UI text for the five languages
+- `firestore.rules` — Firestore security rules
+- `proxy.js` — rate limiting and API protection
+- `scripts/` — icon generation and the Google OAuth helper

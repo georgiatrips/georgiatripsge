@@ -24,8 +24,6 @@ const API_LIMITS = {
   "/api/upload": { max: 60, methods: ["POST"] },
   "/api/translate": { max: 120, methods: ["POST"] },
   "/api/google-reviews": { max: 30, methods: ["GET"] },
-  "/api/weather": { max: 60, methods: ["GET"] },
-  "/api/currency": { max: 60, methods: ["GET"] },
   "/api/analytics/track": { max: 60, methods: ["GET", "POST"] },
 };
 

@@ -43,9 +43,15 @@ export default function WelcomeCouponPopup() {
     let timer = 0;
 
     const show = (delayMs) => {
+      window.clearTimeout(timer);
       timer = window.setTimeout(() => {
         if (!cancelled) setIsOpen(true);
       }, delayMs);
+    };
+
+    const onConsent = () => {
+      window.removeEventListener("gt_cookie_dismissed", onConsent);
+      show(1500);
     };
 
     (async () => {
@@ -70,17 +76,15 @@ export default function WelcomeCouponPopup() {
         if (settings.limitOnePerIp && ip && (await isIpClaimed(ip))) return;
         if (cancelled) return;
 
-        const isMobile = window.innerWidth <= 768;
-        const consentGiven = Boolean(localStorage.getItem("gt_cookie_consent"));
-        if (!isMobile) {
-          show(20000);
-        } else if (consentGiven) {
-          show(8000);
+        // Never on top of the cookie banner: if it is still open, wait until
+        // the visitor answers it, then show the coupon shortly after.
+        let consentGiven = false;
+        try {
+          consentGiven = Boolean(localStorage.getItem("gt_cookie_consent"));
+        } catch (_) {}
+        if (consentGiven) {
+          show(6000);
         } else {
-          const onConsent = () => {
-            window.removeEventListener("gt_cookie_dismissed", onConsent);
-            show(4000);
-          };
           window.addEventListener("gt_cookie_dismissed", onConsent);
         }
       } catch (err) {
@@ -91,6 +95,7 @@ export default function WelcomeCouponPopup() {
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
+      window.removeEventListener("gt_cookie_dismissed", onConsent);
     };
   }, [user, pathname]);
 

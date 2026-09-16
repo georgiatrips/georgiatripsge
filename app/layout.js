@@ -78,7 +78,7 @@ export const viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#0d233a",
+  themeColor: "#2a6592",
 };
 
 // Locale-specific title/description/OG/hreflang live in app/[locale]/layout.js
@@ -232,12 +232,29 @@ export default async function RootLayout({ children }) {
           </CurrencyProvider>
         </LanguageProvider>
 
+        {/* The service worker caches /_next/static files. In development those
+            file names do not change when their content does, so it would keep
+            serving stale CSS/JS: register it only in production, and remove
+            any earlier registration (and its cache) during development. */}
         <Script id="register-sw" strategy="afterInteractive">
-          {`
+          {process.env.NODE_ENV === "production"
+            ? `
             if ('serviceWorker' in navigator) {
               window.addEventListener('load', function() {
                 navigator.serviceWorker.register('/sw.js').catch(function() {});
               });
+            }
+          `
+            : `
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(function(list) {
+                list.forEach(function(r) { r.unregister(); });
+              });
+              if (window.caches) {
+                caches.keys().then(function(keys) {
+                  keys.forEach(function(k) { if (k.indexOf('georgiatrips') === 0) caches.delete(k); });
+                });
+              }
             }
           `}
         </Script>

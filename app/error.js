@@ -68,7 +68,7 @@ export default function Error({ error, reset }) {
         }}
       >
         <span style={{ fontSize: "3rem", display: "block", marginBottom: "1rem" }}>⚠️</span>
-        <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--navy, #0d233a)", marginBottom: "0.75rem" }}>
+        <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--gt-ink, #1f2d3d)", marginBottom: "0.75rem" }}>
           {t.title}
         </h1>
         <p style={{ color: "var(--text-muted, #64748b)", fontSize: "0.95rem", lineHeight: 1.6, marginBottom: "2rem" }}>
@@ -79,7 +79,7 @@ export default function Error({ error, reset }) {
             onClick={() => reset()}
             style={{
               padding: "0.75rem 1.5rem",
-              background: "var(--teal, #29b2b7)",
+              background: "var(--gt-primary, #2a6592)",
               color: "#ffffff",
               border: "none",
               borderRadius: "12px",
@@ -94,7 +94,7 @@ export default function Error({ error, reset }) {
             style={{
               padding: "0.75rem 1.5rem",
               background: "rgba(13, 35, 58, 0.08)",
-              color: "var(--navy, #0d233a)",
+              color: "var(--gt-ink, #1f2d3d)",
               borderRadius: "12px",
               fontWeight: 700,
               textDecoration: "none",

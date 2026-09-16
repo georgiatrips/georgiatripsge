@@ -222,9 +222,9 @@ export default async function PrivateToursBatumiPage({ params }) {
         </div>
         <div className="landing-features-grid">
           {c.fleet.map((v, i) => (
-            <div key={i} className="landing-feature-card" style={{ background: "rgba(13, 35, 58, 0.8)", borderColor: "rgba(245, 158, 11, 0.25)" }}>
+            <div key={i} className="landing-feature-card">
               <span className="landing-feature-icon">{v.icon}</span>
-              <div style={{ color: "#f59e0b", fontWeight: 700, fontSize: "0.85rem", marginBottom: "0.25rem" }}>{v.cap}</div>
+              <div style={{ color: "var(--gt-primary)", fontWeight: 700, fontSize: "0.85rem", marginBottom: "0.25rem" }}>{v.cap}</div>
               <h3>{v.name}</h3>
               <p>{v.desc}</p>
             </div>

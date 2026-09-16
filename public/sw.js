@@ -1,4 +1,4 @@
-const CACHE_NAME = "georgiatrips-v3";
+const CACHE_NAME = "georgiatrips-v4";
 const STATIC_ASSETS = [
   "/logo.png",
   "/manifest.json",

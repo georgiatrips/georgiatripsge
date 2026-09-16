@@ -26,7 +26,7 @@
   justify-content: flex-end;
   min-height: clamp(680px, 100svh, 960px);
   overflow: hidden;
-  background: var(--gt-navy-950);
+  background: var(--gt-stone);
   color: #fff;
 }
 
@@ -37,15 +37,15 @@
   inset: 0;
   z-index: -1;
   background:
-    linear-gradient(90deg, rgba(7, 23, 36, 0.88) 0%, rgba(7, 23, 36, 0.62) 45%, rgba(7, 23, 36, 0.18) 80%),
-    linear-gradient(0deg, rgba(7, 23, 36, 0.82) 0%, rgba(7, 23, 36, 0) 55%),
+    linear-gradient(90deg, rgba(18, 36, 54, 0.74) 0%, rgba(18, 36, 54, 0.5) 45%, rgba(7, 23, 36, 0.18) 80%),
+    linear-gradient(0deg, rgba(18, 36, 54, 0.66) 0%, rgba(7, 23, 36, 0) 55%),
     linear-gradient(180deg, rgba(7, 23, 36, 0.45) 0%, rgba(7, 23, 36, 0) 22%);
 }
 
 html[dir="rtl"] .gt-hero-scrim {
   background:
-    linear-gradient(270deg, rgba(7, 23, 36, 0.88) 0%, rgba(7, 23, 36, 0.62) 45%, rgba(7, 23, 36, 0.18) 80%),
-    linear-gradient(0deg, rgba(7, 23, 36, 0.82) 0%, rgba(7, 23, 36, 0) 55%),
+    linear-gradient(270deg, rgba(18, 36, 54, 0.74) 0%, rgba(18, 36, 54, 0.5) 45%, rgba(7, 23, 36, 0.18) 80%),
+    linear-gradient(0deg, rgba(18, 36, 54, 0.66) 0%, rgba(7, 23, 36, 0) 55%),
     linear-gradient(180deg, rgba(7, 23, 36, 0.45) 0%, rgba(7, 23, 36, 0) 22%);
 }
 
@@ -80,6 +80,15 @@ html[dir="rtl"] .gt-hero-scrim {
 }
 
 .gt-hero .gt-display em { font-style: normal; color: var(--gt-gold); }
+
+/* Two planned lines (split in the dictionary), each balanced on its own. */
+.gt-hero-title-line { display: block; text-wrap: balance; }
+/* Sized from the copy column: each planned line fits on one row (longest
+   line: ka ≈ 15.2em, tr ≈ 11.3em, ru ≈ 10.5em). Phones keep a readable floor. */
+.gt-hero-copy { container-type: inline-size; }
+:lang(ka) .gt-hero .gt-hero-title { font-size: clamp(1.75rem, calc(100cqi / 15.8), 3.1rem); line-height: 1.15; }
+:lang(tr) .gt-hero .gt-hero-title { font-size: clamp(2rem, calc(100cqi / 11.8), 4.5rem); }
+:lang(ru) .gt-hero .gt-hero-title { font-size: clamp(1.9rem, calc(100cqi / 11), 3.4rem); }
 
 .gt-hero-lead {
   max-width: 40rem;
@@ -156,7 +165,7 @@ html[dir="rtl"] .gt-hero-scrim {
 }
 
 .gt-search-control select:hover { background: var(--gt-paper); }
-.gt-search-control select:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(16, 109, 164, 0.2); }
+.gt-search-control select:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(42, 101, 146, 0.2); }
 
 .gt-search-caret { position: absolute; inset-inline-end: 0.4rem; color: var(--gt-muted); pointer-events: none; }
 
@@ -244,7 +253,7 @@ html[dir="rtl"] .gt-hero-scrim {
   block-size: 64px;
   overflow: hidden;
   border-radius: 10px;
-  background: var(--gt-navy-900);
+  background: var(--gt-stone);
 }
 
 .gt-departure-media img { object-fit: cover; }
@@ -315,7 +324,7 @@ html[dir="rtl"] .gt-hero-scrim {
 .gt-mapx {
   display: grid;
   grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.85fr);
-  grid-template-areas: "map panel" "list list";
+  grid-template-areas: "map panel";
   align-items: stretch;
   gap: 1.25rem clamp(1.25rem, 3vw, 2.25rem);
 }
@@ -333,8 +342,8 @@ html[dir="rtl"] .gt-hero-scrim {
   border: 1px solid var(--gt-line);
   border-radius: var(--gt-radius-xl);
   background:
-    radial-gradient(90% 70% at 20% 10%, rgba(41, 178, 183, 0.1), transparent 60%),
-    radial-gradient(70% 60% at 90% 90%, rgba(250, 180, 24, 0.08), transparent 60%),
+    radial-gradient(90% 70% at 20% 10%, rgba(58, 146, 150, 0.1), transparent 60%),
+    radial-gradient(70% 60% at 90% 90%, rgba(224, 169, 59, 0.08), transparent 60%),
     var(--gt-paper);
 }
 
@@ -370,10 +379,10 @@ html.gt-js .gt-map-figure.is-in .gt-map-region { opacity: 1; translate: none; }
 
 /* Hover label. It never takes the pointer, so it cannot start a hover loop. */
 .gt-map-tip { pointer-events: none; }
-.gt-map-tip rect { fill: var(--gt-ocean-900); filter: drop-shadow(0 6px 12px rgba(11, 74, 110, 0.3)); }
+.gt-map-tip rect { fill: var(--gt-ocean-900); filter: drop-shadow(0 6px 12px rgba(34, 85, 124, 0.3)); }
 .gt-map-tip text { fill: #fff; font: 700 12px var(--gt-font-body); text-anchor: middle; dominant-baseline: central; }
 .gt-map-badge circle { fill: var(--gt-gold); stroke: #fff; stroke-width: 2.5; filter: drop-shadow(0 3px 6px rgba(13, 35, 58, 0.3)); }
-.gt-map-badge text { fill: var(--gt-navy-900); font: 800 13px var(--gt-font-body); text-anchor: middle; dominant-baseline: central; }
+.gt-map-badge text { fill: var(--gt-ink); font: 800 13px var(--gt-font-body); text-anchor: middle; dominant-baseline: central; }
 html.gt-js .gt-map-figure .gt-map-badge { opacity: 0; transition: opacity 0.5s ease 0.8s; }
 html.gt-js .gt-map-figure.is-in .gt-map-badge { opacity: 1; }
 
@@ -381,7 +390,7 @@ html.gt-js .gt-map-figure.is-in .gt-map-badge { opacity: 1; }
 .gt-map-pin-dot { fill: var(--gt-ocean-900); stroke: #fff; stroke-width: 2.5; }
 .gt-map-pin.is-office .gt-map-pin-dot { fill: var(--gt-gold-600); }
 .gt-map-pin:focus-visible .gt-map-pin-dot { stroke: var(--gt-gold); stroke-width: 3.5; }
-.gt-map-pin-pulse { fill: rgba(250, 180, 24, 0.35); transform-box: fill-box; transform-origin: center; animation: gt-map-pulse 2.4s ease-out infinite; }
+.gt-map-pin-pulse { fill: rgba(224, 169, 59, 0.35); transform-box: fill-box; transform-origin: center; animation: gt-map-pulse 2.4s ease-out infinite; }
 .gt-map-pin-label rect { fill: var(--gt-ocean-900); }
 .gt-map-pin-label text { fill: #fff; font: 700 12px var(--gt-font-body); text-anchor: middle; dominant-baseline: central; }
 
@@ -394,17 +403,18 @@ html.gt-js .gt-map-figure.is-in .gt-map-badge { opacity: 1; }
 .gt-map-legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
 .gt-map-swatch { display: inline-block; width: 14px; height: 14px; border-radius: 4px; background: #d5e0ea; }
 .gt-map-swatch.is-tours { background: #8fd0d2; }
-.gt-map-swatch.is-pin { border-radius: 50%; background: var(--gt-gold-600); box-shadow: 0 0 0 3px rgba(250, 180, 24, 0.3); }
+.gt-map-swatch.is-pin { border-radius: 50%; background: var(--gt-gold-600); box-shadow: 0 0 0 3px rgba(224, 169, 59, 0.3); }
 
 .gt-map-panel {
   grid-area: panel;
   display: flex;
   flex-direction: column;
   padding: clamp(1.25rem, 2.5vw, 1.75rem);
+  border: 1px solid var(--gt-line);
   border-radius: var(--gt-radius-xl);
-  background: linear-gradient(160deg, var(--gt-ocean-700) 0%, var(--gt-ocean-900) 100%);
-  color: #fff;
-  box-shadow: var(--gt-shadow-lg);
+  background: var(--gt-white);
+  color: var(--gt-ink);
+  box-shadow: var(--gt-shadow);
 }
 
 .gt-map-panel-body { display: flex; flex: 1; flex-direction: column; gap: 0.8rem; animation: gt-panel-in 0.45s var(--gt-ease-out) both; }
@@ -414,14 +424,14 @@ html.gt-js .gt-map-figure.is-in .gt-map-badge { opacity: 1; }
   to { opacity: 1; translate: none; }
 }
 
-.gt-map-panel-kicker { display: inline-flex; align-items: center; gap: 0.4rem; margin: 0; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #ffd978; }
+.gt-map-panel-kicker { display: inline-flex; align-items: center; gap: 0.4rem; margin: 0; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gt-teal-700); }
 :lang(ka) .gt-map-panel-kicker,
 :lang(ar) .gt-map-panel-kicker { letter-spacing: 0.02em; }
 .gt-map-panel-title { margin: 0; font-family: var(--gt-font-display); font-size: clamp(1.6rem, 2.6vw, 2.1rem); line-height: 1.15; text-wrap: balance; }
-.gt-map-panel-desc { margin: 0; line-height: 1.55; color: rgba(255, 255, 255, 0.84); }
+.gt-map-panel-desc { margin: 0; line-height: 1.55; color: var(--gt-muted); }
 
 .gt-map-list-block { display: grid; gap: 0.55rem; }
-.gt-map-list-title { margin: 0; font-size: 0.78rem; font-weight: 700; color: rgba(255, 255, 255, 0.76); }
+.gt-map-list-title { margin: 0; font-size: 0.78rem; font-weight: 700; color: var(--gt-muted); }
 
 .gt-map-tours { display: grid; gap: 0.45rem; margin: 0; padding: 0; list-style: none; }
 
@@ -431,44 +441,45 @@ html.gt-js .gt-map-figure.is-in .gt-map-badge { opacity: 1; }
   align-items: center;
   gap: 0.75rem;
   padding: 0.45rem 0.7rem 0.45rem 0.45rem;
+  border: 1px solid var(--gt-line);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  background: var(--gt-paper);
+  color: var(--gt-ink);
   text-decoration: none;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 html[dir="rtl"] .gt-map-tour { padding: 0.45rem 0.45rem 0.45rem 0.7rem; }
-.gt-map-tour:hover { background: rgba(255, 255, 255, 0.2); }
+.gt-map-tour:hover { border-color: var(--gt-line-strong); background: var(--gt-primary-soft); }
 .gt-map-tour:focus-visible { outline: 3px solid var(--gt-gold); outline-offset: 2px; }
-.gt-map-tour > svg { color: var(--gt-gold); }
+.gt-map-tour > svg { color: var(--gt-primary); }
 html[dir="rtl"] .gt-map-tour > svg { scale: -1 1; }
 
-.gt-map-tour-img { position: relative; overflow: hidden; width: 64px; aspect-ratio: 4 / 3; border-radius: 8px; background: rgba(255, 255, 255, 0.1); }
+.gt-map-tour-img { position: relative; overflow: hidden; width: 64px; aspect-ratio: 4 / 3; border-radius: 8px; background: var(--gt-stone); }
 .gt-map-tour-img img { object-fit: cover; }
 .gt-map-tour-text { display: grid; gap: 0.15rem; min-width: 0; }
 .gt-map-tour-text strong { display: -webkit-box; overflow: hidden; font-size: 0.9rem; line-height: 1.3; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.gt-map-tour-text small { font-size: 0.78rem; color: rgba(255, 255, 255, 0.8); }
+.gt-map-tour-text small { font-size: 0.78rem; color: var(--gt-muted); }
 
 .gt-map-places { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.45rem; margin: 0; padding: 0; list-style: none; }
 
-.gt-map-place { position: relative; display: block; overflow: hidden; aspect-ratio: 16 / 10; border-radius: 10px; background: rgba(255, 255, 255, 0.08); color: #fff; text-decoration: none; }
+.gt-map-place { position: relative; display: block; overflow: hidden; aspect-ratio: 16 / 10; border-radius: 10px; background: var(--gt-stone); color: #fff; text-decoration: none; }
 .gt-map-place img { object-fit: cover; transition: scale 0.5s var(--gt-ease-out); }
 .gt-map-place:hover img { scale: 1.06; }
 .gt-map-place:focus-visible { outline: 3px solid var(--gt-gold); outline-offset: 2px; }
-.gt-map-place span { position: absolute; inset-inline: 0; inset-block-end: 0; padding: 1.3rem 0.55rem 0.45rem; background: linear-gradient(0deg, rgba(7, 23, 36, 0.88), rgba(7, 23, 36, 0)); font-size: 0.78rem; font-weight: 700; line-height: 1.25; }
+.gt-map-place span { position: absolute; inset-inline: 0; inset-block-end: 0; padding: 1.3rem 0.55rem 0.45rem; background: linear-gradient(0deg, rgba(18, 36, 54, 0.74), rgba(7, 23, 36, 0)); font-size: 0.78rem; font-weight: 700; line-height: 1.25; }
 
-.gt-map-locations p { margin: 0 0 0.4rem; font-size: 0.78rem; font-weight: 700; color: rgba(255, 255, 255, 0.74); }
+.gt-map-locations p { margin: 0 0 0.4rem; font-size: 0.78rem; font-weight: 700; color: var(--gt-muted); }
 .gt-map-locations ul { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
 .gt-map-locations a,
-.gt-map-locations span { display: inline-flex; padding: 0.3rem 0.75rem; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 999px; color: #fff; font-size: 0.85rem; text-decoration: none; }
-.gt-map-locations a:hover { border-color: var(--gt-gold); }
+.gt-map-locations span { display: inline-flex; padding: 0.3rem 0.75rem; border: 1px solid var(--gt-line-strong); border-radius: 999px; color: var(--gt-ink-2); font-size: 0.85rem; text-decoration: none; }
+.gt-map-locations a:hover { border-color: var(--gt-primary); color: var(--gt-primary); }
 
 .gt-map-panel .gt-btn { margin-block-start: auto; }
 
 /* Desktop: one fixed panel height for every region, so choosing a region
-   never changes the row height or moves the map and the chips below it. */
-@media (min-width: 981px) {
+   never changes the row height or moves the map. */
+@media (min-width: 1200px) {
   .gt-map-panel { min-height: 34rem; }
 }
 
@@ -483,7 +494,7 @@ html[dir="rtl"] .gt-map-tour > svg { scale: -1 1; }
   gap: 0.7rem;
   padding: 0.55rem 0.7rem;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--gt-paper);
   font-size: 0.9rem;
   font-weight: 600;
   line-height: 1.35;
@@ -494,48 +505,19 @@ html[dir="rtl"] .gt-map-tour > svg { scale: -1 1; }
   place-items: center;
   width: 28px;
   height: 28px;
-  border: 1.5px solid rgba(250, 180, 24, 0.6);
+  border: 1.5px solid var(--gt-primary);
   border-radius: 50%;
-  color: var(--gt-gold);
+  color: var(--gt-primary);
   font-size: 0.8rem;
   font-weight: 800;
 }
 
-.gt-map-list { grid-area: list; display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; }
-.gt-map-list-label { margin: 0; font-size: 0.82rem; font-weight: 800; color: var(--gt-muted); }
-.gt-map-list ul { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0; padding: 0; list-style: none; }
-
-.gt-map-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-height: 40px;
-  padding: 0 0.9rem;
-  border: 1px solid var(--gt-line-strong);
-  border-radius: 999px;
-  background: #fff;
-  color: var(--gt-ink-2);
-  font: inherit;
-  font-size: 0.88rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
-}
-
-.gt-map-chip span { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: var(--gt-gold); color: var(--gt-navy-900); font-size: 0.75rem; font-weight: 800; }
-.gt-map-chip:hover { border-color: var(--gt-navy-900); color: var(--gt-navy-900); }
-.gt-map-chip.is-active { border-color: var(--gt-ocean-800); background: var(--gt-ocean-800); color: #fff; }
-.gt-map-chip:focus-visible { outline: 3px solid var(--gt-teal); outline-offset: 2px; }
-
 @media (max-width: 980px) {
-  .gt-mapx { grid-template-columns: minmax(0, 1fr); grid-template-areas: "map" "list" "panel"; }
+  .gt-mapx { grid-template-columns: minmax(0, 1fr); grid-template-areas: "map" "panel"; }
 }
 
 @media (max-width: 640px) {
   .gt-map-figure { padding: 0.5rem 0.5rem 0.8rem; }
-  .gt-map-list ul { flex-wrap: nowrap; overflow-x: auto; margin-inline: calc(var(--gt-gutter) * -1); padding: 0 var(--gt-gutter) 0.4rem; scrollbar-width: none; }
-  .gt-map-list ul::-webkit-scrollbar { display: none; }
-  .gt-map-chip { white-space: nowrap; }
 }
 
 /* ---------- Local team ---------- */
@@ -544,75 +526,71 @@ html[dir="rtl"] .gt-map-tour > svg { scale: -1 1; }
    never adds horizontal scroll. */
 .gt-why-section { overflow-x: clip; }
 
-/* Heading above; the portrait and the six points (two columns) side by side,
-   sized so both columns end at about the same height. */
+/* Heading above; the portrait and the four points side by side. The grid
+   stretches both columns, so the photo is always as tall as the list and
+   never smaller than --why-min. */
 .gt-why {
+  --why-min: 30rem;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-  align-items: center;
-  gap: clamp(2rem, 5vw, 4.5rem);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: clamp(2rem, 5vw, 4rem);
 }
 
-.gt-why-media { position: relative; isolation: isolate; }
+.gt-why-media { position: relative; isolation: isolate; min-height: var(--why-min); }
 
-/* Soft light behind the portrait: warm gold top-start, teal bottom-end. */
+/* Soft light behind the portrait. */
 .gt-why-media::before {
   content: "";
   position: absolute;
-  inset: 6% -7% -7% -7%;
+  inset: 8% -5% -5% -5%;
   z-index: -1;
   border-radius: 40%;
   background:
-    radial-gradient(60% 55% at 22% 18%, rgba(250, 180, 24, 0.55), transparent 70%),
-    radial-gradient(65% 60% at 82% 88%, rgba(41, 178, 183, 0.5), transparent 72%);
+    radial-gradient(60% 55% at 22% 18%, rgba(201, 162, 39, 0.28), transparent 70%),
+    radial-gradient(65% 60% at 82% 88%, rgba(47, 111, 143, 0.24), transparent 72%);
   filter: blur(44px);
 }
 
 .gt-why-photo {
-  position: relative;
-  aspect-ratio: 4 / 5;
+  position: absolute;
+  inset: 0;
   overflow: hidden;
   border-radius: var(--gt-radius-xl);
   background: var(--gt-stone);
-  box-shadow:
-    0 50px 90px -40px rgba(13, 35, 58, 0.55),
-    0 18px 36px -18px rgba(13, 35, 58, 0.35);
+  box-shadow: var(--gt-shadow-lg);
 }
 
 .gt-why-photo img { object-fit: cover; object-position: 50% 30%; }
 
-/* Light falls from the top corner and fades into shadow at the bottom. */
-.gt-why-photo::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, transparent 38%),
-    linear-gradient(to top, rgba(7, 23, 36, 0.32) 0%, transparent 45%);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
-  pointer-events: none;
-}
-
 .gt-why-points {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.5rem 2rem;
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.gt-why-point { display: flex; align-items: flex-start; gap: 0.85rem; }
-.gt-why-point h3 { margin: 0.1rem 0 0.3rem; font-family: var(--gt-font-body); font-size: 1.02rem; font-weight: 800; line-height: 1.35; }
-.gt-why-point p { margin: 0; font-size: 0.95rem; line-height: 1.6; color: var(--gt-muted); }
-
-@media (max-width: 900px) {
-  .gt-why { grid-template-columns: minmax(0, 1fr); }
-  .gt-why-media { width: 100%; max-width: 34rem; margin-inline: auto; }
+.gt-why-point {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid var(--gt-line);
+  border-radius: var(--gt-radius-lg);
+  background: var(--gt-white);
 }
 
-@media (max-width: 560px) { .gt-why-points { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; } }
+.gt-why-point h3 { margin: 0 0 0.25rem; font-family: var(--gt-font-body); font-size: 1.05rem; font-weight: 700; line-height: 1.35; color: var(--gt-ink); }
+.gt-why-point p { margin: 0; font-size: 0.94rem; line-height: 1.55; color: var(--gt-muted); }
+
+@media (max-width: 900px) {
+  .gt-why { --why-min: 0; grid-template-columns: minmax(0, 1fr); }
+  .gt-why-media { width: 100%; }
+  .gt-why-photo { position: relative; aspect-ratio: 4 / 3; }
+  .gt-why-points { grid-template-rows: none; }
+}
 
 /* ---------- Places on our routes ---------- */
 
@@ -674,19 +652,12 @@ html[dir="rtl"] .gt-map-tour > svg { scale: -1 1; }
 
 /* ---------- Plan: how it works + three-step planner ---------- */
 
-.gt-plan-section { position: relative; isolation: isolate; overflow: hidden; background: var(--gt-ocean-800); }
-.gt-plan-bg { z-index: -2; object-fit: cover; opacity: 0.3; }
-.gt-plan-section .gt-lead { color: rgba(255, 255, 255, 0.86); }
+/* The homepage reads as one continuous page: every section sits on the same
+   paper background and white cards carry the structure, so there are no
+   colour bands between sections. */
+main:has(.gt-hero) .gt-section { background: var(--gt-paper); }
 
-.gt-plan-section::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background:
-    radial-gradient(80% 70% at 85% 20%, rgba(41, 178, 183, 0.22), transparent 60%),
-    linear-gradient(90deg, rgba(11, 74, 110, 0.94) 0%, rgba(15, 93, 137, 0.84) 55%, rgba(21, 112, 163, 0.7) 100%);
-}
+.gt-plan-section { position: relative; }
 
 .gt-plan {
   display: grid;
@@ -710,7 +681,7 @@ html[dir="rtl"] .gt-map-tour > svg { scale: -1 1; }
   inset-inline-start: 21px;
   inset-block: 48px -1.1rem;
   width: 2px;
-  background: linear-gradient(to bottom, rgba(250, 180, 24, 0.5), rgba(250, 180, 24, 0));
+  background: linear-gradient(to bottom, rgba(42, 101, 146, 0.35), rgba(42, 101, 146, 0));
 }
 
 .gt-plan-step-num {
@@ -718,25 +689,25 @@ html[dir="rtl"] .gt-map-tour > svg { scale: -1 1; }
   place-items: center;
   width: 44px;
   height: 44px;
-  border: 1.5px solid rgba(250, 180, 24, 0.55);
+  border: 1.5px solid var(--gt-primary);
   border-radius: 50%;
-  background: rgba(250, 180, 24, 0.12);
-  color: var(--gt-gold);
+  background: var(--gt-white);
+  color: var(--gt-primary);
   font-family: var(--gt-font-display);
   font-size: 1.15rem;
   font-weight: 700;
 }
 
-.gt-plan-steps strong { display: block; margin-block-start: 0.25rem; font-size: 1.05rem; color: #fff; }
-.gt-plan-steps p { margin: 0.2rem 0 0; font-size: 0.95rem; line-height: 1.55; color: rgba(255, 255, 255, 0.84); }
+.gt-plan-steps strong { display: block; margin-block-start: 0.25rem; font-size: 1.05rem; color: var(--gt-ink); }
+.gt-plan-steps p { margin: 0.2rem 0 0; font-size: 0.95rem; line-height: 1.55; color: var(--gt-muted); }
 
 .gt-plan-tags { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0 0 1.5rem; padding: 0; list-style: none; }
-.gt-plan-tags li { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.75rem; border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 999px; background: rgba(255, 255, 255, 0.1); color: #fff; font-size: 0.85rem; font-weight: 600; overflow-wrap: anywhere; }
-.gt-plan-tags svg { flex: none; color: var(--gt-gold); }
+.gt-plan-tags li { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.75rem; border: 1px solid var(--gt-line); border-radius: 999px; background: var(--gt-white); color: var(--gt-ink-2); font-size: 0.85rem; font-weight: 600; overflow-wrap: anywhere; }
+.gt-plan-tags svg { flex: none; color: var(--gt-teal-700); }
 
-.gt-plan-call { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; margin: 0; color: #dce6ef; }
-.gt-plan-call svg { color: var(--gt-gold); }
-.gt-plan-call a { font-weight: 800; color: #fff; white-space: nowrap; text-decoration: underline; text-decoration-color: rgba(255, 255, 255, 0.4); text-underline-offset: 4px; }
+.gt-plan-call { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; margin: 0; color: var(--gt-ink-2); }
+.gt-plan-call svg { color: var(--gt-primary); }
+.gt-plan-call a { font-weight: 800; color: var(--gt-primary); white-space: nowrap; text-decoration: underline; text-decoration-color: rgba(42, 101, 146, 0.35); text-underline-offset: 4px; }
 
 .gt-wizard {
   display: grid;
@@ -745,7 +716,7 @@ html[dir="rtl"] .gt-map-tour > svg { scale: -1 1; }
   border-radius: 22px;
   background: #fff;
   color: var(--gt-ink);
-  box-shadow: 0 40px 80px -40px rgba(0, 0, 0, 0.65);
+  box-shadow: var(--gt-shadow-lg);
 }
 
 .gt-wizard-head { display: grid; gap: 0.55rem; }
@@ -792,12 +763,12 @@ html[dir="rtl"] .gt-wizard-body { animation-name: gt-step-in-rtl; }
 }
 
 .gt-choice-card:hover { border-color: var(--gt-navy-700); translate: 0 -2px; }
-.gt-choice-card.is-active { border-color: var(--gt-ocean-800); background: #f5fafd; box-shadow: inset 0 0 0 1px var(--gt-ocean-800), 0 10px 24px -16px rgba(11, 74, 110, 0.5); }
+.gt-choice-card.is-active { border-color: var(--gt-ocean-800); background: #f5fafd; box-shadow: inset 0 0 0 1px var(--gt-ocean-800), 0 10px 24px -16px rgba(34, 85, 124, 0.5); }
 .gt-choice-card input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
 .gt-choice-card:has(input:focus-visible) { outline: 3px solid var(--gt-teal); outline-offset: 2px; }
 
 .gt-choice-card-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 11px; background: var(--gt-teal-soft); color: var(--gt-teal-700); transition: background-color 0.2s ease, color 0.2s ease; }
-.gt-choice-card.is-active .gt-choice-card-icon { background: var(--gt-ocean-800); color: #ffd978; }
+.gt-choice-card.is-active .gt-choice-card-icon { background: var(--gt-primary); color: #fff; }
 .gt-choice-card-text { min-width: 0; padding-inline-end: 1rem; }
 .gt-choice-card-text strong { display: block; font-size: 0.95rem; line-height: 1.3; overflow-wrap: anywhere; }
 .gt-choice-card-text small { display: block; margin-block-start: 0.15rem; font-size: 0.8rem; line-height: 1.4; color: var(--gt-muted); }
@@ -847,6 +818,11 @@ html[dir="rtl"] .gt-wizard-body { animation-name: gt-step-in-rtl; }
 /* ---------- Transfers ---------- */
 
 .gt-transfer { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.5rem, 4vw, 3.5rem); }
+
+/* Both columns end together in every language: the route tiles grow to take
+   whatever height the other column adds. */
+.gt-transfer > div { display: flex; flex-direction: column; }
+.gt-transfer .gt-routes { flex: 1; grid-auto-rows: minmax(0, 1fr); }
 
 .gt-sublabel { margin: 0 0 0.75rem; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gt-muted); }
 .gt-sublabel--spaced { margin-block-start: 1.6rem; }
@@ -947,18 +923,19 @@ html[dir="rtl"] .gt-wizard-body { animation-name: gt-step-in-rtl; }
   margin-block-start: 1.25rem;
   padding: 0.95rem 1.1rem;
   border-radius: var(--gt-radius);
-  background: var(--gt-navy-900);
-  color: #fff;
+  border: 1px solid var(--gt-line);
+  background: var(--gt-primary-soft);
+  color: var(--gt-ink);
   text-decoration: none;
   scroll-margin-top: calc(var(--gt-header-h) + 1rem);
   transition: background-color 0.2s var(--gt-ease);
 }
 
-.gt-vip-link:hover { background: var(--gt-navy-800); }
+.gt-vip-link:hover { border-color: var(--gt-primary); }
 .gt-vip-link:focus-visible { outline: 3px solid var(--gt-gold); outline-offset: 2px; }
-.gt-vip-link > svg:first-child { color: var(--gt-gold); }
+.gt-vip-link > svg { color: var(--gt-primary); }
 .gt-vip-link strong { display: block; font-size: 0.98rem; }
-.gt-vip-link small { display: block; margin-block-start: 0.15rem; font-size: 0.84rem; line-height: 1.45; color: #b9c8d6; }
+.gt-vip-link small { display: block; margin-block-start: 0.15rem; font-size: 0.84rem; line-height: 1.45; color: var(--gt-muted); }
 
 @media (max-width: 900px) { .gt-transfer { grid-template-columns: minmax(0, 1fr); } }
 
@@ -1016,56 +993,51 @@ html[dir="rtl"] .gt-wizard-body { animation-name: gt-step-in-rtl; }
 
 /* ---------- FAQ ---------- */
 
-.gt-faq { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr); align-items: start; gap: clamp(2rem, 5vw, 4.5rem); }
-
-/* Left column: heading, photo and the WhatsApp card overlapping the photo. It
-   stays in view on desktop while the question list scrolls. */
-.gt-faq-aside { min-width: 0; }
-
-@media (min-width: 901px) {
-  .gt-faq-aside { position: sticky; top: calc(var(--gt-header-h) + 1.5rem); }
+/* Photo (with the WhatsApp card on it) beside the questions. Both columns
+   stretch to the same height; the photo fills its column. */
+.gt-faq {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: stretch;
+  gap: clamp(1.5rem, 4vw, 3.5rem);
 }
 
-.gt-faq-visual { position: relative; margin-block-start: 1.6rem; }
-
-.gt-faq-photo {
+.gt-faq-visual {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 26rem;
   overflow: hidden;
-  aspect-ratio: 4 / 5;
   border-radius: var(--gt-radius-xl);
-  background: var(--gt-stone);
-  box-shadow: 0 30px 60px -36px rgba(11, 74, 110, 0.55);
+  box-shadow: var(--gt-shadow-lg);
 }
 
+.gt-faq-photo { position: absolute; inset: 0; background: var(--gt-stone); }
 .gt-faq-photo img { object-fit: cover; object-position: 50% 38%; }
 
 .gt-faq-help {
   position: relative;
   display: grid;
   justify-items: start;
-  gap: 0.7rem;
-  margin-block-start: 1.6rem;
-  padding: 1.35rem;
+  gap: 0.5rem;
+  margin: 1rem;
+  padding: 1.1rem 1.2rem;
   border-radius: var(--gt-radius-lg);
-  background: linear-gradient(160deg, var(--gt-ocean-700) 0%, var(--gt-ocean-900) 100%);
-  color: #fff;
-  box-shadow: 0 24px 44px -26px rgba(11, 74, 110, 0.7);
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--gt-ink);
+  box-shadow: var(--gt-shadow);
 }
 
-.gt-faq-visual .gt-faq-help { margin: -5.5rem 1rem 0; }
-.gt-faq-help p { margin: 0; line-height: 1.55; color: rgba(255, 255, 255, 0.86); }
+.gt-faq-help strong { font-size: 1.02rem; }
+.gt-faq-help p { margin: 0; font-size: 0.92rem; line-height: 1.5; color: var(--gt-muted); }
 
-@media (max-width: 900px) {
-  .gt-faq-photo { aspect-ratio: 16 / 11; }
-  .gt-faq-visual .gt-faq-help { margin: -3.5rem 0.75rem 0; }
-}
-
-.gt-faq-list { display: grid; gap: 0.6rem; }
+.gt-faq-list { display: grid; align-content: start; gap: 0.55rem; }
 
 .gt-faq-item {
   overflow: hidden;
   border: 1px solid var(--gt-line);
-  border-radius: 14px;
+  border-radius: var(--gt-radius);
   background: var(--gt-white);
   transition: border-color 0.2s var(--gt-ease), box-shadow 0.2s var(--gt-ease);
 }
@@ -1077,21 +1049,25 @@ html[dir="rtl"] .gt-wizard-body { animation-name: gt-step-in-rtl; }
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1.05rem 1.2rem;
-  font-size: 1rem;
-  font-weight: 700;
+  padding: 0.85rem 1.1rem;
+  font-size: 0.97rem;
+  font-weight: 600;
   line-height: 1.4;
+  color: var(--gt-ink);
   list-style: none;
   cursor: pointer;
 }
 
 .gt-faq-item summary::-webkit-details-marker { display: none; }
-.gt-faq-item summary svg { flex: none; color: var(--gt-teal-700); transition: transform 0.25s var(--gt-ease); }
+.gt-faq-item summary svg { flex: none; color: var(--gt-blue); transition: transform 0.25s var(--gt-ease); }
 .gt-faq-item[open] summary svg { transform: rotate(45deg); }
-.gt-faq-item summary:focus-visible { outline: 3px solid var(--gt-teal); outline-offset: -3px; }
-.gt-faq-item p { margin: 0; padding: 0 1.2rem 1.15rem; line-height: 1.7; color: var(--gt-ink-2); }
+.gt-faq-item summary:focus-visible { outline: 3px solid var(--gt-blue); outline-offset: -3px; }
+.gt-faq-item p { margin: 0; padding: 0 1.1rem 1rem; font-size: 0.94rem; line-height: 1.65; color: var(--gt-ink-2); }
 
-@media (max-width: 900px) { .gt-faq { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 900px) {
+  .gt-faq { grid-template-columns: minmax(0, 1fr); }
+  .gt-faq-visual { min-height: 20rem; }
+}
 
 /* ---------- Final CTA ---------- */
 
@@ -1099,14 +1075,14 @@ html[dir="rtl"] .gt-wizard-body { animation-name: gt-step-in-rtl; }
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  padding-block: clamp(4.5rem, 9vw, 7rem);
+  padding-block: clamp(3.5rem, 7vw, 5rem);
   background: var(--gt-ocean-900);
   color: #fff;
   text-align: center;
 }
 
 .gt-final-img { z-index: -2; object-fit: cover; opacity: 0.5; }
-.gt-final::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(11, 74, 110, 0.5), rgba(11, 74, 110, 0.88)); }
+.gt-final::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(34, 85, 124, 0.45), rgba(34, 85, 124, 0.78)); }
 .gt-final .gt-h2 { max-width: 42rem; margin: 0 auto; }
 .gt-final p { max-width: 36rem; margin: 1rem auto 2rem; font-size: 1.1rem; line-height: 1.6; color: rgba(255, 255, 255, 0.88); }
 .gt-final-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; }

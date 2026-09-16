@@ -114,7 +114,7 @@ export default function ReviewManager({ onReviewsCountChange }) {
       const res = await fetch("/api/google-reviews");
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Google-დან მიმოხილვების მიღება ვერ მოხერხდა");
+        throw new Error(data.message || data.error || "Google-დან მიმოხილვების მიღება ვერ მოხერხდა");
       }
       const results = await upsertGoogleReviews(data.data.reviews);
       const created = results.filter((r) => r.action === "created").length;

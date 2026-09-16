@@ -33,7 +33,7 @@ export default function GlobalError({ error, reset }) {
           }}
         >
           <span style={{ fontSize: "3.5rem", display: "block", marginBottom: "1rem" }}>⚠️</span>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "#0d233a", marginBottom: "0.75rem" }}>
+          <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "#1f2d3d", marginBottom: "0.75rem" }}>
             Application Error
           </h1>
           <p style={{ color: "#64748b", fontSize: "0.95rem", lineHeight: 1.6, marginBottom: "2rem" }}>
@@ -43,7 +43,7 @@ export default function GlobalError({ error, reset }) {
             onClick={() => reset()}
             style={{
               padding: "0.75rem 1.75rem",
-              background: "#29b2b7",
+              background: "#3a9296",
               color: "#ffffff",
               border: "none",
               borderRadius: "12px",

@@ -76,17 +76,17 @@
 .gt-filter-control select:focus {
   outline: none;
   border-color: var(--gt-blue);
-  box-shadow: 0 0 0 3px rgba(16, 109, 164, 0.18);
+  box-shadow: 0 0 0 3px rgba(42, 101, 146, 0.18);
 }
 
+/* Filters share the row equally, however many the published tours need. */
 .gt-filter-sheet {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
   align-items: end;
   gap: 0.75rem;
 }
 
-.gt-filterbar.has-type .gt-filter-sheet { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
 .gt-filter-toggle,
 .gt-filter-sheet-head,

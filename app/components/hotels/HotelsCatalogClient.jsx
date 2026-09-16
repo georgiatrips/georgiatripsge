@@ -8,7 +8,8 @@ import PageHero from "../PageHero";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { useCurrency } from "../../lib/currency/CurrencyContext";
 import { asLocalizedText, matchesMultiLang } from "../../lib/toursFirestore";
-import { SearchIcon } from "../Icons";
+import { SearchIcon, WhatsAppIcon } from "../Icons";
+import { whatsappHref } from "../../lib/shared";
 
 function HotelCard({ hotel, t, lang }) {
   const { format } = useCurrency();
@@ -20,44 +21,36 @@ function HotelCard({ hotel, t, lang }) {
 
   return (
     <article className="hotel-item">
-      <h2 className="hotel-item-title">{nameText}</h2>
-      
       <div className="hotel-item-image-wrapper">
         <Image
           src={photo}
           alt={nameText}
           fill
-          sizes="(max-width: 1024px) 100vw, 800px"
+          sizes="(max-width: 760px) 100vw, 500px"
           style={{ objectFit: "cover" }}
-          priority={hotel.isFeatured}
         />
-        {hotel.isFeatured && (
-          <span className="hm-badge">
-            {t?.("hotelsPage.recommended") || "რეკომენდებული"}
-          </span>
-        )}
+        {hotel.isFeatured && <span className="hm-badge">{t("hotelsPage.recommended")}</span>}
       </div>
 
-      <p className="hotel-item-desc">{descText}</p>
+      <div className="hotel-item-body">
+        <h2 className="hotel-item-title">{nameText}</h2>
+        {descText && <p className="hotel-item-desc">{descText}</p>}
 
-      {hotel.priceFrom && (
-        <p className="hotel-item-price">
-          {priceLabelText ? `${priceLabelText} ` : ""}{format(hotel.priceFrom, lang)}
-        </p>
-      )}
-
-      {hotel.bookingUrl && (
-        <div className="hotel-item-button-wrapper">
-          <a
-            href={hotel.bookingUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hotel-item-button"
-          >
-            {buttonText || t?.("hotelsPage.bookNow") || "დაჯავშნა"}
-          </a>
-        </div>
-      )}
+        {(hotel.priceFrom || hotel.bookingUrl) && (
+          <div className="hotel-item-foot">
+            {hotel.priceFrom && (
+              <p className="hotel-item-price">
+                {priceLabelText ? `${priceLabelText} ` : ""}{format(hotel.priceFrom, lang)}
+              </p>
+            )}
+            {hotel.bookingUrl && (
+              <a href={hotel.bookingUrl} target="_blank" rel="noopener noreferrer" className="hotel-item-button">
+                {buttonText || t("hotelsPage.bookNow")}
+              </a>
+            )}
+          </div>
+        )}
+      </div>
     </article>
   );
 }
@@ -116,11 +109,13 @@ export default function HotelsCatalogClient({ initialHotels = [] }) {
           ) : (
             <div className="hm-empty">
               <h2>{hotels.length === 0 ? t("hotelsPage.noHotelsYet") : t("hotelsPage.notFound")}</h2>
-              <p>
-                {hotels.length === 0
-                  ? "სასტუმროების დამატება ხდება ადმინ პანელიდან."
-                  : "სცადე სხვა საძიებო სიტყვა."}
-              </p>
+              <p>{t(hotels.length === 0 ? "hotelsPage.emptyText" : "hotelsPage.notFoundText")}</p>
+              {hotels.length === 0 && (
+                <a href={whatsappHref(t("site.hotelWa"))} target="_blank" rel="noopener noreferrer" className="gt-btn gt-btn--wa">
+                  <WhatsAppIcon size={18} />
+                  {t("site.chatWhatsapp")}
+                </a>
+              )}
             </div>
           )}
         </div>

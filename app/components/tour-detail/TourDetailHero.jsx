@@ -122,7 +122,7 @@ export default function TourDetailHero({
             )}
           </div>
 
-          <button type="button" className="tdp-hero2-cta" onClick={scrollToBooking}>
+          <button type="button" className="gt-btn gt-btn--cta gt-btn--lg tdp-hero2-cta" onClick={scrollToBooking}>
             {t("tourDetail.bookNow")}
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="gt-flip-rtl">
               <path d="M5 12h14M13 6l6 6-6 6" />

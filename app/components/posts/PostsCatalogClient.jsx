@@ -462,7 +462,7 @@ export default function PostsCatalogClient({ initialPosts = [] }) {
                       <div className="fb-author-wrap">
                         <div className="fb-avatar">
                           {post.avatar ? (
-                            <img src={post.avatar} alt="" className="posts-author-avatar" />
+                            <img src={post.avatar} alt="" className="posts-author-avatar" width={40} height={40} loading="lazy" decoding="async" />
                           ) : (
                             <BrandLogo width={40} height={40} />
                           )}
@@ -544,7 +544,7 @@ export default function PostsCatalogClient({ initialPosts = [] }) {
                     {/* 4. REACTIONS & COUNTS BAR */}
                     <div className="fb-reactions-bar">
                       <div className="fb-reactions-icons">
-                        <svg className="fb-like-summary-icon" width="18" height="18" viewBox="0 0 24 24" fill={isLiked ? "#29b2b7" : "none"} stroke={isLiked ? "#29b2b7" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg className="fb-like-summary-icon" width="18" height="18" viewBox="0 0 24 24" fill={isLiked ? "#3a9296" : "none"} stroke={isLiked ? "#3a9296" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
                         </svg>
                         <span className="fb-reactions-count">{currentLikes}</span>
@@ -565,7 +565,7 @@ export default function PostsCatalogClient({ initialPosts = [] }) {
                         disabled={!user}
                         onClick={() => toggleLike(post.id)}
                       >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill={isLiked ? "#29b2b7" : "none"} stroke={isLiked ? "#29b2b7" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill={isLiked ? "#3a9296" : "none"} stroke={isLiked ? "#3a9296" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
                         </svg>
                         <span>{isLiked ? t("postsPage.liked") : t("postsPage.like")}</span>
@@ -651,7 +651,7 @@ export default function PostsCatalogClient({ initialPosts = [] }) {
                           {userComments.map((comment) => (
                             <div key={comment.id} className="fb-single-comment user-comment">
                               {comment.avatar ? (
-                                <img src={comment.avatar} alt="" className="post-comment-avatar" />
+                                <img src={comment.avatar} alt="" className="post-comment-avatar" width={28} height={28} loading="lazy" decoding="async" />
                               ) : (
                                 <span className="post-comment-avatar-fallback">👤</span>
                               )}

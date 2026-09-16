@@ -246,8 +246,8 @@ export default async function BatumiAirportTransferPage({ params }) {
             <tbody>
               {c.rates.map((row, i) => (
                 <tr key={i}>
-                  <td style={{ fontWeight: 700, color: "#ffffff" }}>📍 {row.dest}</td>
-                  <td style={{ color: "#94a3b8" }}>{row.dist}</td>
+                  <td style={{ fontWeight: 700, color: "var(--gt-ink)" }}>📍 {row.dest}</td>
+                  <td style={{ color: "var(--gt-muted)" }}>{row.dist}</td>
                   <td className="price-val">{row.sedan}</td>
                   <td className="price-val">{row.minivan}</td>
                   <td className="price-val">{row.sprinter}</td>

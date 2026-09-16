@@ -38,7 +38,7 @@
   height: 36px;
   margin-block-start: 0.35rem;
   border-radius: 50%;
-  background: var(--gt-navy-900, #0d233a);
+  background: var(--gt-navy-900, #2a6592);
   box-shadow: 0 0 0 4px #fff;
   color: #fff;
   font-size: 0.9rem;
@@ -46,7 +46,7 @@
 }
 
 .tdp-stop:first-child .tdp-stop-marker { background: var(--gt-teal-700, #0f7f84); }
-.tdp-stop:last-child .tdp-stop-marker { background: var(--gt-gold, #fab418); color: var(--gt-navy-900, #0d233a); }
+.tdp-stop:last-child .tdp-stop-marker { background: var(--gt-gold, #e0a93b); color: var(--gt-ink, #1f2d3d); }
 
 .tdp-stop-card {
   display: grid;
@@ -80,7 +80,7 @@
 button.tdp-stop-media { cursor: zoom-in; }
 .tdp-stop-media img { object-fit: cover; transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
 button.tdp-stop-media:hover img { transform: scale(1.05); }
-button.tdp-stop-media:focus-visible { outline: 3px solid var(--gt-teal, #29b2b7); outline-offset: 2px; }
+button.tdp-stop-media:focus-visible { outline: 3px solid var(--gt-teal, #3a9296); outline-offset: 2px; }
 
 .tdp-stop-zoom {
   position: absolute;
@@ -114,7 +114,7 @@ button.tdp-stop-media:focus-visible { outline: 3px solid var(--gt-teal, #29b2b7)
   font-size: 1.08rem;
   font-weight: 800;
   line-height: 1.3;
-  color: var(--gt-ink, #0f172a);
+  color: var(--gt-ink, #1f2d3d);
 }
 
 .tdp-stop-desc {
@@ -143,7 +143,7 @@ button.tdp-stop-media:focus-visible { outline: 3px solid var(--gt-teal, #29b2b7)
   padding: 0;
   border: 0;
   background: none;
-  color: var(--gt-blue-700, #0b5a88);
+  color: var(--gt-blue-700, #22557c);
   font: inherit;
   font-size: 0.9rem;
   font-weight: 700;
@@ -154,7 +154,7 @@ button.tdp-stop-media:focus-visible { outline: 3px solid var(--gt-teal, #29b2b7)
 .tdp-stop-more:hover,
 .tdp-stop-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 .tdp-stop-more:focus-visible,
-.tdp-stop-link:focus-visible { outline: 3px solid var(--gt-teal, #29b2b7); outline-offset: 2px; border-radius: 4px; }
+.tdp-stop-link:focus-visible { outline: 3px solid var(--gt-teal, #3a9296); outline-offset: 2px; border-radius: 4px; }
 
 /* Grid children must be allowed to shrink below their content width on
    phones, otherwise the single column grows wider than the screen. */
@@ -178,7 +178,7 @@ button.tdp-stop-media:focus-visible { outline: 3px solid var(--gt-teal, #29b2b7)
   line-height: 1.35;
 }
 
-.tdp-pay-note svg { flex: none; color: var(--gt-gold, #fab418); }
+.tdp-pay-note svg { flex: none; color: var(--gt-gold, #e0a93b); }
 
 .tdp-form-label {
   display: block;
@@ -214,7 +214,7 @@ button.tdp-stop-media:focus-visible { outline: 3px solid var(--gt-teal, #29b2b7)
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: var(--gt-teal-soft, rgba(41, 178, 183, 0.12));
+  background: var(--gt-teal-soft, rgba(58, 146, 150, 0.12));
   color: var(--gt-teal-700, #0f7f84);
 }
 

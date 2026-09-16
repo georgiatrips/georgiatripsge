@@ -114,7 +114,7 @@ export default function BookingSuccessPage() {
             }}
           >
             <span style={{ fontSize: "3rem", display: "block", marginBottom: "1rem" }}>⚠️</span>
-            <h1 style={{ fontSize: "1.5rem", color: "#1e293b", marginBottom: "0.5rem" }}>
+            <h1 style={{ fontSize: "1.5rem", color: "#1f2d3d", marginBottom: "0.5rem" }}>
               {t("bookingSuccess.notFoundTitle") || "ჯავშანი ვერ მოიძებნა"}
             </h1>
             <p style={{ color: "#64748b", fontSize: "0.95rem", marginBottom: "1.5rem" }}>{error}</p>
@@ -146,7 +146,7 @@ export default function BookingSuccessPage() {
             {/* Top Accent Banner */}
             <div
               style={{
-                background: "linear-gradient(135deg, #0d233a 0%, #0f365d 100%)",
+                background: "#2a6592",
                 color: "#ffffff",
                 padding: "2.5rem 2rem 2rem",
                 textAlign: "center",
@@ -196,7 +196,7 @@ export default function BookingSuccessPage() {
                   <span style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700, display: "block" }}>
                     {t("bookingSuccess.bookingIdLabel") || "ჯავშნის ნომერი (ID)"}
                   </span>
-                  <strong style={{ fontSize: "1.25rem", color: "#0f172a", fontFamily: "monospace", letterSpacing: "0.02em" }}>
+                  <strong style={{ fontSize: "1.25rem", color: "#1f2d3d", fontFamily: "monospace", letterSpacing: "0.02em" }}>
                     {booking.bookingId}
                   </strong>
                 </div>
@@ -240,15 +240,15 @@ export default function BookingSuccessPage() {
               <div style={{ display: "grid", gap: "0.85rem", marginBottom: "2rem" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "0.75rem", borderBottom: "1px solid #e2e8f0" }}>
                   <span style={{ color: "#64748b", fontSize: "0.9rem" }}>{t("bookingSuccess.tour") || "📍 ტური:"}</span>
-                  <strong style={{ color: "#1e293b", fontSize: "0.95rem", textAlign: "right" }}>{booking.tourTitle}</strong>
+                  <strong style={{ color: "#1f2d3d", fontSize: "0.95rem", textAlign: "right" }}>{booking.tourTitle}</strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "0.75rem", borderBottom: "1px solid #e2e8f0" }}>
                   <span style={{ color: "#64748b", fontSize: "0.9rem" }}>{t("bookingSuccess.date") || "📅 თარიღი:"}</span>
-                  <strong style={{ color: "#1e293b", fontSize: "0.95rem" }}>{booking.date}</strong>
+                  <strong style={{ color: "#1f2d3d", fontSize: "0.95rem" }}>{booking.date}</strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "0.75rem", borderBottom: "1px solid #e2e8f0" }}>
                   <span style={{ color: "#64748b", fontSize: "0.9rem" }}>{t("bookingSuccess.people") || "👥 მგზავრები:"}</span>
-                  <strong style={{ color: "#1e293b", fontSize: "0.95rem" }}>
+                  <strong style={{ color: "#1f2d3d", fontSize: "0.95rem" }}>
                     {(t("bookingSuccess.peopleCount") || "{count} ადამიანი").replace("{count}", booking.totalPeople)}
                   </strong>
                 </div>
@@ -269,7 +269,7 @@ export default function BookingSuccessPage() {
                     alignItems: "center",
                     justifyContent: "center",
                     gap: "0.6rem",
-                    background: "#25D366",
+                    background: "var(--gt-wa, #1f7a64)",
                     color: "#ffffff",
                     padding: "0.95rem 1.5rem",
                     borderRadius: "14px",
@@ -309,7 +309,7 @@ export default function BookingSuccessPage() {
                       flex: 1,
                       textAlign: "center",
                       background: "#ffffff",
-                      color: "#0f172a",
+                      color: "#1f2d3d",
                       padding: "0.8rem 1rem",
                       borderRadius: "12px",
                       fontWeight: 600,

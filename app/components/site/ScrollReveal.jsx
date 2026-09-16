@@ -79,7 +79,9 @@ export default function ScrollReveal() {
 
     io = new IntersectionObserver(
       (entries) => revealBatch(entries.filter((entry) => entry.isIntersecting).map((entry) => entry.target)),
-      { rootMargin: "0px 0px -6% 0px", threshold: 0 }
+      // Starts a little before the block reaches the screen, so the entrance is
+      // already under way when it scrolls in and no empty band shows.
+      { rootMargin: "0px 0px 15% 0px", threshold: 0 }
     );
 
     let firstScan = true;

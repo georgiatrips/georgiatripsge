@@ -88,23 +88,23 @@ export default function PrivacyPolicyPage() {
       <Navbar />
       <main style={{ padding: "7rem 1.5rem 5rem 1.5rem", minHeight: "80vh", background: "var(--bg, #f8fafc)" }}>
         <div style={{ maxWidth: "800px", margin: "0 auto", background: "#ffffff", padding: "3rem 2.5rem", borderRadius: "20px", boxShadow: "0 10px 30px rgba(0,0,0,0.05)" }}>
-          <Link href="/" style={{ color: "var(--teal, #29b2b7)", fontWeight: 700, textDecoration: "none", display: "inline-block", marginBottom: "1.5rem" }}>
+          <Link href="/" style={{ color: "var(--gt-primary, #2a6592)", fontWeight: 700, textDecoration: "none", display: "inline-block", marginBottom: "1.5rem" }}>
             {t.backHome}
           </Link>
-          <h1 style={{ fontSize: "2.25rem", fontWeight: 800, color: "var(--navy, #0d233a)", marginBottom: "0.5rem" }}>{t.title}</h1>
+          <h1 style={{ fontSize: "2.25rem", fontWeight: 800, color: "var(--gt-ink, #1f2d3d)", marginBottom: "0.5rem" }}>{t.title}</h1>
           <p style={{ color: "var(--text-muted, #64748b)", fontSize: "0.9rem", marginBottom: "2rem" }}>{t.updated}</p>
           <p style={{ fontSize: "1.05rem", lineHeight: 1.7, color: "var(--text, #334155)", marginBottom: "2rem" }}>{t.intro}</p>
 
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--navy, #0d233a)", marginTop: "1.5rem", marginBottom: "0.5rem" }}>{t.s1Title}</h2>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--gt-ink, #1f2d3d)", marginTop: "1.5rem", marginBottom: "0.5rem" }}>{t.s1Title}</h2>
           <p style={{ lineHeight: 1.7, color: "var(--text, #334155)", marginBottom: "1.5rem" }}>{t.s1Desc}</p>
 
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--navy, #0d233a)", marginTop: "1.5rem", marginBottom: "0.5rem" }}>{t.s2Title}</h2>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--gt-ink, #1f2d3d)", marginTop: "1.5rem", marginBottom: "0.5rem" }}>{t.s2Title}</h2>
           <p style={{ lineHeight: 1.7, color: "var(--text, #334155)", marginBottom: "1.5rem" }}>{t.s2Desc}</p>
 
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--navy, #0d233a)", marginTop: "1.5rem", marginBottom: "0.5rem" }}>{t.s3Title}</h2>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--gt-ink, #1f2d3d)", marginTop: "1.5rem", marginBottom: "0.5rem" }}>{t.s3Title}</h2>
           <p style={{ lineHeight: 1.7, color: "var(--text, #334155)", marginBottom: "1.5rem" }}>{t.s3Desc}</p>
 
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--navy, #0d233a)", marginTop: "1.5rem", marginBottom: "0.5rem" }}>{t.s4Title}</h2>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--gt-ink, #1f2d3d)", marginTop: "1.5rem", marginBottom: "0.5rem" }}>{t.s4Title}</h2>
           <p style={{ lineHeight: 1.7, color: "var(--text, #334155)", marginBottom: "1.5rem" }}>{t.s4Desc}</p>
         </div>
       </main>

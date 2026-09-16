@@ -84,21 +84,19 @@ export default function CookieConsent() {
         maxWidth: "440px",
         margin: "0 auto",
         zIndex: 9999,
-        background: "rgba(13, 35, 58, 0.97)",
-        backdropFilter: "blur(14px)",
-        WebkitBackdropFilter: "blur(14px)",
-        color: "#ffffff",
+        background: "#ffffff",
+        color: "#1f2d3d",
         padding: "1rem 1.2rem",
         borderRadius: "14px",
-        boxShadow: "0 20px 45px rgba(0, 0, 0, 0.35)",
-        border: "1px solid rgba(255, 255, 255, 0.14)",
+        boxShadow: "0 18px 40px -18px rgba(31, 45, 61, 0.35)",
+        border: "1px solid #e3e8ee",
         animation: "gt-fade-up 0.35s ease both",
       }}
     >
       <strong style={{ display: "block", fontSize: "0.95rem", fontWeight: 700, marginBottom: "0.35rem" }}>{t.title}</strong>
-      <p style={{ fontSize: "0.84rem", color: "rgba(255, 255, 255, 0.88)", lineHeight: 1.5, margin: "0 0 0.85rem 0" }}>
+      <p style={{ fontSize: "0.84rem", color: "#5f6c7b", lineHeight: 1.5, margin: "0 0 0.85rem 0" }}>
         {t.desc}
-        <Link href={getLocalizedHref("/privacy-policy", lang)} style={{ color: "#f5c85a", textDecoration: "underline" }}>
+        <Link href={getLocalizedHref("/privacy-policy", lang)} style={{ color: "#2a6592", textDecoration: "underline" }}>
           {t.privacy}
         </Link>
       </p>
@@ -108,8 +106,8 @@ export default function CookieConsent() {
           onClick={() => decide("declined")}
           style={{
             background: "transparent",
-            color: "#ffffff",
-            border: "1px solid rgba(255, 255, 255, 0.4)",
+            color: "#3e4c5b",
+            border: "1px solid #cfd7e0",
             minHeight: "44px",
             padding: "0 1rem",
             borderRadius: "9px",
@@ -124,8 +122,8 @@ export default function CookieConsent() {
           type="button"
           onClick={() => decide("accepted")}
           style={{
-            background: "#fab418",
-            color: "#0d233a",
+            background: "#2a6592",
+            color: "#ffffff",
             border: "none",
             minHeight: "44px",
             padding: "0 1.2rem",

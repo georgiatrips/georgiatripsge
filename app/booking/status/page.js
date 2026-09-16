@@ -66,7 +66,7 @@ export default function BookingStatusPage() {
 
       <main style={{ flex: 1, padding: "3rem 1rem 5rem", maxWidth: "620px", margin: "0 auto", width: "100%" }}>
         <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <h1 style={{ fontSize: "1.85rem", fontWeight: 800, color: "#0d233a", marginBottom: "0.5rem" }}>
+          <h1 style={{ fontSize: "1.85rem", fontWeight: 800, color: "#1f2d3d", marginBottom: "0.5rem" }}>
             {t("bookingStatus.title") || "ჯავშნის სტატუსის შემოწმება"}
           </h1>
           <p style={{ color: "#64748b", fontSize: "0.95rem" }}>
@@ -183,7 +183,7 @@ export default function BookingStatusPage() {
                 <span style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", fontWeight: 700 }}>
                   {t("bookingStatus.idLabel") || "ჯავშნის ID"}
                 </span>
-                <h3 style={{ margin: 0, fontSize: "1.25rem", color: "#0f172a", fontFamily: "monospace" }}>
+                <h3 style={{ margin: 0, fontSize: "1.25rem", color: "#1f2d3d", fontFamily: "monospace" }}>
                   {bookingResult.bookingId}
                 </h3>
               </div>
@@ -244,15 +244,15 @@ export default function BookingStatusPage() {
             <div style={{ display: "grid", gap: "0.75rem", marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "0.5rem", borderBottom: "1px solid #f1f5f9" }}>
                 <span style={{ color: "#64748b", fontSize: "0.9rem" }}>{t("bookingStatus.tour") || "ტური:"}</span>
-                <strong style={{ color: "#1e293b", fontSize: "0.95rem" }}>{bookingResult.tourTitle}</strong>
+                <strong style={{ color: "#1f2d3d", fontSize: "0.95rem" }}>{bookingResult.tourTitle}</strong>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "0.5rem", borderBottom: "1px solid #f1f5f9" }}>
                 <span style={{ color: "#64748b", fontSize: "0.9rem" }}>{t("bookingStatus.date") || "თარიღი:"}</span>
-                <strong style={{ color: "#1e293b", fontSize: "0.95rem" }}>{bookingResult.date}</strong>
+                <strong style={{ color: "#1f2d3d", fontSize: "0.95rem" }}>{bookingResult.date}</strong>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "0.5rem", borderBottom: "1px solid #f1f5f9" }}>
                 <span style={{ color: "#64748b", fontSize: "0.9rem" }}>{t("bookingStatus.people") || "მგზავრები:"}</span>
-                <strong style={{ color: "#1e293b", fontSize: "0.95rem" }}>
+                <strong style={{ color: "#1f2d3d", fontSize: "0.95rem" }}>
                   {(t("bookingSuccess.peopleCount") || "{count} ადამიანი").replace("{count}", bookingResult.totalPeople)}
                 </strong>
               </div>

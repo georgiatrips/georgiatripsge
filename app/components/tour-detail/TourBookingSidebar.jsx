@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { useCurrency } from "../../lib/currency/CurrencyContext";
 import { asLocalizedText } from "../../lib/toursFirestore";
@@ -57,6 +57,10 @@ export default function TourBookingSidebar({
   const { t, lang } = useLanguage();
   const { format } = useCurrency();
   const tourTitle = asLocalizedText(tour.title, lang);
+  // Contact channel, notes and coupon are optional: kept behind one toggle so
+  // the form shows only what a booking needs. Opens by itself when in use.
+  const [moreOpen, setMoreOpen] = useState(false);
+  const showMore = moreOpen || Boolean(appliedCoupon || bookingNotes);
 
   // Every statement here matches the site FAQ and tour data. Cancellation
   // uses the FAQ's 48-hour window (the sidebar previously said 24 hours).
@@ -230,82 +234,86 @@ export default function TourBookingSidebar({
             )}
           </div>
 
-          <div className="tdp-form-group">
-            <label htmlFor="booking-contact">{t("tourDetail.preferredContact")}</label>
-            <select id="booking-contact" value={messengerPref} onChange={(e) => setMessengerPref(e.target.value)}>
-              <option value="WhatsApp">WhatsApp</option>
-              <option value="Viber">Viber</option>
-              <option value="Telegram">Telegram</option>
-              <option value="Direct Call">{t("tourDetail.phoneCall")}</option>
-            </select>
-          </div>
+          <details className="tdp-more-options" open={showMore} onToggle={(e) => setMoreOpen(e.currentTarget.open)}>
+            <summary>{t("tourDetail.moreOptions")}</summary>
 
-          <div className="tdp-form-group">
-            <label htmlFor="booking-notes">{t("tourDetail.notesLabel")}</label>
-            <textarea
-              id="booking-notes"
-              rows={2}
-              placeholder={t("tourDetail.notesPlaceholder")}
-              value={bookingNotes}
-              onChange={(e) => setBookingNotes(e.target.value)}
-            />
-          </div>
-
-          <div className="tdp-coupon-section">
-            <div className="tdp-coupon-label-row">
-              <label htmlFor="booking-coupon">{t("bookingCoupon.title")}</label>
-              {appliedCoupon && <span className="tdp-coupon-active-badge">✓ {appliedCoupon.discount || 10}% OFF</span>}
+            <div className="tdp-form-group">
+              <label htmlFor="booking-contact">{t("tourDetail.preferredContact")}</label>
+              <select id="booking-contact" value={messengerPref} onChange={(e) => setMessengerPref(e.target.value)}>
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="Viber">Viber</option>
+                <option value="Telegram">Telegram</option>
+                <option value="Direct Call">{t("tourDetail.phoneCall")}</option>
+              </select>
             </div>
 
-            {appliedCoupon ? (
-              <div className="tdp-coupon-applied-box">
-                <div className="tdp-coupon-applied-info">
-                  <span className="tdp-coupon-applied-code">{appliedCoupon.code}</span>
-                  <span className="tdp-coupon-applied-desc">
-                    {t("bookingCoupon.discountApplied")} (-{format(discountAmount, lang)})
-                  </span>
-                </div>
-                <button type="button" className="tdp-coupon-remove-btn" onClick={handleRemoveCoupon}>
-                  {t("bookingCoupon.remove")}
-                </button>
+            <div className="tdp-form-group">
+              <label htmlFor="booking-notes">{t("tourDetail.notesLabel")}</label>
+              <textarea
+                id="booking-notes"
+                rows={2}
+                placeholder={t("tourDetail.notesPlaceholder")}
+                value={bookingNotes}
+                onChange={(e) => setBookingNotes(e.target.value)}
+              />
+            </div>
+
+            <div className="tdp-coupon-section">
+              <div className="tdp-coupon-label-row">
+                <label htmlFor="booking-coupon">{t("bookingCoupon.title")}</label>
+                {appliedCoupon && <span className="tdp-coupon-active-badge">✓ {appliedCoupon.discount || 10}% OFF</span>}
               </div>
-            ) : (
-              <div className="tdp-coupon-input-wrap">
-                <div className="tdp-coupon-input-row">
-                  <input
-                    id="booking-coupon"
-                    type="text"
-                    placeholder={t("bookingCoupon.placeholder")}
-                    value={couponCodeInput}
-                    onChange={(e) => {
-                      setCouponCodeInput(e.target.value);
-                      setCouponError("");
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleApplyCoupon();
-                      }
-                    }}
-                    className="tdp-coupon-input"
-                  />
-                  <button type="button" className="tdp-coupon-apply-btn" onClick={() => handleApplyCoupon()}>
-                    {t("bookingCoupon.applyBtn")}
+
+              {appliedCoupon ? (
+                <div className="tdp-coupon-applied-box">
+                  <div className="tdp-coupon-applied-info">
+                    <span className="tdp-coupon-applied-code">{appliedCoupon.code}</span>
+                    <span className="tdp-coupon-applied-desc">
+                      {t("bookingCoupon.discountApplied")} (-{format(discountAmount, lang)})
+                    </span>
+                  </div>
+                  <button type="button" className="tdp-coupon-remove-btn" onClick={handleRemoveCoupon}>
+                    {t("bookingCoupon.remove")}
                   </button>
                 </div>
+              ) : (
+                <div className="tdp-coupon-input-wrap">
+                  <div className="tdp-coupon-input-row">
+                    <input
+                      id="booking-coupon"
+                      type="text"
+                      placeholder={t("bookingCoupon.placeholder")}
+                      value={couponCodeInput}
+                      onChange={(e) => {
+                        setCouponCodeInput(e.target.value);
+                        setCouponError("");
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleApplyCoupon();
+                        }
+                      }}
+                      className="tdp-coupon-input"
+                    />
+                    <button type="button" className="tdp-coupon-apply-btn" onClick={() => handleApplyCoupon()}>
+                      {t("bookingCoupon.applyBtn")}
+                    </button>
+                  </div>
 
-                {user && (
-                  <button type="button" className="tdp-coupon-quick-apply" onClick={() => handleApplyCoupon("WELCOME10")}>
-                    <span>{t("bookingCoupon.useMyWelcome")}</span>
-                    <span className="tdp-quick-apply-tag">{t("bookingCoupon.apply")}</span>
-                  </button>
-                )}
+                  {user && (
+                    <button type="button" className="tdp-coupon-quick-apply" onClick={() => handleApplyCoupon("WELCOME10")}>
+                      <span>{t("bookingCoupon.useMyWelcome")}</span>
+                      <span className="tdp-quick-apply-tag">{t("bookingCoupon.apply")}</span>
+                    </button>
+                  )}
 
-                {couponError && <p className="tdp-coupon-err-msg" role="alert">{couponError}</p>}
-                {couponSuccess && <p className="tdp-coupon-success-msg">{couponSuccess}</p>}
-              </div>
-            )}
-          </div>
+                  {couponError && <p className="tdp-coupon-err-msg" role="alert">{couponError}</p>}
+                  {couponSuccess && <p className="tdp-coupon-success-msg">{couponSuccess}</p>}
+                </div>
+              )}
+            </div>
+          </details>
 
           {baseTotalPrice > 0 && (
             <div className="tdp-total-price-row">

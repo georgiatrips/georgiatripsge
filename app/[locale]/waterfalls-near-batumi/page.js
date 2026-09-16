@@ -258,7 +258,7 @@ export default async function WaterfallsNearBatumiPage({ params }) {
           {c.waterfalls.map((wf, i) => (
             <div key={i} className="landing-feature-card">
               <span className="landing-feature-icon">{wf.icon}</span>
-              <div style={{ display: "flex", justifyContent: "space-between", color: "#29b2b7", fontSize: "0.85rem", fontWeight: 700, marginBottom: "0.5rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", color: "var(--gt-teal-700)", fontSize: "0.85rem", fontWeight: 700, marginBottom: "0.5rem" }}>
                 <span>{wf.distance}</span>
                 <span>{wf.height}</span>
               </div>

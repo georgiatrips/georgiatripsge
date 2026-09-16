@@ -20,7 +20,7 @@ function PlaceCard({ place, lang }) {
           src={place.img}
           alt={asLocalizedText(place.title, lang)}
           fill
-          sizes="(max-width: 760px) 100vw, 33vw"
+          sizes="(max-width: 560px) 100vw, (max-width: 1020px) 50vw, 25vw"
           style={{ objectFit: "cover" }}
         />
         <span className="place-card-region">
@@ -101,45 +101,19 @@ export default function PlacesCatalogClient({ initialPlaces = [] }) {
                 ))}
               </div>
 
-              <div
-                className="places-search-box"
-                style={{
-                  position: "relative",
-                  display: "flex",
-                  alignItems: "center",
-                  flex: "1",
-                  maxWidth: "320px",
-                }}
-              >
-                <SearchIcon
-                  size={16}
-                  color="var(--teal)"
-                  style={{
-                    position: "absolute",
-                    left: "12px",
-                    pointerEvents: "none",
-                  }}
-                />
+              <label className="places-search">
+                <span className="gt-sr-only">{t("common.search")}</span>
+                <SearchIcon size={16} />
                 <input
-                  type="text"
+                  type="search"
                   placeholder={t("common.search")}
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
                     setPage(1);
                   }}
-                  className="admin-input"
-                  style={{
-                    width: "100%",
-                    padding: "0.55rem 0.8rem 0.55rem 2.3rem",
-                    borderRadius: "10px",
-                    border: "1px solid rgba(255,255,255,0.2)",
-                    background: "rgba(255,255,255,0.08)",
-                    color: "#fff",
-                    fontSize: "0.9rem",
-                  }}
                 />
-              </div>
+              </label>
 
               <label className="places-region-select">
                 <span>{t("placesPage.region")}</span>
@@ -167,6 +141,7 @@ export default function PlacesCatalogClient({ initialPlaces = [] }) {
                     <PlaceCard key={place.id} place={place} lang={lang} />
                   ))}
                 </div>
+                {totalPages > 1 && (
                 <div className="catalog-pagination" aria-label={t("placesPage.title")}>
                   {Array.from({ length: totalPages }, (_, index) => index + 1).map((number) => (
                     <button
@@ -179,6 +154,7 @@ export default function PlacesCatalogClient({ initialPlaces = [] }) {
                     </button>
                   ))}
                 </div>
+                )}
               </>
             )}
 

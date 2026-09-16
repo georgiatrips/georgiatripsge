@@ -4,8 +4,8 @@
 
 .landing-container {
   min-height: 100vh;
-  background-color: #071524;
-  color: #f8fafc;
+  background-color: var(--gt-paper, #f7f9fb);
+  color: var(--gt-ink, #1f2d3d);
   font-family: inherit;
   overflow-x: hidden;
 }
@@ -14,10 +14,9 @@
 .landing-hero {
   position: relative;
   padding: 8rem 1.5rem 4.5rem;
-  background: radial-gradient(circle at 50% 20%, rgba(41, 178, 183, 0.15) 0%, rgba(7, 21, 36, 0.95) 75%),
-              linear-gradient(180deg, #071524 0%, #0d233a 100%);
+  background: linear-gradient(180deg, var(--gt-primary-soft, #eaf1f7) 0%, var(--gt-paper, #f7f9fb) 100%);
   text-align: center;
-  border-bottom: 1px solid rgba(41, 178, 183, 0.15);
+  border-bottom: 1px solid var(--gt-line, #e3e8ee);
 }
 
 .landing-hero-inner {
@@ -32,10 +31,10 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.4rem 1rem;
-  background: rgba(41, 178, 183, 0.12);
-  border: 1px solid rgba(41, 178, 183, 0.35);
+  background: rgba(58, 146, 150, 0.12);
+  border: 1px solid rgba(58, 146, 150, 0.35);
   border-radius: 9999px;
-  color: #29b2b7;
+  color: #3a9296;
   font-size: 0.85rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -47,19 +46,19 @@
   font-size: clamp(2rem, 4.5vw, 3.25rem);
   font-weight: 800;
   line-height: 1.18;
-  color: #ffffff;
+  color: var(--gt-ink, #1f2d3d);
   margin-bottom: 1.25rem;
   letter-spacing: -0.02em;
 }
 
 .landing-title span {
-  color: #29b2b7;
+  color: var(--gt-primary, #2a6592);
 }
 
 .landing-subtitle {
   font-size: clamp(1rem, 2vw, 1.2rem);
   line-height: 1.6;
-  color: #94a3b8;
+  color: var(--gt-muted, #5f6c7b);
   max-width: 780px;
   margin: 0 auto 2rem;
 }
@@ -77,19 +76,20 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.85rem 1.75rem;
-  background: linear-gradient(135deg, #29b2b7 0%, #158085 100%);
+  background: var(--gt-primary, #2a6592);
   color: #ffffff;
   font-weight: 700;
   font-size: 0.95rem;
   border-radius: 12px;
   text-decoration: none;
   transition: all 0.25s ease;
-  box-shadow: 0 4px 14px rgba(41, 178, 183, 0.35);
+  box-shadow: 0 4px 14px rgba(42, 101, 146, 0.25);
 }
 
 .landing-btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(41, 178, 183, 0.5);
+  background: var(--gt-primary-700, #22557c);
+  box-shadow: 0 6px 20px rgba(42, 101, 146, 0.3);
   color: #ffffff;
 }
 
@@ -98,9 +98,9 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.85rem 1.75rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #e2e8f0;
+  background: #ffffff;
+  border: 1px solid var(--gt-line-strong, #cfd7e0);
+  color: var(--gt-primary, #2a6592);
   font-weight: 600;
   font-size: 0.95rem;
   border-radius: 12px;
@@ -109,9 +109,9 @@
 }
 
 .landing-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  border-color: rgba(41, 178, 183, 0.4);
+  background: var(--gt-primary-soft, #eaf1f7);
+  color: var(--gt-primary-700, #22557c);
+  border-color: var(--gt-primary, #2a6592);
 }
 
 /* ── Breadcrumbs ── */
@@ -126,17 +126,17 @@
 }
 
 .landing-breadcrumbs a {
-  color: #94a3b8;
+  color: var(--gt-muted, #5f6c7b);
   text-decoration: none;
   transition: color 0.2s;
 }
 
 .landing-breadcrumbs a:hover {
-  color: #29b2b7;
+  color: #3a9296;
 }
 
 .landing-breadcrumbs span.sep {
-  color: #475569;
+  color: var(--gt-line-strong, #cfd7e0);
 }
 
 /* ── Content Sections ── */
@@ -153,7 +153,7 @@
 }
 
 .landing-section-tag {
-  color: #29b2b7;
+  color: #3a9296;
   font-size: 0.85rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -164,12 +164,12 @@
 .landing-section-title {
   font-size: clamp(1.75rem, 3vw, 2.5rem);
   font-weight: 800;
-  color: #ffffff;
+  color: var(--gt-ink, #1f2d3d);
   margin-bottom: 1rem;
 }
 
 .landing-section-desc {
-  color: #94a3b8;
+  color: var(--gt-muted, #5f6c7b);
   font-size: 1.05rem;
   line-height: 1.6;
 }
@@ -183,18 +183,17 @@
 }
 
 .landing-feature-card {
-  background: rgba(13, 35, 58, 0.6);
-  border: 1px solid rgba(41, 178, 183, 0.18);
+  background: #ffffff;
+  border: 1px solid var(--gt-line, #e3e8ee);
   border-radius: 16px;
   padding: 2rem;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  backdrop-filter: blur(10px);
 }
 
 .landing-feature-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(41, 178, 183, 0.4);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+  border-color: rgba(58, 146, 150, 0.4);
+  box-shadow: 0 12px 30px rgba(31, 45, 61, 0.08);
 }
 
 .landing-feature-icon {
@@ -206,12 +205,12 @@
 .landing-feature-card h3 {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #f1f5f9;
+  color: var(--gt-ink, #1f2d3d);
   margin-bottom: 0.75rem;
 }
 
 .landing-feature-card p {
-  color: #94a3b8;
+  color: var(--gt-muted, #5f6c7b);
   font-size: 0.95rem;
   line-height: 1.55;
 }
@@ -227,29 +226,29 @@
 }
 
 .landing-tour-card {
-  background: #0d233a;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #ffffff;
+  border: 1px solid var(--gt-line, #e3e8ee);
   border-radius: 18px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   transition: all 0.3s ease;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 8px 24px rgba(31, 45, 61, 0.06);
   text-decoration: none;
   color: inherit;
 }
 
 .landing-tour-card:hover {
   transform: translateY(-6px);
-  border-color: rgba(41, 178, 183, 0.4);
-  box-shadow: 0 16px 36px rgba(41, 178, 183, 0.15);
+  border-color: rgba(58, 146, 150, 0.4);
+  box-shadow: 0 16px 36px rgba(31, 45, 61, 0.1);
 }
 
 .landing-tour-img-wrap {
   position: relative;
   width: 100%;
   height: 220px;
-  background: #1e293b;
+  background: #e6ebf0;
   overflow: hidden;
 }
 
@@ -268,9 +267,9 @@
   position: absolute;
   bottom: 12px;
   right: 12px;
-  background: rgba(13, 35, 58, 0.9);
-  border: 1px solid rgba(41, 178, 183, 0.4);
-  color: #29b2b7;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--gt-line, #e3e8ee);
+  color: var(--gt-primary, #2a6592);
   padding: 0.35rem 0.75rem;
   border-radius: 8px;
   font-weight: 800;
@@ -288,13 +287,13 @@
 .landing-tour-title {
   font-size: 1.2rem;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--gt-ink, #1f2d3d);
   margin-bottom: 0.75rem;
   line-height: 1.35;
 }
 
 .landing-tour-desc {
-  color: #94a3b8;
+  color: var(--gt-muted, #5f6c7b);
   font-size: 0.9rem;
   line-height: 1.5;
   margin-bottom: 1.25rem;
@@ -310,13 +309,13 @@
   align-items: center;
   justify-content: space-between;
   padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--gt-line, #e3e8ee);
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--gt-muted, #5f6c7b);
 }
 
 .landing-tour-cta {
-  color: #29b2b7;
+  color: var(--gt-primary, #2a6592);
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -325,11 +324,11 @@
 
 /* ── Transfer / Pricing Table ── */
 .landing-table-wrap {
-  background: rgba(13, 35, 58, 0.7);
-  border: 1px solid rgba(41, 178, 183, 0.2);
+  background: #ffffff;
+  border: 1px solid var(--gt-line, #e3e8ee);
   border-radius: 16px;
   overflow-x: auto;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 30px rgba(31, 45, 61, 0.06);
   margin-bottom: 3rem;
 }
 
@@ -341,11 +340,11 @@
 }
 
 .landing-table th {
-  background: rgba(7, 21, 36, 0.8);
-  color: #29b2b7;
+  background: var(--gt-stone, #eff3f6);
+  color: var(--gt-ink-2, #3e4c5b);
   font-weight: 700;
   padding: 1.15rem 1.5rem;
-  border-bottom: 1px solid rgba(41, 178, 183, 0.2);
+  border-bottom: 1px solid var(--gt-line, #e3e8ee);
   text-transform: uppercase;
   font-size: 0.82rem;
   letter-spacing: 0.05em;
@@ -353,16 +352,16 @@
 
 .landing-table td {
   padding: 1.15rem 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  color: #cbd5e1;
+  border-bottom: 1px solid var(--gt-line, #e3e8ee);
+  color: var(--gt-ink-2, #3e4c5b);
 }
 
 .landing-table tr:hover td {
-  background: rgba(41, 178, 183, 0.05);
+  background: rgba(58, 146, 150, 0.05);
 }
 
 .landing-table .price-val {
-  color: #f59e0b;
+  color: var(--gt-primary, #2a6592);
   font-weight: 800;
   font-size: 1.05rem;
 }
@@ -376,21 +375,21 @@
 }
 
 .landing-faq-item {
-  background: rgba(13, 35, 58, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #ffffff;
+  border: 1px solid var(--gt-line, #e3e8ee);
   border-radius: 14px;
   padding: 1.5rem;
   transition: all 0.2s ease;
 }
 
 .landing-faq-item:hover {
-  border-color: rgba(41, 178, 183, 0.3);
+  border-color: rgba(58, 146, 150, 0.3);
 }
 
 .landing-faq-q {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--gt-ink, #1f2d3d);
   margin-bottom: 0.6rem;
   display: flex;
   align-items: center;
@@ -398,31 +397,31 @@
 }
 
 .landing-faq-a {
-  color: #94a3b8;
+  color: var(--gt-muted, #5f6c7b);
   font-size: 0.95rem;
   line-height: 1.6;
 }
 
 /* ── CTA Banner ── */
 .landing-cta-banner {
-  background: linear-gradient(135deg, rgba(41, 178, 183, 0.15) 0%, rgba(13, 35, 58, 0.9) 100%);
-  border: 1px solid rgba(41, 178, 183, 0.3);
+  background: var(--gt-primary-soft, #eaf1f7);
+  border: 1px solid var(--gt-line, #e3e8ee);
   border-radius: 20px;
   padding: 3.5rem 2rem;
   text-align: center;
   margin-top: 4rem;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+  box-shadow: none;
 }
 
 .landing-cta-banner h2 {
   font-size: clamp(1.75rem, 3vw, 2.5rem);
   font-weight: 800;
-  color: #ffffff;
+  color: var(--gt-ink, #1f2d3d);
   margin-bottom: 1rem;
 }
 
 .landing-cta-banner p {
-  color: #94a3b8;
+  color: var(--gt-muted, #5f6c7b);
   font-size: 1.1rem;
   max-width: 680px;
   margin: 0 auto 2rem;

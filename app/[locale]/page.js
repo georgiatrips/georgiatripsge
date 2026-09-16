@@ -16,9 +16,9 @@ import { asLocalizedText } from "../lib/toursFirestore";
 import { formatRegionName } from "../lib/placesMeta";
 import { INSTAGRAM_HANDLE, INSTAGRAM_LINK, PHONE_DISPLAY, PHONE_TEL, whatsappHref } from "../lib/shared";
 import {
-  ArrowRightIcon, BriefcaseIcon, CalendarIcon, CarIcon, CheckIcon, CompassIcon, HeadsetIcon, HeartIcon,
-  InstagramIcon, LanguagesIcon, LocationIcon, PhoneIcon, PlaneIcon, PlusIcon, RouteIcon, ShieldCheckIcon,
-  StarIcon, UsersIcon, WhatsAppIcon,
+  ArrowRightIcon, BriefcaseIcon, CalendarIcon, CarIcon, CheckIcon, CompassIcon, HeadsetIcon,
+  InstagramIcon, LocationIcon, PhoneIcon, PlaneIcon, PlusIcon, RouteIcon, ShieldCheckIcon,
+  StarIcon, UsersIcon, WalletIcon, WhatsAppIcon,
 } from "../components/Icons";
 import "../styles/home.css";
 import "../styles/tour-card.css";
@@ -53,11 +53,6 @@ const FAQ_KEYS = [
   ["faq.q6", "faq.a6"],
   ["homepage.faqQ8", "homepage.faqA8"],
   ["homepage.faqQ9", "homepage.faqA9"],
-  ["faq.q5", "faq.a5"],
-  ["homepage.faqQ11", "homepage.faqA11"],
-  ["homepage.faqQ10", "homepage.faqA10"],
-  ["faq.q2", "faq.a2"],
-  ["faq.q4", "faq.a4"],
 ];
 
 // Vehicles, photos and capacities exactly as published on the transfers page.
@@ -76,6 +71,16 @@ function withEmphasis(text) {
   return String(text || "")
     .split(/\*(.+?)\*/g)
     .map((part, index) => (index % 2 ? <em key={index}>{part}</em> : <Fragment key={index}>{part}</Fragment>));
+}
+
+// A line break in the hero title starts a new line, so the title breaks where
+// the copy intends instead of wherever the column happens to end.
+function heroTitle(text) {
+  return String(text || "")
+    .split("\n")
+    .map((line, index) => (
+      <span key={index} className="gt-hero-title-line">{withEmphasis(line.trim())}</span>
+    ));
 }
 
 export default async function HomePage({ params }) {
@@ -185,11 +190,9 @@ export default async function HomePage({ params }) {
 
   const whyItems = [
     { n: 1, icon: <CompassIcon size={21} /> },
-    { n: 2, icon: <CalendarIcon size={21} /> },
+    { n: 2, icon: <WalletIcon size={21} /> },
     { n: 3, icon: <CarIcon size={21} /> },
-    { n: 4, icon: <LanguagesIcon size={21} /> },
-    { n: 5, icon: <HeadsetIcon size={21} /> },
-    { n: 6, icon: <HeartIcon size={21} /> },
+    { n: 4, icon: <HeadsetIcon size={21} /> },
   ];
 
   const transferPerks = [
@@ -211,7 +214,7 @@ export default async function HomePage({ params }) {
           <div className={`gt-container gt-hero-inner${nextDepartures.length ? "" : " gt-hero-inner--solo"}`}>
             <div className="gt-hero-copy">
               <p className="gt-hero-eyebrow">{t("homepage.heroEyebrow")}</p>
-              <h1 id="hero-title" className="gt-display">{withEmphasis(t("homepage.heroTitle"))}</h1>
+              <h1 id="hero-title" className="gt-display gt-hero-title">{heroTitle(t("homepage.heroTitle"))}</h1>
               <p className="gt-hero-lead">{t("homepage.heroLead")}</p>
 
               <HeroSearch regionCounts={regionCounts} departures={searchDepartures} />
@@ -298,9 +301,10 @@ export default async function HomePage({ params }) {
               </div>
             </div>
 
-            {/* The plan-a-trip card fills whatever the last row leaves (0–6 tours). */}
+            {/* The plan-a-trip card fills whatever the last row leaves (0–6 tours).
+                The hero photo is the LCP image; these cards sit below the fold and load lazily. */}
             <TourGrid
-              items={tours.slice(0, 6).map((tour, index) => ({ tour, eager: index === 0 }))}
+              items={tours.slice(0, 6).map((tour) => ({ tour }))}
               lang={lang}
               t={t}
               reveal
@@ -345,7 +349,7 @@ export default async function HomePage({ params }) {
               </div>
             </div>
 
-            {/* Portrait beside the six points; both columns end at about the same height. */}
+            {/* Portrait beside the four points; the photo stretches to the height of the list. */}
             <div className="gt-why">
               <div className="gt-why-media" data-reveal="image">
                 <div className="gt-why-photo">
@@ -412,8 +416,7 @@ export default async function HomePage({ params }) {
         )}
 
         {/* 6. Private / custom trips: how it works + three-step planner */}
-        <section className="gt-section gt-section--navy gt-plan-section" id="plan" aria-labelledby="plan-title">
-          <Image src="/gudauri.webp" alt="" fill sizes="100vw" quality={60} className="gt-plan-bg" />
+        <section className="gt-section gt-plan-section" id="plan" aria-labelledby="plan-title">
           <div className="gt-container gt-plan">
             <div className="gt-plan-copy" data-reveal="left">
               <p className="gt-eyebrow">{t("homepage.planEyebrow")}</p>
@@ -577,34 +580,38 @@ export default async function HomePage({ params }) {
         {/* 9. FAQ */}
         <section className="gt-section gt-section--stone" id="faq" aria-labelledby="faq-title">
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
-          <div className="gt-container gt-faq">
-            <div className="gt-faq-aside" data-reveal="left">
+          <div className="gt-container">
+            <div className="gt-section-head" data-reveal>
               <p className="gt-eyebrow">{t("homepage.faqEyebrow")}</p>
               <h2 id="faq-title" className="gt-h2">{t("homepage.faqTitle")}</h2>
-              <div className="gt-faq-visual">
+            </div>
+
+            {/* Photo and questions side by side; the photo takes the height of the list. */}
+            <div className="gt-faq">
+              <div className="gt-faq-visual" data-reveal="image">
                 <div className="gt-faq-photo">
-                  <Image src="/profile1.jpg" alt="" fill sizes="(max-width: 900px) 100vw, 420px" />
+                  <Image src="/profile1.jpg" alt="" fill sizes="(max-width: 900px) 100vw, 40vw" />
                 </div>
                 <div className="gt-faq-help">
                   <strong>{t("homepage.faqHelpTitle")}</strong>
                   <p>{t("homepage.faqHelpText")}</p>
-                  <a href={generalWa} target="_blank" rel="noopener noreferrer" className="gt-btn gt-btn--wa">
-                    <WhatsAppIcon size={18} />
+                  <a href={generalWa} target="_blank" rel="noopener noreferrer" className="gt-btn gt-btn--wa gt-btn--sm">
+                    <WhatsAppIcon size={17} />
                     {t("site.chatWhatsapp")}
                   </a>
                 </div>
               </div>
-            </div>
-            <div className="gt-faq-list" data-reveal-group>
-              {faqs.map((faq, index) => (
-                <details key={faq.q} className="gt-faq-item" open={index === 0}>
-                  <summary>
-                    <span>{faq.q}</span>
-                    <PlusIcon size={20} />
-                  </summary>
-                  <p>{faq.a}</p>
-                </details>
-              ))}
+              <div className="gt-faq-list" data-reveal-group>
+                {faqs.map((faq, index) => (
+                  <details key={faq.q} className="gt-faq-item" open={index === 0}>
+                    <summary>
+                      <span>{faq.q}</span>
+                      <PlusIcon size={18} />
+                    </summary>
+                    <p>{faq.a}</p>
+                  </details>
+                ))}
+              </div>
             </div>
           </div>
         </section>

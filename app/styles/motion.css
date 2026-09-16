@@ -23,8 +23,8 @@ html.gt-js [data-reveal-group] > :not(.is-in) { opacity: 0; }
 
 html.gt-js [data-reveal].is-in,
 html.gt-js [data-reveal-group] > .is-in {
-  animation: gt-reveal-up 0.7s var(--gt-ease-out) backwards;
-  animation-delay: calc(var(--gt-i, 0) * 0.08s);
+  animation: gt-reveal-up 0.5s var(--gt-ease-out) backwards;
+  animation-delay: calc(var(--gt-i, 0) * 0.05s);
 }
 
 html.gt-js [data-reveal="fade"].is-in,
@@ -123,7 +123,7 @@ html.gt-js [data-reveal].gt-instant .gt-eyebrow::before { transition: none; }
 .gt-btn:hover svg.gt-flip-rtl { translate: 3px 0; }
 html[dir="rtl"] .gt-btn:hover svg.gt-flip-rtl { translate: -3px 0; }
 
-.gt-btn--gold:hover { box-shadow: 0 16px 30px -12px rgba(250, 180, 24, 0.85); }
+.gt-btn--gold:hover { box-shadow: 0 16px 30px -12px rgba(224, 169, 59, 0.85); }
 .gt-btn--wa:hover { box-shadow: 0 14px 28px -14px rgba(14, 124, 102, 0.9); }
 
 /* ---------- Reduced motion ---------- */

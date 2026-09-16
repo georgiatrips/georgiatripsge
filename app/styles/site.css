@@ -6,42 +6,63 @@
    redesigned. Layout uses logical properties so Arabic (dir="rtl") mirrors
    automatically.
 
-   Brand: navy ground + teal accent + gold action, serif display type
+   Palette: four calm, classic colours and soft neutrals. Nothing else:
+     blue   #2a6592  links, buttons, active states, small coloured blocks
+     teal   #3a9296  icons and small labels
+     gold   #e0a93b  small highlights (stars, badges)
+     amber  #ffb52e  booking buttons only, so the next step is always obvious
+     ink    #1f2d3d  text, and the footer background (#0f2336)
+   Other large surfaces are white, paper or stone. Serif display type
    (Playfair / Noto Serif Georgian) over Noto Sans Georgian body text.
    ========================================================================== */
 
 :root {
-  /* Brand */
-  --gt-navy-950: #071724;
-  --gt-navy-900: #0d233a;
-  --gt-navy-800: #14314d;
-  --gt-navy-700: #1d4266;
-  /* Deep ocean blue for large coloured blocks (map panel, planner, CTAs):
-     dark enough for white text, lighter and warmer than the navy above. */
-  --gt-ocean-700: #1570a3;
-  --gt-ocean-800: #0f5d89;
-  --gt-ocean-900: #0b4a6e;
-  --gt-blue: #106da4;
-  --gt-blue-700: #0b5a88;
-  --gt-teal: #29b2b7;
-  --gt-teal-700: #0f7f84;
-  --gt-teal-soft: rgba(41, 178, 183, 0.12);
-  --gt-gold: #fab418;
-  --gt-gold-600: #e8a300;
-  --gt-gold-ink: #6b4a00;
-  --gt-gold-soft: rgba(250, 180, 24, 0.18);
-  --gt-wa: #0e7c66;
-  --gt-wa-hover: #0b6654;
+  /* Primary blue. The navy/ocean names are kept for existing rules and now
+     point at the same blue family, so no block renders near-black. */
+  --gt-primary: #2a6592;
+  --gt-primary-700: #22557c;
+  --gt-primary-soft: #eaf1f7;
+  --gt-navy-950: #22557c;
+  --gt-navy-900: #2a6592;
+  --gt-navy-800: #22557c;
+  --gt-navy-700: #3b77a3;
+  --gt-ocean-700: #3b77a3;
+  --gt-ocean-800: #2a6592;
+  --gt-ocean-900: #22557c;
+  --gt-blue: #2a6592;
+  --gt-blue-700: #22557c;
+
+  /* Teal accent */
+  --gt-teal: #3a9296;
+  --gt-teal-700: #2c7477;
+  --gt-teal-soft: rgba(58, 146, 150, 0.12);
+
+  /* Gold highlight */
+  --gt-gold: #e0a93b;
+  --gt-gold-600: #c9922a;
+  --gt-gold-ink: #7a5712;
+  --gt-gold-soft: rgba(224, 169, 59, 0.16);
+
+  --gt-wa: #1f7a64;
+  --gt-wa-hover: #19664f;
   --gt-danger: #b42318;
 
-  /* Neutrals — same cool slate family as the rest of the site */
-  --gt-ink: #0f172a;
-  --gt-ink-2: #334155;
-  --gt-muted: #5b6b7d;
-  --gt-line: #e2e8f0;
-  --gt-line-strong: #cbd5e1;
-  --gt-paper: #f8fafc;
-  --gt-stone: #eef2f7;
+  /* The one dark surface: the footer. */
+  --gt-footer-bg: #0f2336;
+
+  /* Call to action: warm amber, used only for booking buttons. */
+  --gt-cta: #ffb52e;
+  --gt-cta-hover: #ffa412;
+  --gt-cta-ink: #1f2d3d;
+
+  /* Neutrals */
+  --gt-ink: #1f2d3d;
+  --gt-ink-2: #3e4c5b;
+  --gt-muted: #5f6c7b;
+  --gt-line: #e3e8ee;
+  --gt-line-strong: #cfd7e0;
+  --gt-paper: #f7f9fb;
+  --gt-stone: #f2f5f8;
   --gt-white: #ffffff;
 
   /* Type */
@@ -59,12 +80,12 @@
   --gt-shadow-sm: 0 1px 2px rgba(13, 35, 58, 0.06), 0 1px 3px rgba(13, 35, 58, 0.08);
   --gt-shadow: 0 10px 28px -12px rgba(13, 35, 58, 0.22), 0 2px 6px rgba(13, 35, 58, 0.06);
   --gt-shadow-lg: 0 28px 56px -24px rgba(13, 35, 58, 0.38);
-  --gt-shadow-gold: 0 10px 24px -10px rgba(250, 180, 24, 0.7);
+  --gt-shadow-gold: 0 8px 20px -12px rgba(224, 169, 59, 0.45);
 
   /* Rhythm */
   --gt-container: 1240px;
   --gt-gutter: clamp(1rem, 4vw, 2rem);
-  --gt-section: clamp(2.75rem, 5.5vw, 4rem);
+  --gt-section: clamp(1.75rem, 3vw, 2.5rem);
   --gt-header-h: 72px;
   --gt-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --gt-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -93,7 +114,7 @@ html[lang="ar"] {
   color: var(--gt-ink);
 }
 
-.gt-section--tight { padding-block: clamp(2.5rem, 5vw, 4rem); }
+.gt-section--tight { padding-block: clamp(2rem, 4vw, 2.75rem); }
 .gt-section--paper { background: var(--gt-paper); }
 .gt-section--stone { background: var(--gt-stone); }
 .gt-section--white { background: var(--gt-white); }
@@ -101,7 +122,7 @@ html[lang="ar"] {
 
 .gt-section-head {
   max-width: 46rem;
-  margin-block-end: clamp(2rem, 4vw, 3rem);
+  margin-block-end: clamp(1.5rem, 3vw, 2.25rem);
 }
 
 .gt-section-head--center {
@@ -246,8 +267,16 @@ html[lang="ar"] {
 .gt-btn[disabled],
 .gt-btn[aria-disabled="true"] { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-.gt-btn--gold { background: var(--gt-gold); color: var(--gt-navy-900); box-shadow: var(--gt-shadow-gold); }
-.gt-btn--gold:hover { background: var(--gt-gold-600); }
+/* The booking button: the one warm colour on the page, so it is always found first. */
+.gt-btn--gold,
+.gt-btn--cta {
+  background: var(--gt-cta);
+  color: var(--gt-cta-ink);
+  font-weight: 800;
+  box-shadow: 0 8px 20px -10px rgba(255, 164, 18, 0.65);
+}
+.gt-btn--gold:hover,
+.gt-btn--cta:hover { background: var(--gt-cta-hover); color: var(--gt-cta-ink); box-shadow: 0 12px 24px -10px rgba(255, 164, 18, 0.75); }
 
 .gt-btn--navy { background: var(--gt-navy-900); color: #fff; }
 .gt-btn--navy:hover { background: var(--gt-navy-800); }
@@ -306,7 +335,7 @@ html[dir="rtl"] .gt-link:hover svg { transform: translateX(-3px); }
 }
 
 .gt-chip svg { flex: none; }
-.gt-chip--light { background: rgba(255, 255, 255, 0.94); color: var(--gt-navy-900); }
+.gt-chip--light { background: rgba(255, 255, 255, 0.94); color: var(--gt-ink); }
 .gt-chip--teal { background: var(--gt-teal-soft); color: var(--gt-teal-700); }
 .gt-chip--gold { background: var(--gt-gold-soft); color: var(--gt-gold-ink); }
 .gt-chip--navy { background: var(--gt-navy-900); color: #fff; }
@@ -356,7 +385,7 @@ html[dir="rtl"] .gt-link:hover svg { transform: translateX(-3px); }
 
 .gt-icon-badge--sm { inline-size: 38px; block-size: 38px; border-radius: 10px; }
 .gt-icon-badge--gold { background: var(--gt-gold-soft); color: var(--gt-gold-ink); }
-.gt-section--navy .gt-icon-badge { background: rgba(250, 180, 24, 0.14); color: var(--gt-gold); }
+.gt-section--navy .gt-icon-badge { background: rgba(224, 169, 59, 0.14); color: var(--gt-gold); }
 
 /* ---------- Grids ---------- */
 
@@ -396,7 +425,7 @@ html[dir="rtl"] .gt-link:hover svg { transform: translateX(-3px); }
 .gt-input:focus {
   outline: none;
   border-color: var(--gt-blue);
-  box-shadow: 0 0 0 3px rgba(16, 109, 164, 0.2);
+  box-shadow: 0 0 0 3px rgba(42, 101, 146, 0.2);
 }
 
 .gt-field-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }

@@ -1,11 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import TourPrice from "../TourPrice";
-import { excerpt, formatTourDate } from "../../lib/tourView";
+import { formatTourDate } from "../../lib/tourView";
 import { interpolate } from "../../lib/i18n/translate";
 import { getLocalizedHref } from "../../lib/siteConfig";
-import { whatsappHref } from "../../lib/shared";
-import { CalendarIcon, ClockIcon, LocationIcon, RouteIcon, UsersIcon, WhatsAppIcon } from "../Icons";
+import { ArrowRightIcon, CalendarIcon, ClockIcon, LocationIcon, RouteIcon, UsersIcon } from "../Icons";
 import "../../styles/tour-card.css";
 
 // Renders on the server (homepage, landing pages) or inside client components
@@ -15,7 +14,6 @@ import "../../styles/tour-card.css";
 export default function TourCard({ tour, lang, t, headingLevel = 3, eager = false, sizes, dateMatch = null }) {
   const Heading = `h${headingLevel}`;
   const tourHref = getLocalizedHref(`/tours/${tour.id}`, lang);
-  const waHref = whatsappHref(interpolate(t("tourCard.waMessage"), { title: tour.title }));
   const nextDate = tour.nextDeparture
     ? formatTourDate(tour.nextDeparture.date, lang, { day: "numeric", month: "short" })
     : "";
@@ -51,8 +49,6 @@ export default function TourCard({ tour, lang, t, headingLevel = 3, eager = fals
           {tour.groupMax && <li><UsersIcon size={15} />{interpolate(t("tourCard.upTo"), { count: tour.groupMax })}</li>}
           {tour.stops.length > 1 && <li><RouteIcon size={15} />{interpolate(t("tourCard.stops"), { count: tour.stops.length })}</li>}
         </ul>
-
-        {tour.desc && <p className="gt-tour-card-desc">{excerpt(tour.desc, 150)}</p>}
 
         {dateMatch ? (
           <div className="gt-tour-card-dates">
@@ -97,16 +93,14 @@ export default function TourCard({ tour, lang, t, headingLevel = 3, eager = fals
             ) : null}
           </div>
 
-          <a
-            href={waHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="gt-btn gt-btn--wa gt-btn--sm gt-tour-card-wa"
-            aria-label={interpolate(t("tourCard.askAria"), { title: tour.title })}
+          <Link
+            href={tourHref}
+            className="gt-btn gt-btn--cta gt-btn--sm gt-tour-card-cta"
+            aria-label={interpolate(t("tourCard.bookAria"), { title: tour.title })}
           >
-            <WhatsAppIcon size={17} />
-            <span>{t("tourCard.ask")}</span>
-          </a>
+            <span>{t("tourCard.book")}</span>
+            <ArrowRightIcon size={16} />
+          </Link>
         </div>
       </div>
     </article>
