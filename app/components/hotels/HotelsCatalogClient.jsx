@@ -13,9 +13,9 @@ import { whatsappHref } from "../../lib/shared";
 
 function HotelCard({ hotel, t, lang }) {
   const { format } = useCurrency();
-  const photo = hotel.gallery?.[0] || "/hero.webp";
-  const nameText = asLocalizedText(hotel.name, lang);
-  const descText = asLocalizedText(hotel.desc, lang);
+  const photo = hotel.gallery?.[0] || hotel.img || "/hero.webp";
+  const nameText = asLocalizedText(hotel.name || hotel.title, lang);
+  const descText = asLocalizedText(hotel.desc || hotel.description, lang);
   const priceLabelText = asLocalizedText(hotel.priceLabel, lang);
   const buttonText = asLocalizedText(hotel.buttonText, lang);
 
@@ -24,7 +24,7 @@ function HotelCard({ hotel, t, lang }) {
       <div className="hotel-item-image-wrapper">
         <Image
           src={photo}
-          alt={nameText}
+          alt={nameText || "Hotel"}
           fill
           sizes="(max-width: 760px) 100vw, 500px"
           style={{ objectFit: "cover" }}
@@ -57,17 +57,32 @@ function HotelCard({ hotel, t, lang }) {
 
 export default function HotelsCatalogClient({ initialHotels = [] }) {
   const { t, lang } = useLanguage();
-  const [hotels] = useState(initialHotels);
+  const [hotels, setHotels] = useState(initialHotels);
   const [query, setQuery] = useState("");
+
+  React.useEffect(() => {
+    if (Array.isArray(initialHotels) && initialHotels.length > 0) {
+      setHotels(initialHotels);
+    } else {
+      // Fallback: If server cache returned empty, fetch live from Firestore on client
+      import("../../lib/hotelsFirestore").then(({ listHotels }) => {
+        listHotels(true).then((freshList) => {
+          if (Array.isArray(freshList) && freshList.length > 0) {
+            setHotels(freshList);
+          }
+        }).catch(() => {});
+      });
+    }
+  }, [initialHotels]);
 
   const filtered = useMemo(() => {
     const term = query.trim();
     if (!term) return hotels;
     return hotels.filter(
       (hotel) =>
-        matchesMultiLang(hotel.name, term) ||
+        matchesMultiLang(hotel.name || hotel.title, term) ||
         matchesMultiLang(hotel.city, term) ||
-        matchesMultiLang(hotel.desc, term)
+        matchesMultiLang(hotel.desc || hotel.description, term)
     );
   }, [hotels, query]);
 

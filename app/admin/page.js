@@ -543,6 +543,13 @@ export default function AdminPage() {
       setSaving(true);
       const created = editingTourId ? null : await createTour(payload);
       if (editingTourId) await updateFirestoreTour(editingTourId, payload);
+      try {
+        await fetch("/api/admin/revalidate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tag: "tours" }),
+        });
+      } catch (_) {}
       setMessage({ type: "success", text: editingTourId ? "ტური განახლებულია!" : `ტური შენახულია! ID: ${created.id}` });
       resetForm();
       await refreshList();
@@ -620,6 +627,13 @@ export default function AdminPage() {
     if (!confirm("წავშალოთ ეს ტური?")) return;
     try {
       await deleteFirestoreTour(id);
+      try {
+        await fetch("/api/admin/revalidate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tag: "tours" }),
+        });
+      } catch (_) {}
       await refreshList();
     } catch (err) {
       setMessage({ type: "error", text: firestoreErrorMessage(err) });

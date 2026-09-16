@@ -120,6 +120,16 @@ export default function HotelManager({ onHotelsCountChange }) {
       };
       if (editingId) await updateHotel(editingId, payload);
       else await createHotel(payload);
+
+      // Revalidate cache tag 'hotels'
+      try {
+        await fetch("/api/admin/revalidate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tag: "hotels" }),
+        });
+      } catch (_) {}
+
       setForm(empty());
       setEditingId(null);
       await refresh();
@@ -151,6 +161,16 @@ export default function HotelManager({ onHotelsCountChange }) {
   const remove = async (id) => {
     if (!confirm("დარწმუნებული ხართ, რომ გსურთ სასტუმროს წაშლა?")) return;
     await deleteHotel(id);
+
+    // Revalidate cache tag 'hotels'
+    try {
+      await fetch("/api/admin/revalidate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tag: "hotels" }),
+      });
+    } catch (_) {}
+
     if (editingId === id) {
       setEditingId(null);
       setForm(empty());

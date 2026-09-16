@@ -67,6 +67,13 @@ export default function PlaceManager({ onPlacesCountChange }) {
       };
       if (editingId) await updatePlace(editingId, payload);
       else await createPlace(payload);
+      try {
+        await fetch("/api/admin/revalidate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tag: "places" }),
+        });
+      } catch (_) {}
       setForm(empty());
       setEditingId(null);
       await refresh();
@@ -108,6 +115,13 @@ export default function PlaceManager({ onPlacesCountChange }) {
   const remove = async (id) => {
     if (!confirm("დარწმუნებული ხართ, რომ გსურთ ადგილის წაშლა?")) return;
     await deletePlace(id);
+    try {
+      await fetch("/api/admin/revalidate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tag: "places" }),
+      });
+    } catch (_) {}
     if (editingId === id) {
       setEditingId(null);
       setForm(empty());

@@ -82,17 +82,24 @@ export function normalizeHotel(hotel) {
   const gallery = Array.isArray(hotel.gallery)
     ? hotel.gallery.map(extractImageUrl).filter(Boolean).slice(0, 2)
     : [];
-  const mainImg = extractImageUrl(hotel.img) || gallery[0] || "/hero.webp";
+  const mainImg = extractImageUrl(hotel.img || hotel.image) || gallery[0] || "/hero.webp";
   const rating = Number(hotel.rating);
+  const name = hotel.name || hotel.title || "";
+  const desc = hotel.desc || hotel.description || "";
   return {
     ...hotel,
     id: hotel.id,
-    name: hotel.name,
-    desc: hotel.desc,
-    city: hotel.city,
-    priceFrom: typeof hotel.priceFrom === "string" ? hotel.priceFrom : "",
+    name,
+    desc,
+    city: hotel.city || "",
+    priceFrom:
+      typeof hotel.priceFrom === "string"
+        ? hotel.priceFrom
+        : hotel.priceFrom != null
+        ? String(hotel.priceFrom)
+        : "",
     rating: Number.isFinite(rating) && rating > 0 ? Math.min(rating, 10) : null,
-    bookingUrl: normalizeBookingUrl(hotel.bookingUrl),
+    bookingUrl: normalizeBookingUrl(hotel.bookingUrl || hotel.url || hotel.link),
     gallery: gallery.length > 0 ? gallery : [mainImg],
     img: mainImg,
     isFeatured: Boolean(hotel.isFeatured),
