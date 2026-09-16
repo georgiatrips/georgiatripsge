@@ -107,6 +107,7 @@ export default function SiteDocument({ lang, children }) {
         <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
         <link rel="dns-prefetch" href="https://connect.facebook.net" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+        <meta name="msvalidate.01" content="6176E8337649B075BA1BC245892D743E" />
       </head>
       <body>
         <LanguageProvider initialLang={lang} messages={getMessages(lang)}>

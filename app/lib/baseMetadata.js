@@ -50,9 +50,11 @@ export const BASE_METADATA = {
     yandex: "b8d0557b47549680",
     other: {
       "facebook-domain-verification": "ef9kax36lazdya98y738pn5e10ny2e",
+      "msvalidate.01": "6176E8337649B075BA1BC245892D743E",
     },
   },
   other: {
+    "msvalidate.01": "6176E8337649B075BA1BC245892D743E",
     "developer": "Manuchar Lominadze (https://www.instagram.com/lominadzee10/)",
   },
   robots: {

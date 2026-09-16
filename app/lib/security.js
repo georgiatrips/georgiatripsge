@@ -160,6 +160,7 @@ export function isStaticAssetRequest(request) {
     pathname.startsWith("/public") ||
     pathname === "/robots.txt" ||
     pathname === "/sitemap.xml" ||
+    pathname === "/BingSiteAuth.xml" ||
     pathname === "/favicon.ico" ||
     (pathname.includes(".") && !pathname.endsWith("/"))
   );
