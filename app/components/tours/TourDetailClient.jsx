@@ -8,22 +8,21 @@ import Navbar from "../Navbar";
 import Footer from "../Footer";
 import TourPrice from "../TourPrice";
 import "../../[locale]/tours/[id]/tourDetail.css";
-import { getFirestoreTourById, normalizeFirestoreTour, groupDepartureDates, listFirestoreTours, asLocalizedText, translateDuration, translateLocation, translateMonthName, getPlaceLocalizedTitle, extractImageUrl } from "../../lib/toursFirestore";
-import { listPlaces } from "../../lib/placesFirestore";
+// Firebase-backed helpers (tour/place refetch, coupons, bookings) are imported
+// on demand so the Firebase SDK is not part of the initial page bundle.
+import { normalizeFirestoreTour, getContentSlug, groupDepartureDates, asLocalizedText, translateDuration, translateLocation, translateMonthName, getPlaceLocalizedTitle, extractImageUrl } from "../../lib/toursShared";
 import { WA_LINK, WA_NUMBER, WhatsAppIcon, PHONE_DISPLAY, TELEGRAM_HANDLE, TELEGRAM_LINK, INSTAGRAM_HANDLE, INSTAGRAM_LINK, SOCIAL_PROFILES, FAQS } from "../../lib/shared";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { getLocalizedHref } from "../../lib/siteConfig";
 import { useCurrency } from "../../lib/currency/CurrencyContext";
 import { formatPriceStr } from "../../lib/i18n/formatPriceStr";
-import { createBooking } from "../../lib/bookingsFirestore";
 import { isValidPhone } from "../../lib/bookingModel";
 import { useAuth } from "../../lib/AuthContext";
 import { useCoupon } from "../../lib/CouponContext";
-import { getCouponByCode } from "../../lib/coupons";
 import { trackMetaPurchase, trackMetaViewContent, trackMetaInitiateCheckout, trackEvent } from "../../lib/analytics";
 import { getStoredMarketingAttribution } from "../../lib/utmTracker";
 import { toTourViews } from "../../lib/tourView";
-import { interpolate } from "../../lib/i18n/translate";
+import { interpolate } from "../../lib/i18n/translateCore";
 
 import TourDetailHero from "../tour-detail/TourDetailHero";
 import TourDetailRouteMap from "../tour-detail/TourDetailRouteMap";
@@ -43,7 +42,8 @@ export default function TourDetailClient({
 }) {
   const params = useParams();
   const router = useRouter();
-  const tourId = params?.id || initialTour?.id;
+  // The URL segment is usually the slug; the Firestore ID comes from the tour.
+  const tourId = initialTour?.id || params?.id;
   const { lang, t, isEnglish } = useLanguage();
   const { format } = useCurrency();
   const { user } = useAuth() ?? {};
@@ -83,10 +83,11 @@ export default function TourDetailClient({
     setFsLoading(true);
     (async () => {
       try {
+        const { getFirestoreTourById, listFirestoreTours } = await import("../../lib/toursFirestore");
         let raw = await getFirestoreTourById(tourId);
         if (!raw) {
           const tours = await listFirestoreTours();
-          raw = tours.find((item) => item.id === tourId) || null;
+          raw = tours.find((item) => item.id === tourId || getContentSlug(item) === tourId) || null;
         }
         if (!cancelled) setRawFsDoc(raw || null);
       } catch (error) {
@@ -102,7 +103,7 @@ export default function TourDetailClient({
   useEffect(() => {
     if (initialPlaces && initialPlaces.length > 0) return;
     let cancelled = false;
-    listPlaces().then((list) => {
+    import("../../lib/placesFirestore").then(({ listPlaces }) => listPlaces()).then((list) => {
       if (!cancelled && Array.isArray(list)) setPlacesList(list);
     }).catch(() => {});
     return () => { cancelled = true; };
@@ -184,10 +185,10 @@ export default function TourDetailClient({
   const currentTourId = rawTour?.id;
   const otherTourViews = useMemo(
     () =>
-      toTourViews((allFsTours || []).filter((item) => item?.id !== currentTourId), lang, placesList)
+      toTourViews((allFsTours || []).filter((item) => item?.id !== currentTourId), lang, placesList, t("tourBadges"))
         .sort((a, b) => Number(b.isPopular) - Number(a.isPopular))
         .slice(0, 3),
-    [allFsTours, currentTourId, lang, placesList]
+    [allFsTours, currentTourId, lang, placesList, t]
   );
 
   const tourFaqs = [
@@ -282,7 +283,7 @@ export default function TourDetailClient({
     try {
       const foundCoupon = (coupons || []).find(
         (c) => c.code.toUpperCase() === code && c.active !== false
-      ) || (await getCouponByCode(code));
+      ) || (await import("../../lib/coupons").then((m) => m.getCouponByCode(code)));
 
       if (foundCoupon && foundCoupon.active !== false) {
         const pct = Number(foundCoupon.discountPercent) || 10;
@@ -422,6 +423,7 @@ export default function TourDetailClient({
       // The success page looks the booking up by its booking ID (plus the
       // access token / phone kept in localStorage). It previously received
       // the tour ID, so it could never find the booking.
+      const { createBooking } = await import("../../lib/bookingsFirestore");
       const result = await createBooking(bookingData);
       const bookingId = result?.bookingId;
       if (!bookingId) throw new Error("Booking was not saved");

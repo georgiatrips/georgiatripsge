@@ -7,13 +7,14 @@ import Navbar from "../Navbar";
 import Footer from "../Footer";
 import { formatRegionName } from "../../lib/placesMeta";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
-import { asLocalizedText } from "../../lib/toursFirestore";
+import { asLocalizedText } from "../../lib/toursShared";
 import { getLocalizedHref } from "../../lib/siteConfig";
+import { placePath } from "../../lib/slugs";
 import "../../[locale]/places/places.css";
 
 function SmallPlaceCard({ place, lang }) {
   return (
-    <Link href={getLocalizedHref(`/places/${place.id}`, lang)} className="place-mini-card">
+    <Link href={getLocalizedHref(placePath(place), lang)} className="place-mini-card">
       <div className="place-mini-media">
         <Image src={place.img} alt={asLocalizedText(place.title, lang)} fill sizes="180px" style={{ objectFit: "cover" }} />
       </div>

@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import Link from "next/link";
-import { useLanguage } from "./lib/i18n/LanguageContext";
+import { useLanguage } from "../lib/i18n/LanguageContext";
 
 const ERROR_TEXTS = {
   ka: {
@@ -90,7 +90,7 @@ export default function Error({ error, reset }) {
             {t.retryBtn}
           </button>
           <Link
-            href="/"
+            href={`/${lang}`}
             style={{
               padding: "0.75rem 1.5rem",
               background: "rgba(13, 35, 58, 0.08)",

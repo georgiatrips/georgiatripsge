@@ -2,7 +2,23 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { isRtlLanguage, SUPPORTED_LANGUAGES } from "./locale";
-import { translate } from "./translate";
+import { lookup, mergeMessages } from "./translateCore";
+
+// Only the current language's messages are sent with the page (the "messages"
+// prop from the root layout). Another language is fetched when the visitor
+// switches, so the five dictionaries are not part of every page bundle.
+const LOCALE_LOADERS = {
+  ka: () => import("./locales/ka").then((m) => m.ka),
+  en: () => import("./locales/en").then((m) => m.en),
+  ru: () => import("./locales/ru").then((m) => m.ru),
+  tr: () => import("./locales/tr").then((m) => m.tr),
+  ar: () => import("./locales/ar").then((m) => m.ar),
+};
+
+async function loadMessages(lang) {
+  const [base, own] = await Promise.all([LOCALE_LOADERS.ka(), LOCALE_LOADERS[lang]()]);
+  return lang === "ka" ? base : mergeMessages(base, own);
+}
 
 const LanguageContext = createContext(null);
 const STORAGE_KEY = "gt_language";
@@ -42,9 +58,28 @@ function getInitialLanguage(fallback = "ka") {
   return fallback;
 }
 
-export function LanguageProvider({ children, initialLang = "ka" }) {
+export function LanguageProvider({ children, initialLang = "ka", messages }) {
   const [lang, setLangState] = useState(initialLang);
   const [hydrated, setHydrated] = useState(false);
+  const [catalog, setCatalog] = useState({ lang: initialLang, messages });
+
+  // A navigation to another locale re-renders the root layout with new props.
+  if (messages !== undefined && catalog.lang === initialLang && catalog.messages !== messages) {
+    setCatalog({ lang: initialLang, messages });
+  }
+
+  useEffect(() => {
+    if (catalog.lang === lang && catalog.messages) return;
+    let cancelled = false;
+    loadMessages(lang)
+      .then((loaded) => {
+        if (!cancelled) setCatalog({ lang, messages: loaded });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [lang, catalog]);
 
   useEffect(() => {
     const detected = getInitialLanguage(initialLang);
@@ -104,7 +139,8 @@ export function LanguageProvider({ children, initialLang = "ka" }) {
    * Translation function.
    * Usage: t("nav.home") => "Home" (if lang is "en")
    */
-  const t = useCallback((key, fallback) => translate(lang, key, fallback), [lang]);
+  const currentMessages = catalog.messages;
+  const t = useCallback((key, fallback) => lookup(currentMessages, key, fallback), [currentMessages]);
 
   const value = {
     lang,
@@ -131,7 +167,7 @@ export function useLanguage() {
     return {
       lang: "ka",
       setLang: () => {},
-      t: (key, fallback) => translate("ka", key, fallback),
+      t: (key, fallback) => fallback ?? key,
       hydrated: false,
       isRtl: false,
       isRTL: false,

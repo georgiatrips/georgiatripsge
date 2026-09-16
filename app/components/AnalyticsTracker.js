@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { registerPageVisit, sendHeartbeat, trackEvent } from "../lib/analytics";
 import { captureMarketingParams } from "../lib/utmTracker";
+import { whenIdle } from "../lib/whenIdle";
 
 export default function AnalyticsTracker() {
   const pathname = usePathname();
@@ -26,10 +27,13 @@ export default function AnalyticsTracker() {
     const fullPath = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : "");
     pageStartTime.current = Date.now();
 
-    // Initial page visit register
-    registerPageVisit({
-      path: fullPath,
-      title: document.title || fullPath,
+    // Register the visit once the page is idle: it loads Firestore, which
+    // must not compete with the first render.
+    const cancelIdle = whenIdle(() => {
+      registerPageVisit({
+        path: fullPath,
+        title: document.title || fullPath,
+      });
     });
 
     // Meta Pixel: Dispatch PageView on subsequent SPA route navigations
@@ -58,6 +62,7 @@ export default function AnalyticsTracker() {
     document.addEventListener("visibilitychange", handleVisibilityOrUnload);
 
     return () => {
+      cancelIdle();
       clearInterval(interval);
       window.removeEventListener("beforeunload", handleVisibilityOrUnload);
       document.removeEventListener("visibilitychange", handleVisibilityOrUnload);

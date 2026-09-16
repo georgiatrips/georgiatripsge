@@ -4,9 +4,9 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
-import { asLocalizedText, extractImageUrl } from "../../lib/toursFirestore";
+import { asLocalizedText, extractImageUrl } from "../../lib/toursShared";
 import { getLocalizedHref } from "../../lib/siteConfig";
-import { interpolate } from "../../lib/i18n/translate";
+import { interpolate } from "../../lib/i18n/translateCore";
 import { ArrowRightIcon, CameraIcon } from "../Icons";
 import "../../styles/tour-route.css";
 
@@ -98,7 +98,7 @@ export default function TourDetailRouteMap({ tour, openLightbox }) {
                         </button>
                       )}
                       {item.placeId && (
-                        <Link href={getLocalizedHref(`/places/${item.placeId}`, lang)} className="tdp-stop-link" prefetch={false}>
+                        <Link href={getLocalizedHref(`/places/${encodeURIComponent(item.placeSlug || item.placeId)}`, lang)} className="tdp-stop-link" prefetch={false}>
                           {t("tourDetail.placeDetails")}
                           <ArrowRightIcon size={14} />
                         </Link>

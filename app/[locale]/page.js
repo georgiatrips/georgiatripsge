@@ -8,8 +8,10 @@ import TourGrid from "../components/site/TourGrid";
 import TripPlannerForm from "../components/homepage/TripPlannerForm";
 import HeroSearch from "../components/homepage/HeroSearch";
 import GeorgiaMap from "../components/homepage/GeorgiaMap";
+import HeroSlides from "../components/homepage/HeroSlides";
 import { getCachedPlaces, getCachedReviews, getCachedTours } from "../lib/server/cachedData";
 import { formatTourDate, isLowSeats, toTourViews } from "../lib/tourView";
+import { tourPath, placePath } from "../lib/slugs";
 import { getTranslator, interpolate } from "../lib/i18n/translate";
 import { getLocalizedHref, getRequestLocale, SITE_URL } from "../lib/siteConfig";
 import { asLocalizedText } from "../lib/toursFirestore";
@@ -17,7 +19,7 @@ import { formatRegionName } from "../lib/placesMeta";
 import { INSTAGRAM_HANDLE, INSTAGRAM_LINK, PHONE_DISPLAY, PHONE_TEL, whatsappHref } from "../lib/shared";
 import {
   ArrowRightIcon, BriefcaseIcon, CalendarIcon, CarIcon, CheckIcon, CompassIcon, HeadsetIcon,
-  InstagramIcon, LocationIcon, PhoneIcon, PlaneIcon, PlusIcon, RouteIcon, ShieldCheckIcon,
+  InstagramIcon, PhoneIcon, PlaneIcon, PlusIcon, RouteIcon, ShieldCheckIcon,
   StarIcon, UsersIcon, WalletIcon, WhatsAppIcon,
 } from "../components/Icons";
 import "../styles/home.css";
@@ -29,7 +31,12 @@ import "../styles/tour-card.css";
 // regions map -> local team -> places on our routes -> private trip planner
 // -> transfers and fleet -> reviews (only if real) -> FAQ -> final CTA.
 
-const HERO_IMAGE = "/mestia.webp";
+// Hero photos, in order. Tbilisi first: it is the sharpest file and loads first.
+const HERO_SLIDES = [
+  { key: "Tbilisi", src: "/tbilisi.jpg", position: "50% 45%" },
+  { key: "Svaneti", src: "/svaneti.jpg", position: "50% 40%" },
+  { key: "Adjara", src: "/adjara.jpg", position: "50% 50%" },
+];
 
 // Region code (as in the map SVG) -> region name as stored in Firestore.
 const MAP_REGIONS = [
@@ -93,7 +100,7 @@ export default async function HomePage({ params }) {
   const rawList = Array.isArray(rawTours) ? rawTours : [];
   const places = Array.isArray(rawPlaces) ? rawPlaces : [];
 
-  const tours = toTourViews(rawList, lang, places).sort((a, b) => {
+  const tours = toTourViews(rawList, lang, places, t("tourBadges")).sort((a, b) => {
     if (a.isPopular !== b.isPopular) return a.isPopular ? -1 : 1;
     return (a.nextDeparture?.date || "9999").localeCompare(b.nextDeparture?.date || "9999");
   });
@@ -126,7 +133,7 @@ export default async function HomePage({ params }) {
       id: tour.id,
       title: tour.title,
       img: tour.img || "",
-      href: href(`/tours/${tour.id}`),
+      href: href(tourPath(tour)),
       meta: [tour.duration, next].filter(Boolean).join(" · "),
     });
   }
@@ -142,7 +149,7 @@ export default async function HomePage({ params }) {
         id: place.id,
         title: asLocalizedText(place.title, lang),
         img: place.img,
-        href: href(`/places/${place.id}`),
+        href: href(placePath(place)),
         popular: Boolean(place.isPopular),
       });
     }
@@ -208,8 +215,13 @@ export default async function HomePage({ params }) {
       <main>
         {/* 1. Hero — what we do, proof it's bookable, and the search */}
         <section className="gt-hero" aria-labelledby="hero-title">
-          <Image src={HERO_IMAGE} alt={t("homepage.heroAlt")} fill sizes="100vw" quality={60} loading="eager" fetchPriority="high" className="gt-hero-img" />
-          <div className="gt-hero-scrim" aria-hidden="true" />
+          <HeroSlides
+            slides={HERO_SLIDES.map((slide) => {
+              const name = t(`homepage.heroSlide${slide.key}`);
+              return { src: slide.src, position: slide.position, name, alt: interpolate(t("homepage.heroSlideAlt"), { place: name }) };
+            })}
+            goLabel={t("homepage.heroSlideGo")}
+          />
 
           <div className={`gt-container gt-hero-inner${nextDepartures.length ? "" : " gt-hero-inner--solo"}`}>
             <div className="gt-hero-copy">
@@ -241,7 +253,7 @@ export default async function HomePage({ params }) {
                 <ul className="gt-departure-list">
                   {nextDepartures.map(({ tour, departure }) => (
                     <li key={tour.id}>
-                      <Link href={href(`/tours/${tour.id}`)} className="gt-departure">
+                      <Link href={href(tourPath(tour))} className="gt-departure">
                         <span className="gt-departure-media" aria-hidden="true">
                           {tour.img && <Image src={tour.img} alt="" fill sizes="64px" />}
                           <span className="gt-departure-date">
@@ -276,10 +288,6 @@ export default async function HomePage({ params }) {
             )}
           </div>
 
-          <p className="gt-hero-place">
-            <LocationIcon size={14} />
-            {t("homepage.heroPlace")}
-          </p>
         </section>
 
         {/* 2. Bookable tours */}
@@ -374,7 +382,7 @@ export default async function HomePage({ params }) {
 
         {/* 5. Places on our routes */}
         {routePlaces.length >= 3 && (
-          <section className="gt-section gt-section--white" aria-labelledby="places-title">
+          <section className="gt-section gt-section--white gt-places-section" aria-labelledby="places-title">
             <div className="gt-container">
               <div className="gt-section-head gt-section-head--duo" data-reveal>
                 <div>
@@ -393,7 +401,7 @@ export default async function HomePage({ params }) {
               <ul className={`gt-places gt-places--${routePlaces.length}`} data-reveal-group>
                 {routePlaces.map((place, index) => (
                   <li key={place.id} className="gt-place">
-                    <Link href={href(`/places/${place.id}`)} prefetch={false}>
+                    <Link href={href(placePath(place))} prefetch={false}>
                       <Image src={place.img} alt="" fill sizes={index === 0 ? "(max-width: 900px) 100vw, 50vw" : "(max-width: 900px) 50vw, 25vw"} />
                       <span className="gt-place-caption">
                         <small>{formatRegionName(kaText(place.region), lang)}</small>
@@ -551,7 +559,7 @@ export default async function HomePage({ params }) {
 
         {/* 8. Reviews — only when real reviews exist */}
         {reviews.length > 0 && (
-          <section className="gt-section gt-section--white" aria-labelledby="reviews-title">
+          <section className="gt-section gt-section--white gt-reviews-section" aria-labelledby="reviews-title">
             <div className="gt-container">
               <div className="gt-section-head" data-reveal>
                 <p className="gt-eyebrow">{t("homepage.reviewsEyebrow")}</p>

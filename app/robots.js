@@ -6,7 +6,9 @@ export default function robots() {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin", "/admin/", "/login", "/booking/", "/coupons", "/api/"],
+        // /login, /booking and /coupons are deliberately not blocked: they carry
+        // a noindex tag, which Google can only see if it is allowed to crawl them.
+        disallow: ["/admin", "/admin/", "/api/"],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,

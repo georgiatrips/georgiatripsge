@@ -1,33 +1,40 @@
 import { NextResponse } from "next/server";
 import { revalidateTag, revalidatePath } from "next/cache";
+import { requireAdmin } from "../../../lib/server/adminAuth";
+
+const CORE_TAGS = ["tours", "places", "posts", "hotels", "reviews"];
+
+// Expire immediately (not stale-while-revalidate): an admin who just saved a
+// tour expects the next page load to show it.
+const EXPIRE_NOW = { expire: 0 };
 
 export async function POST(request) {
+  const admin = await requireAdmin(request);
+  if (admin.error) {
+    return NextResponse.json({ success: false, error: admin.error }, { status: admin.status });
+  }
+
   try {
     const body = await request.json().catch(() => ({}));
-    const { tag, path, secret } = body;
-
-    // Optional secret check if REVALIDATE_SECRET is configured
-    const expectedSecret = process.env.REVALIDATE_SECRET;
-    if (expectedSecret && secret !== expectedSecret) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (tag) {
-      revalidateTag(tag);
-      return NextResponse.json({ success: true, revalidatedTag: tag, now: Date.now() });
-    }
+    const { tag, path } = body;
 
     if (path) {
       revalidatePath(path);
       return NextResponse.json({ success: true, revalidatedPath: path, now: Date.now() });
     }
 
-    // Default revalidate all core tags
-    const coreTags = ["tours", "places", "posts", "hotels", "reviews"];
-    coreTags.forEach((t) => revalidateTag(t));
-    return NextResponse.json({ success: true, revalidatedTags: coreTags, now: Date.now() });
+    const tags = tag ? [tag] : CORE_TAGS;
+    if (tags.some((t) => !CORE_TAGS.includes(t))) {
+      return NextResponse.json({ success: false, error: "Unknown tag" }, { status: 400 });
+    }
+    tags.forEach((t) => revalidateTag(t, EXPIRE_NOW));
+    // The sitemap and the proxy's slug index list tours and places, so they must
+    // pick up additions and deletions.
+    revalidatePath("/sitemap.xml");
+    revalidatePath("/content-index.json");
+    return NextResponse.json({ success: true, revalidatedTags: tags, now: Date.now() });
   } catch (error) {
     console.error("[api/admin/revalidate] Error:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Revalidation failed" }, { status: 500 });
   }
 }

@@ -516,8 +516,8 @@ html[dir="rtl"] .gt-flip-rtl { transform: scaleX(-1); }
   z-index: 100000;
   padding: 0.6rem 1rem;
   border-radius: 8px;
-  background: var(--gt-gold);
-  color: var(--gt-navy-900);
+  background: var(--gt-ink);
+  color: #fff;
   font-weight: 700;
   transform: translateY(-160%);
   transition: transform 0.2s var(--gt-ease);

@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLanguage } from "../lib/i18n/LanguageContext";
-import { MONTH_NAMES as MONTHS_MAP } from "../lib/toursFirestore";
+import { MONTH_NAMES as MONTHS_MAP } from "../lib/toursShared";
 
 const INTL_LOCALE = { ka: "ka-GE", en: "en-GB", ru: "ru-RU", tr: "tr-TR", ar: "ar-u-nu-latn" };
 

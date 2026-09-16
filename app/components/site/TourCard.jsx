@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import TourPrice from "../TourPrice";
 import { formatTourDate } from "../../lib/tourView";
-import { interpolate } from "../../lib/i18n/translate";
+import { interpolate } from "../../lib/i18n/translateCore";
 import { getLocalizedHref } from "../../lib/siteConfig";
 import { ArrowRightIcon, CalendarIcon, ClockIcon, LocationIcon, RouteIcon, UsersIcon } from "../Icons";
 import "../../styles/tour-card.css";
@@ -13,7 +13,7 @@ import "../../styles/tour-card.css";
 // active, so the card explains why it matches that day.
 export default function TourCard({ tour, lang, t, headingLevel = 3, eager = false, sizes, dateMatch = null }) {
   const Heading = `h${headingLevel}`;
-  const tourHref = getLocalizedHref(`/tours/${tour.id}`, lang);
+  const tourHref = getLocalizedHref(`/tours/${encodeURIComponent(tour.slug || tour.id)}`, lang);
   const nextDate = tour.nextDeparture
     ? formatTourDate(tour.nextDeparture.date, lang, { day: "numeric", month: "short" })
     : "";

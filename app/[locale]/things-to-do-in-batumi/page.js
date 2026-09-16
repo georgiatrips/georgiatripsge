@@ -4,6 +4,7 @@ import Image from "next/image";
 import { getCachedPlaces, getCachedTours, serializeForClient } from "../../lib/server/cachedData";
 import { asLocalizedText } from "../../lib/toursFirestore";
 import { SITE_URL, getRequestLocale, buildLocalizedMetadata, getLocalizedHref } from "../../lib/siteConfig";
+import { tourPath, placePath } from "../../lib/slugs";
 import { WA_LINK } from "../../lib/shared";
 import "../../landing.css";
 
@@ -126,7 +127,7 @@ export default async function ThingsToDoInBatumiPage({ params }) {
             "name": asLocalizedText(p.title, lang) || asLocalizedText(p.title, "en"),
             "description": asLocalizedText(p.desc, lang) || asLocalizedText(p.desc, "en"),
             "image": p.img || `${SITE_URL}/tbilisi.webp`,
-            "url": `${SITE_URL}/${lang}/places/${encodeURIComponent(p.id)}`,
+            "url": `${SITE_URL}/${lang}${placePath(p)}`,
           }
         }))
       },
@@ -213,7 +214,7 @@ export default async function ThingsToDoInBatumiPage({ params }) {
               const desc = asLocalizedText(place.desc, lang) || asLocalizedText(place.desc, "en") || place.desc;
 
               return (
-                <Link key={place.id} href={getLocalizedHref(`/places/${place.id}`, lang)} className="landing-tour-card">
+                <Link key={place.id} href={getLocalizedHref(placePath(place), lang)} className="landing-tour-card">
                   <div className="landing-tour-img-wrap">
                     <Image
                       src={place.img || "/tbilisi.webp"}

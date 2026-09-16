@@ -169,16 +169,16 @@ button.tdp-stop-media:focus-visible { outline: 3px solid var(--gt-teal, #3a9296)
   gap: 0.45rem;
   margin: 0.85rem 0 0;
   padding: 0.5rem 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 1px solid var(--gt-line, #e3e8ee);
   border-radius: 9px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: var(--gt-white, #fff);
+  color: var(--gt-ink-2, #3e4c5b);
   font-size: 0.8rem;
   font-weight: 600;
   line-height: 1.35;
 }
 
-.tdp-pay-note svg { flex: none; color: var(--gt-gold, #e0a93b); }
+.tdp-pay-note svg { flex: none; color: var(--gt-teal-700, #2c7477); }
 
 .tdp-form-label {
   display: block;

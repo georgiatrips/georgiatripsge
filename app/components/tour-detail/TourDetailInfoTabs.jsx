@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
-import { translateLocation } from "../../lib/toursFirestore";
+import { translateLocation } from "../../lib/toursShared";
 
 export default function TourDetailInfoTabs({ tour }) {
   const { t, lang } = useLanguage();

@@ -1,24 +1,27 @@
-import { Suspense } from "react";
+// The shared <html> document for every root layout: app/[locale]/layout.js
+// (public, statically rendered pages) and the account/admin root layouts.
+// It must not read cookies() or headers(): that would make every public page
+// render dynamically on each request.
+import { Suspense, ViewTransition } from "react";
 import { Noto_Sans_Georgian, Noto_Serif_Georgian, Playfair_Display, Noto_Sans_Arabic, Noto_Naskh_Arabic } from "next/font/google";
-import { cookies, headers } from "next/headers";
 import Script from "next/script";
-import "./globals.css";
-import "./coupon.css";
-import "./styles/site.css";
-import "./styles/chrome.css";
-import "./styles/datepicker.css";
-import "./styles/page-hero.css";
-import "./styles/motion.css";
-import { AuthProvider } from "./lib/AuthContext";
-import { LanguageProvider } from "./lib/i18n/LanguageContext";
-import { CurrencyProvider } from "./lib/currency/CurrencyContext";
-import { CouponProvider } from "./lib/CouponContext";
-import { isRtlLanguage } from "./lib/i18n/locale";
-import { SITE_URL, getRequestLocale } from "./lib/siteConfig";
-import CookieConsent from "./components/CookieConsent";
-import AnalyticsTracker from "./components/AnalyticsTracker";
-import WelcomeCouponPopup from "./components/WelcomeCouponPopup";
-import ScrollReveal from "./components/site/ScrollReveal";
+import "../../globals.css";
+import "../../coupon.css";
+import "../../styles/site.css";
+import "../../styles/chrome.css";
+import "../../styles/datepicker.css";
+import "../../styles/page-hero.css";
+import "../../styles/motion.css";
+import { AuthProvider } from "../../lib/AuthContext";
+import { LanguageProvider } from "../../lib/i18n/LanguageContext";
+import { CurrencyProvider } from "../../lib/currency/CurrencyContext";
+import { CouponProvider } from "../../lib/CouponContext";
+import { isRtlLanguage } from "../../lib/i18n/locale";
+import { getMessages } from "../../lib/i18n/translate";
+import CookieConsent from "../CookieConsent";
+import AnalyticsTracker from "../AnalyticsTracker";
+import WelcomeCouponPopup from "../WelcomeCouponPopup";
+import ScrollReveal from "./ScrollReveal";
 
 // Variable fonts: one file per family/subset instead of one per weight.
 const notoGeorgian = Noto_Sans_Georgian({
@@ -29,11 +32,13 @@ const notoGeorgian = Noto_Sans_Georgian({
   adjustFontFallback: true,
 });
 
+// Headings use the serif fonts, so they are preloaded too: otherwise they are
+// discovered late and every reload visibly swaps from a fallback font.
 const notoSerifGeorgian = Noto_Serif_Georgian({
   variable: "--font-noto-serif-georgian",
   subsets: ["georgian"],
   display: "swap",
-  preload: false,
+  preload: true,
   adjustFontFallback: true,
 });
 
@@ -41,7 +46,7 @@ const playfair = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin"],
   display: "swap",
-  preload: false,
+  preload: true,
   adjustFontFallback: true,
 });
 
@@ -74,95 +79,23 @@ const notoArabic = Noto_Sans_Arabic({
   adjustFontFallback: true,
 });
 
-export const viewport = {
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 5,
-  themeColor: "#2a6592",
-};
-
-// Locale-specific title/description/OG/hreflang live in app/[locale]/layout.js
-// (Next.js metadata merging replaces these keys entirely for any localized
-// route). This root-level metadata only covers what's identical everywhere
-// and what non-locale routes (/admin, /login, /booking, /coupons) still need.
-export const metadata = {
-  metadataBase: new URL(SITE_URL),
-  // No `template` here: every page/layout below already brands its own
-  // title with "| GeorgiaTrips" (see [locale]/layout.js and each page.js).
-  // A parent template augments (wraps) any plain-string title a descendant
-  // sets, so keeping one here would double the suffix on every page.
-  title: "GeorgiaTrips — Premium Tours & Transfers in Georgia",
-  description: "Discover Georgia in comfort and luxury with GeorgiaTrips.",
-  icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" },
-      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
-      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
-    ],
-    shortcut: "/favicon.ico",
-    apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-    ],
-    other: [
-      {
-        rel: "apple-touch-icon-precomposed",
-        url: "/apple-touch-icon-precomposed.png",
-      },
-    ],
-  },
-  manifest: "/manifest.json",
-  authors: [
-    { name: "GeorgiaTrips", url: "https://georgiatrips.ge" },
-    { name: "Manuchar Lominadze", url: "https://www.instagram.com/lominadzee10/" },
-  ],
-  creator: "Manuchar Lominadze (@lominadzee10)",
-  publisher: "GeorgiaTrips",
-  verification: {
-    google: "pqDpqUT-VHHamkaxnisNnk8LO2z-v0EdXak_z77V86U",
-    yandex: "b8d0557b47549680",
-    other: {
-      "facebook-domain-verification": "ef9kax36lazdya98y738pn5e10ny2e",
-    },
-  },
-  other: {
-    "facebook-domain-verification": "ef9kax36lazdya98y738pn5e10ny2e",
-    "developer": "Manuchar Lominadze (https://www.instagram.com/lominadzee10/)",
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
-  },
-};
-
-export default async function RootLayout({ children }) {
-  const [cookieStore, requestHeaders] = await Promise.all([cookies(), headers()]);
-
-  // SEO-critical <html lang>/<dir> must reflect the URL (via middleware's
-  // x-georgiatrips-locale header), not client cookie state — Googlebot never
-  // sends the cookie. The cookie is only the fallback for non-locale routes
-  // (/admin, /login, /booking, /coupons) that have no URL locale segment.
-  const urlLocale = requestHeaders.get("x-georgiatrips-locale");
-  const cookieLang = cookieStore.get("gt_language")?.value;
-  const htmlLang = getRequestLocale(urlLocale || cookieLang);
-  const htmlDir = isRtlLanguage(htmlLang) ? "rtl" : "ltr";
-
+export default function SiteDocument({ lang, children }) {
   return (
     <html
-      lang={htmlLang}
-      dir={htmlDir}
+      suppressHydrationWarning
+      lang={lang}
+      dir={isRtlLanguage(lang) ? "rtl" : "ltr"}
       className={`${notoGeorgian.variable} ${notoSerifGeorgian.variable} ${playfair.variable} ${playfairCyrillic.variable} ${notoArabic.variable} ${notoNaskhArabic.variable}`}
     >
       <head>
+        {/* Runs before the first paint: a visitor who was signed in last time sees
+            their name in the header at once instead of "Login" flashing first.
+            AuthProvider clears the flag if the session has ended. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem("gt_user_logged_in")==="true"){var d=document.documentElement;d.setAttribute("data-auth","in");d.style.setProperty("--gt-user-name",JSON.stringify(localStorage.getItem("gt_user_display_name")||""))}}catch(e){}`,
+          }}
+        />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
@@ -176,11 +109,12 @@ export default async function RootLayout({ children }) {
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
       </head>
       <body>
-        <LanguageProvider initialLang={htmlLang}>
+        <LanguageProvider initialLang={lang} messages={getMessages(lang)}>
           <CurrencyProvider>
             <AuthProvider>
               <CouponProvider>
-                {children}
+                {/* Page changes crossfade; styles in styles/motion.css (.gt-page). */}
+                <ViewTransition default="gt-page">{children}</ViewTransition>
                 <Suspense fallback={null}>
                   <AnalyticsTracker />
                 </Suspense>

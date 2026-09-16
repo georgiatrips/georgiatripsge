@@ -3,8 +3,8 @@
 import React, { useState } from "react";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { useCurrency } from "../../lib/currency/CurrencyContext";
-import { asLocalizedText } from "../../lib/toursFirestore";
-import { interpolate } from "../../lib/i18n/translate";
+import { asLocalizedText } from "../../lib/toursShared";
+import { interpolate } from "../../lib/i18n/translateCore";
 import { PHONE_TEL, whatsappHref } from "../../lib/shared";
 import TourPrice from "../TourPrice";
 import DatePicker from "../DatePicker";

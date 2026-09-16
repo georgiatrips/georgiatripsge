@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
-import { interpolate } from "../../lib/i18n/translate";
-import { asLocalizedText } from "../../lib/toursFirestore";
+import { interpolate } from "../../lib/i18n/translateCore";
+import { asLocalizedText } from "../../lib/toursShared";
 
 // Long galleries (some tours have 20+ photos) start with six photos, which fill
 // whole rows at two and three columns, and open fully on request.

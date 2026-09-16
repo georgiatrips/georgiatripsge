@@ -9,7 +9,6 @@ import DatePicker from "../DatePicker";
 import { WA_LINK, WhatsAppIcon } from "../../lib/shared";
 import { CheckIcon } from "../Icons";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
-import { createBooking } from "../../lib/bookingsFirestore";
 import { isValidPhone } from "../../lib/bookingModel";
 import { trackEvent } from "../../lib/analytics";
 
@@ -119,6 +118,7 @@ export default function TransfersClient() {
     setPhoneError("");
 
     try {
+      const { createBooking } = await import("../../lib/bookingsFirestore");
       const result = await createBooking({
         type: "transfer",
         name: contactName.trim() || `მგზავრი (${cleanPhone})`,

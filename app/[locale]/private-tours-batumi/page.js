@@ -4,6 +4,7 @@ import Image from "next/image";
 import { getCachedTours, serializeForClient } from "../../lib/server/cachedData";
 import { asLocalizedText } from "../../lib/toursFirestore";
 import { SITE_URL, getRequestLocale, buildLocalizedMetadata, getLocalizedHref } from "../../lib/siteConfig";
+import { tourPath, placePath } from "../../lib/slugs";
 import { WA_LINK } from "../../lib/shared";
 import "../../landing.css";
 
@@ -140,7 +141,7 @@ export default async function PrivateToursBatumiPage({ params }) {
             "name": `[Private VIP] ${asLocalizedText(t.title, lang) || asLocalizedText(t.title, "en")}`,
             "description": asLocalizedText(t.desc, lang) || asLocalizedText(t.desc, "en"),
             "image": t.img || `${SITE_URL}/hero.webp`,
-            "url": `${SITE_URL}/${lang}/tours/${encodeURIComponent(t.id)}`,
+            "url": `${SITE_URL}/${lang}${tourPath(t)}`,
           }
         }))
       },
@@ -246,7 +247,7 @@ export default async function PrivateToursBatumiPage({ params }) {
             const price = tour.pricePrivate || tour.price || null;
 
             return (
-              <Link key={tour.id} href={getLocalizedHref(`/tours/${tour.id}`, lang)} className="landing-tour-card">
+              <Link key={tour.id} href={getLocalizedHref(tourPath(tour), lang)} className="landing-tour-card">
                 <div className="landing-tour-img-wrap">
                   <Image
                     src={tour.img || "/hero.webp"}

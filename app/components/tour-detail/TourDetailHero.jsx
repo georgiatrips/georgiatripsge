@@ -3,8 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
-import { interpolate } from "../../lib/i18n/translate";
-import { asLocalizedText, translateDuration, translateLocation } from "../../lib/toursFirestore";
+import { interpolate } from "../../lib/i18n/translateCore";
+import { asLocalizedText, translateDuration, translateLocation } from "../../lib/toursShared";
 import { getLocalizedHref } from "../../lib/siteConfig";
 import TourPrice from "../TourPrice";
 import "../../styles/tour-hero.css";

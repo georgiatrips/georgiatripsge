@@ -1,18 +1,13 @@
-import {
-  collection,
-  doc,
-  setDoc,
-  updateDoc,
-  addDoc,
-  serverTimestamp,
-  query,
-  orderBy,
-  limit,
-  onSnapshot,
-  getDocs,
-  deleteDoc,
-} from "firebase/firestore";
-import { db } from "./firebase";
+// Firestore is loaded on demand: this module is imported by public pages for
+// trackEvent/Meta helpers, and a static import would put the whole Firebase
+// SDK into every page bundle.
+let firestorePromise;
+function loadFirestore() {
+  firestorePromise ??= Promise.all([import("firebase/firestore"), import("./firebase")]).then(
+    ([fs, { db }]) => ({ ...fs, db })
+  );
+  return firestorePromise;
+}
 
 const VISITOR_ID_KEY = "gt_vid";
 const SESSION_ID_KEY = "gt_sid";
@@ -716,7 +711,9 @@ export async function getGeoData() {
 
 // ── Initialize or Refresh Visitor Session in Firestore ──────
 export async function registerPageVisit({ path, title }) {
-  if (typeof window === "undefined" || !db) return null;
+  if (typeof window === "undefined") return null;
+  const { db, doc, setDoc, serverTimestamp } = await loadFirestore();
+  if (!db) return null;
 
   const sessionId = getSessionId();
   const visitorId = getVisitorId();
@@ -816,11 +813,12 @@ export async function registerPageVisit({ path, title }) {
 
 // ── Session Heartbeat (Live Online Status & Dwell Time) ─────
 export async function sendHeartbeat(path, title, totalDurationSeconds) {
-  if (typeof window === "undefined" || !db) return;
+  if (typeof window === "undefined") return;
   const sessionId = getSessionId();
   if (!sessionId) return;
 
   try {
+    const { db, doc, updateDoc, serverTimestamp } = await loadFirestore();
     const sessionRef = doc(db, "visitor_sessions", sessionId);
     await updateDoc(sessionRef, {
       currentPage: path || window.location.pathname,
@@ -850,14 +848,15 @@ export async function trackEvent(eventName, eventParams = {}) {
     path,
     title,
     params: eventParams,
-    createdAt: serverTimestamp(),
     createdAtMillis: Date.now(),
     isoTime: now.toISOString(),
   };
 
   // 1. Log to Firestore
-  if (db) {
+  {
     try {
+      const { db, collection, doc, addDoc, setDoc, serverTimestamp } = await loadFirestore();
+      eventPayload.createdAt = serverTimestamp();
       await addDoc(collection(db, "analytics_events"), eventPayload);
       
       // Also attach event tag to current session
@@ -976,68 +975,43 @@ export function trackMetaPurchase({ bookingId, tourTitle, tourId, price, people 
 }
 
 // ── Real-time Subscriptions for Admin Dashboard ──────────────
+function subscribeToCollection(collectionName, orderField, max, label, callback) {
+  if (typeof window === "undefined") return () => {};
+
+  let unsubscribe = () => {};
+  let cancelled = false;
+  loadFirestore()
+    .then(({ db, collection, query, orderBy, limit, onSnapshot }) => {
+      if (cancelled) return;
+      const q = query(collection(db, collectionName), orderBy(orderField, "desc"), limit(max));
+      unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          try {
+            callback(snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
+          } catch (_) {}
+        },
+        (err) => {
+          console.warn(`${label} subscription warning:`, err);
+          callback([]);
+        }
+      );
+    })
+    .catch((err) => {
+      console.warn(`${label} query error:`, err);
+      callback([]);
+    });
+
+  return () => {
+    cancelled = true;
+    unsubscribe();
+  };
+}
+
 export function subscribeToLiveSessions(callback) {
-  if (!db || typeof window === "undefined") return () => {};
-
-  try {
-    const q = query(
-      collection(db, "visitor_sessions"),
-      orderBy("lastActiveMillis", "desc"),
-      limit(200)
-    );
-
-    return onSnapshot(
-      q,
-      (snapshot) => {
-        try {
-          const items = snapshot.docs.map((docSnap) => ({
-            id: docSnap.id,
-            ...docSnap.data(),
-          }));
-          callback(items);
-        } catch (_) {}
-      },
-      (err) => {
-        console.warn("Live sessions subscription warning:", err);
-        callback([]);
-      }
-    );
-  } catch (err) {
-    console.warn("Live sessions query error:", err);
-    callback([]);
-    return () => {};
-  }
+  return subscribeToCollection("visitor_sessions", "lastActiveMillis", 200, "Live sessions", callback);
 }
 
 export function subscribeToRecentEvents(callback) {
-  if (!db || typeof window === "undefined") return () => {};
-
-  try {
-    const q = query(
-      collection(db, "analytics_events"),
-      orderBy("createdAtMillis", "desc"),
-      limit(100)
-    );
-
-    return onSnapshot(
-      q,
-      (snapshot) => {
-        try {
-          const events = snapshot.docs.map((docSnap) => ({
-            id: docSnap.id,
-            ...docSnap.data(),
-          }));
-          callback(events);
-        } catch (_) {}
-      },
-      (err) => {
-        console.warn("Recent events subscription warning:", err);
-        callback([]);
-      }
-    );
-  } catch (err) {
-    console.warn("Recent events query error:", err);
-    callback([]);
-    return () => {};
-  }
+  return subscribeToCollection("analytics_events", "createdAtMillis", 100, "Recent events", callback);
 }

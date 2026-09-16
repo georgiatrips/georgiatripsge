@@ -170,7 +170,7 @@ export default function Navbar({ active = "home", overlay }) {
   return (
     <>
       <a className="gt-skip-link" href="#gt-content">{t("site.skip")}</a>
-      <header className={`gt-header${isTransparent ? " is-transparent" : ""}${scrolled ? " is-scrolled" : ""}`}>
+      <header className={`gt-header${isTransparent ? " is-transparent" : ""}${scrolled ? " is-scrolled" : ""}`} style={{ viewTransitionName: "site-header" }}>
         <div className="gt-header-bar">
           <Link href={href("/")} className="gt-brand" aria-label={`GeorgiaTrips — ${t("nav.home")}`}>
             <BrandLogo width={42} height={42} priority />
@@ -298,9 +298,12 @@ export default function Navbar({ active = "home", overlay }) {
                   )}
                 </>
               ) : (
-                <Link href="/login" className="gt-account-btn" prefetch={false}>
+                // While sign-in is still being checked, a returning visitor sees their
+                // remembered name here (html[data-auth], styles in chrome.css).
+                <Link href="/login" className="gt-account-btn gt-account-btn--guest" prefetch={false}>
                   <UserIcon size={18} />
                   <span className="gt-account-label">{t("nav.login")}</span>
+                  <span className="gt-account-label gt-account-cached" aria-hidden="true" />
                 </Link>
               )}
             </div>

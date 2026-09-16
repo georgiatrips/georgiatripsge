@@ -966,6 +966,11 @@ export const ru = {
     "styleVipDesc": "Премиум-автомобили и корпоративные поездки"
   },
   "homepage": {
+    "heroSlideGo": "Фото: {place}",
+    "heroSlideAlt": "{place}, Грузия",
+    "heroSlideAdjara": "Аджария",
+    "heroSlideSvaneti": "Сванетия",
+    "heroSlideTbilisi": "Тбилиси",
     "heroEyebrow": "Туры · Личный водитель · Трансферы",
     "heroTitle": "Откройте *Грузию*\nвместе с Georgia Trips",
     "heroLead": "Однодневные туры, индивидуальные поездки и трансферы по всей Грузии.",
@@ -973,7 +978,6 @@ export const ru = {
     "ctaPlan": "Индивидуальная поездка",
     "ctaWhatsapp": "Написать эксперту в WhatsApp",
     "heroAlt": "Ушгули и гора Шхара в Сванетии, Грузия",
-    "heroPlace": "Ушгули, Сванетия",
     "heroRouteLabel": "Где мы путешествуем",
     "heroRoute": [
       "Батуми",

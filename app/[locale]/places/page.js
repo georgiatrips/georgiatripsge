@@ -3,6 +3,7 @@ import { getCachedPlaces } from "../../lib/server/cachedData";
 import { asLocalizedText } from "../../lib/toursFirestore";
 import PlacesCatalogClient from "../../components/places/PlacesCatalogClient";
 import { SITE_URL, getRequestLocale, buildLocalizedMetadata } from "../../lib/siteConfig";
+import { placePath } from "../../lib/slugs";
 import "./places.css";
 
 const COPY = {
@@ -49,7 +50,7 @@ export default async function PlacesPage({ params }) {
             "name": asLocalizedText(place.title, lang) || asLocalizedText(place.title, "ka") || place.title,
             "description": asLocalizedText(place.desc, lang) || asLocalizedText(place.desc, "ka") || place.desc,
             "image": place.img || `${SITE_URL}/tbilisi.webp`,
-            "url": `${SITE_URL}/${lang}/places/${place.id}`,
+            "url": `${SITE_URL}/${lang}${placePath(place)}`,
           },
         })),
       },

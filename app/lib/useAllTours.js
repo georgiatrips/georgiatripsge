@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useEffect, useState, useRef } from "react";
-import { listFirestoreTours, normalizeFirestoreTour } from "./toursFirestore";
+import { normalizeFirestoreTour } from "./toursShared";
 import { useLanguage } from "./i18n/LanguageContext";
 
 // Module-level cache for raw Firestore documents to avoid repeated fetches
@@ -43,6 +43,7 @@ export function useAllTours() {
 
     cachePromise = (async () => {
       try {
+        const { listFirestoreTours } = await import("./toursFirestore");
         const list = await listFirestoreTours();
         cachedRawTours = list;
         cacheTimestamp = Date.now();

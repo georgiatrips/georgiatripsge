@@ -8,9 +8,9 @@ import PageHero from "../PageHero";
 import DatePicker from "../DatePicker";
 import TourGrid, { HelpCard } from "../site/TourGrid";
 import { GEORGIA_REGIONS, formatRegionName } from "../../lib/placesMeta";
-import { matchesMultiLang } from "../../lib/toursFirestore";
+import { matchesMultiLang } from "../../lib/toursShared";
 import { toTourView, formatTourDate } from "../../lib/tourView";
-import { interpolate } from "../../lib/i18n/translate";
+import { interpolate } from "../../lib/i18n/translateCore";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { getLocalizedHref } from "../../lib/siteConfig";
 import { whatsappHref } from "../../lib/shared";
@@ -63,7 +63,7 @@ export default function ToursCatalogClient({ initialTours = [] }) {
     () =>
       (Array.isArray(initialTours) ? initialTours : [])
         .map((raw) => {
-          const view = toTourView(raw, lang);
+          const view = toTourView(raw, lang, [], t("tourBadges"));
           if (!view) return null;
           // Only departures with seats left count as bookable group dates.
           const groupDates = view.departures.filter((d) => d.freeSeats === null || d.freeSeats > 0).map((d) => d.date);
@@ -77,7 +77,7 @@ export default function ToursCatalogClient({ initialTours = [] }) {
           };
         })
         .filter(Boolean),
-    [initialTours, lang]
+    [initialTours, lang, t]
   );
 
   const regionCounts = useMemo(() => {

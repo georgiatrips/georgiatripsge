@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-import { useLanguage } from "./lib/i18n/LanguageContext";
+import Navbar from "../Navbar";
+import Footer from "../Footer";
+import { useLanguage } from "../../lib/i18n/LanguageContext";
+import { getLocalizedHref } from "../../lib/siteConfig";
 
 const NOT_FOUND_TEXTS = {
   ka: {
@@ -48,7 +49,7 @@ const NOT_FOUND_TEXTS = {
   },
 };
 
-export default function NotFound() {
+export default function NotFoundContent() {
   const { lang } = useLanguage();
   const t = NOT_FOUND_TEXTS[lang] || NOT_FOUND_TEXTS.ka;
 
@@ -124,7 +125,7 @@ export default function NotFound() {
             }}
           >
             <Link
-              href="/"
+              href={getLocalizedHref("/", lang)}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -143,7 +144,7 @@ export default function NotFound() {
             </Link>
 
             <Link
-              href="/ka/tours"
+              href={getLocalizedHref("/tours", lang)}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -162,7 +163,7 @@ export default function NotFound() {
             </Link>
 
             <Link
-              href="/ka/transfers"
+              href={getLocalizedHref("/transfers", lang)}
               style={{
                 display: "inline-flex",
                 alignItems: "center",

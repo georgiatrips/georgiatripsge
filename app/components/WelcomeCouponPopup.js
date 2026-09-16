@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../lib/AuthContext";
 import { useCoupon } from "../lib/CouponContext";
-import { getCouponSettings, isIpClaimed, recordClaimedIp } from "../lib/couponSettings";
+// couponSettings talks to Firestore; it is imported only when the popup
+// actually needs it so the Firebase SDK stays out of the page bundle.
+const loadCouponSettings = () => import("../lib/couponSettings");
 import CouponTicket from "./CouponTicket";
 
 // Welcome coupon for visitors who are not signed in.
@@ -72,6 +74,7 @@ export default function WelcomeCouponPopup() {
         if (cancelled) return;
         if (ip) setClientIp(ip);
 
+        const { getCouponSettings, isIpClaimed } = await loadCouponSettings();
         const settings = await getCouponSettings();
         if (settings.limitOnePerIp && ip && (await isIpClaimed(ip))) return;
         if (cancelled) return;
@@ -111,7 +114,7 @@ export default function WelcomeCouponPopup() {
     event?.stopPropagation?.();
     claimWelcomeCoupon();
     handleClose();
-    if (clientIp) recordClaimedIp(clientIp, "");
+    if (clientIp) loadCouponSettings().then((m) => m.recordClaimedIp(clientIp, "")).catch(() => {});
     router.push("/login?tab=signup");
   };
 

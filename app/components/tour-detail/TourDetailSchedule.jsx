@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
-import { asLocalizedText, translateMonthName } from "../../lib/toursFirestore";
+import { asLocalizedText, translateMonthName } from "../../lib/toursShared";
 
 export default function TourDetailSchedule({
   tour,

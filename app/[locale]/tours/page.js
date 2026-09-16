@@ -3,6 +3,7 @@ import { asLocalizedText } from "../../lib/toursFirestore";
 import { getCachedTours, serializeForClient } from "../../lib/server/cachedData";
 import ToursCatalogClient from "../../components/tours/ToursCatalogClient";
 import { SITE_URL, getRequestLocale, buildLocalizedMetadata } from "../../lib/siteConfig";
+import { tourPath } from "../../lib/slugs";
 import "./tours.css";
 
 const COPY = {
@@ -20,8 +21,12 @@ export async function generateMetadata({ params }) {
   return buildLocalizedMetadata({ path: "/tours", lang, title: c.title, description: c.description, image: "/hero.webp" });
 }
 
-export default async function ToursPage({ params }) {
+export default async function ToursPage({ params, searchParams }) {
   const { locale } = await params;
+  // ToursCatalogClient filters from the query string (useSearchParams). Reading
+  // searchParams here renders this page per request, so crawlers and visitors
+  // get the filtered catalog in the HTML instead of a loading placeholder.
+  await searchParams;
   const lang = getRequestLocale(locale);
   const rawTours = await getCachedTours();
   const tours = serializeForClient(rawTours) || [];
@@ -44,7 +49,7 @@ export default async function ToursPage({ params }) {
           "name": title,
           "description": desc,
           "image": tour.img || `${SITE_URL}/hero.webp`,
-          "url": `${SITE_URL}/${lang}/tours/${tour.id}`,
+          "url": `${SITE_URL}/${lang}${tourPath(tour)}`,
           "offers": {
             "@type": "Offer",
             "price": tour.priceGroup || tour.pricePrivate || 0,

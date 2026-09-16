@@ -966,6 +966,11 @@ export const tr = {
     "styleVipDesc": "Premium araçlar ve kurumsal geziler"
   },
   "homepage": {
+    "heroSlideGo": "Fotoğraf: {place}",
+    "heroSlideAlt": "{place}, Gürcistan",
+    "heroSlideAdjara": "Acara",
+    "heroSlideSvaneti": "Svaneti",
+    "heroSlideTbilisi": "Tiflis",
     "heroEyebrow": "Turlar · Özel şoför · Transferler",
     "heroTitle": "*Gürcistan*'ı\nGeorgia Trips ile keşfedin",
     "heroLead": "Gürcistan'ın her yerinde günübirlik turlar, özel geziler ve transferler.",
@@ -973,7 +978,6 @@ export const tr = {
     "ctaPlan": "Özel gezi planla",
     "ctaWhatsapp": "WhatsApp'tan bir uzmana yazın",
     "heroAlt": "Svaneti'de Şhara Dağı eteklerindeki Uşguli köyü, Gürcistan",
-    "heroPlace": "Uşguli, Svaneti",
     "heroRouteLabel": "Nereleri geziyoruz",
     "heroRoute": [
       "Batum",

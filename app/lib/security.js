@@ -89,7 +89,6 @@ export function checkApiRateLimit(request) {
 const BLOCKED_BOTS = [
   "bytespider",       // ByteDance (TikTok) crawler
   "amazonbot",        // Amazon crawler
-  "petalbot",         // Huawei crawler
   "mj12bot",          // Majestic-12
   "dotbot",           // DotBot
   "semrushbot",       // Semrush

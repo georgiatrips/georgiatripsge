@@ -4,6 +4,7 @@ import { ALL_TOURS as staticTours } from "../toursData";
 import { listPlaces } from "../placesFirestore";
 import { listPostSummaries } from "../postsFirestore";
 import { listHotels } from "../hotelsFirestore";
+import { findBySlugOrId, getContentSlug } from "../slugs";
 import { listReviews } from "../reviewsFirestore";
 
 /**
@@ -66,27 +67,27 @@ export const getCachedTours = unstable_cache(
   }
 );
 
-/**
- * Cached getter for a single Tour by ID.
- * Cached for 1 hour, tagged with 'tours' and `tour-${id}`.
- */
-export const getCachedTourById = (tourId) =>
+// Thrown (never returned) for a missing tour: unstable_cache does not store
+// thrown results, so a miss is not cached and a tour that appears later — or a
+// lookup that failed transiently — is not stuck as "not found" for an hour.
+const TOUR_NOT_FOUND = "TOUR_NOT_FOUND";
+
+const cachedTourById = (tourId) =>
   unstable_cache(
     async () => {
+      let tour = null;
       try {
-        let tour = await getFirestoreTourById(tourId);
+        tour = await getFirestoreTourById(tourId);
         if (!tour) {
           const all = await listFirestoreTours();
           tour = all.find((t) => t.id === tourId) || null;
         }
-        if (!tour) {
-          tour = staticTours.find((t) => t.id === tourId) || null;
-        }
-        return serializeForClient(tour);
       } catch (err) {
         console.error(`[getCachedTourById] Error for ${tourId}:`, err);
-        return serializeForClient(staticTours.find((t) => t.id === tourId) || null);
       }
+      tour ??= staticTours.find((t) => t.id === tourId) || null;
+      if (!tour) throw new Error(TOUR_NOT_FOUND);
+      return serializeForClient(tour);
     },
     [`tour-detail-${tourId}`],
     {
@@ -94,6 +95,19 @@ export const getCachedTourById = (tourId) =>
       tags: ["tours", `tour-${tourId}`],
     }
   )();
+
+/**
+ * Cached getter for a single Tour by ID. Returns null when the tour does not
+ * exist. Found tours are cached for 1 hour, tagged with 'tours' and `tour-${id}`.
+ */
+export async function getCachedTourById(tourId) {
+  try {
+    return await cachedTourById(tourId);
+  } catch (err) {
+    if (err?.message === TOUR_NOT_FOUND) return null;
+    throw err;
+  }
+}
 
 /**
  * Cached getter for all Places.
@@ -180,3 +194,33 @@ export const getCachedReviews = unstable_cache(
     tags: ["reviews"],
   }
 );
+
+/**
+ * Resolves a tour URL segment, which is normally the slug but may be the
+ * Firestore ID (old links). Falls back to a direct ID lookup for tours newer
+ * than the cached list. Returns null when nothing matches.
+ */
+export async function getCachedTourBySlugOrId(param) {
+  const tours = await getCachedTours();
+  const { item } = findBySlugOrId(tours, param);
+  return item || (await getCachedTourById(param));
+}
+
+/** Same as getCachedTourBySlugOrId, for places. */
+export async function getCachedPlaceBySlugOrId(param) {
+  const places = await getCachedPlaces();
+  return findBySlugOrId(places, param).item;
+}
+
+/**
+ * Slug/ID pairs for every tour and place; proxy.js uses them (via
+ * /content-index.json) to redirect ID URLs and 404 unknown ones.
+ */
+export async function getContentIndex() {
+  const [tours, places] = await Promise.all([getCachedTours(), getCachedPlaces()]);
+  const pairs = (list) =>
+    (Array.isArray(list) ? list : [])
+      .filter((item) => item?.id)
+      .map((item) => ({ id: String(item.id), slug: getContentSlug(item) }));
+  return { tours: pairs(tours), places: pairs(places) };
+}

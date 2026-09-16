@@ -450,7 +450,7 @@
 }
 
 .gt-price-box.variant-hero .gt-price-current {
-  color: var(--teal, #3a9296);
+  color: var(--gt-primary, #2a6592);
 }
 
 

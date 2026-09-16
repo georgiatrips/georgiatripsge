@@ -25,6 +25,7 @@ import { useAuth } from "../lib/AuthContext";
 import { useCurrency } from "../lib/currency/CurrencyContext";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 import { adminFetch } from "../lib/apiClient";
+import { uniqueSlugFor } from "../lib/slugs";
 import {
   createTour,
   listFirestoreTours,
@@ -497,7 +498,13 @@ export default function AdminPage() {
       })
       .filter((i) => i?.url);
 
+    // The public URL is /tours/<slug>. Store it once, derived from the tour as
+    // it was before this edit, so renaming a tour never breaks its URL.
+    const previousTour = editingTourId ? existingTours.find((item) => item.id === editingTourId) : null;
+    const slug = previousTour?.slug || uniqueSlugFor(previousTour || { title }, existingTours);
+
     const payload = {
+      slug,
       title,
       desc,
       itinerary,
@@ -544,7 +551,7 @@ export default function AdminPage() {
       const created = editingTourId ? null : await createTour(payload);
       if (editingTourId) await updateFirestoreTour(editingTourId, payload);
       try {
-        await fetch("/api/admin/revalidate", {
+        await adminFetch("/api/admin/revalidate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ tag: "tours" }),
@@ -628,7 +635,7 @@ export default function AdminPage() {
     try {
       await deleteFirestoreTour(id);
       try {
-        await fetch("/api/admin/revalidate", {
+        await adminFetch("/api/admin/revalidate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ tag: "tours" }),

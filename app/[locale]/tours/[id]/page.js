@@ -1,17 +1,29 @@
 import React, { Suspense } from "react";
+import { notFound } from "next/navigation";
 import { asLocalizedText } from "../../../lib/toursFirestore";
-import { getCachedTourById, getCachedTours, getCachedPlaces, serializeForClient } from "../../../lib/server/cachedData";
+import { getCachedTourBySlugOrId, getCachedTours, getCachedPlaces, serializeForClient } from "../../../lib/server/cachedData";
+import { getContentSlug, tourPath } from "../../../lib/slugs";
 import TourDetailClient from "../../../components/tours/TourDetailClient";
 import { SITE_URL, getRequestLocale, buildLocalizedMetadata } from "../../../lib/siteConfig";
 import "./tourDetail.css";
 
-const NOT_FOUND_COPY = {
-  ka: { title: "ტური ვერ მოიძებნა", description: "მოთხოვნილი ტური ვერ მოიძებნა." },
-  en: { title: "Tour not found", description: "The requested tour could not be found." },
-  ru: { title: "Тур не найден", description: "Запрошенный тур не найден." },
-  tr: { title: "Tur bulunamadı", description: "İstenen tur bulunamadı." },
-  ar: { title: "لم يتم العثور على الجولة", description: "لم يتم العثور على الجولة المطلوبة." },
+// "<tour title> – Day Tour from Batumi": the searched-for words that a bare
+// tour name lacks. A per-language `seoTitle` on the tour overrides it.
+const TITLE_SUFFIX = {
+  ka: { oneday: "ერთდღიანი ტური ბათუმიდან", multiday: "ტური ბათუმიდან" },
+  en: { oneday: "Day Tour from Batumi", multiday: "Tour from Batumi" },
+  ru: { oneday: "Однодневный тур из Батуми", multiday: "Тур из Батуми" },
+  tr: { oneday: "Batum'dan Günübirlik Tur", multiday: "Batum'dan Tur" },
+  ar: { oneday: "جولة ليوم واحد من باتومي", multiday: "جولة من باتومي" },
 };
+
+// Meta descriptions are cut at a word boundary near Google's snippet length.
+function toMetaDescription(text, max = 155) {
+  const clean = String(text || "").replace(/\s+/g, " ").trim();
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max);
+  return `${cut.slice(0, Math.max(cut.lastIndexOf(" "), max - 20)).replace(/[\s,.;:–—-]+$/, "")}…`;
+}
 
 const BREADCRUMB_COPY = {
   ka: { home: "მთავარი", tours: "ტურები" },
@@ -20,6 +32,13 @@ const BREADCRUMB_COPY = {
   tr: { home: "Ana Sayfa", tours: "Turlar" },
   ar: { home: "الرئيسية", tours: "الجولات" },
 };
+
+// Pre-render the current tours at build time; tours added later are rendered
+// on first request and then cached like the rest (see [locale]/layout.js).
+export async function generateStaticParams() {
+  const tours = await getCachedTours().catch(() => []);
+  return (tours || []).filter((t) => t?.id).map((t) => ({ id: getContentSlug(t) }));
+}
 
 function durationToIso8601(hours) {
   const n = Number(hours);
@@ -30,22 +49,22 @@ function durationToIso8601(hours) {
 export async function generateMetadata({ params }) {
   const { locale, id: tourId } = await params;
   const lang = getRequestLocale(locale);
-  const tour = await getCachedTourById(tourId);
+  const tour = await getCachedTourBySlugOrId(tourId);
 
-  if (!tour) {
-    const nf = NOT_FOUND_COPY[lang] || NOT_FOUND_COPY.en;
-    return { title: nf.title, description: nf.description };
-  }
+  if (!tour) notFound();
 
   const title = asLocalizedText(tour.title, lang) || asLocalizedText(tour.title, "ka") || "Tour in Georgia";
   const desc = asLocalizedText(tour.desc, lang) || asLocalizedText(tour.desc, "ka") || "Discover the best tours in Georgia with GeorgiaTrips.";
   const imgUrl = tour.img || `${SITE_URL}/hero.webp`;
 
+  const suffix = (TITLE_SUFFIX[lang] || TITLE_SUFFIX.en)[tour.type === "multiday" ? "multiday" : "oneday"];
+  const seoTitle = asLocalizedText(tour.seoTitle, lang) || `${title} – ${suffix}`;
+
   return buildLocalizedMetadata({
-    path: `/tours/${tourId}`,
+    path: tourPath(tour),
     lang,
-    title: `${title} | GeorgiaTrips`,
-    description: desc,
+    title: `${seoTitle} | GeorgiaTrips`,
+    description: toMetaDescription(desc),
     image: imgUrl,
   });
 }
@@ -55,10 +74,12 @@ export default async function TourDetailPage({ params }) {
   const lang = getRequestLocale(locale);
 
   const [rawTour, allTours, places] = await Promise.all([
-    getCachedTourById(tourId),
+    getCachedTourBySlugOrId(tourId),
     getCachedTours(),
     getCachedPlaces(),
   ]);
+
+  if (!rawTour) notFound();
 
   const cleanTour = serializeForClient(rawTour);
   const cleanAllTours = serializeForClient(allTours);
@@ -67,6 +88,7 @@ export default async function TourDetailPage({ params }) {
   const title = rawTour ? asLocalizedText(rawTour.title, lang) || asLocalizedText(rawTour.title, "ka") || "Tour in Georgia" : "Tour";
   const desc = rawTour ? asLocalizedText(rawTour.desc, lang) || asLocalizedText(rawTour.desc, "ka") || "" : "";
   const bc = BREADCRUMB_COPY[lang] || BREADCRUMB_COPY.en;
+  const pageUrl = `${SITE_URL}/${lang}${tourPath(rawTour)}`;
 
   const itinerary = Array.isArray(rawTour?.itinerary) && rawTour.itinerary.length > 0
     ? rawTour.itinerary.map((step, idx) => ({
@@ -80,40 +102,41 @@ export default async function TourDetailPage({ params }) {
       }))
     : undefined;
 
+  // Prices are numbers in Firestore but strings like "₾100/კაცი" in the static fallback.
+  const offerPrice = Number(String(rawTour.priceGroup ?? rawTour.pricePrivate ?? "").match(/\d+(?:\.\d+)?/)?.[0]) || 0;
+
   const jsonLd = rawTour
     ? {
         "@context": "https://schema.org",
         "@graph": [
           {
             "@type": "TouristTrip",
-            "@id": `${SITE_URL}/${lang}/tours/${tourId}#trip`,
+            "@id": `${pageUrl}#trip`,
             "name": title,
             "description": desc,
             "image": rawTour.img || `${SITE_URL}/hero.webp`,
             "touristType": ["Adventure", "Cultural", "Sightseeing"],
             ...(durationToIso8601(rawTour.durationHours) ? { "duration": durationToIso8601(rawTour.durationHours) } : {}),
             ...(itinerary ? { "itinerary": { "@type": "ItemList", "itemListElement": itinerary } } : {}),
-            "offers": {
-              "@type": "Offer",
-              "price": rawTour.priceGroup || rawTour.pricePrivate || 0,
-              "priceCurrency": "GEL",
-              "availability": "https://schema.org/InStock",
-              "validFrom": new Date().toISOString().split("T")[0],
-              "url": `${SITE_URL}/${lang}/tours/${tourId}`,
-            },
-            "provider": {
-              "@type": "TravelAgency",
-              "name": "GeorgiaTrips",
-              "url": SITE_URL,
-            },
+            // No Offer without a real price: "price": 0 would advertise a free tour.
+            ...(offerPrice > 0 ? {
+              "offers": {
+                "@type": "Offer",
+                "price": offerPrice,
+                "priceCurrency": "GEL",
+                "availability": "https://schema.org/InStock",
+                "url": pageUrl,
+              },
+            } : {}),
+            "provider": { "@id": `${SITE_URL}/#organization` },
           },
           {
             "@type": "BreadcrumbList",
-            "@id": `${SITE_URL}/${lang}/tours/${tourId}#breadcrumbs`,
+            "@id": `${pageUrl}#breadcrumbs`,
             "itemListElement": [
               { "@type": "ListItem", "position": 1, "name": bc.home, "item": `${SITE_URL}/${lang}` },
               { "@type": "ListItem", "position": 2, "name": bc.tours, "item": `${SITE_URL}/${lang}/tours` },
-              { "@type": "ListItem", "position": 3, "name": title, "item": `${SITE_URL}/${lang}/tours/${tourId}` },
+              { "@type": "ListItem", "position": 3, "name": title, "item": pageUrl },
             ],
           },
         ],

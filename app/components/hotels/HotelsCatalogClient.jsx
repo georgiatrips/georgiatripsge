@@ -7,7 +7,7 @@ import Footer from "../Footer";
 import PageHero from "../PageHero";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { useCurrency } from "../../lib/currency/CurrencyContext";
-import { asLocalizedText, matchesMultiLang } from "../../lib/toursFirestore";
+import { asLocalizedText, matchesMultiLang } from "../../lib/toursShared";
 import { SearchIcon, WhatsAppIcon } from "../Icons";
 import { whatsappHref } from "../../lib/shared";
 

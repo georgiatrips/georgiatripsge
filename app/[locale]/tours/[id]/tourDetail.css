@@ -955,7 +955,7 @@
 .total-price-label small {
   display: block;
   font-size: 0.72rem;
-  color: #64748b;
+  color: var(--gt-ink-2, #3e4c5b);
 }
 
 .total-price-amount {
@@ -1330,7 +1330,7 @@
 }
 
 .dp-trigger--form .dp-trigger-value--placeholder {
-  color: #94a3b8 !important;
+  color: #5f6c7b !important;
   font-weight: 400 !important;
 }
 

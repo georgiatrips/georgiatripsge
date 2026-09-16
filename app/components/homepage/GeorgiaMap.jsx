@@ -6,9 +6,9 @@ import Link from "next/link";
 import { MAP_VIEWBOX, REGION_CENTERS, REGION_PATHS, projectLatLng } from "../../lib/georgiaMap";
 import { MAP_LOCATIONS } from "../../lib/mapLocations";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
-import { interpolate } from "../../lib/i18n/translate";
+import { interpolate } from "../../lib/i18n/translateCore";
 import { getLocalizedHref } from "../../lib/siteConfig";
-import { asLocalizedText } from "../../lib/toursFirestore";
+import { asLocalizedText } from "../../lib/toursShared";
 import { ArrowRightIcon, LocationIcon, WhatsAppIcon } from "../Icons";
 
 // Regions drawn but not selectable (no trips are offered there).

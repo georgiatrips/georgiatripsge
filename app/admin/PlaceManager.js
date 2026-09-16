@@ -6,6 +6,7 @@ import Link from "next/link";
 import { GEORGIA_REGIONS } from "../lib/placesMeta";
 import { createPlace, deletePlace, listPlaces, updatePlace } from "../lib/placesFirestore";
 import { asLocalizedText, extractImageUrl } from "../lib/toursFirestore";
+import { uniqueSlugFor } from "../lib/slugs";
 import LocalizedInputGroup, { emptyLangObj, parseLocal } from "./LocalizedInputGroup";
 import { adminFetch } from "../lib/apiClient";
 
@@ -59,8 +60,12 @@ export default function PlaceManager({ onPlacesCountChange }) {
     setSaving(true);
     setMessage("");
     try {
+      // The public URL is /places/<slug>: stored once, from the place as it was
+      // before this edit, so renaming a place never breaks its URL.
+      const previousPlace = editingId ? places.find((item) => item.id === editingId) : null;
       const payload = {
         ...form,
+        slug: previousPlace?.slug || uniqueSlugFor(previousPlace || { title: form.title }, places),
         title: form.title,
         desc: form.desc,
         img: form.gallery[0] || "/hero.png",
@@ -68,7 +73,7 @@ export default function PlaceManager({ onPlacesCountChange }) {
       if (editingId) await updatePlace(editingId, payload);
       else await createPlace(payload);
       try {
-        await fetch("/api/admin/revalidate", {
+        await adminFetch("/api/admin/revalidate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ tag: "places" }),
@@ -116,7 +121,7 @@ export default function PlaceManager({ onPlacesCountChange }) {
     if (!confirm("დარწმუნებული ხართ, რომ გსურთ ადგილის წაშლა?")) return;
     await deletePlace(id);
     try {
-      await fetch("/api/admin/revalidate", {
+      await adminFetch("/api/admin/revalidate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tag: "places" }),

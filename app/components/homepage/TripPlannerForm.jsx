@@ -3,7 +3,7 @@
 import { useId, useRef, useState } from "react";
 import DatePicker from "../DatePicker";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
-import { interpolate } from "../../lib/i18n/translate";
+import { interpolate } from "../../lib/i18n/translateCore";
 import { whatsappHref } from "../../lib/shared";
 import { trackEvent } from "../../lib/analytics";
 import { ArrowRightIcon, BriefcaseIcon, CalendarIcon, CarIcon, CheckIcon, PlaneIcon, RouteIcon, WhatsAppIcon } from "../Icons";

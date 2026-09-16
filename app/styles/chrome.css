@@ -276,6 +276,13 @@
 
 .gt-account-btn svg { flex: none; color: var(--gt-teal-700); }
 .gt-account-label { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+/* Remembered sign-in (set before paint in app/layout.js): show the saved name
+   instead of "Login" until Firebase confirms the session. */
+.gt-account-cached { display: none; }
+html[data-auth="in"] .gt-account-btn--guest .gt-account-label:not(.gt-account-cached) { display: none; }
+html[data-auth="in"] .gt-account-btn--guest .gt-account-cached { display: block; }
+html[data-auth="in"] .gt-account-btn--guest .gt-account-cached::after { content: var(--gt-user-name, ""); }
 .gt-account-btn:hover { border-color: var(--gt-navy-900); }
 .gt-account-btn:focus-visible { outline: 3px solid var(--gt-teal); outline-offset: 2px; }
 .gt-header.is-transparent .gt-account-btn { border-color: rgba(255, 255, 255, 0.55); background: rgba(255, 255, 255, 0.12); color: #fff; }

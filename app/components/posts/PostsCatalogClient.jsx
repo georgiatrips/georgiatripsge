@@ -12,7 +12,7 @@ import { useAllTours } from "../../lib/useAllTours";
 import { useAuth } from "../../lib/AuthContext";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { addPostComment, createPost, deletePost, listPosts, togglePostLike, updatePost, voteOnPoll } from "../../lib/postsFirestore";
-import { formatLocationTag, asLocalizedText, translateDuration, translateLocation } from "../../lib/toursFirestore";
+import { formatLocationTag, asLocalizedText, translateDuration, translateLocation } from "../../lib/toursShared";
 import { adminFetch } from "../../lib/apiClient";
 
 const asText = (value, fallback = "") => {
@@ -311,7 +311,7 @@ export default function PostsCatalogClient({ initialPosts = [] }) {
           <aside className="posts-tours-sidebar">
             <div className="posts-sidebar-tour-list">
               {sidebarTours.map((tour) => (
-                <Link key={tour.id} href={getLocalizedHref("/tours/" + tour.id, lang)} className="posts-sidebar-tour">
+                <Link key={tour.id} href={getLocalizedHref(`/tours/${encodeURIComponent(tour.slug || tour.id)}`, lang)} className="posts-sidebar-tour">
                   <span className="posts-sidebar-tour-image">
                     <Image
                       src={tour.img || "/hero.webp"}

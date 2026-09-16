@@ -1,2 +1,2 @@
-import Loading from "../../loading";
+import Loading from "../loading";
 export default Loading;

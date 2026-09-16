@@ -1,6 +1,16 @@
 import { notFound } from "next/navigation";
 import { SUPPORTED_LANGUAGES } from "../lib/i18n/locale";
 import { SITE_URL, buildLocalizedMetadata } from "../lib/siteConfig";
+import { BASE_METADATA } from "../lib/baseMetadata";
+import SiteDocument from "../components/site/SiteDocument";
+
+export { viewport } from "../lib/baseMetadata";
+
+// This is the root layout for all public pages (there is no app/layout.js), so
+// the <html lang> comes straight from the URL without reading request headers
+// or cookies. That keeps these pages statically rendered and CDN-cacheable;
+// cached data is refreshed hourly or on demand via /api/admin/revalidate.
+export const revalidate = 3600;
 import { SOCIAL_PROFILES, EMAIL } from "../lib/shared";
 
 // Plain-string titles (not { default, template }): title is a top-level
@@ -45,13 +55,16 @@ export async function generateMetadata({ params }) {
   const { locale } = await params;
   const copy = HOME_COPY[locale] || HOME_COPY.ka;
 
-  return buildLocalizedMetadata({
-    path: "/",
-    lang: locale,
-    title: copy.title,
-    description: copy.description,
-    image: "/hero.webp",
-  });
+  return {
+    ...BASE_METADATA,
+    ...buildLocalizedMetadata({
+      path: "/",
+      lang: locale,
+      title: copy.title,
+      description: copy.description,
+      image: "/hero.webp",
+    }),
+  };
 }
 
 // Site-wide entities only. FAQPage markup lives on the homepage, next to the
@@ -115,11 +128,6 @@ function buildStructuredData(lang = "ka") {
           sameAs: ["https://www.instagram.com/lominadzee10/"],
           jobTitle: "Lead Full-Stack Web Developer & UI/UX Designer",
         },
-        potentialAction: {
-          "@type": "SearchAction",
-          target: `${SITE_URL}/${lang}/tours?search={search_term_string}`,
-          "query-input": "required name=search_term_string",
-        },
         inLanguage: SUPPORTED_LANGUAGES,
       },
       {
@@ -145,12 +153,12 @@ export default async function LocaleLayout({ children, params }) {
   const jsonLd = buildStructuredData(locale);
 
   return (
-    <>
+    <SiteDocument lang={locale}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       {children}
-    </>
+    </SiteDocument>
   );
 }

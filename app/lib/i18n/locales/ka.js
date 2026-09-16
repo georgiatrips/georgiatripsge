@@ -966,6 +966,11 @@ export const ka = {
     "styleVipDesc": "პრემიუმ ავტომობილები და კორპორატიული ვიზიტები"
   },
   "homepage": {
+    "heroSlideGo": "ფოტო: {place}",
+    "heroSlideAlt": "{place}, საქართველო",
+    "heroSlideAdjara": "აჭარა",
+    "heroSlideSvaneti": "სვანეთი",
+    "heroSlideTbilisi": "თბილისი",
     "heroEyebrow": "ტურები · პირადი მძღოლი · ტრანსფერები",
     "heroTitle": "აღმოაჩინეთ *საქართველო* —\nGeorgia Trips-თან ერთად",
     "heroLead": "ერთდღიანი ტურები, ინდივიდუალური მოგზაურობა და ტრანსფერები მთელ საქართველოში.",
@@ -973,7 +978,6 @@ export const ka = {
     "ctaPlan": "ინდივიდუალური ტური",
     "ctaWhatsapp": "მოგვწერეთ WhatsApp-ზე",
     "heroAlt": "უშგული და შხარის მთა, სვანეთი, საქართველო",
-    "heroPlace": "უშგული, სვანეთი",
     "heroRouteLabel": "სად ვმოგზაურობთ",
     "heroRoute": [
       "ბათუმი",

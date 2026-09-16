@@ -3,8 +3,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
 import { useAuth } from "./AuthContext";
 import { useCurrency } from "./currency/CurrencyContext";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "./firebase";
 
 const CouponContext = createContext(null);
 
@@ -70,7 +68,11 @@ export function CouponProvider({ children }) {
       ];
 
       try {
-        if (db && user.uid) {
+        if (user.uid) {
+          const [{ doc, getDoc }, { db }] = await Promise.all([
+            import("firebase/firestore"),
+            import("./firebase"),
+          ]);
           const userDoc = await getDoc(doc(db, "users", user.uid));
           if (userDoc.exists()) {
             const data = userDoc.data();

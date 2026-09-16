@@ -2,13 +2,13 @@
 
 > Premium Tours, Private Trips & Transfers across Georgia.
 
-GeorgiaTrips (https://georgiatrips.ge) offers curated private and group day trips, multi-day tours, airport transfers, and hotel recommendations in Georgia (Batumi, Tbilisi, Kazbegi, Svaneti, Kakheti, Martvili, Kutaisi).
+GeorgiaTrips (https://www.georgiatrips.ge) offers curated private and group day trips, multi-day tours, airport transfers, and hotel recommendations in Georgia (Batumi, Tbilisi, Kazbegi, Svaneti, Kakheti, Martvili, Kutaisi).
 
 ## Services
-- [Tours](https://georgiatrips.ge/en/tours): Day trips, private VIP tours, mountain excursions, wine tours.
-- [Transfers](https://georgiatrips.ge/en/transfers): Airport pickups, intercity private transfers.
-- [Hotels](https://georgiatrips.ge/en/hotels): Curated accommodations in Georgia.
-- [Places](https://georgiatrips.ge/en/places): Sightseeing catalog of waterfalls, canyons, castles, and attractions.
+- [Tours](https://www.georgiatrips.ge/en/tours): Day trips, private VIP tours, mountain excursions, wine tours.
+- [Transfers](https://www.georgiatrips.ge/en/transfers): Airport pickups, intercity private transfers.
+- [Hotels](https://www.georgiatrips.ge/en/hotels): Curated accommodations in Georgia.
+- [Places](https://www.georgiatrips.ge/en/places): Sightseeing catalog of waterfalls, canyons, castles, and attractions.
 
 ## Features
 - Instant WhatsApp booking with instant confirmation.
@@ -17,5 +17,5 @@ GeorgiaTrips (https://georgiatrips.ge) offers curated private and group day trip
 - Free cancellation on most tours.
 
 ## Contact & Booking
-- Website: https://georgiatrips.ge
-- Direct Inquiries: https://georgiatrips.ge/en/tours
+- Website: https://www.georgiatrips.ge
+- Direct Inquiries: https://www.georgiatrips.ge/en/tours

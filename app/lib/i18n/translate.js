@@ -3,19 +3,26 @@ import { en } from "./locales/en";
 import { ru } from "./locales/ru";
 import { tr } from "./locales/tr";
 import { ar } from "./locales/ar";
+import { getNestedValue, mergeMessages } from "./translateCore";
 
-// Single source of truth for UI strings. LanguageContext (client) and server
-// components both resolve keys through translate(), so there is exactly one
-// dictionary set and one fallback order: requested language → Georgian →
-// caller fallback → the key itself.
+export { getNestedValue, interpolate } from "./translateCore";
+
+// Single source of truth for UI strings, with one fallback order: requested
+// language → Georgian → caller fallback → the key itself.
+// Server-side only: client components get their language's merged messages
+// from LanguageProvider (see getMessages), so the five dictionaries never
+// ship in the page bundle.
 export const dictionaries = { ka, en, ru, tr, ar };
 
-export function getNestedValue(obj, path) {
-  if (!obj || !path) return undefined;
-  return path.split(".").reduce((acc, key) => {
-    if (acc && typeof acc === "object" && key in acc) return acc[key];
-    return undefined;
-  }, obj);
+const mergedCache = new Map();
+
+/** The full message tree for `lang`, with Georgian filling any gaps. */
+export function getMessages(lang) {
+  const key = dictionaries[lang] ? lang : "ka";
+  if (!mergedCache.has(key)) {
+    mergedCache.set(key, key === "ka" ? ka : mergeMessages(ka, dictionaries[key]));
+  }
+  return mergedCache.get(key);
 }
 
 export function translate(lang, key, fallback) {
@@ -34,11 +41,4 @@ export function translate(lang, key, fallback) {
 
 export function getTranslator(lang) {
   return (key, fallback) => translate(lang, key, fallback);
-}
-
-/** Replaces {name} placeholders; unknown placeholders are left untouched. */
-export function interpolate(template, values = {}) {
-  return String(template ?? "").replace(/\{(\w+)\}/g, (match, name) =>
-    values[name] === undefined || values[name] === null ? match : String(values[name])
-  );
 }

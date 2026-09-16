@@ -966,6 +966,11 @@ export const en = {
     "styleVipDesc": "Premium vehicles and corporate trips"
   },
   "homepage": {
+    "heroSlideGo": "Show photo: {place}",
+    "heroSlideAlt": "{place}, Georgia",
+    "heroSlideAdjara": "Adjara",
+    "heroSlideSvaneti": "Svaneti",
+    "heroSlideTbilisi": "Tbilisi",
     "heroEyebrow": "Tours · Private drivers · Transfers",
     "heroTitle": "Discover *Georgia*\nwith Georgia Trips",
     "heroLead": "Day tours, private trips and transfers all over Georgia.",
@@ -973,7 +978,6 @@ export const en = {
     "ctaPlan": "Plan a private trip",
     "ctaWhatsapp": "WhatsApp a travel expert",
     "heroAlt": "Ushguli village beneath Mount Shkhara in Svaneti, Georgia",
-    "heroPlace": "Ushguli, Svaneti",
     "heroRouteLabel": "Where we travel",
     "heroRoute": [
       "Batumi",

@@ -8,7 +8,7 @@ import Footer from "../components/Footer";
 import CouponTicket from "../components/CouponTicket";
 import { useAuth } from "../lib/AuthContext";
 import { useLanguage } from "../lib/i18n/LanguageContext";
-import { interpolate } from "../lib/i18n/translate";
+import { interpolate } from "../lib/i18n/translateCore";
 import { getLocalizedHref } from "../lib/siteConfig";
 import { getCouponByCode } from "../lib/coupons";
 import "../coupon.css";

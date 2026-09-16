@@ -1,5 +1,4 @@
-import { MONTH_NAMES, normalizeFirestoreTour, translateDuration, translateLocation } from "./toursFirestore";
-import { translate } from "./i18n/translate";
+import { MONTH_NAMES, normalizeFirestoreTour, translateDuration, translateLocation } from "./toursShared";
 
 // Presentation model for tour cards and summaries. Pure functions — safe in
 // server and client components. Everything shown comes from the Firestore
@@ -62,7 +61,9 @@ export function isLowSeats(freeSeats, capacity) {
   return freeSeats <= Math.min(6, Math.max(1, Math.floor((capacity || 18) / 3)));
 }
 
-export function toTourView(raw, lang = "en", places = []) {
+// `badges` is the "tourBadges" message map for `lang` (t("tourBadges") on
+// the client, translate(lang, "tourBadges") on the server).
+export function toTourView(raw, lang = "en", places = [], badges = null) {
   const tour = normalizeFirestoreTour(raw, lang, places);
   if (!tour) return null;
 
@@ -70,11 +71,11 @@ export function toTourView(raw, lang = "en", places = []) {
   const privatePrice = tour.hasPrivate ? positiveNumber(raw.pricePrivate) : null;
   const departures = getUpcomingDepartures(raw);
   const badgeKey = typeof raw.badge === "string" ? raw.badge : raw.badge?.ka || "";
-  const badges = translate(lang, "tourBadges");
   const badge = badgeKey ? (badges && typeof badges === "object" && badges[badgeKey]) || (lang === "ka" ? badgeKey : "") : "";
 
   return {
     id: tour.id,
+    slug: tour.slug,
     title: tour.title,
     desc: tour.desc,
     img: tour.img,
@@ -96,8 +97,8 @@ export function toTourView(raw, lang = "en", places = []) {
   };
 }
 
-export function toTourViews(list, lang = "en", places = []) {
-  return (Array.isArray(list) ? list : []).map((raw) => toTourView(raw, lang, places)).filter(Boolean);
+export function toTourViews(list, lang = "en", places = [], badges = null) {
+  return (Array.isArray(list) ? list : []).map((raw) => toTourView(raw, lang, places, badges)).filter(Boolean);
 }
 
 /** Word-boundary excerpt, so cards don't repeat the full tour description. */

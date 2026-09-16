@@ -82,39 +82,66 @@ html.gt-js [data-reveal].gt-instant .gt-eyebrow::before { transition: none; }
   to { translate: 0 14vh; }
 }
 
+/* One short, quiet entrance for the first screen (no long staggers): page
+   changes are handled by the view transition below, so this stays subtle. */
 @media (prefers-reduced-motion: no-preference) {
-  .gt-hero-eyebrow,
-  .gt-hero .gt-display,
-  .gt-hero-lead,
-  .gt-search,
-  .gt-hero-assurances,
+  .gt-hero-copy,
   .gt-hero-card,
   .page-hero-kicker,
   .page-hero-title,
   .page-hero-sub {
-    animation: gt-rise 0.9s var(--gt-ease-out) both;
+    animation: gt-rise-soft 0.45s var(--gt-ease-out) both;
   }
 
-  .gt-hero .gt-display,
-  .page-hero-title { animation-delay: 0.08s; }
-  .gt-hero-lead,
-  .page-hero-sub { animation-delay: 0.18s; }
-  .gt-search { animation-delay: 0.28s; }
-  .gt-hero-assurances { animation-delay: 0.38s; }
-  .gt-hero-card { animation-delay: 0.48s; }
+  .gt-hero-card { animation-delay: 0.08s; }
 
-  .gt-hero-img,
-  .page-hero-bg img { animation: gt-settle 2.6s var(--gt-ease-out) both; }
-
-  /* Subtle depth on scroll where the browser supports scroll timelines. */
+  /* Inner-page photos keep their gentle scroll depth where supported. */
   @supports (animation-timeline: scroll()) {
-    .gt-hero-img,
     .page-hero-bg img {
-      animation: gt-settle 2.6s var(--gt-ease-out) both, gt-drift linear both;
-      animation-timeline: auto, scroll(root);
-      animation-range: normal, 0 100vh;
+      animation: gt-drift linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 100vh;
     }
   }
+}
+
+@keyframes gt-rise-soft {
+  from { opacity: 0; translate: 0 10px; }
+  to { opacity: 1; translate: none; }
+}
+
+/* ---------- Page transitions (View Transitions API) ----------
+   Navigations crossfade the page content with a short upward settle; the
+   header is its own layer and stays perfectly still. Browsers without
+   support simply switch pages instantly. */
+
+::view-transition-group(.gt-page) { animation-duration: 0.32s; }
+
+::view-transition-old(.gt-page) {
+  animation: 0.16s ease-in both gt-vt-out;
+}
+
+::view-transition-new(.gt-page) {
+  animation: 0.32s cubic-bezier(0.16, 1, 0.3, 1) 0.06s both gt-vt-in;
+}
+
+::view-transition-group(site-header) { animation: none; z-index: 100; }
+::view-transition-old(site-header) { display: none; }
+::view-transition-new(site-header) { animation: none; }
+
+@keyframes gt-vt-out {
+  to { opacity: 0; }
+}
+
+@keyframes gt-vt-in {
+  from { opacity: 0; translate: 0 12px; }
+  to { opacity: 1; translate: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(.gt-page),
+  ::view-transition-new(.gt-page) { animation: 0.2s ease both gt-fade-in; }
+  ::view-transition-old(.gt-page) { animation-direction: reverse; }
 }
 
 /* ---------- Micro-interactions ---------- */
@@ -138,15 +165,11 @@ html[dir="rtl"] .gt-btn:hover svg.gt-flip-rtl { translate: -3px 0; }
   html.gt-js [data-reveal="image"] img { scale: none !important; transition: none !important; }
   html.gt-js [data-reveal] .gt-eyebrow::before { scale: 1 1 !important; transition: none !important; }
 
-  .gt-hero-eyebrow,
-  .gt-hero .gt-display,
-  .gt-hero-lead,
-  .gt-search,
-  .gt-hero-assurances,
+  .gt-hero-copy,
   .gt-hero-card,
   .page-hero-kicker,
   .page-hero-title,
-  .page-hero-sub { animation: gt-fade-in 0.7s ease both; }
+  .page-hero-sub { animation: gt-fade-in 0.4s ease both; }
 
   .gt-btn,
   .gt-card,

@@ -966,6 +966,11 @@ export const ar = {
     "styleVipDesc": "سيارات فاخرة ورحلات للشركات"
   },
   "homepage": {
+    "heroSlideGo": "صورة: {place}",
+    "heroSlideAlt": "{place}، جورجيا",
+    "heroSlideAdjara": "أجاريا",
+    "heroSlideSvaneti": "سفانيتي",
+    "heroSlideTbilisi": "تبليسي",
     "heroEyebrow": "جولات · سائق خاص · خدمات توصيل",
     "heroTitle": "اكتشف *جورجيا*\nمع Georgia Trips",
     "heroLead": "جولات يومية ورحلات خاصة وخدمات نقل في جميع أنحاء جورجيا.",
@@ -973,7 +978,6 @@ export const ar = {
     "ctaPlan": "خطط لرحلة خاصة",
     "ctaWhatsapp": "راسل خبير سفر عبر واتساب",
     "heroAlt": "قرية أوشغولي أسفل جبل شخارا في سفانيتي، جورجيا",
-    "heroPlace": "أوشغولي، سفانيتي",
     "heroRouteLabel": "أين نسافر",
     "heroRoute": [
       "باتومي",

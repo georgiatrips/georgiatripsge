@@ -1,18 +1,12 @@
 import React, { Suspense } from "react";
-import { getCachedPlaces } from "../../../lib/server/cachedData";
+import { notFound } from "next/navigation";
+import { getCachedPlaces, getCachedPlaceBySlugOrId } from "../../../lib/server/cachedData";
+import { getContentSlug, placePath } from "../../../lib/slugs";
 import { asLocalizedText } from "../../../lib/toursFirestore";
 import { formatRegionName } from "../../../lib/placesMeta";
 import PlaceDetailClient from "../../../components/places/PlaceDetailClient";
 import { SITE_URL, getRequestLocale, buildLocalizedMetadata } from "../../../lib/siteConfig";
 import "../places.css";
-
-const NOT_FOUND_COPY = {
-  ka: { title: "ადგილი ვერ მოიძებნა", description: "მოთხოვნილი ლოკაცია ვერ მოიძებნა." },
-  en: { title: "Place not found", description: "The requested location could not be found." },
-  ru: { title: "Место не найдено", description: "Запрошенное место не найдено." },
-  tr: { title: "Yer bulunamadı", description: "İstenen konum bulunamadı." },
-  ar: { title: "لم يتم العثور على المكان", description: "لم يتم العثور على الموقع المطلوب." },
-};
 
 const BREADCRUMB_COPY = {
   ka: { home: "მთავარი", places: "ღირსშესანიშნაობები" },
@@ -22,16 +16,18 @@ const BREADCRUMB_COPY = {
   ar: { home: "الرئيسية", places: "المعالم السياحية" },
 };
 
+// Pre-render the current places at build time; new ones render on first request.
+export async function generateStaticParams() {
+  const places = await getCachedPlaces().catch(() => []);
+  return (places || []).filter((p) => p?.id).map((p) => ({ id: getContentSlug(p) }));
+}
+
 export async function generateMetadata({ params }) {
   const { locale, id: placeId } = await params;
   const lang = getRequestLocale(locale);
-  const places = await getCachedPlaces();
-  const place = (places || []).find((p) => p.id === placeId);
+  const place = await getCachedPlaceBySlugOrId(placeId);
 
-  if (!place) {
-    const nf = NOT_FOUND_COPY[lang] || NOT_FOUND_COPY.en;
-    return { title: nf.title, description: nf.description };
-  }
+  if (!place) notFound();
 
   const title = asLocalizedText(place.title, lang) || asLocalizedText(place.title, "ka") || "Landmark in Georgia";
   const desc = asLocalizedText(place.desc, lang) || asLocalizedText(place.desc, "ka") || "Discover Georgia's most beautiful places with GeorgiaTrips.";
@@ -39,7 +35,7 @@ export async function generateMetadata({ params }) {
   const imgUrl = place.img || `${SITE_URL}/hero.webp`;
 
   return buildLocalizedMetadata({
-    path: `/places/${placeId}`,
+    path: placePath(place),
     lang,
     title: `${title} (${region}) | GeorgiaTrips`,
     description: desc.slice(0, 160),
@@ -52,7 +48,9 @@ export default async function PlaceDetailPage({ params }) {
   const lang = getRequestLocale(locale);
 
   const places = await getCachedPlaces();
-  const place = (places || []).find((p) => p.id === placeId) || null;
+  const place = await getCachedPlaceBySlugOrId(placeId);
+  if (!place) notFound();
+  const pageUrl = `${SITE_URL}/${lang}${placePath(place)}`;
 
   const title = place ? asLocalizedText(place.title, lang) || asLocalizedText(place.title, "ka") || "Place in Georgia" : "Place";
   const desc = place ? asLocalizedText(place.desc, lang) || asLocalizedText(place.desc, "ka") || "" : "";
@@ -65,7 +63,7 @@ export default async function PlaceDetailPage({ params }) {
         "@graph": [
           {
             "@type": "TouristAttraction",
-            "@id": `${SITE_URL}/${lang}/places/${placeId}#attraction`,
+            "@id": `${pageUrl}#attraction`,
             "name": title,
             "description": desc,
             "image": place.img || `${SITE_URL}/hero.webp`,
@@ -77,11 +75,11 @@ export default async function PlaceDetailPage({ params }) {
           },
           {
             "@type": "BreadcrumbList",
-            "@id": `${SITE_URL}/${lang}/places/${placeId}#breadcrumbs`,
+            "@id": `${pageUrl}#breadcrumbs`,
             "itemListElement": [
               { "@type": "ListItem", "position": 1, "name": bc.home, "item": `${SITE_URL}/${lang}` },
               { "@type": "ListItem", "position": 2, "name": bc.places, "item": `${SITE_URL}/${lang}/places` },
-              { "@type": "ListItem", "position": 3, "name": title, "item": `${SITE_URL}/${lang}/places/${placeId}` },
+              { "@type": "ListItem", "position": 3, "name": title, "item": pageUrl },
             ],
           },
         ],

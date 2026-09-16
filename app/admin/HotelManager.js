@@ -123,7 +123,7 @@ export default function HotelManager({ onHotelsCountChange }) {
 
       // Revalidate cache tag 'hotels'
       try {
-        await fetch("/api/admin/revalidate", {
+        await adminFetch("/api/admin/revalidate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ tag: "hotels" }),
@@ -164,7 +164,7 @@ export default function HotelManager({ onHotelsCountChange }) {
 
     // Revalidate cache tag 'hotels'
     try {
-      await fetch("/api/admin/revalidate", {
+      await adminFetch("/api/admin/revalidate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tag: "hotels" }),

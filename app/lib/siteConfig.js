@@ -3,14 +3,11 @@
  * Single source of truth for base URLs, supported languages, and SEO helpers.
  */
 
-// NOTE: standardized on the non-www apex domain because that is what
-// robots.js, sitemap.js, the root layout's Search Console/Yandex/Facebook
-// verification tags, and the site-wide JSON-LD all already use. If DNS/Vercel
-// is actually serving www.georgiatrips.ge as canonical, set
-// NEXT_PUBLIC_SITE_URL and add a redirect the other direction — don't let the
-// two diverge, that's a duplicate-content risk.
+// Production serves www.georgiatrips.ge (Vercel redirects the apex to it), so
+// the fallback must match: a missing env var must never produce canonicals on
+// a host that redirects.
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL || "https://georgiatrips.ge"
+  process.env.NEXT_PUBLIC_SITE_URL || "https://www.georgiatrips.ge"
 ).replace(/\/+$/, "");
 
 export const SUPPORTED_LANGUAGES = ["ka", "en", "ru", "tr", "ar"];
@@ -56,8 +53,7 @@ export function getCanonicalUrl(path = "/", lang = DEFAULT_LANGUAGE) {
 
 /**
  * Returns hreflang alternates dictionary suitable for Next.js metadata.alternates.languages
- * Includes both broad universal language tags (en, ru, tr, ar, ka) and regional tags
- * to ensure maximum discovery for international tourists browsing inside Georgia.
+ * One tag per language (the content is not country-specific) plus x-default.
  */
 export function getAlternateLanguages(path = "/") {
   const cleanPath = stripLocaleFromPath(path);
@@ -69,11 +65,6 @@ export function getAlternateLanguages(path = "/") {
     ru: `${SITE_URL}/ru${normalizedPath}`,
     tr: `${SITE_URL}/tr${normalizedPath}`,
     ar: `${SITE_URL}/ar${normalizedPath}`,
-    "ka-GE": `${SITE_URL}/ka${normalizedPath}`,
-    "en-US": `${SITE_URL}/en${normalizedPath}`,
-    "ru-RU": `${SITE_URL}/ru${normalizedPath}`,
-    "tr-TR": `${SITE_URL}/tr${normalizedPath}`,
-    "ar-SA": `${SITE_URL}/ar${normalizedPath}`,
     "x-default": `${SITE_URL}/en${normalizedPath}`,
   };
 }
