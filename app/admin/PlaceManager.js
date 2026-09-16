@@ -6,7 +6,7 @@ import Link from "next/link";
 import { GEORGIA_REGIONS } from "../lib/placesMeta";
 import { createPlace, deletePlace, listPlaces, updatePlace } from "../lib/placesFirestore";
 import { asLocalizedText, extractImageUrl } from "../lib/toursFirestore";
-import { uniqueSlugFor } from "../lib/slugs";
+import { placePath, uniqueSlugFor } from "../lib/slugs";
 import LocalizedInputGroup, { emptyLangObj, parseLocal } from "./LocalizedInputGroup";
 import { adminFetch } from "../lib/apiClient";
 
@@ -76,7 +76,7 @@ export default function PlaceManager({ onPlacesCountChange }) {
         await adminFetch("/api/admin/revalidate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tag: "places" }),
+          body: JSON.stringify({ tag: "places", changed: [`/places/${payload.slug}`] }),
         });
       } catch (_) {}
       setForm(empty());
@@ -119,12 +119,14 @@ export default function PlaceManager({ onPlacesCountChange }) {
 
   const remove = async (id) => {
     if (!confirm("დარწმუნებული ხართ, რომ გსურთ ადგილის წაშლა?")) return;
+    // Captured before deletion: search engines are told the URL is gone.
+    const deletedPlace = places.find((item) => item.id === id);
     await deletePlace(id);
     try {
       await adminFetch("/api/admin/revalidate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tag: "places" }),
+        body: JSON.stringify({ tag: "places", changed: deletedPlace ? [placePath(deletedPlace)] : [] }),
       });
     } catch (_) {}
     if (editingId === id) {

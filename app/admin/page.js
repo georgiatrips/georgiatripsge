@@ -25,7 +25,7 @@ import { useAuth } from "../lib/AuthContext";
 import { useCurrency } from "../lib/currency/CurrencyContext";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 import { adminFetch } from "../lib/apiClient";
-import { uniqueSlugFor } from "../lib/slugs";
+import { tourPath, uniqueSlugFor } from "../lib/slugs";
 import {
   createTour,
   listFirestoreTours,
@@ -554,7 +554,7 @@ export default function AdminPage() {
         await adminFetch("/api/admin/revalidate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tag: "tours" }),
+          body: JSON.stringify({ tag: "tours", changed: [`/tours/${slug}`] }),
         });
       } catch (_) {}
       setMessage({ type: "success", text: editingTourId ? "ტური განახლებულია!" : `ტური შენახულია! ID: ${created.id}` });
@@ -632,13 +632,15 @@ export default function AdminPage() {
 
   const handleDelete = async (id) => {
     if (!confirm("წავშალოთ ეს ტური?")) return;
+    // Captured before deletion: search engines are told the URL is gone.
+    const deletedTour = existingTours.find((item) => item.id === id);
     try {
       await deleteFirestoreTour(id);
       try {
         await adminFetch("/api/admin/revalidate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tag: "tours" }),
+          body: JSON.stringify({ tag: "tours", changed: deletedTour ? [tourPath(deletedTour)] : [] }),
         });
       } catch (_) {}
       await refreshList();

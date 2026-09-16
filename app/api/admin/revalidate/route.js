@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { revalidateTag, revalidatePath } from "next/cache";
 import { requireAdmin } from "../../../lib/server/adminAuth";
+import { submitToIndexNow } from "../../../lib/server/indexNow";
 
 const CORE_TAGS = ["tours", "places", "posts", "hotels", "reviews"];
 
@@ -16,7 +17,9 @@ export async function POST(request) {
 
   try {
     const body = await request.json().catch(() => ({}));
-    const { tag, path } = body;
+    // `changed`: locale-free paths of the saved/deleted item, e.g. ["/tours/<slug>"],
+    // announced to search engines via IndexNow once the response is sent.
+    const { tag, path, changed } = body;
 
     if (path) {
       revalidatePath(path);
@@ -32,6 +35,11 @@ export async function POST(request) {
     // pick up additions and deletions.
     revalidatePath("/sitemap.xml");
     revalidatePath("/content-index.json");
+    if (Array.isArray(changed) && changed.length > 0) {
+      after(() =>
+        submitToIndexNow(changed).catch((err) => console.warn("[indexNow]", err.message))
+      );
+    }
     return NextResponse.json({ success: true, revalidatedTags: tags, now: Date.now() });
   } catch (error) {
     console.error("[api/admin/revalidate] Error:", error);
