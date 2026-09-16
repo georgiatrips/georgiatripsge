@@ -33,7 +33,7 @@ const notoSerifGeorgian = Noto_Serif_Georgian({
   variable: "--font-noto-serif-georgian",
   subsets: ["georgian"],
   display: "swap",
-  preload: true,
+  preload: false,
   adjustFontFallback: true,
 });
 
@@ -41,7 +41,7 @@ const playfair = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin"],
   display: "swap",
-  preload: true,
+  preload: false,
   adjustFontFallback: true,
 });
 
@@ -170,48 +170,10 @@ export default async function RootLayout({ children }) {
         <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="preconnect" href="https://georgiatripsge.firebaseapp.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://firestore.googleapis.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://connect.facebook.net" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://georgiatripsge.firebaseapp.com" />
         <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
         <link rel="dns-prefetch" href="https://connect.facebook.net" />
-
-        {/* Meta Pixel Code (Direct in Head for Meta Crawler & Verification) */}
-        <script
-          id="fb-pixel-base"
-          dangerouslySetInnerHTML={{
-            __html: `
-              if (typeof window !== 'undefined' && typeof Node !== 'undefined' && !Node.prototype.getBoundingClientRect) {
-                Node.prototype.getBoundingClientRect = function() {
-                  if (this.parentElement && typeof this.parentElement.getBoundingClientRect === 'function') {
-                    return this.parentElement.getBoundingClientRect();
-                  }
-                  return { top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0 };
-                };
-              }
-              !function(f,b,e,v,n,t,s)
-              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-              n.queue=[];t=b.createElement(e);t.async=!0;
-              t.src=v;s=b.getElementsByTagName(e)[0];
-              s.parentNode.insertBefore(t,s)}(window, document,'script',
-              'https://connect.facebook.net/en_US/fbevents.js');
-              fbq('init', '4302985556633819');
-              fbq('track', 'PageView');
-            `,
-          }}
-        />
-        <noscript>
-          <img
-            height="1"
-            width="1"
-            style={{ display: "none" }}
-            src="https://www.facebook.com/tr?id=4302985556633819&ev=PageView&noscript=1"
-            alt=""
-          />
-        </noscript>
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
       </head>
       <body>
         <LanguageProvider initialLang={htmlLang}>
@@ -231,6 +193,31 @@ export default async function RootLayout({ children }) {
             </AuthProvider>
           </CurrencyProvider>
         </LanguageProvider>
+
+        {/* Meta Pixel Code (Deferred afterInteractive to prevent render blocking) */}
+        <Script id="fb-pixel-init" strategy="lazyOnload">
+          {`
+            !function(f,b,e,v,n,t,s)
+            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+            n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;s=b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t,s)}(window, document,'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+            fbq('init', '4302985556633819');
+            fbq('track', 'PageView');
+          `}
+        </Script>
+        <noscript>
+          <img
+            height="1"
+            width="1"
+            style={{ display: "none" }}
+            src="https://www.facebook.com/tr?id=4302985556633819&ev=PageView&noscript=1"
+            alt=""
+          />
+        </noscript>
 
         {/* The service worker caches /_next/static files. In development those
             file names do not change when their content does, so it would keep

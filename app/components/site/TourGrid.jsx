@@ -47,7 +47,7 @@ export function HelpCard({ id, title, text, ctaLabel, planHref, waHref, headingL
 
   return (
     <aside className={`gt-help-card ${className}`.trim()} aria-labelledby={id}>
-      <Image src="/kakheti.webp" alt="" fill sizes="(max-width: 640px) 100vw, 80vw" quality={60} className="gt-help-card-bg" />
+      <Image src="/kakheti.webp" alt="" fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 420px" quality={60} className="gt-help-card-bg" />
       <div className="gt-help-card-inner">
         <span className="gt-icon-badge"><RouteIcon size={22} /></span>
         <div className="gt-help-card-text">

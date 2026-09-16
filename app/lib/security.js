@@ -98,7 +98,7 @@ const BLOCKED_BOTS = [
   "nimbot",           // Nimble
 ];
 
-// ძიებითი სისტემების ბოტები, რომლებსაც ვუშვებთ
+// ძიებითი სისტემებისა და აუდიტის ბოტები, რომლებსაც ვუშვებთ
 const ALLOWED_BOTS = [
   "googlebot",
   "bingbot",
@@ -114,21 +114,27 @@ const ALLOWED_BOTS = [
   "linkedinbot",
   "pinterest",
   "petalbot",
+  "chrome-lighthouse",
+  "lighthouse",
+  "pagespeed",
+  "insights",
+  "google-inspectiontool",
 ];
 
 export function detectBot(request) {
   const userAgent = (request.headers.get("user-agent") || "").toLowerCase();
   if (!userAgent) return null;
 
+  // შევამოწმოთ დაშვებულები პირველ რიგში
+  for (const bot of ALLOWED_BOTS) {
+    if (userAgent.includes(bot)) return { blocked: false, name: bot };
+  }
+
   // შევამოწმოთ დაბლოკილები
   for (const bot of BLOCKED_BOTS) {
     if (userAgent.includes(bot)) return { blocked: true, name: bot };
   }
 
-  // შევამოწმოთ დაშვებულები
-  for (const bot of ALLOWED_BOTS) {
-    if (userAgent.includes(bot)) return { blocked: false, name: bot };
-  }
   // ცარიელი UA ან "curl", "python-requests" და ა.შ. (მხოლოდ API-ზე შევზღუდოთ)
   const suspiciousPatterns = ["curl", "wget", "python", "requests", "scrapy", "node-fetch", "axios", "postman"];
   for (const pattern of suspiciousPatterns) {
@@ -153,6 +159,9 @@ export function isStaticAssetRequest(request) {
     pathname.startsWith("/_next/static") ||
     pathname.startsWith("/_next/image") ||
     pathname.startsWith("/public") ||
-    pathname.includes(".") && !pathname.endsWith("/")
+    pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml" ||
+    pathname === "/favicon.ico" ||
+    (pathname.includes(".") && !pathname.endsWith("/"))
   );
 }
