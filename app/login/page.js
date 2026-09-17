@@ -69,7 +69,7 @@ export default function LoginPage() {
   const [suEmail, setSuEmail] = useState("");
   const [suPassword, setSuPassword] = useState("");
 
-  const { user } = useAuth() ?? {};
+  const { user, logOut } = useAuth() ?? {};
   const { claimWelcomeCoupon } = useCoupon();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -80,6 +80,22 @@ export default function LoginPage() {
       setTab(tabParam);
     }
   }, [searchParams]);
+
+  // Loading state while checking Firebase auth session
+  if (user === undefined) {
+    return (
+      <>
+        <Navbar />
+        <main className="login-page-wrap">
+          <div className="login-card" style={{ minHeight: "340px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "1rem" }}>
+            <div style={{ width: "42px", height: "42px", border: "3.5px solid rgba(41,178,183,0.2)", borderTopColor: "var(--teal)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+            <p style={{ color: "var(--text-mute)", fontSize: "0.95rem", fontWeight: 600 }}>{t("common.loading") || "იტვირთება..."}</p>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   // If already logged in, show profile view (handled below)
   const isLoggedIn = !!user;
@@ -217,10 +233,33 @@ export default function LoginPage() {
                 />
               </div>
 
-              <div style={{ display: "flex", gap: "10px", width: "100%", marginTop: "1.5rem" }}>
-                <Link href="/tours" className="lp-btn-primary" style={{ flex: 1, display: "inline-flex", justifyContent: "center", alignItems: "center", textDecoration: "none" }}>
-                  {t("loginPage.exploreTours")}
-                </Link>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", width: "100%", marginTop: "1.5rem" }}>
+                <div style={{ display: "flex", gap: "10px", width: "100%" }}>
+                  <Link href="/coupons" className="lp-social-btn" style={{ flex: 1, margin: 0, textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                    🎟️ {t("nav.coupons") || "კუპონები"}
+                  </Link>
+                  <Link href="/tours" className="lp-btn-primary" style={{ flex: 1, margin: 0, display: "inline-flex", justifyContent: "center", alignItems: "center", textDecoration: "none" }}>
+                    {t("loginPage.exploreTours") || "ტურები"}
+                  </Link>
+                </div>
+
+                {user.isAdmin && (
+                  <Link href="/admin" className="lp-social-btn" style={{ width: "100%", margin: 0, textDecoration: "none", borderColor: "var(--teal)", color: "var(--teal)", fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                    ⚙️ {t("nav.admin") || "ადმინ პანელი"}
+                  </Link>
+                )}
+
+                <button
+                  type="button"
+                  className="lp-social-btn"
+                  style={{ width: "100%", margin: 0, color: "#dc2626", borderColor: "rgba(220, 38, 38, 0.25)", cursor: "pointer" }}
+                  onClick={async () => {
+                    await logOut?.();
+                    router.push("/");
+                  }}
+                >
+                  {t("nav.logout") || "გამოსვლა"}
+                </button>
               </div>
             </div>
           ) : (

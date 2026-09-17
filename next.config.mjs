@@ -59,6 +59,11 @@ const nextConfig = {
         destination: '/ka/transfers',
         permanent: true,
       },
+      {
+        source: '/profile',
+        destination: '/login',
+        permanent: false,
+      },
     ];
   },
 };
