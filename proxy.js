@@ -122,6 +122,7 @@ const API_LIMITS = {
   "/api/translate": { max: 120, methods: ["POST"] },
   "/api/google-reviews": { max: 30, methods: ["GET"] },
   "/api/analytics/track": { max: 60, methods: ["GET", "POST"] },
+  "/api/webhook/meta": { max: 300, methods: ["GET", "POST"] },
 };
 
 export async function proxy(request) {
@@ -175,8 +176,10 @@ export async function proxy(request) {
   // 3. API routes-ის დამატებითი დაცვა
   // ═══════════════════════════════════════════════════════════════
   if (isApiRequest(pathname)) {
-    // API-ზე ბოტის მსგავსი User-Agent (-ის დაბლოკვა)
-    if (botInfo?.suspicious) {
+    const isWebhook = pathname.startsWith("/api/webhook");
+
+    // API-ზე ბოტის მსგავსი User-Agent (-ის დაბლოკვა, გარდა Webhook-ებისა რომლებსაც საკუთარი HMAC/Token დაცვა აქვთ)
+    if (botInfo?.suspicious && !isWebhook) {
       return NextResponse.json({ error: "API access denied" }, { status: 403 });
     }
     const policy = API_LIMITS[pathname] || { max: 60, methods: ["GET", "POST"] };
