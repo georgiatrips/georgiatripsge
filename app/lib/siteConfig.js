@@ -163,6 +163,11 @@ export function buildLocalizedMetadata({ path = "/", lang = DEFAULT_LANGUAGE, ti
       siteName: "GeorgiaTrips",
       images: [{ url: imageUrl, width: 1200, height: 630, alt: title }],
       locale: LANGUAGE_LOCALES[currentLang],
+      // The other languages of this same page, so a share in one language can
+      // be rendered in the reader's own (mirrors the hreflang set above).
+      alternateLocale: SUPPORTED_LANGUAGES.filter((code) => code !== currentLang).map(
+        (code) => LANGUAGE_LOCALES[code]
+      ),
       type: "website",
     },
     twitter: {

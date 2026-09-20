@@ -53,6 +53,24 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      // The pre-migration static site lived on .html URLs. Google still lists
+      // some of them (e.g. /about.html) and any old inbound link points there,
+      // but they now 404 — the proxy skips paths containing a dot. These send
+      // that traffic and link equity to the closest current page. English,
+      // because the old static pages were English.
+      { source: '/index.html', destination: '/en', permanent: true },
+      { source: '/about.html', destination: '/en', permanent: true },
+      { source: '/contact.html', destination: '/en', permanent: true },
+      { source: '/tours.html', destination: '/en/tours', permanent: true },
+      { source: '/tour.html', destination: '/en/tours', permanent: true },
+      { source: '/services.html', destination: '/en/tours', permanent: true },
+      { source: '/gallery.html', destination: '/en/places', permanent: true },
+      { source: '/blog.html', destination: '/en/posts', permanent: true },
+      { source: '/transfer.html', destination: '/en/transfers', permanent: true },
+      { source: '/transfers.html', destination: '/en/transfers', permanent: true },
+      { source: '/hotels.html', destination: '/en/hotels', permanent: true },
+      // Anything else ending in .html: the homepage beats a 404.
+      { source: '/:legacy*.html', destination: '/en', permanent: true },
       {
         source: '/transport',
         // Straight to the final URL: /transfers would redirect again to /ka/transfers.

@@ -393,6 +393,8 @@ export const ka = {
     "errorMsg": "ადგილების ჩატვირთვა ვერ მოხერხდა"
   },
   "placeDetail": {
+    "toursHereKicker": "ჩვენთან ერთად",
+    "toursHereTitle": "ტურები, რომლებიც ამ ადგილს მოიცავს",
     "backAll": "← ყველა ადგილი",
     "aboutTitle": "ადგილის შესახებ",
     "aboutSubtitle": "ერთი ადგილი, ბევრი შთაბეჭდილება",

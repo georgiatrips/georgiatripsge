@@ -393,6 +393,8 @@ export const tr = {
     "errorMsg": "Yerler yüklenemedi"
   },
   "placeDetail": {
+    "toursHereKicker": "Bizimle gidin",
+    "toursHereTitle": "Bu yeri kapsayan turlar",
     "backAll": "← Tüm Yerler",
     "aboutTitle": "Bu Yer Hakkında",
     "aboutSubtitle": "Tek bir konum, birçok izlenim",

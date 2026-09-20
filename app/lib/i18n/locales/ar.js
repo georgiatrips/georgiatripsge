@@ -393,6 +393,8 @@ export const ar = {
     "errorMsg": "فشل تحميل الأماكن"
   },
   "placeDetail": {
+    "toursHereKicker": "اذهب معنا",
+    "toursHereTitle": "جولات تشمل هذا المكان",
     "backAll": "← جميع الأماكن",
     "aboutTitle": "عن هذا المكان",
     "aboutSubtitle": "موقع واحد، انطباعات متعددة",

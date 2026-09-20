@@ -393,6 +393,8 @@ export const en = {
     "errorMsg": "Failed to load places"
   },
   "placeDetail": {
+    "toursHereKicker": "Visit with us",
+    "toursHereTitle": "Tours that visit this place",
     "backAll": "← All Places",
     "aboutTitle": "About this Place",
     "aboutSubtitle": "One location, many impressions",

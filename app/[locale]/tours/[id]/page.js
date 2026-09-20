@@ -1,8 +1,8 @@
 import React, { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { asLocalizedText } from "../../../lib/toursFirestore";
+import { asLocalizedText, extractImageUrl } from "../../../lib/toursShared";
 import { getCachedTourBySlugOrId, getCachedTours, getCachedPlaces, serializeForClient } from "../../../lib/server/cachedData";
-import { getContentSlug, tourPath } from "../../../lib/slugs";
+import { getContentSlug, placePath, tourPath } from "../../../lib/slugs";
 import TourDetailClient from "../../../components/tours/TourDetailClient";
 import { SITE_URL, getRequestLocale, buildLocalizedMetadata } from "../../../lib/siteConfig";
 import "./tourDetail.css";
@@ -90,17 +90,35 @@ export default async function TourDetailPage({ params }) {
   const bc = BREADCRUMB_COPY[lang] || BREADCRUMB_COPY.en;
   const pageUrl = `${SITE_URL}/${lang}${tourPath(rawTour)}`;
 
+  // Itinerary stops link to their own place pages when the tour references a
+  // place document, which also gives search engines a crawl path into them.
+  const placeById = new Map((places || []).map((place) => [place.id, place]));
   const itinerary = Array.isArray(rawTour?.itinerary) && rawTour.itinerary.length > 0
-    ? rawTour.itinerary.map((step, idx) => ({
-        "@type": "ListItem",
-        "position": idx + 1,
-        "item": {
-          "@type": "TouristAttraction",
-          "name": asLocalizedText(step.title, lang) || asLocalizedText(step.title, "ka") || "",
-          "description": asLocalizedText(step.desc, lang) || asLocalizedText(step.desc, "ka") || "",
-        },
-      }))
+    ? rawTour.itinerary.map((step, idx) => {
+        const place = step?.placeId ? placeById.get(step.placeId) : null;
+        return {
+          "@type": "ListItem",
+          "position": idx + 1,
+          "item": {
+            "@type": "TouristAttraction",
+            "name": asLocalizedText(step.title, lang) || asLocalizedText(step.title, "ka") || "",
+            "description": asLocalizedText(step.desc, lang) || asLocalizedText(step.desc, "ka") || "",
+            ...(place ? { "url": `${SITE_URL}/${lang}${placePath(place)}` } : {}),
+          },
+        };
+      })
     : undefined;
+
+  // "7 საათი" / "7 hours" -> PT7H. Only emitted when the tour really states one.
+  const durationHours = Number(
+    String(asLocalizedText(rawTour.duration, "ka") || "").match(/\d+(?:\.\d+)?/)?.[0]
+  );
+
+  // Real photos of this tour, so Google can associate the images with it.
+  const galleryImages = (Array.isArray(rawTour.gallery) ? rawTour.gallery : [])
+    .map((item) => extractImageUrl(item))
+    .filter(Boolean)
+    .slice(0, 6);
 
   // Prices are numbers in Firestore but strings like "₾100/კაცი" in the static fallback.
   const offerPrice = Number(String(rawTour.priceGroup ?? rawTour.pricePrivate ?? "").match(/\d+(?:\.\d+)?/)?.[0]) || 0;
@@ -114,9 +132,9 @@ export default async function TourDetailPage({ params }) {
             "@id": `${pageUrl}#trip`,
             "name": title,
             "description": desc,
-            "image": rawTour.img || `${SITE_URL}/hero.webp`,
-            "touristType": ["Adventure", "Cultural", "Sightseeing"],
-            ...(durationToIso8601(rawTour.durationHours) ? { "duration": durationToIso8601(rawTour.durationHours) } : {}),
+            "image": galleryImages.length > 0 ? galleryImages : [rawTour.img || `${SITE_URL}/hero.webp`],
+            "inLanguage": lang,
+            ...(durationToIso8601(durationHours) ? { "duration": durationToIso8601(durationHours) } : {}),
             ...(itinerary ? { "itinerary": { "@type": "ItemList", "itemListElement": itinerary } } : {}),
             // No Offer without a real price: "price": 0 would advertise a free tour.
             ...(offerPrice > 0 ? {

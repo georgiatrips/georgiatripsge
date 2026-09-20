@@ -402,7 +402,7 @@ export default async function HomePage({ params }) {
                 {routePlaces.map((place, index) => (
                   <li key={place.id} className="gt-place">
                     <Link href={href(placePath(place))} prefetch={false}>
-                      <Image src={place.img} alt="" fill sizes={index === 0 ? "(max-width: 900px) 100vw, 50vw" : "(max-width: 900px) 50vw, 25vw"} />
+                      <Image src={place.img} alt={asLocalizedText(place.title, lang)} fill sizes={index === 0 ? "(max-width: 900px) 100vw, 50vw" : "(max-width: 900px) 50vw, 25vw"} />
                       <span className="gt-place-caption">
                         <small>{formatRegionName(kaText(place.region), lang)}</small>
                         {asLocalizedText(place.title, lang)}

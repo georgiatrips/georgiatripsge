@@ -35,12 +35,21 @@ function toDate(value) {
   return Number.isNaN(d.getTime()) ? undefined : d;
 }
 
-function entriesForPath(path, lastModified) {
+function entriesForPath(path, lastModified, images) {
   return SUPPORTED_LANGUAGES.map((locale) => ({
     url: `${SITE_URL}/${locale}${path}`,
     ...(lastModified ? { lastModified } : {}),
+    // Google discovers images through the sitemap even when they are loaded
+    // lazily; only the tour's/place's own photo is listed, never site chrome.
+    ...(images && images.length > 0 ? { images } : {}),
     alternates: { languages: getAlternateLanguages(path) },
   }));
+}
+
+function mainImage(item) {
+  const url = typeof item?.img === "string" ? item.img.trim() : "";
+  if (!url) return [];
+  return [url.startsWith("http") ? url : `${SITE_URL}${url.startsWith("/") ? "" : "/"}${url}`];
 }
 
 export default async function sitemap() {
@@ -62,14 +71,14 @@ export default async function sitemap() {
     if (!tour?.id || seenTours.has(tour.id)) continue;
     seenTours.add(tour.id);
     entries.push(
-      ...entriesForPath(tourPath(tour), toDate(tour.updatedAt || tour.createdAt))
+      ...entriesForPath(tourPath(tour), toDate(tour.updatedAt || tour.createdAt), mainImage(tour))
     );
   }
 
   for (const place of places || []) {
     if (!place?.id) continue;
     entries.push(
-      ...entriesForPath(placePath(place), toDate(place.updatedAt || place.createdAt))
+      ...entriesForPath(placePath(place), toDate(place.updatedAt || place.createdAt), mainImage(place))
     );
   }
 

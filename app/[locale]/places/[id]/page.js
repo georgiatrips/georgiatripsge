@@ -1,6 +1,6 @@
 import React, { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { getCachedPlaces, getCachedPlaceBySlugOrId } from "../../../lib/server/cachedData";
+import { getCachedPlaces, getCachedPlaceBySlugOrId, getCachedTours } from "../../../lib/server/cachedData";
 import { getContentSlug, placePath } from "../../../lib/slugs";
 import { asLocalizedText } from "../../../lib/toursFirestore";
 import { formatRegionName } from "../../../lib/placesMeta";
@@ -47,7 +47,7 @@ export default async function PlaceDetailPage({ params }) {
   const { locale, id: placeId } = await params;
   const lang = getRequestLocale(locale);
 
-  const places = await getCachedPlaces();
+  const [places, tours] = await Promise.all([getCachedPlaces(), getCachedTours()]);
   const place = await getCachedPlaceBySlugOrId(placeId);
   if (!place) notFound();
   const pageUrl = `${SITE_URL}/${lang}${placePath(place)}`;
@@ -95,7 +95,7 @@ export default async function PlaceDetailPage({ params }) {
         />
       )}
       <Suspense fallback={<div style={{ padding: "4rem", textAlign: "center", color: "#1f2d3d" }}>...</div>}>
-        <PlaceDetailClient initialPlace={place} initialAllPlaces={places} />
+        <PlaceDetailClient initialPlace={place} initialAllPlaces={places} initialTours={tours} />
       </Suspense>
     </>
   );

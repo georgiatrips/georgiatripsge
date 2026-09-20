@@ -104,6 +104,17 @@ async function resolveDetailPath(request, match) {
   return NextResponse.rewrite(url);
 }
 
+// Catalog URLs carrying a free-text search or a specific date are internal
+// search results: an unbounded set of URLs with no content of their own, which
+// Google asks site owners to keep out of the index. Facet parameters such as
+// ?destination= are left to the param-free canonical the pages already emit,
+// so the two signals never contradict each other on the same URL.
+const SEARCH_RESULT_PARAMS = ["search", "date"];
+
+function isSearchResultUrl(nextUrl) {
+  return SEARCH_RESULT_PARAMS.some((param) => nextUrl.searchParams.has(param));
+}
+
 // The locale un-prefixed legacy URLs (indexed pre-migration) redirect to.
 // "ka" because that is the language Googlebot has actually been crawling and
 // indexing so far — redirecting there preserves ranking continuity for the
@@ -246,7 +257,11 @@ export async function proxy(request) {
       const response = await resolveDetailPath(request, detailMatch);
       if (response) return withIndexingPolicy(request, response);
     }
-    return withIndexingPolicy(request, NextResponse.next());
+    const response = NextResponse.next();
+    if (isSearchResultUrl(request.nextUrl)) {
+      response.headers.set("X-Robots-Tag", "noindex, follow");
+    }
+    return withIndexingPolicy(request, response);
   }
 
   if (pathname === "/") {

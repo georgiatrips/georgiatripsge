@@ -78,6 +78,9 @@ function buildStructuredData(lang = "ka") {
         "@id": `${SITE_URL}/#organization`,
         name: "GeorgiaTrips",
         legalName: "GeorgiaTrips",
+        // Both spellings are used in the wild (the site's own hero reads
+        // "Georgia Trips"), so Google can resolve either to this entity.
+        alternateName: ["Georgia Trips", "georgiatrips.ge"],
         url: SITE_URL,
         logo: `${SITE_URL}/logo.png`,
         image: `${SITE_URL}/hero.webp`,
@@ -100,11 +103,26 @@ function buildStructuredData(lang = "ka") {
         ],
         address: {
           "@type": "PostalAddress",
+          // Matches the Google Business Profile listing exactly (27 Kutaisi St,
+          // Batumi 6010) so both describe the same entity.
+          streetAddress: "27 Kutaisi Street",
           addressLocality: "Batumi",
           addressRegion: "Adjara",
+          postalCode: "6010",
           addressCountry: "GE",
         },
+        hasMap: "https://www.google.com/maps/place/?q=place_id:ChIJBXgJNomHZ0ARMFv54m7MSmk",
         sameAs: SOCIAL_PROFILES,
+        // The languages the site and the team actually operate in.
+        knowsLanguage: ["en", "ka", "ru", "tr", "ar"],
+        contactPoint: {
+          "@type": "ContactPoint",
+          contactType: "customer service",
+          telephone: "+995504220020",
+          email: EMAIL,
+          availableLanguage: ["English", "Georgian", "Russian", "Turkish", "Arabic"],
+          areaServed: "GE",
+        },
         openingHoursSpecification: {
           "@type": "OpeningHoursSpecification",
           dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
@@ -117,6 +135,7 @@ function buildStructuredData(lang = "ka") {
         "@id": `${SITE_URL}/#website`,
         url: SITE_URL,
         name: "GeorgiaTrips",
+        alternateName: "Georgia Trips",
         publisher: {
           "@id": `${SITE_URL}/#organization`,
         },

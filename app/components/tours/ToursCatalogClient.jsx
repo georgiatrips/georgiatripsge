@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import Navbar from "../Navbar";
 import Footer from "../Footer";
 import PageHero from "../PageHero";
@@ -23,7 +22,14 @@ const PAGE_SIZE = 12;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const kaText = (value) => (typeof value === "string" ? value : value?.ka || "");
 
-function readParams(searchParams) {
+// Filters are read from the URL on the client instead of through
+// useSearchParams(): that hook would force this page to be rendered per
+// request (or leave the catalog out of the prerendered HTML), and the full
+// tour list in static HTML is what search engines index.
+function readParams() {
+  const empty = { region: "all", date: "", format: "all", type: "all", query: "" };
+  if (typeof window === "undefined") return empty;
+  const searchParams = new URLSearchParams(window.location.search);
   const date = searchParams.get("date") || "";
   const format = searchParams.get("format");
   const type = searchParams.get("type");
@@ -37,9 +43,8 @@ function readParams(searchParams) {
 }
 
 export default function ToursCatalogClient({ initialTours = [] }) {
-  const searchParams = useSearchParams();
   const { t, lang } = useLanguage();
-  const [initial] = useState(() => readParams(searchParams));
+  const [initial] = useState(readParams);
 
   const [region, setRegion] = useState(initial.region);
   const [date, setDate] = useState(initial.date);

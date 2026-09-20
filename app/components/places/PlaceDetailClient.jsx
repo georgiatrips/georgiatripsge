@@ -9,7 +9,7 @@ import { formatRegionName } from "../../lib/placesMeta";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { asLocalizedText } from "../../lib/toursShared";
 import { getLocalizedHref } from "../../lib/siteConfig";
-import { placePath } from "../../lib/slugs";
+import { placePath, tourPath } from "../../lib/slugs";
 import "../../[locale]/places/places.css";
 
 function SmallPlaceCard({ place, lang }) {
@@ -26,10 +26,22 @@ function SmallPlaceCard({ place, lang }) {
   );
 }
 
-export default function PlaceDetailClient({ initialPlace = null, initialAllPlaces = [] }) {
+export default function PlaceDetailClient({ initialPlace = null, initialAllPlaces = [], initialTours = [] }) {
   const { t, lang } = useLanguage();
   const [place] = useState(initialPlace);
   const [all] = useState(initialAllPlaces);
+
+  // Tours whose itinerary really stops here: a route from "what is this place"
+  // to "how do I get there with you", and a crawl path between the two page types.
+  const toursHere = useMemo(
+    () =>
+      place
+        ? (initialTours || [])
+            .filter((tour) => (tour.itinerary || []).some((stop) => stop?.placeId === place.id))
+            .slice(0, 3)
+        : [],
+    [initialTours, place]
+  );
 
   const similar = useMemo(() => place ? all.filter((item) => item.id !== place.id && item.region === place.region).slice(0, 3) : [], [all, place]);
   const popular = useMemo(() => place ? all.filter((item) => item.id !== place.id && item.isPopular).slice(0, 3) : [], [all, place]);
@@ -92,6 +104,43 @@ export default function PlaceDetailClient({ initialPlace = null, initialAllPlace
             </aside>
           </div>
         </section>
+
+        {toursHere.length > 0 && (
+          <section className="place-related">
+            <div className="container">
+              <div className="place-related-head">
+                <div>
+                  <span className="places-kicker">{t("placeDetail.toursHereKicker")}</span>
+                  <h2>{t("placeDetail.toursHereTitle")}</h2>
+                </div>
+                <Link href={getLocalizedHref("/tours", lang)}>{t("placeDetail.viewAll")}</Link>
+              </div>
+              <div className="place-mini-grid">
+                {toursHere.map((tour) => (
+                  <Link
+                    key={tour.id}
+                    href={getLocalizedHref(tourPath(tour), lang)}
+                    className="place-mini-card"
+                  >
+                    <div className="place-mini-media">
+                      <Image
+                        src={tour.img || "/hero.webp"}
+                        alt={asLocalizedText(tour.title, lang)}
+                        fill
+                        sizes="180px"
+                        style={{ objectFit: "cover" }}
+                      />
+                    </div>
+                    <div>
+                      <span>{asLocalizedText(tour.duration, lang)}</span>
+                      <h3>{asLocalizedText(tour.title, lang)}</h3>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {similar.length > 0 && (
           <section className="place-related">

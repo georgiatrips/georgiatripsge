@@ -393,6 +393,8 @@ export const ru = {
     "errorMsg": "Не удалось загрузить места"
   },
   "placeDetail": {
+    "toursHereKicker": "Поехать с нами",
+    "toursHereTitle": "Туры, включающие это место",
     "backAll": "← Все места",
     "aboutTitle": "Об этом месте",
     "aboutSubtitle": "Одно место, множество впечатлений",
