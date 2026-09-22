@@ -1003,3 +1003,578 @@
 @media (max-width: 480px) {
   .tf-trust-badges-grid { grid-template-columns: 1fr; }
 }
+
+/* ============================================================
+   AI SMART TRANSFER CALCULATOR & DYNAMIC PRICING STYLES (REFINED)
+   ============================================================ */
+
+.tf-calculator-section {
+  padding: 3.5rem 1rem 4.5rem !important;
+  background: radial-gradient(circle at 50% 0%, #ffffff 0%, var(--gt-paper) 70%, #edf3f8 100%);
+}
+
+.tf-calc-card {
+  background: var(--gt-white);
+  border: 1px solid rgba(42, 101, 146, 0.14);
+  border-radius: 28px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(15, 23, 42, 0.03);
+  padding: clamp(1.5rem, 4vw, 3rem);
+  position: relative;
+  overflow: hidden;
+}
+
+.tf-calc-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--gt-primary) 0%, var(--gt-gold) 50%, var(--gt-primary) 100%);
+}
+
+.tf-calc-badge-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.85rem;
+}
+
+.tf-ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: linear-gradient(135deg, rgba(42, 101, 146, 0.08) 0%, rgba(224, 169, 59, 0.15) 100%);
+  border: 1px solid rgba(224, 169, 59, 0.35);
+  color: var(--gt-primary);
+  font-size: 0.84rem;
+  font-weight: 800;
+  padding: 0.4rem 1.1rem;
+  border-radius: 50px;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 8px rgba(224, 169, 59, 0.12);
+}
+
+.tf-calc-title {
+  text-align: center;
+  font-size: clamp(1.6rem, 3.4vw, 2.3rem);
+  font-weight: 800;
+  color: var(--gt-ink);
+  margin-bottom: 0.45rem;
+  line-height: 1.25;
+}
+
+.tf-calc-subtitle {
+  text-align: center;
+  font-size: clamp(0.9rem, 1.6vw, 1.02rem);
+  color: var(--gt-muted);
+  max-width: 620px;
+  margin: 0 auto 2.2rem;
+  line-height: 1.6;
+}
+
+.tf-calc-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.85rem;
+}
+
+/* Route Builder: Pickup & Dropoff */
+.tf-route-builder {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: 1.2rem;
+}
+
+@media (max-width: 880px) {
+  .tf-route-builder {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+.tf-loc-box {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all 0.25s ease;
+  min-height: 250px;
+}
+
+.tf-loc-box:focus-within {
+  border-color: var(--gt-primary);
+  box-shadow: 0 0 0 4px rgba(42, 101, 146, 0.12);
+  background: #ffffff;
+}
+
+.tf-loc-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.tf-loc-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tf-loc-dot--start {
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+}
+
+.tf-loc-dot--end {
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
+}
+
+.tf-loc-label {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: var(--gt-ink);
+  letter-spacing: 0.02em;
+}
+
+.tf-loc-input {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--gt-ink);
+  background: #ffffff;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.tf-loc-input:focus {
+  border-color: var(--gt-primary);
+  box-shadow: 0 2px 8px rgba(42, 101, 146, 0.1);
+}
+
+/* Quick chips */
+.tf-quick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.2rem;
+}
+
+.tf-chips-group-title {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #64748b;
+  margin-right: 0.25rem;
+  width: 100%;
+  display: block;
+}
+
+.tf-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: var(--gt-ink-2);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.38rem 0.75rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.tf-chip:hover {
+  border-color: var(--gt-primary);
+  background: rgba(42, 101, 146, 0.06);
+  color: var(--gt-primary);
+  transform: translateY(-1px);
+}
+
+.tf-chip.is-active {
+  background: var(--gt-primary);
+  border-color: var(--gt-primary);
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 3px 10px rgba(42, 101, 146, 0.3);
+}
+
+.tf-chip--sm {
+  font-size: 0.76rem;
+  padding: 0.3rem 0.65rem;
+}
+
+/* Swap button */
+.tf-swap-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 2rem;
+}
+
+.tf-btn-swap {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  color: var(--gt-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tf-btn-swap:hover {
+  background: var(--gt-primary);
+  color: #ffffff;
+  border-color: var(--gt-primary);
+  transform: rotate(180deg) scale(1.1);
+  box-shadow: 0 6px 20px rgba(42, 101, 146, 0.3);
+}
+
+@media (max-width: 880px) {
+  .tf-swap-wrap {
+    padding-top: 0;
+  }
+  .tf-btn-swap {
+    transform: rotate(90deg);
+  }
+  .tf-btn-swap:hover {
+    transform: rotate(270deg) scale(1.1);
+  }
+}
+
+/* Live AI Route Summary Banner */
+.tf-live-summary {
+  background: linear-gradient(135deg, #091a2c 0%, #15385b 50%, #1a4971 100%);
+  color: #ffffff;
+  border-radius: 20px;
+  padding: 1.4rem 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  box-shadow: 0 12px 32px rgba(9, 26, 44, 0.35);
+  animation: tfFadeIn 0.35s ease;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+@keyframes tfFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 700px) {
+  .tf-live-summary {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.1rem;
+    padding: 1.25rem 1.4rem;
+  }
+}
+
+.tf-live-summary-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.tf-summary-route-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.tf-summary-loc {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.2rem 0.6rem;
+  border-radius: 8px;
+}
+
+.tf-summary-arrow {
+  color: var(--gt-gold);
+  font-weight: 900;
+}
+
+.tf-summary-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.tf-metric-badge {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 600;
+}
+
+.tf-metric-badge--vehicle {
+  background: rgba(224, 169, 59, 0.2);
+  border-color: rgba(224, 169, 59, 0.5);
+  color: #ffe08a;
+  font-weight: 700;
+}
+
+.tf-live-summary-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+
+@media (max-width: 700px) {
+  .tf-live-summary-right {
+    align-items: flex-start;
+    width: 100%;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    padding-top: 0.85rem;
+  }
+}
+
+.tf-price-label {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 700;
+}
+
+.tf-price-val {
+  font-size: 2.1rem;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Vehicle Selection Tiles */
+.tf-vehicles-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.tf-section-label {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--gt-ink);
+}
+
+.tf-vehicles-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 900px) {
+  .tf-vehicles-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .tf-vehicles-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tf-vehicle-tile {
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 1.15rem 1rem;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+}
+
+.tf-vehicle-tile:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  transform: translateY(-3px);
+}
+
+.tf-vehicle-tile.is-selected {
+  border-color: var(--gt-primary);
+  background: #f0f7ff;
+  box-shadow: 0 10px 28px rgba(42, 101, 146, 0.18);
+}
+
+.tf-v-tile-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+
+.tf-v-img-wrap {
+  width: 100%;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tf-v-check {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--gt-primary);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(42, 101, 146, 0.4);
+}
+
+.tf-v-tile-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.tf-v-name {
+  font-size: 0.96rem;
+  font-weight: 800;
+  color: var(--gt-ink);
+  margin: 0;
+}
+
+.tf-v-specs {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 700;
+  margin: 0.2rem 0;
+}
+
+.tf-v-calculated-price {
+  margin-top: 0.5rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tf-v-p-label {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.tf-v-p-amount {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: var(--gt-ink);
+}
+
+.tf-vehicle-tile.is-selected .tf-v-p-amount {
+  color: var(--gt-primary);
+}
+
+/* Inputs row */
+.tf-inputs-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .tf-inputs-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Stepper */
+.tf-stepper-wrap {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--gt-line-strong);
+  border-radius: 10px;
+  background: var(--gt-white);
+  overflow: hidden;
+}
+
+.tf-stepper-btn {
+  width: 44px;
+  height: 48px;
+  background: #f1f5f9;
+  border: none;
+  color: var(--gt-ink);
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tf-stepper-btn:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.tf-stepper-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tf-stepper-input {
+  flex: 1;
+  border: none;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--gt-ink);
+  outline: none;
+  background: transparent;
+}
+
+/* Contact Grid */
+.tf-contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .tf-contact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
