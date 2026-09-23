@@ -17,7 +17,6 @@ import AnalyticsManager from "./AnalyticsManager";
 import CouponManager from "./CouponManager";
 import BookingManager from "./BookingManager";
 import TransferPricingManager from "./TransferPricingManager";
-import TourPlannerManager from "./TourPlannerManager";
 import { subscribeToLiveSessions } from "../lib/analytics";
 import { subscribeToBookings } from "../lib/bookingsFirestore";
 import LocalizedInputGroup, { emptyLangObj, parseLocal } from "./LocalizedInputGroup";
@@ -791,14 +790,6 @@ export default function AdminPage() {
             >
               <span style={{ fontSize: "1.2rem" }}>🚕</span>
               <span>ტრანსფერის ფასები</span>
-            </button>
-            <button
-              type="button"
-              className={`admin-nav-tab ${activeTab === "planner" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("planner")}
-            >
-              <span style={{ fontSize: "1.2rem" }}>🧭</span>
-              <span>AI ტურის დაგეგმვა</span>
             </button>
             <button
               type="button"
@@ -1995,11 +1986,6 @@ export default function AdminPage() {
           {/* TAB 6: COUPONS & IP MANAGEMENT */}
           {activeTab === "coupons" && (
             <CouponManager />
-          )}
-
-          {/* TAB: AI TOUR PLANNER (admin only) */}
-          {activeTab === "planner" && (
-            <TourPlannerManager />
           )}
 
           {/* TAB: TRANSFER PRICES (distance bands per vehicle) */}

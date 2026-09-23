@@ -72,6 +72,11 @@ export async function prepareImageForUpload(file) {
   try {
     image = await decodeImage(file);
   } catch {
+    // Every browser decodes JPG/PNG/WEBP, so a failure there means the file
+    // itself is broken: reject it here instead of sending it to Cloudinary.
+    if (["image/jpeg", "image/png", "image/webp"].includes(type)) {
+      throw new Error(`${file.name}: ფაილი დაზიანებულია და ვერ იკითხება`);
+    }
     // HEIC/HEIF etc. that this browser can't read: Cloudinary still can, as
     // long as the original fits through the request size limit.
     if (file.size <= MAX_RAW_BYTES) return file;

@@ -80,9 +80,11 @@ export async function POST(request) {
     const data = await uploadRes.json();
     if (!uploadRes.ok) {
       console.error("[Cloudinary]", data);
+      // Cloudinary 4xx = the file itself was rejected (e.g. corrupt image);
+      // 422 tells the client not to retry it. 5xx stays retryable.
       return NextResponse.json(
         { error: data?.error?.message || "ატვირთვა ვერ მოხერხდა" },
-        { status: 502 }
+        { status: uploadRes.status < 500 ? 422 : 502 }
       );
     }
 
