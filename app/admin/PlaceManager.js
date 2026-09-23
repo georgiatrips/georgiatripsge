@@ -9,20 +9,7 @@ import { asLocalizedText, extractImageUrl } from "../lib/toursFirestore";
 import { placePath, uniqueSlugFor } from "../lib/slugs";
 import LocalizedInputGroup, { emptyLangObj, parseLocal } from "./LocalizedInputGroup";
 import { adminFetch } from "../lib/apiClient";
-
-async function upload(file) {
-  const fd = new FormData();
-  fd.append("file", file);
-  const response = await adminFetch("/api/upload", { method: "POST", body: fd });
-  let data;
-  try {
-    data = await response.json();
-  } catch {
-    data = { error: `ატვირთვა ვერ მოხერხდა (სტატუსი: ${response.status})` };
-  }
-  if (!response.ok) throw new Error(data?.error || "ატვირთვა ვერ მოხერხდა");
-  return data.url;
-}
+import { uploadImages } from "../lib/imageUpload";
 
 const empty = () => ({
   title: emptyLangObj(),
@@ -37,6 +24,7 @@ export default function PlaceManager({ onPlacesCountChange }) {
   const [places, setPlaces] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(null);
   const [message, setMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [regionFilter, setRegionFilter] = useState("all");
@@ -68,7 +56,7 @@ export default function PlaceManager({ onPlacesCountChange }) {
         slug: previousPlace?.slug || uniqueSlugFor(previousPlace || { title: form.title }, places),
         title: form.title,
         desc: form.desc,
-        img: form.gallery[0] || "/hero.png",
+        img: form.gallery[0] || "/hero.webp",
       };
       if (editingId) await updatePlace(editingId, payload);
       else await createPlace(payload);
@@ -90,18 +78,21 @@ export default function PlaceManager({ onPlacesCountChange }) {
     }
   };
 
-  const uploadImages = async (event) => {
-    const files = [...(event.target.files || [])];
+  const handleUpload = async (event) => {
+    const input = event.target;
+    const files = [...(input.files || [])];
+    input.value = "";
     if (!files.length) return;
-    setSaving(true);
+    setMessage("");
+    setUploadProgress({ done: 0, total: files.length });
     try {
-      const urls = await Promise.all(files.map(upload));
-      setForm((current) => ({ ...current, gallery: [...current.gallery, ...urls] }));
-    } catch (error) {
-      setMessage(error.message);
+      const { urls, errors } = await uploadImages(files, {
+        onProgress: (done, total) => setUploadProgress({ done, total }),
+      });
+      if (urls.length) setForm((current) => ({ ...current, gallery: [...current.gallery, ...urls] }));
+      if (errors.length) setMessage(`${urls.length}/${files.length} ფოტო აიტვირთა. შეცდომა: ${errors.join("; ")}`);
     } finally {
-      setSaving(false);
-      event.target.value = "";
+      setUploadProgress(null);
     }
   };
 
@@ -214,10 +205,15 @@ export default function PlaceManager({ onPlacesCountChange }) {
               type="file"
               accept="image/*"
               multiple
-              onChange={uploadImages}
-              disabled={saving}
+              onChange={handleUpload}
+              disabled={saving || Boolean(uploadProgress)}
               style={{ padding: "0.5rem", background: "rgba(255,255,255,0.05)", borderRadius: "8px" }}
             />
+            {uploadProgress && (
+              <span className="admin-hint" style={{ margin: "0 0 0 0.75rem", color: "#fab418" }}>
+                ⏳ იტვირთება {uploadProgress.done}/{uploadProgress.total}...
+              </span>
+            )}
           </div>
           {form.gallery.length > 0 ? (
             <div className="admin-gallery-grid">
@@ -225,7 +221,7 @@ export default function PlaceManager({ onPlacesCountChange }) {
                 .filter((url) => Boolean(url && url.trim()))
                 .map((url, index) => (
                   <div className="admin-gallery-item" key={url || index}>
-                    <Image src={url || "/hero.png"} alt="" fill sizes="120px" style={{ objectFit: "cover" }} />
+                    <Image src={url || "/hero.webp"} alt="" fill sizes="120px" style={{ objectFit: "cover" }} />
                   <button
                     type="button"
                     className="admin-gallery-remove"
@@ -250,7 +246,7 @@ export default function PlaceManager({ onPlacesCountChange }) {
         </fieldset>
 
         <div className="admin-form-actions">
-          <button className="admin-btn-primary" disabled={saving}>
+          <button className="admin-btn-primary" disabled={saving || Boolean(uploadProgress)}>
             {saving ? "ინახება..." : editingId ? "ცვლილებების შენახვა" : "ადგილის შენახვა"}
           </button>
           {editingId && (
@@ -320,7 +316,7 @@ export default function PlaceManager({ onPlacesCountChange }) {
               const mainImg =
                 extractImageUrl(place.img) ||
                 (place.gallery && extractImageUrl(place.gallery[0])) ||
-                "/hero.png";
+                "/hero.webp";
               return (
                 <div key={place.id} className="admin-entry-card">
                   <div style={{ display: "flex", gap: "0.8rem", padding: "0.8rem" }}>

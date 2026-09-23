@@ -804,6 +804,8 @@ export function extractImageUrl(val) {
   }
 
   if (!url) return "";
+  // Older records stored this placeholder, which no longer exists in /public.
+  if (url === "/hero.png") return "/hero.webp";
 
   // Auto-optimize Cloudinary delivery with intelligent AVIF/WebP conversion & compression
   if (url.includes("res.cloudinary.com") && url.includes("/upload/") && !url.includes("/f_auto")) {

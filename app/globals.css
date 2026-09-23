@@ -2931,7 +2931,7 @@ body {
   min-height: 46vh;
   display: flex;
   align-items: center;
-  background: linear-gradient(rgba(11, 26, 41, 0.72), rgba(11, 26, 41, 0.86)), url('/hero.png') center/cover no-repeat;
+  background: linear-gradient(rgba(11, 26, 41, 0.72), rgba(11, 26, 41, 0.86)), url('/hero.webp') center/cover no-repeat;
   overflow: hidden;
 }
 

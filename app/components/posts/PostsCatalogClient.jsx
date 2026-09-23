@@ -13,7 +13,7 @@ import { useAuth } from "../../lib/AuthContext";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { addPostComment, createPost, deletePost, listPosts, togglePostLike, updatePost, voteOnPoll } from "../../lib/postsFirestore";
 import { formatLocationTag, asLocalizedText, translateDuration, translateLocation } from "../../lib/toursShared";
-import { adminFetch } from "../../lib/apiClient";
+import { uploadImage } from "../../lib/imageUpload";
 
 const asText = (value, fallback = "") => {
   if (typeof value === "string" || typeof value === "number") return String(value);
@@ -98,17 +98,8 @@ export default function PostsCatalogClient({ initialPosts = [] }) {
     if (!file || !user) return;
     setUploadingPostImage(true);
     try {
-      const data = new FormData();
-      data.append("file", file);
-      const response = await adminFetch("/api/upload", { method: "POST", body: data });
-      let result;
-      try {
-        result = await response.json();
-      } catch {
-        result = { error: `ატვირთვა ვერ მოხერხდა (${response.status})` };
-      }
-      if (!response.ok) throw new Error(result?.error || t("postsPage.uploadPhotoError"));
-      setPostImage(result.url);
+      const url = await uploadImage(file);
+      setPostImage(url);
     } catch (error) {
       setComposerMessage(t("postsPage.uploadPhotoError"));
     } finally {

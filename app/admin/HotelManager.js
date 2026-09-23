@@ -14,22 +14,9 @@ import { asLocalizedText, extractImageUrl } from "../lib/toursFirestore";
 import { useCurrency } from "../lib/currency/CurrencyContext";
 import LocalizedInputGroup, { emptyLangObj, parseLocal } from "./LocalizedInputGroup";
 import { adminFetch } from "../lib/apiClient";
+import { uploadImages } from "../lib/imageUpload";
 
 const MAX_PHOTOS = 2;
-
-async function upload(file) {
-  const fd = new FormData();
-  fd.append("file", file);
-  const response = await adminFetch("/api/upload", { method: "POST", body: fd });
-  let data;
-  try {
-    data = await response.json();
-  } catch {
-    data = { error: `ატვირთვა ვერ მოხერხდა (სტატუსი: ${response.status})` };
-  }
-  if (!response.ok) throw new Error(data?.error || "ატვირთვა ვერ მოხერხდა");
-  return data.url;
-}
 
 const empty = () => ({
   name: emptyLangObj(),
@@ -80,11 +67,14 @@ export default function HotelManager({ onHotelsCountChange }) {
     setSaving(true);
     setError("");
     try {
-      const urls = await Promise.all(files.slice(0, room).map(upload));
-      setForm((current) => ({
-        ...current,
-        gallery: [...current.gallery, ...urls].slice(0, MAX_PHOTOS),
-      }));
+      const { urls, errors } = await uploadImages(files.slice(0, room));
+      if (urls.length) {
+        setForm((current) => ({
+          ...current,
+          gallery: [...current.gallery, ...urls].slice(0, MAX_PHOTOS),
+        }));
+      }
+      if (errors.length) setError(errors.join("; "));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -400,7 +390,7 @@ export default function HotelManager({ onHotelsCountChange }) {
               const mainImg =
                 extractImageUrl(hotel.img) ||
                 (hotel.gallery && extractImageUrl(hotel.gallery[0])) ||
-                "/hero.png";
+                "/hero.webp";
               return (
                 <div key={hotel.id} className="admin-entry-card">
                   <div style={{ display: "flex", gap: "0.8rem", padding: "0.8rem" }}>

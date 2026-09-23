@@ -17,6 +17,7 @@ import AnalyticsManager from "./AnalyticsManager";
 import CouponManager from "./CouponManager";
 import BookingManager from "./BookingManager";
 import TransferPricingManager from "./TransferPricingManager";
+import TourPlannerManager from "./TourPlannerManager";
 import { subscribeToLiveSessions } from "../lib/analytics";
 import { subscribeToBookings } from "../lib/bookingsFirestore";
 import LocalizedInputGroup, { emptyLangObj, parseLocal } from "./LocalizedInputGroup";
@@ -26,6 +27,7 @@ import { useAuth } from "../lib/AuthContext";
 import { useCurrency } from "../lib/currency/CurrencyContext";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 import { adminFetch } from "../lib/apiClient";
+import { uploadImage, uploadImages } from "../lib/imageUpload";
 import { tourPath, uniqueSlugFor } from "../lib/slugs";
 import {
   createTour,
@@ -47,20 +49,6 @@ const emptyLocation = () => ({
   img: "",
   mode: "place",
 });
-
-async function uploadToCloudinary(file) {
-  const fd = new FormData();
-  fd.append("file", file);
-  const res = await adminFetch("/api/upload", { method: "POST", body: fd });
-  let data;
-  try {
-    data = await res.json();
-  } catch {
-    data = { error: `ატვირთვა ვერ მოხერხდა (სტატუსი: ${res.status})` };
-  }
-  if (!res.ok) throw new Error(data?.error || "ატვირთვა ვერ მოხერხდა");
-  return data.url;
-}
 
 export default function AdminPage() {
   const { format } = useCurrency();
@@ -92,6 +80,7 @@ export default function AdminPage() {
   const [saving, setSaving] = useState(false);
   const [editingTourId, setEditingTourId] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(null);
   const [message, setMessage] = useState(null);
   const { user } = useAuth() ?? {};
   const { t } = useLanguage();
@@ -266,7 +255,7 @@ export default function AdminPage() {
     if (!file) return;
     try {
       setUploading(true);
-      const url = await uploadToCloudinary(file);
+      const url = await uploadImage(file);
       updateLocation(idx, "img", url);
       setGallery((prev) => {
         const existingUrls = new Set(
@@ -296,22 +285,22 @@ export default function AdminPage() {
     if (!files.length) return;
     try {
       setUploading(true);
-      const uploadPromises = files.map(async (file) => {
-        const url = await uploadToCloudinary(file);
-        return {
-          url,
-          locationTitle: "",
-          placeId: "",
-        };
+      const { urls, errors } = await uploadImages(files, {
+        onProgress: (done, total) => setUploadProgress({ done, total }),
       });
-      const newItems = await Promise.all(uploadPromises);
+      const newItems = urls.map((url) => ({ url, locationTitle: "", placeId: "" }));
       setGallery((prev) => [...prev, ...newItems]);
-      setMessage({ type: "success", text: `${newItems.length} ფოტო წარმატებით აიტვირთა!` });
+      if (errors.length) {
+        setMessage({ type: "error", text: `${newItems.length}/${files.length} ფოტო აიტვირთა. შეცდომა: ${errors.join("; ")}` });
+      } else {
+        setMessage({ type: "success", text: `${newItems.length} ფოტო წარმატებით აიტვირთა!` });
+      }
     } catch (err) {
       console.error(err);
       setMessage({ type: "error", text: err.message || "ფოტოს ატვირთვა ვერ მოხერხდა" });
     } finally {
       setUploading(false);
+      setUploadProgress(null);
       e.target.value = "";
     }
   };
@@ -534,7 +523,7 @@ export default function AdminPage() {
       // Store a URL, never the gallery object itself. Older records can contain
       // gallery metadata objects, while next/image requires a string source.
       gallery: cleanedGallery,
-      img: cleanedGallery[0]?.url || extractImageUrl(itinerary[0]?.img) || "/hero.png",
+      img: cleanedGallery[0]?.url || extractImageUrl(itinerary[0]?.img) || "/hero.webp",
       departureDates: hasGroup
         ? departureDates.map((d) => ({
             date: d.date,
@@ -718,7 +707,7 @@ export default function AdminPage() {
       <section className="admin-hero">
         <div className="admin-hero-bg">
           <Image
-            src="/hero.png"
+            src="/hero.webp"
             alt=""
             fill
             priority
@@ -802,6 +791,14 @@ export default function AdminPage() {
             >
               <span style={{ fontSize: "1.2rem" }}>🚕</span>
               <span>ტრანსფერის ფასები</span>
+            </button>
+            <button
+              type="button"
+              className={`admin-nav-tab ${activeTab === "planner" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("planner")}
+            >
+              <span style={{ fontSize: "1.2rem" }}>🧭</span>
+              <span>AI ტურის დაგეგმვა</span>
             </button>
             <button
               type="button"
@@ -1332,7 +1329,7 @@ export default function AdminPage() {
                                 .map((place) => (
                                   <button type="button" key={place.id} className="admin-place-search-result" onClick={() => selectPlaceForLocation(idx, place)}>
                                     <span className="admin-place-result-thumb">
-                                      <Image src={extractImageUrl(place.img) || extractImageUrl(place.gallery?.[0]) || "/hero.png"} alt="" fill sizes="42px" style={{ objectFit: "cover" }} />
+                                      <Image src={extractImageUrl(place.img) || extractImageUrl(place.gallery?.[0]) || "/hero.webp"} alt="" fill sizes="42px" style={{ objectFit: "cover" }} />
                                     </span>
                                     <span><strong>{asLocalizedText(place.title, "ka")}</strong><small>{asLocalizedText(place.region, "ka")}</small></span>
                                   </button>
@@ -1358,7 +1355,7 @@ export default function AdminPage() {
                           >
                             <div style={{ display: "flex", alignItems: "center", gap: "0.85rem", minWidth: 0 }}>
                               <div style={{ position: "relative", width: "52px", height: "52px", borderRadius: "8px", overflow: "hidden", flexShrink: 0, border: "1px solid rgba(255,255,255,0.2)" }}>
-                                <Image src={extractImageUrl(loc.img) || "/hero.png"} alt="" fill sizes="52px" style={{ objectFit: "cover" }} />
+                                <Image src={extractImageUrl(loc.img) || "/hero.webp"} alt="" fill sizes="52px" style={{ objectFit: "cover" }} />
                               </div>
                               <div style={{ minWidth: 0 }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
@@ -1529,7 +1526,7 @@ export default function AdminPage() {
                     style={{ display: "none" }}
                   />
                 </label>
-                {uploading && <span className="admin-hint" style={{ margin: 0, color: "#fab418" }}>⏳ იტვირთება Cloudinary-ზე...</span>}
+                {uploading && <span className="admin-hint" style={{ margin: 0, color: "#fab418" }}>⏳ იტვირთება{uploadProgress ? ` ${uploadProgress.done}/${uploadProgress.total}` : ""}...</span>}
                 {gallery.length > 0 && <span className="admin-hint" style={{ margin: 0 }}>სულ: {gallery.length} ფოტო</span>}
               </div>
 
@@ -1549,7 +1546,7 @@ export default function AdminPage() {
                       return Boolean(u && u.trim());
                     })
                     .map((item, idx) => {
-                      const url = (typeof item === "string" ? item : item?.url) || "/hero.png";
+                      const url = (typeof item === "string" ? item : item?.url) || "/hero.webp";
                       const locTitle = typeof item === "string" ? "" : (item?.locationTitle || "");
                       const isCover = idx === 0;
 
@@ -1920,7 +1917,7 @@ export default function AdminPage() {
                       extractImageUrl(tItem.img) ||
                       extractImageUrl(tItem.image) ||
                       (tItem.gallery && extractImageUrl(tItem.gallery[0])) ||
-                      "/hero.png";
+                      "/hero.webp";
                     return (
                       <div key={tItem.id} className="admin-entry-card">
                         <div style={{ display: "flex", gap: "0.8rem", padding: "0.8rem" }}>
@@ -1998,6 +1995,11 @@ export default function AdminPage() {
           {/* TAB 6: COUPONS & IP MANAGEMENT */}
           {activeTab === "coupons" && (
             <CouponManager />
+          )}
+
+          {/* TAB: AI TOUR PLANNER (admin only) */}
+          {activeTab === "planner" && (
+            <TourPlannerManager />
           )}
 
           {/* TAB: TRANSFER PRICES (distance bands per vehicle) */}

@@ -136,6 +136,8 @@ const API_LIMITS = {
   // Transfer calculator: place search runs as the visitor types.
   "/api/transfers/places": { max: 120, methods: ["GET"] },
   "/api/transfers/route": { max: 60, methods: ["GET"] },
+  // Admin AI tour planner: each plan is a paid Claude request that runs for minutes.
+  "/api/admin/tour-planner": { max: 15, windowMs: 60 * 60 * 1000, methods: ["POST"] },
 };
 
 export async function proxy(request) {
@@ -215,7 +217,7 @@ export async function proxy(request) {
     const namespace = isAuth ? `${pathname}:auth` : pathname;
 
     const { rateLimited: apiLimited, retryAfter: apiRetryAfter } =
-      checkRateLimit(request, { max: rateLimitMax, namespace });
+      checkRateLimit(request, { max: rateLimitMax, namespace, windowMs: policy.windowMs });
     if (apiLimited) {
       return NextResponse.json(
         { error: "API rate limit exceeded", retryAfter: apiRetryAfter || 60 },

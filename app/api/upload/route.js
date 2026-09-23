@@ -57,18 +57,13 @@ export async function POST(request) {
       return NextResponse.json({ error: "ფოტოს ზომა უნდა იყოს 15 MB-მდე" }, { status: 413 });
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64 = buffer.toString("base64");
-    const mime = file.type || "image/jpeg";
-    const dataUri = `data:${mime};base64,${base64}`;
-
     const timestamp = Math.round(Date.now() / 1000);
     const paramsToSign = { folder: FOLDER, timestamp };
     const signature = signParams(paramsToSign);
 
-    const body = new URLSearchParams();
-    body.set("file", dataUri);
+    // Multipart straight through: no base64 copy (+33% size) held in memory.
+    const body = new FormData();
+    body.set("file", file, file.name || "photo");
     body.set("api_key", API_KEY);
     body.set("timestamp", String(timestamp));
     body.set("folder", FOLDER);
@@ -78,7 +73,6 @@ export async function POST(request) {
       `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body,
       }
     );
