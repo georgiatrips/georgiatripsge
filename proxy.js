@@ -133,6 +133,9 @@ const API_LIMITS = {
   "/api/translate": { max: 120, methods: ["POST"] },
   "/api/google-reviews": { max: 30, methods: ["GET"] },
   "/api/analytics/track": { max: 60, methods: ["GET", "POST"] },
+  // Transfer calculator: place search runs as the visitor types.
+  "/api/transfers/places": { max: 120, methods: ["GET"] },
+  "/api/transfers/route": { max: 60, methods: ["GET"] },
 };
 
 export async function proxy(request) {

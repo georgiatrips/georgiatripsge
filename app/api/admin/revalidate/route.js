@@ -3,7 +3,7 @@ import { revalidateTag, revalidatePath } from "next/cache";
 import { requireAdmin } from "../../../lib/server/adminAuth";
 import { submitToIndexNow } from "../../../lib/server/indexNow";
 
-const CORE_TAGS = ["tours", "places", "posts", "hotels", "reviews"];
+const CORE_TAGS = ["tours", "places", "posts", "hotels", "reviews", "transfers"];
 
 // Expire immediately (not stale-while-revalidate): an admin who just saved a
 // tour expects the next page load to show it.

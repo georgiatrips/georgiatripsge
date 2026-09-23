@@ -2,6 +2,8 @@ import React from "react";
 import Link from "next/link";
 import { SITE_URL, getRequestLocale, buildLocalizedMetadata, getLocalizedHref } from "../../lib/siteConfig";
 import { WA_LINK, SOCIAL_PROFILES } from "../../lib/shared";
+import { getCachedTransferPricing } from "../../lib/server/cachedData";
+import { getTransferFare, normalizeTransferPricing } from "../../lib/transfers/pricing";
 import "../../landing.css";
 
 export async function generateMetadata({ params }) {
@@ -38,13 +40,13 @@ const CONTENT = {
     ratesDesc: "Transparent pricing per vehicle, not per person. Choose the vehicle class that matches your group.",
     tableHeaders: ["Destination", "Distance / Time", "Sedan (1-3 pax)", "Minivan (4-7 pax)", "VIP Sprinter (8-18)"],
     rates: [
-      { dest: "Batumi City Center / Boulevard", dist: "6 km / 12 mins", sedan: "₾35", minivan: "₾60", sprinter: "₾110" },
-      { dest: "Gonio & Kvariati Resorts", dist: "10 km / 15 mins", sedan: "₾45", minivan: "₾70", sprinter: "₾120" },
-      { dest: "Sarpi (Turkish Border)", dist: "15 km / 20 mins", sedan: "₾55", minivan: "₾85", sprinter: "₾140" },
-      { dest: "Kobuleti & Tsikhisdziri", dist: "32 km / 35 mins", sedan: "₾65", minivan: "₾100", sprinter: "₾160" },
-      { dest: "Shekvetili & Ureki (Magnetic Sands)", dist: "48 km / 45 mins", sedan: "₾85", minivan: "₾130", sprinter: "₾190" },
-      { dest: "Kutaisi Airport / City (KUT)", dist: "145 km / 2 hrs", sedan: "₾180", minivan: "₾260", sprinter: "₾390" },
-      { dest: "Tbilisi City Center", dist: "375 km / 5.5 hrs", sedan: "₾390", minivan: "₾550", sprinter: "₾850" }
+      { dest: "Batumi City Center / Boulevard", dist: "6 km / 12 mins", km: 6 },
+      { dest: "Gonio & Kvariati Resorts", dist: "10 km / 15 mins", km: 10 },
+      { dest: "Sarpi (Turkish Border)", dist: "15 km / 20 mins", km: 15 },
+      { dest: "Kobuleti & Tsikhisdziri", dist: "32 km / 35 mins", km: 32 },
+      { dest: "Shekvetili & Ureki (Magnetic Sands)", dist: "48 km / 45 mins", km: 48 },
+      { dest: "Kutaisi Airport / City (KUT)", dist: "145 km / 2 hrs", km: 145 },
+      { dest: "Tbilisi City Center", dist: "375 km / 5.5 hrs", km: 375 }
     ],
     faqs: [
       { q: "Where will I meet my driver at Batumi Airport?", a: "Your driver will be waiting in the arrival hall immediately after baggage claim, holding a greeting sign with your name clearly displayed." },
@@ -71,13 +73,13 @@ const CONTENT = {
     ratesDesc: "Цена указана за весь автомобиль, а не за человека.",
     tableHeaders: ["Направление", "Расстояние / Время", "Седан (1-3 чел)", "Минивэн (4-7 чел)", "Спринтер (8-18)"],
     rates: [
-      { dest: "Центр Батуми / Бульвар", dist: "6 км / 12 мин", sedan: "₾35", minivan: "₾60", sprinter: "₾110" },
-      { dest: "Курорты Гонио и Квариати", dist: "10 км / 15 мин", sedan: "₾45", minivan: "₾70", sprinter: "₾120" },
-      { dest: "Сарпи (Граница с Турцией)", dist: "15 км / 20 мин", sedan: "₾55", minivan: "₾85", sprinter: "₾140" },
-      { dest: "Кобулети и Цихисдзири", dist: "32 км / 35 мин", sedan: "₾65", minivan: "₾100", sprinter: "₾160" },
-      { dest: "Шекветили и Уреки", dist: "48 км / 45 мин", sedan: "₾85", minivan: "₾130", sprinter: "₾190" },
-      { dest: "Аэропорт / город Кутаиси (KUT)", dist: "145 км / 2 ч", sedan: "₾180", minivan: "₾260", sprinter: "₾390" },
-      { dest: "Центр Тбилиси", dist: "375 км / 5.5 ч", sedan: "₾390", minivan: "₾550", sprinter: "₾850" }
+      { dest: "Центр Батуми / Бульвар", dist: "6 км / 12 мин", km: 6 },
+      { dest: "Курорты Гонио и Квариати", dist: "10 км / 15 мин", km: 10 },
+      { dest: "Сарпи (Граница с Турцией)", dist: "15 км / 20 мин", km: 15 },
+      { dest: "Кобулети и Цихисдзири", dist: "32 км / 35 мин", km: 32 },
+      { dest: "Шекветили и Уреки", dist: "48 км / 45 мин", km: 48 },
+      { dest: "Аэропорт / город Кутаиси (KUT)", dist: "145 км / 2 ч", km: 145 },
+      { dest: "Центр Тбилиси", dist: "375 км / 5.5 ч", km: 375 }
     ],
     faqs: [
       { q: "Где именно меня встретит водитель?", a: "Водитель будет ожидать вас прямо на выходе из зоны получения багажа с табличкой с вашим именем." },
@@ -104,13 +106,13 @@ const CONTENT = {
     ratesDesc: "ფასი მოცემულია მთლიან ავტომობილზე.",
     tableHeaders: ["მიმართულება", "მანძილი / დრო", "სედანი (1-3 მგზ)", "მინივენი (4-7 მგზ)", "სპრინტერი (8-18)"],
     rates: [
-      { dest: "ბათუმის ცენტრი / ბულვარი", dist: "6 კმ / 12 წთ", sedan: "₾35", minivan: "₾60", sprinter: "₾110" },
-      { dest: "გონიო და კვარიათი", dist: "10 კმ / 15 წთ", sedan: "₾45", minivan: "₾70", sprinter: "₾120" },
-      { dest: "სარფი (საზღვარი)", dist: "15 კმ / 20 წთ", sedan: "₾55", minivan: "₾85", sprinter: "₾140" },
-      { dest: "ქობულეთი და ციხისძირი", dist: "32 კმ / 35 წთ", sedan: "₾65", minivan: "₾100", sprinter: "₾160" },
-      { dest: "შეკვეთილი და ურეკი", dist: "48 კმ / 45 წთ", sedan: "₾85", minivan: "₾130", sprinter: "₾190" },
-      { dest: "ქუთაისის აეროპორტი / ქალაქი", dist: "145 კმ / 2 სთ", sedan: "₾180", minivan: "₾260", sprinter: "₾390" },
-      { dest: "თბილისის ცენტრი", dist: "375 კმ / 5.5 სთ", sedan: "₾390", minivan: "₾550", sprinter: "₾850" }
+      { dest: "ბათუმის ცენტრი / ბულვარი", dist: "6 კმ / 12 წთ", km: 6 },
+      { dest: "გონიო და კვარიათი", dist: "10 კმ / 15 წთ", km: 10 },
+      { dest: "სარფი (საზღვარი)", dist: "15 კმ / 20 წთ", km: 15 },
+      { dest: "ქობულეთი და ციხისძირი", dist: "32 კმ / 35 წთ", km: 32 },
+      { dest: "შეკვეთილი და ურეკი", dist: "48 კმ / 45 წთ", km: 48 },
+      { dest: "ქუთაისის აეროპორტი / ქალაქი", dist: "145 კმ / 2 სთ", km: 145 },
+      { dest: "თბილისის ცენტრი", dist: "375 კმ / 5.5 სთ", km: 375 }
     ],
     faqs: [
       { q: "სად დამხვდება მძღოლი?", a: "მძღოლი დაგხვდებათ ჩამოფრენის დარბაზში, ბარგის მიღების შემდეგ, თქვენი სახელის წარწერით." },
@@ -124,6 +126,17 @@ export default async function BatumiAirportTransferPage({ params }) {
   const { locale } = await params;
   const lang = getRequestLocale(locale);
   const c = CONTENT[lang] || CONTENT.en;
+
+  // Prices follow the per-km tariffs managed in the admin panel.
+  const pricing = normalizeTransferPricing(await getCachedTransferPricing());
+  const rateRows = c.rates.map((row) => {
+    const fares = Object.fromEntries(
+      ["sedan", "minivan", "sprinter"].map((key) => [key, getTransferFare(pricing, key, row.km)])
+    );
+    return { ...row, fares };
+  });
+  const allFares = rateRows.flatMap((r) => Object.values(r.fares)).filter((f) => f != null);
+  const formatFare = (fare) => (fare != null ? `₾${fare}` : "—");
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -152,8 +165,8 @@ export default async function BatumiAirportTransferPage({ params }) {
         ],
         "offers": {
           "@type": "AggregateOffer",
-          "lowPrice": 35,
-          "highPrice": 850,
+          "lowPrice": allFares.length ? Math.min(...allFares) : 35,
+          "highPrice": allFares.length ? Math.max(...allFares) : 850,
           "priceCurrency": "GEL"
         }
       },
@@ -244,13 +257,13 @@ export default async function BatumiAirportTransferPage({ params }) {
               </tr>
             </thead>
             <tbody>
-              {c.rates.map((row, i) => (
+              {rateRows.map((row, i) => (
                 <tr key={i}>
                   <td style={{ fontWeight: 700, color: "var(--gt-ink)" }}>📍 {row.dest}</td>
                   <td style={{ color: "var(--gt-muted)" }}>{row.dist}</td>
-                  <td className="price-val">{row.sedan}</td>
-                  <td className="price-val">{row.minivan}</td>
-                  <td className="price-val">{row.sprinter}</td>
+                  <td className="price-val">{formatFare(row.fares.sedan)}</td>
+                  <td className="price-val">{formatFare(row.fares.minivan)}</td>
+                  <td className="price-val">{formatFare(row.fares.sprinter)}</td>
                 </tr>
               ))}
             </tbody>

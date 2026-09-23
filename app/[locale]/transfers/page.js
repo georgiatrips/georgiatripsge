@@ -2,6 +2,7 @@ import React from "react";
 import { SOCIAL_PROFILES } from "../../lib/shared";
 import TransfersClient from "../../components/transfers/TransfersClient";
 import { SITE_URL, getRequestLocale, buildLocalizedMetadata } from "../../lib/siteConfig";
+import { getCachedTransferPricing } from "../../lib/server/cachedData";
 import "./transfers.css";
 
 const COPY = {
@@ -23,6 +24,7 @@ export default async function TransfersPage({ params }) {
   const { locale } = await params;
   const lang = getRequestLocale(locale);
   const c = COPY[lang] || COPY.en;
+  const pricing = await getCachedTransferPricing();
 
   const transferJsonLd = {
     "@context": "https://schema.org",
@@ -71,7 +73,7 @@ export default async function TransfersPage({ params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(transferJsonLd) }}
       />
-      <TransfersClient />
+      <TransfersClient pricing={pricing} />
     </>
   );
 }

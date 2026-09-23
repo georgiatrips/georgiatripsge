@@ -1,71 +1,37 @@
 /**
- * GeorgiaTrips Smart Transfer & Route Price Calculator
+ * GeorgiaTrips Smart Transfer & Route Calculator
  *
- * Sedan Tiered Rates (სედანი):
- * - 0 to 50 km: 2.50 GEL / km
- * - 50 to 100 km: 2.20 GEL / km
- * - 100 to 150 km: 2.00 GEL / km
- * - 150 to 200 km: 1.80 GEL / km
- * - 200 to 300 km: 1.70 GEL / km
- * - 300+ km: 1.20 GEL / km
- *
- * Svaneti Surcharge: +10% from any location!
- *
- * Other Vehicles:
- * - Minivan (მინივენი): 2.00 GEL / km
- * - Jeep / SUV (ჯიპი): 2.50 GEL / km
- * - Sprinter (სპრინტერი): 3.00 GEL / km
+ * Locations, known road distances and quote assembly. Per-km prices live in
+ * ./pricing.js and are edited from the admin panel (distance bands per vehicle).
  */
 
-export const VEHICLE_RATES = {
+import { TRANSFER_VEHICLE_KEYS, getRatePerKm, getTransferFare } from "./pricing";
+
+export const TRANSFER_VEHICLES = {
   sedan: {
     key: "sedan",
-    ratePerKm: 1.70, // Base reference; dynamic tiered rate computed in getSedanRatePerKm
-    minFare: 35,
     nameKa: "სედანი",
-    nameEn: "Sedan",
-    nameRu: "Седан",
-    nameTr: "Sedan",
-    nameAr: "سيدان",
     capacityPax: 3,
     capacityBags: 2,
     img: "/1car.webp",
   },
   minivan: {
     key: "minivan",
-    ratePerKm: 2.00,
-    minFare: 55,
     nameKa: "მინივენი",
-    nameEn: "Minivan",
-    nameRu: "Минивэн",
-    nameTr: "Minivan",
-    nameAr: "ميني فان",
     capacityPax: 6,
     capacityBags: 5,
     img: "/2car.webp",
   },
   jeep: {
     key: "jeep",
-    ratePerKm: 2.50,
-    minFare: 65,
     nameKa: "ჯიპი / SUV (4x4)",
-    nameEn: "Jeep / SUV (4x4)",
-    nameRu: "Внедорожник 4x4",
-    nameTr: "Jeep / SUV 4x4",
-    nameAr: "جيب / دفع رباعي",
     capacityPax: 4,
     capacityBags: 3,
     img: "/3car.webp",
   },
   sprinter: {
     key: "sprinter",
-    ratePerKm: 3.00,
-    minFare: 110,
     nameKa: "VIP სპრინტერი",
-    nameEn: "VIP Sprinter",
-    nameRu: "VIP Спринтер",
-    nameTr: "VIP Sprinter",
-    nameAr: "مرسيدس سبرينتر",
     capacityPax: 16,
     capacityBags: 14,
     img: "/4car.webp",
@@ -330,6 +296,18 @@ export const TRANSFER_LOCATIONS = [
   },
 ];
 
+export const LOCATION_BY_ID = Object.fromEntries(TRANSFER_LOCATIONS.map((l) => [l.id, l]));
+
+// Transfers start only from the three airports and the three main cities.
+export const PICKUP_LOCATION_IDS = [
+  "batumi_airport",
+  "tbilisi_airport",
+  "kutaisi_airport",
+  "tbilisi_city",
+  "batumi_city",
+  "kutaisi_city",
+];
+
 /**
  * Exact Highway / Road Driving Distances (in KM) & Standard Driving Times (in Minutes)
  * Key: "locationA_id:locationB_id" (alphabetical order)
@@ -420,8 +398,9 @@ const EXACT_ROUTES = {
   "sighnaghi:telavi": { km: 60, mins: 55 },
 };
 
-function getRouteKey(idA, idB) {
-  return [idA, idB].sort().join(":");
+// Some keys above are not in alphabetical order, so look up both directions.
+function getExactRoute(idA, idB) {
+  return EXACT_ROUTES[`${idA}:${idB}`] || EXACT_ROUTES[`${idB}:${idA}`] || null;
 }
 
 /**
@@ -508,9 +487,15 @@ export function findLocation(queryStr) {
 /**
  * Check if the transfer route involves Svaneti (Mestia, Ushguli, etc.)
  */
+// Upper & Lower Svaneti (Mestia, Ushguli, Lentekhi, Khaishi…), roughly.
+function isInSvaneti(point) {
+  return !!point && point.lat >= 42.78 && point.lng >= 41.95 && point.lng <= 43.3;
+}
+
 export function isSvanetiRoute(pickup, dropoff, locA = null, locB = null) {
   if (locA && (locA.id === "mestia" || locA.id === "svaneti")) return true;
   if (locB && (locB.id === "mestia" || locB.id === "svaneti")) return true;
+  if (isInSvaneti(locA) || isInSvaneti(locB)) return true;
 
   const textA = (typeof pickup === "string" ? pickup : (locA?.names?.ka || "")).toLowerCase();
   const textB = (typeof dropoff === "string" ? dropoff : (locB?.names?.ka || "")).toLowerCase();
@@ -542,25 +527,6 @@ export function isSvanetiRoute(pickup, dropoff, locA = null, locB = null) {
 }
 
 /**
- * Dynamic per-km rate for Sedan based on trip distance (in KM):
- * - <= 50 km: 2.50 GEL / km
- * - 50 - 100 km: 2.20 GEL / km
- * - 100 - 150 km: 2.00 GEL / km
- * - 150 - 200 km: 1.80 GEL / km
- * - 200 - 300 km: 1.70 GEL / km
- * - 300+ km: 1.20 GEL / km
- */
-export function getSedanRatePerKm(distanceKm) {
-  const d = Math.max(0, Number(distanceKm) || 0);
-  if (d <= 50) return 2.50;
-  if (d <= 100) return 2.20;
-  if (d <= 150) return 2.00;
-  if (d <= 200) return 1.80;
-  if (d <= 300) return 1.70;
-  return 1.20;
-}
-
-/**
  * Estimate road driving distance & duration in minutes between two locations
  */
 export function estimateRouteDistance(pickupInput, dropoffInput) {
@@ -580,9 +546,8 @@ export function estimateRouteDistance(pickupInput, dropoffInput) {
       };
     }
 
-    const routeKey = getRouteKey(locA.id, locB.id);
-    if (EXACT_ROUTES[routeKey]) {
-      const match = EXACT_ROUTES[routeKey];
+    const match = getExactRoute(locA.id, locB.id);
+    if (match) {
       return {
         distanceKm: match.km,
         durationMinutes: match.mins,
@@ -649,46 +614,25 @@ export function formatDuration(minutes, lang = "ka") {
 }
 
 /**
- * Calculate dynamic quote for all vehicles and selected vehicle
+ * Prices every vehicle for a known route ({ distanceKm, durationMinutes }).
  */
-export function calculateTransferQuote(pickup, dropoff, selectedVehicleKey = "sedan", lang = "ka") {
-  const route = estimateRouteDistance(pickup, dropoff);
+export function quoteFromRoute(route, pricing, { vehicleKey = "sedan", isSvaneti = false, lang = "ka" } = {}) {
   if (!route) return null;
-
-  const { distanceKm, durationMinutes, isEstimated } = route;
-
-  const locA = typeof pickup === "object" ? pickup : findLocation(pickup);
-  const locB = typeof dropoff === "object" ? dropoff : findLocation(dropoff);
-  const isSvaneti = isSvanetiRoute(pickup, dropoff, locA, locB);
-
-  const sedanRate = getSedanRatePerKm(distanceKm);
+  const { distanceKm, durationMinutes } = route;
 
   const allVehiclePrices = {};
-  for (const [key, vInfo] of Object.entries(VEHICLE_RATES)) {
-    const rate = key === "sedan" ? sedanRate : vInfo.ratePerKm;
-    let rawPrice = distanceKm * rate;
-
-    // Mountain surcharge: +10% for Svaneti from any location
-    if (isSvaneti) {
-      rawPrice = rawPrice * 1.10;
-    }
-
-    allVehiclePrices[key] = Math.max(vInfo.minFare, Math.round(rawPrice));
+  for (const key of TRANSFER_VEHICLE_KEYS) {
+    allVehiclePrices[key] = getTransferFare(pricing, key, distanceKm, { isSvaneti });
   }
-
-  const vConfig = VEHICLE_RATES[selectedVehicleKey] || VEHICLE_RATES.sedan;
-  const selectedPrice = allVehiclePrices[vConfig.key] || allVehiclePrices.sedan;
-  const activeRatePerKm = selectedVehicleKey === "sedan" ? sedanRate : vConfig.ratePerKm;
 
   return {
     distanceKm,
     durationMinutes,
     formattedDuration: formatDuration(durationMinutes, lang),
-    priceGEL: selectedPrice,
-    ratePerKm: activeRatePerKm,
+    priceGEL: allVehiclePrices[vehicleKey] ?? null,
+    ratePerKm: getRatePerKm(pricing, vehicleKey, distanceKm),
     isSvaneti,
-    vehicleKey: vConfig.key,
+    vehicleKey,
     allVehiclePrices,
-    isEstimated,
   };
 }

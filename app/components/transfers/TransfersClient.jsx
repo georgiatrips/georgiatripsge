@@ -1,28 +1,63 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
 import Navbar from "../Navbar";
 import Footer from "../Footer";
 import PageHero from "../PageHero";
 import DatePicker from "../DatePicker";
 import { WA_LINK, WhatsAppIcon } from "../../lib/shared";
-import { CheckIcon } from "../Icons";
+import { CheckIcon, ChevronDownIcon, SearchIcon } from "../Icons";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { isValidPhone } from "../../lib/bookingModel";
 import { trackEvent } from "../../lib/analytics";
 import {
   TRANSFER_LOCATIONS,
-  VEHICLE_RATES,
-  calculateTransferQuote,
-  findLocation,
+  TRANSFER_VEHICLES,
+  LOCATION_BY_ID,
+  PICKUP_LOCATION_IDS,
+  estimateRouteDistance,
+  isSvanetiRoute,
+  quoteFromRoute,
 } from "../../lib/transfers/routeCalculator";
+import { TRANSFER_VEHICLE_KEYS, normalizeTransferPricing } from "../../lib/transfers/pricing";
 
-export default function TransfersClient() {
+const AIRPORT_IDS = PICKUP_LOCATION_IDS.filter((id) => LOCATION_BY_ID[id].category === "airport");
+const PICKUP_CITY_IDS = PICKUP_LOCATION_IDS.filter((id) => LOCATION_BY_ID[id].category !== "airport");
+const DESTINATION_IDS = TRANSFER_LOCATIONS.filter((l) => l.category !== "airport").map((l) => l.id);
+
+function matchKnownLocations(query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  return TRANSFER_LOCATIONS.filter((l) => Object.values(l.names).some((n) => n.toLowerCase().includes(q)));
+}
+
+function exactKnownLocation(query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return null;
+  return TRANSFER_LOCATIONS.find((l) => Object.values(l.names).some((n) => n.toLowerCase() === q)) || null;
+}
+
+// "Sarpi, Khelvachauri Municipality" — the region part is dropped as noise.
+const shortDetail = (p) => (p.detail ? p.detail.split(", ")[0] : "");
+const placeLabel = (p) => (shortDetail(p) ? `${p.name}, ${shortDetail(p)}` : p.name);
+
+export default function TransfersClient({ pricing: pricingProp }) {
   const { t, lang, isEnglish } = useLanguage();
+  const pricing = useMemo(() => normalizeTransferPricing(pricingProp), [pricingProp]);
 
-  const [pickupLoc, setPickupLoc] = useState("თბილისის აეროპორტი (TBS)");
-  const [dropoffLoc, setDropoffLoc] = useState("ბათუმი");
+  const [pickupId, setPickupId] = useState("tbilisi_airport");
+  // { kind: "known", id } | { kind: "place", name, detail, lat, lng } | null while typing
+  const [dropoff, setDropoff] = useState({ kind: "known", id: "batumi_city" });
+  const [dropoffText, setDropoffText] = useState("");
+  const [dropoffError, setDropoffError] = useState(false);
+  const [openField, setOpenField] = useState(null); // "pickup" | "dropoff" | null
+  const [mapSearch, setMapSearch] = useState({ query: "", items: [] });
+  const [mapRoutes, setMapRoutes] = useState({}); // routeKey -> route | "error"
+  const pickupRef = useRef(null);
+  const dropoffRef = useRef(null);
+  const dropoffInputRef = useRef(null);
+
   const [selectedVehicleKey, setSelectedVehicleKey] = useState("sedan");
   const [transferDate, setTransferDate] = useState("");
   const [transferTime, setTransferTime] = useState("12:00");
@@ -33,80 +68,184 @@ export default function TransfersClient() {
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Set default localized locations when language changes
+  const fleetKeys = TRANSFER_VEHICLE_KEYS;
+
+  const getLocationLabel = (loc) => loc.names[lang] || loc.names.ka || loc.names.en;
+
+  const pickup = LOCATION_BY_ID[pickupId];
+  const pickupLabel = getLocationLabel(pickup);
+  const dropoffPoint =
+    dropoff?.kind === "known" ? LOCATION_BY_ID[dropoff.id] : dropoff ? { id: "map_place", lat: dropoff.lat, lng: dropoff.lng } : null;
+  const dropoffLabel =
+    dropoff?.kind === "known" ? getLocationLabel(LOCATION_BY_ID[dropoff.id]) : dropoff ? placeLabel(dropoff) : "";
+  const dropoffName = dropoff?.kind === "place" ? dropoff.name : dropoffLabel;
+  const dropoffDetail = dropoff?.kind === "place" ? shortDetail(dropoff) : "";
+
+  // Keep the input text in the visitor's language for picked known places.
   useEffect(() => {
-    if (lang === "en") {
-      setPickupLoc("Tbilisi Airport (TBS)");
-      setDropoffLoc("Batumi");
-    } else if (lang === "ru") {
-      setPickupLoc("Аэропорт Тбилиси (TBS)");
-      setDropoffLoc("Батуми");
-    } else if (lang === "tr") {
-      setPickupLoc("Tiflis Havalimanı (TBS)");
-      setDropoffLoc("Batum");
-    } else if (lang === "ar") {
-      setPickupLoc("مطار تبليسي (TBS)");
-      setDropoffLoc("باتومي");
-    } else {
-      setPickupLoc("თბილისის აეროპორტი (TBS)");
-      setDropoffLoc("ბათუმი");
-    }
+    if (dropoff?.kind === "known") setDropoffText(getLocationLabel(LOCATION_BY_ID[dropoff.id]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang]);
 
-  const fleetKeys = ["sedan", "minivan", "jeep", "sprinter"];
+  // ── Route: exact table first, otherwise real road distance from the map ──
+  const staticRoute = dropoffPoint ? estimateRouteDistance(pickup, dropoffPoint) : null;
+  const needsMapRoute = !!staticRoute && staticRoute.source === "coordinates_heuristic";
+  const routeKey = needsMapRoute ? `${pickup.lat},${pickup.lng}|${dropoffPoint.lat},${dropoffPoint.lng}` : null;
+  const mapRoute = routeKey ? mapRoutes[routeKey] : undefined;
+  const routeLoading = needsMapRoute && mapRoute === undefined;
 
-  // Calculate dynamic quote in real-time
-  const quote = useMemo(() => {
-    return calculateTransferQuote(pickupLoc, dropoffLoc, selectedVehicleKey, lang);
-  }, [pickupLoc, dropoffLoc, selectedVehicleKey, lang]);
+  useEffect(() => {
+    if (!routeKey || mapRoutes[routeKey] !== undefined) return;
+    const [from, to] = routeKey.split("|");
+    const ctrl = new AbortController();
+    fetch(`/api/transfers/route?from=${from}&to=${to}`, { signal: ctrl.signal })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((data) => setMapRoutes((m) => ({ ...m, [routeKey]: data })))
+      .catch((err) => {
+        if (err.name !== "AbortError") setMapRoutes((m) => ({ ...m, [routeKey]: "error" }));
+      });
+    return () => ctrl.abort();
+  }, [routeKey, mapRoutes]);
+
+  const route = !staticRoute
+    ? null
+    : !needsMapRoute
+      ? staticRoute
+      : mapRoute && mapRoute !== "error"
+        ? { ...mapRoute, source: "map" }
+        : mapRoute === "error"
+          ? staticRoute
+          : null;
+
+  // Map labels end with the region ("Mingrelia-Upper Svaneti" also covers
+  // Zugdidi), so only the place name and its coordinates decide Svaneti.
+  const isSvaneti = dropoffPoint
+    ? isSvanetiRoute(pickupLabel, dropoff.kind === "place" ? dropoff.name : dropoffLabel, pickup, dropoffPoint)
+    : false;
+
+  const quote = useMemo(
+    () => quoteFromRoute(route, pricing, { vehicleKey: selectedVehicleKey, isSvaneti, lang }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [route?.distanceKm, route?.durationMinutes, pricing, selectedVehicleKey, isSvaneti, lang]
+  );
+
+  // ── "To" search: known destinations + any place in Georgia from the map ──
+  const typedQuery = dropoff ? "" : dropoffText.trim();
+  const knownMatches = useMemo(() => matchKnownLocations(typedQuery), [typedQuery]);
+
+  useEffect(() => {
+    if (typedQuery.length < 2) {
+      setMapSearch({ query: "", items: [] });
+      return;
+    }
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => {
+      fetch(`/api/transfers/places?q=${encodeURIComponent(typedQuery)}&lang=${lang}`, { signal: ctrl.signal })
+        .then((r) => r.json())
+        .then((data) => setMapSearch({ query: typedQuery, items: data.results || [] }))
+        .catch((err) => {
+          if (err.name !== "AbortError") setMapSearch({ query: typedQuery, items: [] });
+        });
+    }, 350);
+    return () => {
+      clearTimeout(timer);
+      ctrl.abort();
+    };
+  }, [typedQuery, lang]);
+
+  const mapItems = mapSearch.query === typedQuery ? mapSearch.items : [];
+
+  // Leaving the field with typed text picks the best match automatically.
+  useEffect(() => {
+    if (openField === "dropoff" || dropoff || !typedQuery) return;
+    if (knownMatches.length) {
+      selectKnownDropoff(knownMatches[0].id);
+    } else if (mapItems.length) {
+      selectPlace(mapItems[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openField, dropoff, typedQuery, knownMatches, mapItems]);
+
+  // Close the open dropdown on an outside click / tap.
+  useEffect(() => {
+    if (!openField) return;
+    const onDown = (e) => {
+      const ref = openField === "pickup" ? pickupRef : dropoffRef;
+      if (ref.current && !ref.current.contains(e.target)) setOpenField(null);
+    };
+    document.addEventListener("pointerdown", onDown);
+    return () => document.removeEventListener("pointerdown", onDown);
+  }, [openField]);
+
+  const handleSelectPickup = (id) => {
+    setPickupId(id);
+    setOpenField(null);
+  };
+
+  const selectKnownDropoff = (id) => {
+    setDropoff({ kind: "known", id });
+    setDropoffText(getLocationLabel(LOCATION_BY_ID[id]));
+    setDropoffError(false);
+    setOpenField(null);
+  };
+
+  function selectPlace(place) {
+    setDropoff({ kind: "place", name: place.name, detail: place.detail, lat: place.lat, lng: place.lng });
+    setDropoffText(placeLabel(place));
+    setDropoffError(false);
+    setOpenField(null);
+  }
+
+  const handleDropoffChange = (value) => {
+    setDropoffText(value);
+    setDropoffError(false);
+    setOpenField("dropoff");
+    const exact = exactKnownLocation(value);
+    setDropoff(exact ? { kind: "known", id: exact.id } : null);
+  };
+
+  const handleDropoffKeyDown = (e) => {
+    if (e.key === "Escape") {
+      setOpenField(null);
+      return;
+    }
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    if (dropoff) {
+      setOpenField(null);
+    } else if (knownMatches.length) {
+      selectKnownDropoff(knownMatches[0].id);
+    } else if (mapItems.length) {
+      selectPlace(mapItems[0]);
+    }
+  };
+
+  const clearDropoff = () => {
+    setDropoff(null);
+    setDropoffText("");
+    setOpenField("dropoff");
+    dropoffInputRef.current?.focus();
+  };
+
+  // Pickup is limited to airports and the three main cities, so swapping only
+  // works when the destination is one of those.
+  const canSwap = dropoff?.kind === "known" && PICKUP_LOCATION_IDS.includes(dropoff.id);
+  const handleSwapLocations = () => {
+    if (!canSwap) return;
+    const nextPickup = dropoff.id;
+    setDropoff({ kind: "known", id: pickupId });
+    setDropoffText(getLocationLabel(LOCATION_BY_ID[pickupId]));
+    setPickupId(nextPickup);
+  };
 
   const selectedVehicleName =
     t(`transfersPage.vehicles.${selectedVehicleKey}.name`) ||
-    VEHICLE_RATES[selectedVehicleKey]?.nameKa ||
+    TRANSFER_VEHICLES[selectedVehicleKey]?.nameKa ||
     selectedVehicleKey;
-
-  const currentVehicleRate = VEHICLE_RATES[selectedVehicleKey]?.ratePerKm || 1.7;
-
-  // PICKUP LOCATIONS: Strictly only the 3 airports and 3 major cities
-  const pickupAirports = useMemo(() => {
-    return TRANSFER_LOCATIONS.filter((l) => l.category === "airport");
-  }, []);
-
-  const pickupCities = useMemo(() => {
-    return TRANSFER_LOCATIONS.filter((l) =>
-      ["batumi_city", "kutaisi_city", "tbilisi_city"].includes(l.id)
-    );
-  }, []);
-
-  // DROPOFF LOCATIONS: All airports and all destinations
-  const dropoffAirports = useMemo(() => {
-    return TRANSFER_LOCATIONS.filter((l) => l.category === "airport");
-  }, []);
-
-  const dropoffDestinations = useMemo(() => {
-    return TRANSFER_LOCATIONS.filter((l) => l.category !== "airport");
-  }, []);
-
-  const getLocationLabel = (loc) => {
-    return loc.names[lang] || loc.names.ka || loc.names.en;
-  };
-
-  const handleSelectPickup = (loc) => {
-    setPickupLoc(typeof loc === "string" ? loc : getLocationLabel(loc));
-  };
-
-  const handleSelectDropoff = (loc) => {
-    setDropoffLoc(typeof loc === "string" ? loc : getLocationLabel(loc));
-  };
-
-  const handleSwapLocations = () => {
-    setPickupLoc(dropoffLoc);
-    setDropoffLoc(pickupLoc);
-  };
 
   const handleSelectVehicle = (key) => {
     setSelectedVehicleKey(key);
-    const maxPax = VEHICLE_RATES[key]?.capacityPax || 4;
+    const maxPax = TRANSFER_VEHICLES[key]?.capacityPax || 4;
     if (parseInt(passengerCount, 10) > maxPax) {
       setPassengerCount(String(maxPax));
     }
@@ -135,7 +274,27 @@ export default function TransfersClient() {
       estTime: "სავარაუდო დრო",
       totalPrice: "სრული ღირებულება",
       swap: "ადგილების გაცვლა",
-      svanetiIncluded: "🏔️ სვანეთის ტარიფი (+10%)",
+      swapDisabled: "გაცვლა შესაძლებელია მხოლოდ აეროპორტსა და დიდ ქალაქებს შორის",
+      dropoffSearchPlaceholder: "ჩაწერეთ ნებისმიერი ადგილი: სოფელი, სასტუმრო, მისამართი...",
+      anyPlaceHint: "ჩაწერეთ საქართველოს ნებისმიერი ადგილი — მანძილს და ფასს რუკიდან დავითვლით",
+      mapResults: "📍 ადგილები რუკიდან",
+      searching: "ვეძებთ...",
+      noResults: "ვერაფერი მოიძებნა — სცადეთ სხვანაირად დაწერა",
+      calculating: "მარშრუტი ითვლება რუკიდან...",
+      pickDropoff: "აირჩიეთ დანიშნულების ადგილი სიიდან, რომ ნახოთ ფასი",
+      viaMap: "მანძილი დათვლილია რუკის მიხედვით",
+      clear: "გასუფთავება",
+      km: "კმ",
+      pax: "მგზავრი",
+      bags: "ჩემოდანი",
+      stepRoute: "მარშრუტი",
+      stepVehicle: "აირჩიეთ ავტომობილი",
+      stepDetails: "მგზავრობის დეტალები",
+      tripSummary: "თქვენი მგზავრობა",
+      from: "საიდან",
+      to: "სად",
+      vehicle: "ავტომობილი",
+      viaMapShort: "რუკით",
     },
     en: {
       cancellation: "Free cancellation up to 24h before",
@@ -152,7 +311,27 @@ export default function TransfersClient() {
       estTime: "Estimated Time",
       totalPrice: "Total Fare",
       swap: "Swap Locations",
-      svanetiIncluded: "🏔️ Svaneti Rate (+10%)",
+      swapDisabled: "Swap works only between airports and the main cities",
+      dropoffSearchPlaceholder: "Type any place: village, hotel, address...",
+      anyPlaceHint: "Type any place in Georgia — we calculate distance and price from the map",
+      mapResults: "📍 Places on the map",
+      searching: "Searching...",
+      noResults: "Nothing found — try a different spelling",
+      calculating: "Calculating route from the map...",
+      pickDropoff: "Choose a destination from the list to see the price",
+      viaMap: "Road distance calculated from the map",
+      clear: "Clear",
+      km: "km",
+      pax: "pax",
+      bags: "bags",
+      stepRoute: "Your route",
+      stepVehicle: "Choose a vehicle",
+      stepDetails: "Trip details",
+      tripSummary: "Your trip",
+      from: "From",
+      to: "To",
+      vehicle: "Vehicle",
+      viaMapShort: "Map route",
     },
     ru: {
       cancellation: "Бесплатная отмена за 24ч",
@@ -169,7 +348,27 @@ export default function TransfersClient() {
       estTime: "Время в пути",
       totalPrice: "Итоговая стоимость",
       swap: "Поменять местами",
-      svanetiIncluded: "🏔️ Тариф Сванетии (+10%)",
+      swapDisabled: "Поменять можно только аэропорты и крупные города",
+      dropoffSearchPlaceholder: "Введите любое место: село, отель, адрес...",
+      anyPlaceHint: "Введите любое место в Грузии — расстояние и цену посчитаем по карте",
+      mapResults: "📍 Места на карте",
+      searching: "Ищем...",
+      noResults: "Ничего не найдено — попробуйте написать иначе",
+      calculating: "Считаем маршрут по карте...",
+      pickDropoff: "Выберите пункт назначения из списка, чтобы увидеть цену",
+      viaMap: "Расстояние рассчитано по карте",
+      clear: "Очистить",
+      km: "км",
+      pax: "пасс.",
+      bags: "багаж",
+      stepRoute: "Маршрут",
+      stepVehicle: "Выберите автомобиль",
+      stepDetails: "Детали поездки",
+      tripSummary: "Ваша поездка",
+      from: "Откуда",
+      to: "Куда",
+      vehicle: "Автомобиль",
+      viaMapShort: "По карте",
     },
     tr: {
       cancellation: "24 saat öncesine kadar ücretsiz iptal",
@@ -186,7 +385,27 @@ export default function TransfersClient() {
       estTime: "Tahmini Süre",
       totalPrice: "Toplam Ücret",
       swap: "Konumları Değiştir",
-      svanetiIncluded: "🏔️ Svaneti Tarifesi (+10%)",
+      swapDisabled: "Değiştirme yalnızca havalimanları ve büyük şehirler arasında yapılabilir",
+      dropoffSearchPlaceholder: "Herhangi bir yer yazın: köy, otel, adres...",
+      anyPlaceHint: "Gürcistan'da herhangi bir yer yazın — mesafe ve fiyatı haritadan hesaplarız",
+      mapResults: "📍 Haritadaki yerler",
+      searching: "Aranıyor...",
+      noResults: "Sonuç bulunamadı — farklı yazmayı deneyin",
+      calculating: "Rota haritadan hesaplanıyor...",
+      pickDropoff: "Fiyatı görmek için listeden bir varış noktası seçin",
+      viaMap: "Mesafe haritaya göre hesaplandı",
+      clear: "Temizle",
+      km: "km",
+      pax: "yolcu",
+      bags: "bavul",
+      stepRoute: "Rota",
+      stepVehicle: "Araç seçin",
+      stepDetails: "Yolculuk detayları",
+      tripSummary: "Yolculuğunuz",
+      from: "Nereden",
+      to: "Nereye",
+      vehicle: "Araç",
+      viaMapShort: "Harita",
     },
     ar: {
       cancellation: "إلغاء مجاني حتى 24 ساعة قبل الموعد",
@@ -203,7 +422,27 @@ export default function TransfersClient() {
       estTime: "الوقت المقدر",
       totalPrice: "السعر الإجمالي",
       swap: "تبديل الوجهات",
-      svanetiIncluded: "🏔️ تسعيرة سفانيتي (+10%)",
+      swapDisabled: "التبديل متاح فقط بين المطارات والمدن الرئيسية",
+      dropoffSearchPlaceholder: "اكتب أي مكان: قرية، فندق، عنوان...",
+      anyPlaceHint: "اكتب أي مكان في جورجيا — نحسب المسافة والسعر من الخريطة",
+      mapResults: "📍 أماكن على الخريطة",
+      searching: "جارٍ البحث...",
+      noResults: "لم يتم العثور على نتائج — جرّب كتابة مختلفة",
+      calculating: "جارٍ حساب المسار من الخريطة...",
+      pickDropoff: "اختر الوجهة من القائمة لرؤية السعر",
+      viaMap: "تم حساب المسافة من الخريطة",
+      clear: "مسح",
+      km: "كم",
+      pax: "ركاب",
+      bags: "حقائب",
+      stepRoute: "المسار",
+      stepVehicle: "اختر السيارة",
+      stepDetails: "تفاصيل الرحلة",
+      tripSummary: "رحلتك",
+      from: "من",
+      to: "إلى",
+      vehicle: "السيارة",
+      viaMapShort: "عبر الخريطة",
     },
   };
 
@@ -211,6 +450,12 @@ export default function TransfersClient() {
 
   const handleTransferSubmit = async (e) => {
     e.preventDefault();
+
+    if (!quote) {
+      setDropoffError(true);
+      dropoffInputRef.current?.focus();
+      return;
+    }
 
     const cleanPhone = contactPhone.trim();
     if (!isValidPhone(cleanPhone)) {
@@ -231,8 +476,8 @@ export default function TransfersClient() {
         name: contactName.trim() || `Passenger (${cleanPhone})`,
         vehicle: selectedVehicleKey,
         vehicleName: selectedVehicleName,
-        pickup: pickupLoc,
-        dropoff: dropoffLoc,
+        pickup: pickupLabel,
+        dropoff: dropoffLabel,
         distanceKm: quote?.distanceKm || null,
         duration: quote?.durationMinutes || null,
         priceGEL: calculatedFare,
@@ -257,7 +502,7 @@ export default function TransfersClient() {
       if (bId) {
         if (typeof window !== "undefined" && window.fbq) {
           window.fbq("track", "Lead", {
-            content_name: `Transfer: ${selectedVehicleName} (${pickupLoc} -> ${dropoffLoc})`,
+            content_name: `Transfer: ${selectedVehicleName} (${pickupLabel} -> ${dropoffLabel})`,
             content_category: "Transfer",
             value: calculatedFare,
             currency: "GEL",
@@ -266,8 +511,8 @@ export default function TransfersClient() {
         trackEvent("book_transfer_success", {
           eventId: bId,
           vehicle: selectedVehicleName,
-          pickup: pickupLoc,
-          dropoff: dropoffLoc,
+          pickup: pickupLabel,
+          dropoff: dropoffLabel,
           price: calculatedFare,
         });
       }
@@ -282,8 +527,8 @@ export default function TransfersClient() {
       ? [
           `🚗 *GeorgiaTrips — Transfer Booking Request*`,
           `━━━━━━━━━━━━━━━━━━━━━━━━`,
-          `📍 *Pickup:* ${pickupLoc.trim() || "Not specified"}`,
-          `🏁 *Dropoff:* ${dropoffLoc.trim() || "Not specified"}`,
+          `📍 *Pickup:* ${pickupLabel.trim() || "Not specified"}`,
+          `🏁 *Dropoff:* ${dropoffLabel.trim() || "Not specified"}`,
           `📏 *Estimated Distance:* ${distanceText}`,
           `⏱️ *Estimated Duration:* ${durationText}`,
           `🚘 *Vehicle:* ${selectedVehicleName}`,
@@ -299,8 +544,8 @@ export default function TransfersClient() {
       ? [
           `🚗 *GeorgiaTrips — Запрос на трансфер*`,
           `━━━━━━━━━━━━━━━━━━━━━━━━`,
-          `📍 *Откуда:* ${pickupLoc.trim() || "Не указано"}`,
-          `🏁 *Куда:* ${dropoffLoc.trim() || "Не указано"}`,
+          `📍 *Откуда:* ${pickupLabel.trim() || "Не указано"}`,
+          `🏁 *Куда:* ${dropoffLabel.trim() || "Не указано"}`,
           `📏 *Расстояние:* ${distanceText}`,
           `⏱️ *Время в пути:* ${durationText}`,
           `🚘 *Автомобиль:* ${selectedVehicleName}`,
@@ -316,8 +561,8 @@ export default function TransfersClient() {
       ? [
           `🚗 *GeorgiaTrips — Transfer Talebi*`,
           `━━━━━━━━━━━━━━━━━━━━━━━━`,
-          `📍 *Nereden:* ${pickupLoc.trim() || "Belirtilmedi"}`,
-          `🏁 *Nereye:* ${dropoffLoc.trim() || "Belirtilmedi"}`,
+          `📍 *Nereden:* ${pickupLabel.trim() || "Belirtilmedi"}`,
+          `🏁 *Nereye:* ${dropoffLabel.trim() || "Belirtilmedi"}`,
           `📏 *Mesafe:* ${distanceText}`,
           `⏱️ *Süre:* ${durationText}`,
           `🚘 *Araç:* ${selectedVehicleName}`,
@@ -333,8 +578,8 @@ export default function TransfersClient() {
       ? [
           `🚗 *GeorgiaTrips — طلب توصيل خاص*`,
           `━━━━━━━━━━━━━━━━━━━━━━━━`,
-          `📍 *مكان الانطلاق:* ${pickupLoc.trim() || "غير محدد"}`,
-          `🏁 *الوجهة:* ${dropoffLoc.trim() || "غير محدد"}`,
+          `📍 *مكان الانطلاق:* ${pickupLabel.trim() || "غير محدد"}`,
+          `🏁 *الوجهة:* ${dropoffLabel.trim() || "غير محدد"}`,
           `📏 *المسافة:* ${distanceText}`,
           `⏱️ *الوقت المقدر:* ${durationText}`,
           `🚘 *نوع السيارة:* ${selectedVehicleName}`,
@@ -349,8 +594,8 @@ export default function TransfersClient() {
       : [
           `🚗 *GeorgiaTrips — ტრანსფერის მოთხოვნა*`,
           `━━━━━━━━━━━━━━━━━━━━━━━━`,
-          `📍 *საიდან:* ${pickupLoc.trim() || "არ არის მითითებული"}`,
-          `🏁 *სად:* ${dropoffLoc.trim() || "არ არის მითითებული"}`,
+          `📍 *საიდან:* ${pickupLabel.trim() || "არ არის მითითებული"}`,
+          `🏁 *სად:* ${dropoffLabel.trim() || "არ არის მითითებული"}`,
           `📏 *მანძილი:* ${distanceText}`,
           `⏱️ *მგზავრობის დრო:* ${durationText}`,
           `🚘 *ავტომობილი:* ${selectedVehicleName}`,
@@ -362,6 +607,11 @@ export default function TransfersClient() {
           `📞 *ტელეფონი / WhatsApp:* ${contactPhone.trim() || "არ არის მითითებული"}`,
           notes.trim() ? `📝 *შენიშვნა:* ${notes.trim()}` : "",
         ];
+
+    // A map pin helps the driver find villages and hotels picked from the map.
+    if (dropoff?.kind === "place") {
+      lines.push(`🗺️ https://maps.google.com/?q=${dropoff.lat},${dropoff.lng}`);
+    }
 
     window.open(`${WA_LINK}?text=${encodeURIComponent(lines.filter(Boolean).join("\n"))}`, "_blank");
   };
@@ -381,199 +631,275 @@ export default function TransfersClient() {
 
       {/* SECTION 1: SMART AI ROUTE & PRICE CALCULATOR */}
       <section className="section tf-calculator-section" id="transfer-calculator">
-        <div className="container" style={{ maxWidth: "1000px" }}>
+        <div className="container" style={{ maxWidth: "1200px" }}>
           <div className="tf-calc-card">
-            <div className="tf-calc-badge-row">
+            <header className="tf-calc-head">
               <span className="tf-ai-badge">{ui.aiBadge}</span>
-            </div>
-            <h2 className="tf-calc-title">{ui.calcTitle}</h2>
-            <p className="tf-calc-subtitle">{ui.calcSub}</p>
+              <h2 className="tf-calc-title">{ui.calcTitle}</h2>
+              <p className="tf-calc-subtitle">{ui.calcSub}</p>
+            </header>
 
             <form onSubmit={handleTransferSubmit} className="tf-calc-form">
-              {/* PICKUP & DROPOFF ROUTE BUILDER */}
-              <div className="tf-route-builder">
-                {/* PICKUP BOX (ONLY 3 AIRPORTS & 3 CITIES) */}
-                <div className="tf-loc-box">
-                  <div className="tf-loc-header">
-                    <span className="tf-loc-dot tf-loc-dot--start" />
-                    <label className="tf-loc-label">{t("transfersPage.pickupLabel") || "აყვანის მისამართი (საიდან)"}</label>
+              <div className="tf-calc-main">
+                <section className="tf-step tf-step--route">
+                  <div className="tf-step-head">
+                    <span className="tf-step-num">1</span>
+                    <h3 className="tf-step-title">{ui.stepRoute}</h3>
                   </div>
-
-                  <input
-                    type="text"
-                    value={pickupLoc}
-                    onChange={(e) => setPickupLoc(e.target.value)}
-                    placeholder={t("transfersPage.pickupPlaceholder") || "მაგ: თბილისის აეროპორტი (TBS)"}
-                    className="tf-loc-input"
-                    required
-                  />
-
-                  {/* PICKUP: 3 AIRPORTS ONLY */}
-                  <div className="tf-quick-chips">
-                    <span className="tf-chips-group-title">{ui.airportsTab}:</span>
-                    {pickupAirports.map((loc) => {
-                      const name = getLocationLabel(loc);
-                      const isSelected = pickupLoc.toLowerCase().includes(loc.id.split("_")[0]);
-                      return (
+                  {/* ROUTE BAR: FROM (fixed list) ⇄ TO (any place in Georgia) */}
+                  <div className="tf-route-bar">
+                    <div
+                      ref={pickupRef}
+                      className={`tf-field${openField === "pickup" ? " is-open" : ""}`}
+                    >
+                      <span className="tf-field-dot tf-field-dot--start" aria-hidden="true" />
+                      <div className="tf-field-main">
+                        <label className="tf-field-label" htmlFor="tf-pickup">
+                          {t("transfersPage.pickupLabel") || "აყვანის მისამართი (საიდან)"}
+                        </label>
                         <button
-                          key={loc.id}
+                          id="tf-pickup"
                           type="button"
-                          className={`tf-chip${isSelected ? " is-active" : ""}`}
-                          onClick={() => handleSelectPickup(loc)}
+                          className="tf-field-select"
+                          aria-haspopup="listbox"
+                          aria-expanded={openField === "pickup"}
+                          onClick={() => setOpenField(openField === "pickup" ? null : "pickup")}
                         >
-                          <span>{loc.icon}</span>
-                          <span>{name}</span>
+                          <span className="tf-field-select-text">
+                            <span aria-hidden="true">{pickup.icon}</span> {pickupLabel}
+                          </span>
+                          <ChevronDownIcon size={14} className="tf-field-chevron" />
                         </button>
-                      );
-                    })}
-                  </div>
+                      </div>
 
-                  {/* PICKUP: 3 CITIES ONLY (BATUMI, KUTAISI, TBILISI) */}
-                  <div className="tf-quick-chips">
-                    <span className="tf-chips-group-title">{ui.citiesTab}:</span>
-                    {pickupCities.map((loc) => {
-                      const name = getLocationLabel(loc);
-                      const isSelected = pickupLoc.toLowerCase().includes(loc.id.split("_")[0]);
-                      return (
-                        <button
-                          key={loc.id}
-                          type="button"
-                          className={`tf-chip${isSelected ? " is-active" : ""}`}
-                          onClick={() => handleSelectPickup(loc)}
-                        >
-                          <span>{loc.icon}</span>
-                          <span>{name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* SWAP BUTTON */}
-                <div className="tf-swap-wrap">
-                  <button
-                    type="button"
-                    className="tf-btn-swap"
-                    onClick={handleSwapLocations}
-                    title={ui.swap}
-                    aria-label={ui.swap}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16" />
-                    </svg>
-                  </button>
-                </div>
-
-                {/* DROPOFF BOX (ALL AIRPORTS & DESTINATIONS) */}
-                <div className="tf-loc-box">
-                  <div className="tf-loc-header">
-                    <span className="tf-loc-dot tf-loc-dot--end" />
-                    <label className="tf-loc-label">{t("transfersPage.dropoffLabel") || "ჩასვლის მისამართი (სად)"}</label>
-                  </div>
-
-                  <input
-                    type="text"
-                    value={dropoffLoc}
-                    onChange={(e) => setDropoffLoc(e.target.value)}
-                    placeholder={t("transfersPage.dropoffPlaceholder") || "მაგ: ბათუმი, ყაზბეგი, გუდაური..."}
-                    className="tf-loc-input"
-                    required
-                  />
-
-                  {/* DROPOFF: AIRPORTS */}
-                  <div className="tf-quick-chips">
-                    <span className="tf-chips-group-title">{ui.airportsTab}:</span>
-                    {dropoffAirports.map((loc) => {
-                      const name = getLocationLabel(loc);
-                      const isSelected = dropoffLoc.toLowerCase().includes(loc.id.split("_")[0]);
-                      return (
-                        <button
-                          key={loc.id}
-                          type="button"
-                          className={`tf-chip${isSelected ? " is-active" : ""}`}
-                          onClick={() => handleSelectDropoff(loc)}
-                        >
-                          <span>{loc.icon}</span>
-                          <span>{name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* DROPOFF: ALL POPULAR DESTINATIONS */}
-                  <div className="tf-quick-chips tf-quick-chips--cities">
-                    <span className="tf-chips-group-title">{ui.popularTab}:</span>
-                    {dropoffDestinations.map((loc) => {
-                      const name = getLocationLabel(loc);
-                      const isSelected = dropoffLoc.toLowerCase().includes(loc.id.split("_")[0]);
-                      return (
-                        <button
-                          key={loc.id}
-                          type="button"
-                          className={`tf-chip tf-chip--sm${isSelected ? " is-active" : ""}`}
-                          onClick={() => handleSelectDropoff(loc)}
-                        >
-                          <span>{loc.icon}</span>
-                          <span>{name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* LIVE AI ROUTE SUMMARY BANNER */}
-              {quote && (
-                <div className="tf-live-summary">
-                  <div className="tf-live-summary-left">
-                    <div className="tf-summary-route-line">
-                      <span className="tf-summary-loc">{pickupLoc || "..."}</span>
-                      <span className="tf-summary-arrow">➔</span>
-                      <span className="tf-summary-loc">{dropoffLoc || "..."}</span>
+                      {openField === "pickup" && (
+                        <div className="tf-dd" role="listbox" aria-label={t("transfersPage.pickupLabel") || "Pickup"}>
+                          {[
+                            { title: ui.airportsTab, ids: AIRPORT_IDS },
+                            { title: ui.citiesTab, ids: PICKUP_CITY_IDS },
+                          ].map((group) => (
+                            <div key={group.title} className="tf-dd-group">
+                              <span className="tf-dd-title">{group.title}</span>
+                              <div className="tf-dd-options">
+                                {group.ids.map((id) => {
+                                  const loc = LOCATION_BY_ID[id];
+                                  const active = id === pickupId;
+                                  return (
+                                    <button
+                                      key={id}
+                                      type="button"
+                                      role="option"
+                                      aria-selected={active}
+                                      className={`tf-dd-option${active ? " is-active" : ""}`}
+                                      onClick={() => handleSelectPickup(id)}
+                                    >
+                                      <span className="tf-dd-option-icon" aria-hidden="true">{loc.icon}</span>
+                                      <span className="tf-dd-option-name">{getLocationLabel(loc)}</span>
+                                      {active && <CheckIcon size={14} />}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <div className="tf-summary-metrics">
-                      <span className="tf-metric-badge">
-                        📏 <strong>{quote.distanceKm} კმ</strong> ({ui.distance})
-                      </span>
-                      <span className="tf-metric-badge">
-                        ⏱️ <strong>{quote.formattedDuration}</strong> ({ui.estTime})
-                      </span>
-                      <span className="tf-metric-badge tf-metric-badge--vehicle">
-                        🚘 <strong>{selectedVehicleName}</strong>
-                      </span>
-                      {quote.isSvaneti && (
-                        <span className="tf-metric-badge" style={{ background: "rgba(217, 119, 6, 0.12)", color: "#b45309", borderColor: "rgba(217, 119, 6, 0.3)" }}>
-                          <strong>{ui.svanetiIncluded}</strong>
-                        </span>
+
+                    <button
+                      type="button"
+                      className="tf-btn-swap"
+                      onClick={handleSwapLocations}
+                      disabled={!canSwap}
+                      title={canSwap ? ui.swap : ui.swapDisabled}
+                      aria-label={ui.swap}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16" />
+                      </svg>
+                    </button>
+
+                    <div
+                      ref={dropoffRef}
+                      className={`tf-field${openField === "dropoff" ? " is-open" : ""}${dropoffError ? " has-error" : ""}`}
+                      onBlur={(e) => {
+                        if (!e.currentTarget.contains(e.relatedTarget)) setOpenField(null);
+                      }}
+                    >
+                      <span className="tf-field-dot tf-field-dot--end" aria-hidden="true" />
+                      <div className="tf-field-main">
+                        <label className="tf-field-label" htmlFor="tf-dropoff">
+                          {t("transfersPage.dropoffLabel") || "ჩასვლის მისამართი (სად)"}
+                        </label>
+                        <div className="tf-field-input-wrap">
+                          <SearchIcon size={16} className="tf-field-search-icon" />
+                          <input
+                            id="tf-dropoff"
+                            ref={dropoffInputRef}
+                            type="text"
+                            role="combobox"
+                            aria-expanded={openField === "dropoff"}
+                            aria-autocomplete="list"
+                            autoComplete="off"
+                            value={dropoffText}
+                            onFocus={(e) => {
+                              setOpenField("dropoff");
+                              e.target.select();
+                            }}
+                            onChange={(e) => handleDropoffChange(e.target.value)}
+                            onKeyDown={handleDropoffKeyDown}
+                            placeholder={ui.dropoffSearchPlaceholder}
+                            className="tf-field-input"
+                          />
+                          {dropoffText && (
+                            <button type="button" className="tf-field-clear" onClick={clearDropoff} aria-label={ui.clear}>
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {openField === "dropoff" && (
+                        // preventDefault keeps focus in the input, so picking an option never blurs it first.
+                        <div className="tf-dd" role="listbox" onMouseDown={(e) => e.preventDefault()}>
+                          {!typedQuery ? (
+                            <>
+                              <p className="tf-dd-hint">🗺️ {ui.anyPlaceHint}</p>
+                              {[
+                                { title: ui.airportsTab, ids: AIRPORT_IDS },
+                                { title: ui.popularTab, ids: DESTINATION_IDS },
+                              ].map((group) => (
+                                <div key={group.title} className="tf-dd-group">
+                                  <span className="tf-dd-title">{group.title}</span>
+                                  <div className="tf-dd-options">
+                                    {group.ids.map((id) => {
+                                      const loc = LOCATION_BY_ID[id];
+                                      const active = dropoff?.kind === "known" && dropoff.id === id;
+                                      return (
+                                        <button
+                                          key={id}
+                                          type="button"
+                                          role="option"
+                                          aria-selected={active}
+                                          className={`tf-dd-option${active ? " is-active" : ""}`}
+                                          onClick={() => selectKnownDropoff(id)}
+                                        >
+                                          <span className="tf-dd-option-icon" aria-hidden="true">{loc.icon}</span>
+                                          <span className="tf-dd-option-name">{getLocationLabel(loc)}</span>
+                                          {active && <CheckIcon size={14} />}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ))}
+                            </>
+                          ) : (
+                            <>
+                              {knownMatches.length > 0 && (
+                                <div className="tf-dd-group">
+                                  <span className="tf-dd-title">{ui.popularTab}</span>
+                                  <div className="tf-dd-options">
+                                    {knownMatches.map((loc) => (
+                                      <button
+                                        key={loc.id}
+                                        type="button"
+                                        role="option"
+                                        aria-selected={false}
+                                        className="tf-dd-option"
+                                        onClick={() => selectKnownDropoff(loc.id)}
+                                      >
+                                        <span className="tf-dd-option-icon" aria-hidden="true">{loc.icon}</span>
+                                        <span className="tf-dd-option-name">{getLocationLabel(loc)}</span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="tf-dd-group">
+                                <span className="tf-dd-title">{ui.mapResults}</span>
+                                {mapItems.length > 0 ? (
+                                  <div className="tf-dd-list">
+                                    {mapItems.map((place) => (
+                                      <button
+                                        key={place.id}
+                                        type="button"
+                                        role="option"
+                                        aria-selected={false}
+                                        className="tf-dd-place"
+                                        onClick={() => selectPlace(place)}
+                                      >
+                                        <span className="tf-dd-place-pin" aria-hidden="true">📍</span>
+                                        <span className="tf-dd-place-text">
+                                          <span className="tf-dd-place-name">{place.name}</span>
+                                          {place.detail && <span className="tf-dd-place-detail">{place.detail}</span>}
+                                        </span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                ) : typedQuery.length >= 2 && mapSearch.query !== typedQuery ? (
+                                  <div className="tf-dd-searching" role="status">
+                                    <div className="tf-dd-searching-head">
+                                      <span className="tf-mini-radar" aria-hidden="true"><span /></span>
+                                      {ui.searching}
+                                    </div>
+                                    {[0, 1, 2].map((i) => (
+                                      <div key={i} className="tf-skel-row" aria-hidden="true">
+                                        <span className="tf-skel tf-skel--pin" />
+                                        <span className="tf-skel-lines">
+                                          <span className="tf-skel" />
+                                          <span className="tf-skel tf-skel--short" />
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="tf-dd-status">
+                                    {typedQuery.length < 2 ? ui.anyPlaceHint : ui.noResults}
+                                  </p>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
 
-                  <div className="tf-live-summary-right">
-                    <span className="tf-price-label">{ui.totalPrice}</span>
-                    <span className="tf-price-val">~{quote.priceGEL} ₾</span>
+                  {dropoffError && <p className="tf-route-error">⚠️ {ui.pickDropoff}</p>}
+                </section>
+
+                <section className="tf-step">
+                  <div className="tf-step-head">
+                    <span className="tf-step-num">2</span>
+                    <h3 className="tf-step-title">{ui.stepVehicle}</h3>
                   </div>
-                </div>
-              )}
+                  <div className="tf-vehicles-grid" role="radiogroup" aria-label={t("transfersPage.vehicleLabel") || "Vehicle"}>
+                    {fleetKeys.map((key) => {
+                      const data = TRANSFER_VEHICLES[key];
+                      const vMeta = t(`transfersPage.vehicles.${key}`) || {};
+                      const isSelected = selectedVehicleKey === key;
+                      const calculatedPrice = quote?.allVehiclePrices[key];
 
-              {/* VEHICLE SELECTION TILES (DYNAMIC TOTAL PRICES ONLY, NO KM RATES) */}
-              <div className="tf-vehicles-wrapper">
-                <label className="tf-section-label">{t("transfersPage.vehicleLabel") || "აირჩიეთ ავტომობილი"}</label>
-
-                <div className="tf-vehicles-grid">
-                  {fleetKeys.map((key) => {
-                    const data = VEHICLE_RATES[key];
-                    const vMeta = t(`transfersPage.vehicles.${key}`) || {};
-                    const isSelected = selectedVehicleKey === key;
-                    const calculatedPrice = quote?.allVehiclePrices[key] || Math.round(100 * data.ratePerKm);
-
-                    return (
-                      <div
-                        key={key}
-                        onClick={() => handleSelectVehicle(key)}
-                        className={`tf-vehicle-tile${isSelected ? " is-selected" : ""}`}
-                      >
-                        <div className="tf-v-tile-top">
+                      return (
+                        <div
+                          key={key}
+                          role="radio"
+                          aria-checked={isSelected}
+                          tabIndex={0}
+                          onClick={() => handleSelectVehicle(key)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              handleSelectVehicle(key);
+                            }
+                          }}
+                          className={`tf-vehicle-tile${isSelected ? " is-selected" : ""}`}
+                        >
+                          <span className={`tf-v-radio${isSelected ? " is-on" : ""}`} aria-hidden="true">
+                            {isSelected && <CheckIcon size={12} />}
+                          </span>
                           <div className="tf-v-img-wrap">
                             <Image
                               src={data.img}
@@ -583,162 +909,245 @@ export default function TransfersClient() {
                               style={{ objectFit: "contain" }}
                             />
                           </div>
-                          {isSelected && <span className="tf-v-check"><CheckIcon size={14} /></span>}
-                        </div>
 
-                        <div className="tf-v-tile-body">
-                          <h4 className="tf-v-name">{vMeta.name || data.nameKa}</h4>
-
-                          <div className="tf-v-specs">
-                            <span>👥 {data.capacityPax} pax</span>
-                            <span>🧳 {data.capacityBags} bags</span>
-                          </div>
-
-                          <div className="tf-v-calculated-price">
-                            <span className="tf-v-p-label">{ui.totalPrice}:</span>
-                            <span className="tf-v-p-amount">~{calculatedPrice} ₾</span>
+                          <div className="tf-v-tile-body">
+                            <h4 className="tf-v-name">{vMeta.name || data.nameKa}</h4>
+                            <div className="tf-v-specs">
+                              <span>👥 {data.capacityPax} {ui.pax}</span>
+                              <span>🧳 {data.capacityBags} {ui.bags}</span>
+                            </div>
+                            <div className="tf-v-calculated-price">
+                              <span className="tf-v-p-label">{ui.totalPrice}</span>
+                              <span className="tf-v-p-amount">{calculatedPrice != null ? `~${calculatedPrice} ₾` : "—"}</span>
+                            </div>
                           </div>
                         </div>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <section className="tf-step">
+                  <div className="tf-step-head">
+                    <span className="tf-step-num">3</span>
+                    <h3 className="tf-step-title">{ui.stepDetails}</h3>
+                  </div>
+                  {/* DATE, TIME & PASSENGERS ROW */}
+                  <div className="tf-inputs-row">
+                    <div>
+                      <label className="tf-label">{t("transfersPage.dateLabel") || "მგზავრობის თარიღი"}</label>
+                      <DatePicker
+                        value={transferDate}
+                        onChange={(dStr) => setTransferDate(dStr)}
+                        placeholder={t("transfersPage.datePlaceholder") || "აირჩიეთ თარიღი"}
+                        direction="down"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="tf-label">{t("transfersPage.timeLabel") || "მგზავრობის / ფრენის დრო"}</label>
+                      <input
+                        type="text"
+                        placeholder={t("transfersPage.timePlaceholder") || "მაგ: 14:30"}
+                        value={transferTime}
+                        onChange={(e) => setTransferTime(e.target.value)}
+                        className="tf-input-styled"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="tf-label">{t("transfersPage.passengersLabel") || "მგზავრთა რაოდენობა"}</label>
+                      <div className="tf-stepper-wrap">
+                        <button
+                          type="button"
+                          className="tf-stepper-btn"
+                          onClick={() => setPassengerCount(String(Math.max(1, parseInt(passengerCount || "1", 10) - 1)))}
+                          disabled={parseInt(passengerCount, 10) <= 1}
+                        >
+                          −
+                        </button>
+                        <input
+                          type="number"
+                          min="1"
+                          max={TRANSFER_VEHICLES[selectedVehicleKey]?.capacityPax || 16}
+                          value={passengerCount}
+                          onChange={(e) => setPassengerCount(e.target.value)}
+                          required
+                          className="tf-stepper-input"
+                        />
+                        <button
+                          type="button"
+                          className="tf-stepper-btn"
+                          onClick={() => {
+                            const maxPax = TRANSFER_VEHICLES[selectedVehicleKey]?.capacityPax || 16;
+                            setPassengerCount(String(Math.min(maxPax, parseInt(passengerCount || "1", 10) + 1)));
+                          }}
+                        >
+                          +
+                        </button>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* DATE, TIME & PASSENGERS ROW */}
-              <div className="tf-inputs-row">
-                <div>
-                  <label className="tf-label">{t("transfersPage.dateLabel") || "მგზავრობის თარიღი"}</label>
-                  <DatePicker
-                    value={transferDate}
-                    onChange={(dStr) => setTransferDate(dStr)}
-                    placeholder={t("transfersPage.datePlaceholder") || "აირჩიეთ თარიღი"}
-                    direction="down"
-                  />
-                </div>
-
-                <div>
-                  <label className="tf-label">{t("transfersPage.timeLabel") || "მგზავრობის / ფრენის დრო"}</label>
-                  <input
-                    type="text"
-                    placeholder={t("transfersPage.timePlaceholder") || "მაგ: 14:30"}
-                    value={transferTime}
-                    onChange={(e) => setTransferTime(e.target.value)}
-                    className="tf-input-styled"
-                  />
-                </div>
-
-                <div>
-                  <label className="tf-label">{t("transfersPage.passengersLabel") || "მგზავრთა რაოდენობა"}</label>
-                  <div className="tf-stepper-wrap">
-                    <button
-                      type="button"
-                      className="tf-stepper-btn"
-                      onClick={() => setPassengerCount(String(Math.max(1, parseInt(passengerCount || "1", 10) - 1)))}
-                      disabled={parseInt(passengerCount, 10) <= 1}
-                    >
-                      −
-                    </button>
-                    <input
-                      type="number"
-                      min="1"
-                      max={VEHICLE_RATES[selectedVehicleKey]?.capacityPax || 16}
-                      value={passengerCount}
-                      onChange={(e) => setPassengerCount(e.target.value)}
-                      required
-                      className="tf-stepper-input"
-                    />
-                    <button
-                      type="button"
-                      className="tf-stepper-btn"
-                      onClick={() => {
-                        const maxPax = VEHICLE_RATES[selectedVehicleKey]?.capacityPax || 16;
-                        setPassengerCount(String(Math.min(maxPax, parseInt(passengerCount || "1", 10) + 1)));
-                      }}
-                    >
-                      +
-                    </button>
+                    </div>
                   </div>
-                </div>
+
+                  {/* CONTACT DETAILS */}
+                  <div className="tf-contact-grid">
+                    <div>
+                      <label className="tf-label">{t("tourDetail.yourName") || "თქვენი სახელი"}</label>
+                      <input
+                        type="text"
+                        placeholder={t("tourDetail.namePlaceholder") || "მაგ: გიორგი"}
+                        value={contactName}
+                        onChange={(e) => setContactName(e.target.value)}
+                        className="tf-input-styled"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="tf-label">{t("transfersPage.phoneLabel") || "ტელეფონის ნომერი / WhatsApp"}</label>
+                      <input
+                        type="tel"
+                        placeholder={t("transfersPage.phonePlaceholder") || "+995 5XX XX XX XX"}
+                        value={contactPhone}
+                        onChange={(e) => {
+                          setContactPhone(e.target.value);
+                          if (phoneError) setPhoneError("");
+                        }}
+                        required
+                        className="tf-input-styled"
+                        style={phoneError ? { borderColor: "#ef4444", boxShadow: "0 0 0 3px rgba(239, 68, 68, 0.2)" } : {}}
+                      />
+                      {phoneError && (
+                        <p style={{ color: "#ef4444", fontSize: "0.82rem", marginTop: "0.35rem", fontWeight: 600 }}>
+                          ⚠️ {phoneError}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="tf-field-full">
+                      <label className="tf-label">{t("transfersPage.flightLabel") || "ფრენის ნომერი / შენიშვნა"}</label>
+                      <textarea
+                        rows={2}
+                        placeholder={t("transfersPage.flightPlaceholder") || "მაგ: ფრენის ნომერი TK382, 3 ჩემოდანი..."}
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        className="tf-input-styled"
+                      />
+                    </div>
+                  </div>
+                </section>
               </div>
 
-              {/* CONTACT DETAILS */}
-              <div className="tf-contact-grid">
-                <div>
-                  <label className="tf-label">{t("tourDetail.yourName") || "თქვენი სახელი"}</label>
-                  <input
-                    type="text"
-                    placeholder={t("tourDetail.namePlaceholder") || "მაგ: გიორგი"}
-                    value={contactName}
-                    onChange={(e) => setContactName(e.target.value)}
-                    className="tf-input-styled"
-                  />
-                </div>
+              <aside className="tf-calc-aside">
+                <div
+                  className={`tf-ticket${routeLoading ? " is-loading" : ""}${quote ? " has-quote" : ""}`}
+                  aria-live="polite"
+                  aria-busy={routeLoading}
+                >
+                  <div className="tf-ticket-head">
+                    <span className="tf-ticket-kicker">{ui.tripSummary}</span>
+                    {route?.source === "map" && !routeLoading && <span className="tf-ticket-chip">🗺️ {ui.viaMapShort}</span>}
+                  </div>
 
-                <div>
-                  <label className="tf-label">{t("transfersPage.phoneLabel") || "ტელეფონის ნომერი / WhatsApp"}</label>
-                  <input
-                    type="tel"
-                    placeholder={t("transfersPage.phonePlaceholder") || "+995 5XX XX XX XX"}
-                    value={contactPhone}
-                    onChange={(e) => {
-                      setContactPhone(e.target.value);
-                      if (phoneError) setPhoneError("");
-                    }}
-                    required
-                    className="tf-input-styled"
-                    style={phoneError ? { borderColor: "#ef4444", boxShadow: "0 0 0 3px rgba(239, 68, 68, 0.2)" } : {}}
-                  />
-                  {phoneError && (
-                    <p style={{ color: "#ef4444", fontSize: "0.82rem", marginTop: "0.35rem", fontWeight: 600 }}>
-                      ⚠️ {phoneError}
-                    </p>
+                  <div className="tf-ticket-route">
+                    <div className="tf-ticket-stop">
+                      <span className="tf-ticket-dot tf-ticket-dot--start" aria-hidden="true" />
+                      <div className="tf-ticket-stop-text">
+                        <span className="tf-ticket-stop-label">{ui.from}</span>
+                        <strong className="tf-ticket-stop-name">{pickupLabel}</strong>
+                      </div>
+                    </div>
+                    <div className="tf-ticket-track" aria-hidden="true">
+                      <span className="tf-ticket-car" />
+                    </div>
+                    <div className="tf-ticket-stop">
+                      <span className="tf-ticket-dot tf-ticket-dot--end" aria-hidden="true" />
+                      <div className="tf-ticket-stop-text">
+                        <span className="tf-ticket-stop-label">{ui.to}</span>
+                        <strong className="tf-ticket-stop-name">{dropoffName || "—"}</strong>
+                        {dropoffDetail && <span className="tf-ticket-stop-detail">{dropoffDetail}</span>}
+                      </div>
+                    </div>
+                  </div>
+
+                  {routeLoading ? (
+                    <div className="tf-ticket-loading">
+                      <div className="tf-radar" aria-hidden="true">
+                        <span className="tf-radar-ring" />
+                        <span className="tf-radar-ring tf-radar-ring--2" />
+                        <span className="tf-radar-pin">📍</span>
+                      </div>
+                      <div className="tf-ticket-loading-text">
+                        <strong>{ui.calculating}</strong>
+                        <span className="tf-skel tf-skel--light" />
+                        <span className="tf-skel tf-skel--light tf-skel--short" />
+                      </div>
+                    </div>
+                  ) : quote ? (
+                    <div className="tf-ticket-metrics">
+                      <div className="tf-ticket-metric">
+                        <span className="tf-ticket-metric-icon" aria-hidden="true">📏</span>
+                        <strong>{quote.distanceKm} {ui.km}</strong>
+                        <span>{ui.distance}</span>
+                      </div>
+                      <div className="tf-ticket-metric">
+                        <span className="tf-ticket-metric-icon" aria-hidden="true">⏱️</span>
+                        <strong>{quote.formattedDuration}</strong>
+                        <span>{ui.estTime}</span>
+                      </div>
+                      <div className="tf-ticket-metric">
+                        <span className="tf-ticket-metric-icon" aria-hidden="true">🚘</span>
+                        <strong>{selectedVehicleName}</strong>
+                        <span>{ui.vehicle}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="tf-ticket-empty">📍 {ui.pickDropoff}</p>
                   )}
+
+                  <div className="tf-ticket-price">
+                    <span className="tf-price-label">{ui.totalPrice}</span>
+                    {routeLoading ? (
+                      <span className="tf-skel tf-skel--price" aria-hidden="true" />
+                    ) : (
+                      <span key={`${quote?.priceGEL}-${selectedVehicleKey}`} className="tf-price-val">
+                        {quote?.priceGEL != null ? `~${quote.priceGEL} ₾` : "—"}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <div className="tf-field-full">
-                  <label className="tf-label">{t("transfersPage.flightLabel") || "ფრენის ნომერი / შენიშვნა"}</label>
-                  <textarea
-                    rows={2}
-                    placeholder={t("transfersPage.flightPlaceholder") || "მაგ: ფრენის ნომერი TK382, 3 ჩემოდანი..."}
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    className="tf-input-styled"
-                  />
-                </div>
-              </div>
+                {/* SUBMIT BUTTON */}
+                <div className="tf-submit-wrap">
+                  <button type="submit" className="btn-tf-whatsapp" disabled={isSubmitting}>
+                    <WhatsAppIcon width={24} height={24} />
+                    <span>
+                      {quote?.priceGEL
+                        ? `${t("transfersPage.submitBtn") || "დაჯავშნა WhatsApp-ზე"} (~${quote.priceGEL} ₾)`
+                        : t("transfersPage.submitBtn") || "დაჯავშნა WhatsApp-ზე"}
+                    </span>
+                  </button>
 
-              {/* SUBMIT BUTTON */}
-              <div className="tf-submit-wrap">
-                <button type="submit" className="btn-tf-whatsapp" disabled={isSubmitting}>
-                  <WhatsAppIcon width={24} height={24} />
-                  <span>
-                    {quote?.priceGEL
-                      ? `${t("transfersPage.submitBtn") || "დაჯავშნა WhatsApp-ზე"} (~${quote.priceGEL} ₾)`
-                      : t("transfersPage.submitBtn") || "დაჯავშნა WhatsApp-ზე"}
-                  </span>
-                </button>
-
-                {/* TRUST BADGES */}
-                <div className="tf-trust-badges-grid" dir={lang === "ar" ? "rtl" : "ltr"}>
-                  <div className="tf-trust-badge-item">
-                    <span className="tf-trust-badge-icon"><CheckIcon size={16} /></span>
-                    <span className="tf-trust-badge-text">{ui.cancellation}</span>
-                  </div>
-                  <div className="tf-trust-badge-item">
-                    <span className="tf-trust-badge-icon"><CheckIcon size={16} /></span>
-                    <span className="tf-trust-badge-text">{ui.payOnArrival}</span>
-                  </div>
-                  <div className="tf-trust-badge-item">
-                    <span className="tf-trust-badge-icon"><CheckIcon size={16} /></span>
-                    <span className="tf-trust-badge-text">{ui.instantWa}</span>
-                  </div>
-                  <div className="tf-trust-badge-item">
-                    <span className="tf-trust-badge-icon"><CheckIcon size={16} /></span>
-                    <span className="tf-trust-badge-text">{ui.guaranteed}</span>
+                  {/* TRUST BADGES */}
+                  <div className="tf-trust-badges-grid" dir={lang === "ar" ? "rtl" : "ltr"}>
+                    <div className="tf-trust-badge-item">
+                      <span className="tf-trust-badge-icon"><CheckIcon size={16} /></span>
+                      <span className="tf-trust-badge-text">{ui.cancellation}</span>
+                    </div>
+                    <div className="tf-trust-badge-item">
+                      <span className="tf-trust-badge-icon"><CheckIcon size={16} /></span>
+                      <span className="tf-trust-badge-text">{ui.payOnArrival}</span>
+                    </div>
+                    <div className="tf-trust-badge-item">
+                      <span className="tf-trust-badge-icon"><CheckIcon size={16} /></span>
+                      <span className="tf-trust-badge-text">{ui.instantWa}</span>
+                    </div>
+                    <div className="tf-trust-badge-item">
+                      <span className="tf-trust-badge-icon"><CheckIcon size={16} /></span>
+                      <span className="tf-trust-badge-text">{ui.guaranteed}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </aside>
             </form>
           </div>
         </div>
@@ -756,10 +1165,10 @@ export default function TransfersClient() {
 
           <div className="transfers-fleet-grid">
             {fleetKeys.map((key) => {
-              const data = VEHICLE_RATES[key];
+              const data = TRANSFER_VEHICLES[key];
               const vMeta = t(`transfersPage.vehicles.${key}`) || {};
               const isSelected = selectedVehicleKey === key;
-              const calculatedPrice = quote?.allVehiclePrices[key] || Math.round(100 * data.ratePerKm);
+              const calculatedPrice = quote?.allVehiclePrices[key];
 
               return (
                 <div key={key} className={`transfers-fleet-card${isSelected ? " is-selected" : ""}`}>
@@ -790,7 +1199,7 @@ export default function TransfersClient() {
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "0.8rem", paddingTop: "0.8rem", borderTop: "1px solid var(--gt-line)" }}>
                       <div>
                         <span style={{ fontSize: "0.75rem", color: "var(--gt-muted)", display: "block" }}>{ui.totalPrice}</span>
-                        <span style={{ fontSize: "1.25rem", fontWeight: 900, color: "var(--gt-ink)" }}>~{calculatedPrice} ₾</span>
+                        <span style={{ fontSize: "1.25rem", fontWeight: 900, color: "var(--gt-ink)" }}>{calculatedPrice != null ? `~${calculatedPrice} ₾` : "—"}</span>
                       </div>
                       <button
                         type="button"
