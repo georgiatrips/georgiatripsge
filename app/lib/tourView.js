@@ -1,4 +1,5 @@
-import { MONTH_NAMES, normalizeFirestoreTour, translateDuration, translateLocation } from "./toursShared";
+import { MONTH_NAMES, getTourRegions, normalizeFirestoreTour, translateDuration, translateLocation } from "./toursShared";
+import { REGIONS_TRANSLATIONS, formatRegionName } from "./placesMeta";
 
 // Presentation model for tour cards and summaries. Pure functions — safe in
 // server and client components. Everything shown comes from the Firestore
@@ -61,6 +62,11 @@ export function isLowSeats(freeSeats, capacity) {
   return freeSeats <= Math.min(6, Math.max(1, Math.floor((capacity || 18) / 3)));
 }
 
+function regionLabel(name, lang) {
+  if (REGIONS_TRANSLATIONS[name]) return formatRegionName(name, lang);
+  return translateLocation(name, lang).replace(/^📍\s*/, "");
+}
+
 // `badges` is the "tourBadges" message map for `lang` (t("tourBadges") on
 // the client, translate(lang, "tourBadges") on the server).
 export function toTourView(raw, lang = "en", places = [], badges = null) {
@@ -70,6 +76,7 @@ export function toTourView(raw, lang = "en", places = [], badges = null) {
   const groupPrice = tour.hasGroup ? positiveNumber(raw.priceGroup) : null;
   const privatePrice = tour.hasPrivate ? positiveNumber(raw.pricePrivate) : null;
   const departures = getUpcomingDepartures(raw);
+  const regions = getTourRegions(raw).map((name) => regionLabel(name, lang)).filter(Boolean);
   const badgeKey = typeof raw.badge === "string" ? raw.badge : raw.badge?.ka || "";
   const badge = badgeKey ? (badges && typeof badges === "object" && badges[badgeKey]) || (lang === "ka" ? badgeKey : "") : "";
 
@@ -80,7 +87,8 @@ export function toTourView(raw, lang = "en", places = [], badges = null) {
     desc: tour.desc,
     img: tour.img,
     photoCount: Array.isArray(tour.gallery) ? tour.gallery.length : 0,
-    region: translateLocation(tour.destinationLabel || tour.destination || "", lang).replace(/^📍\s*/, ""),
+    region: regions[0] || "",
+    regions,
     duration: translateDuration(tour.duration, lang),
     isMultiDay: tour.type === "multiday",
     hasGroup: Boolean(groupPrice),

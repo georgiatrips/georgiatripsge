@@ -106,7 +106,13 @@ export function subscribeToBookings(callback) {
       orderBy("createdAt", "desc")
     );
 
-    return onSnapshot(
+    // Every listener gets an error handler: without one Firestore logs
+    // "Uncaught Error in snapshot listener". `unsubscribe` always points at
+    // the listener that is currently open, fallback included.
+    const onListenError = (err) => {
+      console.warn("Bookings real-time listener stopped:", err?.code || err);
+    };
+    let unsubscribe = onSnapshot(
       q,
       (snapshot) => {
         const items = snapshot.docs.map((docSnap) =>
@@ -115,17 +121,27 @@ export function subscribeToBookings(callback) {
         callback(items);
       },
       (err) => {
-        console.warn("Bookings real-time error, falling back:", err);
-        // Fallback unsorted snapshot
-        return onSnapshot(collection(db, BOOKINGS_COLLECTION), (snapshot) => {
-          const items = snapshot.docs.map((docSnap) =>
-            normalizeBooking(docSnap.data(), docSnap.id)
-          );
-          items.sort((a, b) => (b.createdAtMillis || 0) - (a.createdAtMillis || 0));
-          callback(items);
-        });
+        // Only a missing index is worth retrying unsorted; permission-denied
+        // would fail the same way again.
+        if (err?.code !== "failed-precondition") {
+          onListenError(err);
+          return;
+        }
+        console.warn("Bookings index missing, falling back to unsorted listener");
+        unsubscribe = onSnapshot(
+          collection(db, BOOKINGS_COLLECTION),
+          (snapshot) => {
+            const items = snapshot.docs.map((docSnap) =>
+              normalizeBooking(docSnap.data(), docSnap.id)
+            );
+            items.sort((a, b) => (b.createdAtMillis || 0) - (a.createdAtMillis || 0));
+            callback(items);
+          },
+          onListenError
+        );
       }
     );
+    return () => unsubscribe();
   } catch (err) {
     console.error("subscribeToBookings error:", err);
     return () => {};

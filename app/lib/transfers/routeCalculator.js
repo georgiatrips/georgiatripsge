@@ -6,37 +6,9 @@
  */
 
 import { TRANSFER_VEHICLE_KEYS, getRatePerKm, getTransferFare } from "./pricing";
+import { VEHICLES } from "../vehicles";
 
-export const TRANSFER_VEHICLES = {
-  sedan: {
-    key: "sedan",
-    nameKa: "სედანი",
-    capacityPax: 3,
-    capacityBags: 2,
-    img: "/1car.webp",
-  },
-  minivan: {
-    key: "minivan",
-    nameKa: "მინივენი",
-    capacityPax: 6,
-    capacityBags: 5,
-    img: "/2car.webp",
-  },
-  jeep: {
-    key: "jeep",
-    nameKa: "ჯიპი / SUV (4x4)",
-    capacityPax: 4,
-    capacityBags: 3,
-    img: "/3car.webp",
-  },
-  sprinter: {
-    key: "sprinter",
-    nameKa: "VIP სპრინტერი",
-    capacityPax: 16,
-    capacityBags: 14,
-    img: "/4car.webp",
-  },
-};
+export const TRANSFER_VEHICLES = VEHICLES;
 
 export const TRANSFER_LOCATIONS = [
   // AIRPORTS

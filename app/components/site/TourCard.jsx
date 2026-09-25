@@ -32,9 +32,16 @@ export default function TourCard({ tour, lang, t, headingLevel = 3, eager = fals
         )}
         {tour.badge && <span className="gt-chip gt-chip--light gt-tour-card-badge">{tour.badge}</span>}
         {tour.region && (
-          <span className="gt-tour-card-region">
+          // Several regions: the first by name, the rest as a "+N" pill (all
+          // of them in the tooltip) so a long list never covers the photo.
+          <span className="gt-tour-card-region" title={tour.regions?.length > 1 ? tour.regions.join(", ") : undefined}>
             <LocationIcon size={14} />
-            {tour.region}
+            <span className="gt-tour-card-region-name">{tour.region}</span>
+            {tour.regions?.length > 1 && (
+              <span className="gt-tour-card-region-more" aria-label={tour.regions.slice(1).join(", ")}>
+                +{tour.regions.length - 1}
+              </span>
+            )}
           </span>
         )}
       </div>

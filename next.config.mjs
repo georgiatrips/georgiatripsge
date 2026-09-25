@@ -49,6 +49,16 @@ const nextConfig = {
         source: "/sw.js",
         headers: [{ key: "Cache-Control", value: "no-cache" }],
       },
+      {
+        // Baseline hygiene headers. Referrer-Policy keeps the full URL on
+        // same-origin navigations (analytics) while sending only the origin
+        // to third parties, which is also what Google recommends.
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        ],
+      },
     ];
   },
   async redirects() {

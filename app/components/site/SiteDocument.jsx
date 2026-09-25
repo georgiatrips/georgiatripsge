@@ -22,6 +22,7 @@ import CookieConsent from "../CookieConsent";
 import AnalyticsTracker from "../AnalyticsTracker";
 import WelcomeCouponPopup from "../WelcomeCouponPopup";
 import ScrollReveal from "./ScrollReveal";
+import ViewTransitionErrorFilter from "./ViewTransitionErrorFilter";
 
 // Variable fonts: one file per family/subset instead of one per weight.
 const notoGeorgian = Noto_Sans_Georgian({
@@ -115,6 +116,7 @@ export default function SiteDocument({ lang, children }) {
             <AuthProvider>
               <CouponProvider>
                 {/* Page changes crossfade; styles in styles/motion.css (.gt-page). */}
+                <ViewTransitionErrorFilter />
                 <ViewTransition default="gt-page">{children}</ViewTransition>
                 <Suspense fallback={null}>
                   <AnalyticsTracker />

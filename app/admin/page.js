@@ -26,6 +26,7 @@ import { useAuth } from "../lib/AuthContext";
 import { useCurrency } from "../lib/currency/CurrencyContext";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 import { adminFetch } from "../lib/apiClient";
+import { VEHICLES, VEHICLE_KEYS, getPrivateVehiclePrices } from "../lib/vehicles";
 import { uploadImage, uploadImages } from "../lib/imageUpload";
 import { tourPath, uniqueSlugFor } from "../lib/slugs";
 import {
@@ -38,7 +39,10 @@ import {
   matchesMultiLang,
   firestoreErrorMessage,
   extractImageUrl,
+  getTourRegions,
 } from "../lib/toursFirestore";
+
+const emptyVehiclePrices = () => Object.fromEntries(VEHICLE_KEYS.map((key) => [key, ""]));
 
 const emptyLocation = () => ({
   placeId: "",
@@ -58,7 +62,9 @@ export default function AdminPage() {
   const [durationDays, setDurationDays] = useState("");
   const [durationNights, setDurationNights] = useState("");
   const [durationHours, setDurationHours] = useState("");
-  const [destination, setDestination] = useState(GEORGIA_REGIONS[0]);
+  // Regions the tour covers, primary first (it also fills the legacy
+  // single `destination` field that older code and filters still read).
+  const [destinations, setDestinations] = useState([GEORGIA_REGIONS[0]]);
   const [groupMin, setGroupMin] = useState("1");
   const [groupMax, setGroupMax] = useState("18");
   const [privateGroupMin, setPrivateGroupMin] = useState("1");
@@ -67,6 +73,15 @@ export default function AdminPage() {
   const [hasPrivate, setHasPrivate] = useState(true);
   const [priceGroup, setPriceGroup] = useState("");
   const [pricePrivate, setPricePrivate] = useState("");
+  // Private price per vehicle ("" = the tour isn't offered in that vehicle).
+  const [vehiclePrices, setVehiclePrices] = useState(emptyVehiclePrices);
+  const filledVehiclePrices = Object.fromEntries(
+    VEHICLE_KEYS.filter((key) => Number(vehiclePrices[key]) > 0).map((key) => [key, Number(vehiclePrices[key])])
+  );
+  const hasVehiclePrices = Object.keys(filledVehiclePrices).length > 0;
+  // With vehicle prices, the tour's private price is the cheapest vehicle
+  // (what cards show as the starting price).
+  const effectivePricePrivate = hasVehiclePrices ? Math.min(...Object.values(filledVehiclePrices)) : pricePrivate;
   const [isVip, setIsVip] = useState(false);
   const [isPopular, setIsPopular] = useState(false);
   const [selectedBadge, setSelectedBadge] = useState(TOUR_BADGE_OPTIONS[0]);
@@ -86,7 +101,14 @@ export default function AdminPage() {
   const [existingTours, setExistingTours] = useState([]);
   const [loadingList, setLoadingList] = useState(true);
 
+  const destination = destinations[0] || GEORGIA_REGIONS[0];
   const destinationLabel = destination;
+  const toggleDestination = (region) =>
+    setDestinations((prev) => {
+      if (!prev.includes(region)) return [...prev, region];
+      // Keep at least one region selected.
+      return prev.length > 1 ? prev.filter((item) => item !== region) : prev;
+    });
 
   const [activeTab, setActiveTab] = useState("tours");
   const [tourSearchQuery, setTourSearchQuery] = useState("");
@@ -118,7 +140,20 @@ export default function AdminPage() {
       })
       .catch(() => {});
 
-    // Live Analytics real-time listener for badge
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Live visitors and pending bookings (tab badges). Only admins may list
+  // these collections, so the listeners wait until Firebase has restored the
+  // session and confirmed the admin flag; subscribing on first render ran
+  // them signed-out and Firestore answered permission-denied.
+  const isAdminUser = Boolean(user?.isAdmin);
+  useEffect(() => {
+    if (!isAdminUser) return undefined;
+    let active = true;
+
     const unsubSessions = subscribeToLiveSessions((sessions) => {
       if (!active) return;
       const now = Date.now();
@@ -126,7 +161,6 @@ export default function AdminPage() {
       setLiveVisitorsCount(online);
     });
 
-    // Bookings real-time listener for badge
     const unsubBookings = subscribeToBookings((items) => {
       if (!active) return;
       const pendingCount = items.filter((b) => (b.status || "pending") === "pending").length;
@@ -138,7 +172,7 @@ export default function AdminPage() {
       unsubSessions();
       unsubBookings();
     };
-  }, []);
+  }, [isAdminUser]);
 
 
   const schedulePreview = groupDepartureDates(departureDates);
@@ -386,7 +420,7 @@ export default function AdminPage() {
     setDurationDays("");
     setDurationNights("");
     setDurationHours("");
-    setDestination(GEORGIA_REGIONS[0]);
+    setDestinations([GEORGIA_REGIONS[0]]);
     setGroupMin("1");
     setGroupMax("18");
     setPrivateGroupMin("1");
@@ -395,6 +429,7 @@ export default function AdminPage() {
     setHasPrivate(true);
     setPriceGroup("");
     setPricePrivate("");
+    setVehiclePrices(emptyVehiclePrices());
     setIsVip(false);
     setIsPopular(false);
     setIsPopular(false);
@@ -423,7 +458,7 @@ export default function AdminPage() {
       setMessage({ type: "error", text: "შეიყვანეთ ჯგუფური ფასი" });
       return;
     }
-    if (hasPrivate && !pricePrivate) {
+    if (hasPrivate && !effectivePricePrivate) {
       setMessage({ type: "error", text: "შეიყვანეთ ინდივიდუალური ფასი" });
       return;
     }
@@ -504,9 +539,11 @@ export default function AdminPage() {
         tr: destinationLabel,
         ar: destinationLabel,
       },
-      type,
+      // 2+ days is always multi-day, even if the type toggle was left alone.
+      type: durationMode === "days" && (parseInt(durationDays, 10) || 0) >= 2 ? "multiday" : type,
       duration: durationValue,
       destination,
+      destinations,
       destinationLabel,
       groupMin: minN,
       groupMax: maxN,
@@ -515,7 +552,8 @@ export default function AdminPage() {
       hasGroup,
       hasPrivate,
       priceGroup: hasGroup ? Number(priceGroup) : null,
-      pricePrivate: hasPrivate ? Number(pricePrivate) : null,
+      pricePrivate: hasPrivate ? Number(effectivePricePrivate) : null,
+      privateVehiclePrices: hasPrivate && hasVehiclePrices ? filledVehiclePrices : null,
       isVip,
       isPopular,
       itinerary,
@@ -578,12 +616,15 @@ export default function AdminPage() {
       setDurationNights(durationNumbers[1] || "0");
       setDurationHours("");
     }
-    setDestination(GEORGIA_REGIONS.includes(asLocalizedText(tour.destination)) ? asLocalizedText(tour.destination) : GEORGIA_REGIONS[0]);
+    const savedRegions = getTourRegions(tour).filter((region) => GEORGIA_REGIONS.includes(region));
+    setDestinations(savedRegions.length ? savedRegions : [GEORGIA_REGIONS[0]]);
     setGroupMin(String(tour.groupMin || 1)); setGroupMax(String(tour.groupMax || 18));
     setPrivateGroupMin(String(tour.privateGroupMin || tour.groupMin || 1));
     setPrivateGroupMax(String(tour.privateGroupMax || tour.groupMax || 18));
     setHasGroup(!!tour.hasGroup); setHasPrivate(!!tour.hasPrivate);
     setPriceGroup(tour.priceGroup ?? ""); setPricePrivate(tour.pricePrivate ?? "");
+    const savedVehiclePrices = getPrivateVehiclePrices(tour);
+    setVehiclePrices(Object.fromEntries(VEHICLE_KEYS.map((key) => [key, savedVehiclePrices[key] != null ? String(savedVehiclePrices[key]) : ""])));
     setIsVip(!!tour.isVip); setIsPopular(!!tour.isPopular); setSelectedBadge(asLocalizedText(tour.badge) || TOUR_BADGE_OPTIONS[0]);
     setTourSection(tour.tourSection || tour.category || "");
     setLocations(
@@ -956,7 +997,20 @@ export default function AdminPage() {
                     <input id="tour-duration-hours" type="number" min="1" value={durationHours} onChange={(e) => setDurationHours(e.target.value)} placeholder="მაგ: 12" required />
                   ) : (
                     <div className="admin-inline-inputs">
-                      <input id="tour-duration-days" type="number" min="1" value={durationDays} onChange={(e) => setDurationDays(e.target.value)} placeholder="დღე" required />
+                      <input
+                        id="tour-duration-days"
+                        type="number"
+                        min="1"
+                        value={durationDays}
+                        onChange={(e) => {
+                          setDurationDays(e.target.value);
+                          const days = parseInt(e.target.value, 10) || 0;
+                          if (days >= 2) setType("multiday");
+                          else if (days === 1) setType("oneday");
+                        }}
+                        placeholder="დღე"
+                        required
+                      />
                       <span>/</span>
                       <input id="tour-duration-nights" type="number" min="0" value={durationNights} onChange={(e) => setDurationNights(e.target.value)} placeholder="ღამე" required />
                     </div>
@@ -964,18 +1018,27 @@ export default function AdminPage() {
               </div>
               <div className="admin-grid-2">
                 <div className="admin-field">
-                  <label htmlFor="tour-dest">მიმართულება</label>
-                  <select
-                    id="tour-dest"
-                    value={destination}
-                    onChange={(e) => setDestination(e.target.value)}
-                  >
-                    {GEORGIA_REGIONS.map((region) => (
-                      <option key={region} value={region}>
-                        {region}
-                      </option>
-                    ))}
-                  </select>
+                  <label id="tour-dest-label">მიმართულება (რეგიონები)</label>
+                  <div className="admin-region-picker" role="group" aria-labelledby="tour-dest-label">
+                    {GEORGIA_REGIONS.map((region) => {
+                      const order = destinations.indexOf(region);
+                      return (
+                        <button
+                          key={region}
+                          type="button"
+                          className={`admin-region-chip${order >= 0 ? " is-active" : ""}`}
+                          aria-pressed={order >= 0}
+                          onClick={() => toggleDestination(region)}
+                        >
+                          {order === 0 && <span className="admin-region-chip-main">მთავარი</span>}
+                          {region}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="admin-hint" style={{ margin: "0.4rem 0 0", fontSize: "0.78rem" }}>
+                    აირჩიეთ ერთი ან რამდენიმე. პირველი არჩეული მთავარია: ის ჩანს ბარათზე, დანარჩენები „+N“-ით.
+                  </p>
                 </div>
                 <div className="admin-field">
                   <label>ჯგუფის ზომა (მინ / მაქს)</label>
@@ -1115,20 +1178,52 @@ export default function AdminPage() {
                       id="price-private"
                       type="number"
                       min="0"
-                      value={pricePrivate}
+                      value={hasVehiclePrices ? effectivePricePrivate : pricePrivate}
                       onChange={(e) => setPricePrivate(e.target.value)}
                       placeholder="500"
+                      disabled={hasVehiclePrices}
                     />
-                    {Number(pricePrivate) > 0 && (
+                    {hasVehiclePrices && (
+                      <p className="admin-hint" style={{ margin: "0.3rem 0 0", fontSize: "0.78rem" }}>
+                        ავტომატურად: ყველაზე იაფი მანქანის ფასი (ბარათზე „დან“ ფასად ჩანს).
+                      </p>
+                    )}
+                    {Number(effectivePricePrivate) > 0 && (
                       <div style={{ fontSize: "0.85rem", color: "#38bdf8", marginTop: 4, display: "flex", gap: "10px", fontWeight: 500 }}>
-                        <span>⇄ <strong>${Math.round(pricePrivate * 0.37)}</strong> USD</span>
-                        <span><strong>€{Math.round(pricePrivate * 0.34)}</strong> EUR</span>
-                        <span><strong>{Math.round(pricePrivate * 1.36)}</strong> AED</span>
+                        <span>⇄ <strong>${Math.round(effectivePricePrivate * 0.37)}</strong> USD</span>
+                        <span><strong>€{Math.round(effectivePricePrivate * 0.34)}</strong> EUR</span>
+                        <span><strong>{Math.round(effectivePricePrivate * 1.36)}</strong> AED</span>
                       </div>
                     )}
                   </div>
                 )}
               </div>
+              {hasPrivate && (
+                <div className="admin-vehicle-prices">
+                  <p className="admin-vehicle-prices-title">🚗 ფასი მანქანის მიხედვით (არასავალდებულო)</p>
+                  <p className="admin-hint" style={{ margin: "0 0 0.6rem", fontSize: "0.8rem" }}>
+                    შეავსეთ მხოლოდ ის მანქანები, რითაც ეს ტური ტარდება. ცარიელი ველი = ეს მანქანა არ შეთავაზდება.
+                    თუ ყველა ცარიელია, მოქმედებს ზემოთ მითითებული ერთი ფასი.
+                  </p>
+                  <div className="admin-vehicle-prices-grid">
+                    {VEHICLE_KEYS.map((key) => (
+                      <div className="admin-field" key={key} style={{ marginBottom: 0 }}>
+                        <label htmlFor={`vehicle-price-${key}`}>
+                          {VEHICLES[key].nameKa} <small>(მაქს. {VEHICLES[key].capacityPax})</small>
+                        </label>
+                        <input
+                          id={`vehicle-price-${key}`}
+                          type="number"
+                          min="0"
+                          value={vehiclePrices[key]}
+                          onChange={(e) => setVehiclePrices((prev) => ({ ...prev, [key]: e.target.value }))}
+                          placeholder="₾"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </fieldset>
 
             {/* Route */}
@@ -1312,12 +1407,16 @@ export default function AdminPage() {
                             onChange={(e) => updateLocation(idx, "search", e.target.value)}
                             placeholder="მოძებნეთ დამატებული ადგილი (მაგ: მარტვილი, ყაზბეგი)..."
                           />
-                          {loc.search && !loc.placeId && (
+                          {loc.search?.trim() && !loc.placeId && (() => {
+                            const matches = availablePlaces
+                              .filter((place) => matchesMultiLang(place.title, loc.search) || matchesMultiLang(place.region, loc.search))
+                              .slice(0, 12);
+                            return (
                             <div className="admin-place-search-results">
-                              {availablePlaces
-                                .filter((place) => matchesMultiLang(place.title, loc.search) || matchesMultiLang(place.region, loc.search))
-                                .slice(0, 6)
-                                .map((place) => (
+                              {matches.length === 0 && (
+                                <p className="admin-place-search-empty">ადგილი ვერ მოიძებნა</p>
+                              )}
+                              {matches.map((place) => (
                                   <button type="button" key={place.id} className="admin-place-search-result" onClick={() => selectPlaceForLocation(idx, place)}>
                                     <span className="admin-place-result-thumb">
                                       <Image src={extractImageUrl(place.img) || extractImageUrl(place.gallery?.[0]) || "/hero.webp"} alt="" fill sizes="42px" style={{ objectFit: "cover" }} />
@@ -1326,7 +1425,8 @@ export default function AdminPage() {
                                   </button>
                                 ))}
                             </div>
-                          )}
+                            );
+                          })()}
                         </div>
 
                         {loc.placeId ? (
@@ -1897,10 +1997,10 @@ export default function AdminPage() {
                   .filter((tour) => {
                     const titleKa = asLocalizedText(tour.title, "ka").toLowerCase();
                     const titleEn = asLocalizedText(tour.title, "en").toLowerCase();
-                    const dest = asLocalizedText(tour.destination || tour.destinationLabel);
+                    const regions = getTourRegions(tour);
                     const q = tourSearchQuery.toLowerCase();
-                    const matchesSearch = !q || titleKa.includes(q) || titleEn.includes(q) || dest.toLowerCase().includes(q);
-                    const matchesRegion = tourRegionFilter === "all" || dest === tourRegionFilter;
+                    const matchesSearch = !q || titleKa.includes(q) || titleEn.includes(q) || regions.some((r) => r.toLowerCase().includes(q));
+                    const matchesRegion = tourRegionFilter === "all" || regions.includes(tourRegionFilter);
                     return matchesSearch && matchesRegion;
                   })
                   .map((tItem) => {
@@ -1929,9 +2029,15 @@ export default function AdminPage() {
                               {asLocalizedText(tItem.title)}
                             </h4>
                             <div className="admin-entry-tags">
-                              <span className="admin-tag-pill">
-                                {asLocalizedText(tItem.destinationLabel) || asLocalizedText(tItem.destination)}
-                              </span>
+                              {(() => {
+                                const regions = getTourRegions(tItem);
+                                return (
+                                  <span className="admin-tag-pill" title={regions.join(", ")}>
+                                    {regions[0]}
+                                    {regions.length > 1 ? ` +${regions.length - 1}` : ""}
+                                  </span>
+                                );
+                              })()}
                               {(tItem.priceGroup || tItem.pricePrivate) && (
                                 <span className="admin-tag-pill price">
                                   💰 {format(tItem.priceGroup || tItem.pricePrivate)}

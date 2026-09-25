@@ -4,7 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { interpolate } from "../../lib/i18n/translateCore";
-import { asLocalizedText, translateDuration, translateLocation } from "../../lib/toursShared";
+import { asLocalizedText, getTourRegions, isMultiDayTour, translateDuration, translateLocation } from "../../lib/toursShared";
+import { REGIONS_TRANSLATIONS, formatRegionName } from "../../lib/placesMeta";
 import { getLocalizedHref } from "../../lib/siteConfig";
 import TourPrice from "../TourPrice";
 import "../../styles/tour-hero.css";
@@ -33,10 +34,14 @@ export default function TourDetailHero({
 }) {
   const { t, lang } = useLanguage();
   const title = asLocalizedText(tour.title, lang);
-  const isMultiday = tour.type === "multiday" || (typeof tour.tourSectionLabel === "string" && tour.tourSectionLabel.includes("მრავალდღიანი"));
+  const isMultiday = isMultiDayTour(tour) || (typeof tour.tourSectionLabel === "string" && tour.tourSectionLabel.includes("მრავალდღიანი"));
   const kicker = (KICKERS[lang] || KICKERS.ka)[isMultiday ? 1 : 0];
   // Only a badge the tour really has; no default "popular" label.
   const badgeText = asLocalizedText(tour.badge, lang);
+  // Every region the tour covers, in the order the admin picked them.
+  const regionNames = getTourRegions(tour).map((name) =>
+    REGIONS_TRANSLATIONS[name] ? formatRegionName(name, lang) : translateLocation(name, lang).replace(/^📍\s*/, "")
+  );
   const badge = badgeText ? (t("tourBadges") || {})[badgeText] || badgeText : "";
 
   const gallery = Array.isArray(tour.gallery) ? tour.gallery.filter(Boolean) : [];
@@ -104,7 +109,7 @@ export default function TourDetailHero({
             </div>
             <div className="tdp-hero2-fact">
               <span className="fact-label">{t("tourDetail.destination")}</span>
-              <strong className="fact-value">{translateLocation(tour.destinationLabel || tour.destination || t("common.georgia"), lang).replace(/^📍\s*/, "")}</strong>
+              <strong className="fact-value">{regionNames.length ? regionNames.join(" · ") : t("common.georgia")}</strong>
             </div>
             {isFirestoreTour && (
               <div className="tdp-hero2-fact">

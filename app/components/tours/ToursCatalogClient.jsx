@@ -7,7 +7,7 @@ import PageHero from "../PageHero";
 import DatePicker from "../DatePicker";
 import TourGrid, { HelpCard } from "../site/TourGrid";
 import { GEORGIA_REGIONS, formatRegionName } from "../../lib/placesMeta";
-import { matchesMultiLang } from "../../lib/toursShared";
+import { getTourRegions, isMultiDayTour, matchesMultiLang } from "../../lib/toursShared";
 import { toTourView, formatTourDate } from "../../lib/tourView";
 import { interpolate } from "../../lib/i18n/translateCore";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
@@ -20,7 +20,6 @@ import "../../styles/tour-card.css";
 
 const PAGE_SIZE = 12;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-const kaText = (value) => (typeof value === "string" ? value : value?.ka || "");
 
 // Filters are read from the URL on the client instead of through
 // useSearchParams(): that hook would force this page to be rendered per
@@ -75,8 +74,8 @@ export default function ToursCatalogClient({ initialTours = [] }) {
           return {
             raw,
             view,
-            region: kaText(raw.destination) || kaText(raw.destinationLabel),
-            type: raw.type === "multiday" ? "multiday" : "oneday",
+            regions: getTourRegions(raw),
+            type: isMultiDayTour(raw) ? "multiday" : "oneday",
             groupDates: new Set(groupDates),
             groupDateList: groupDates,
           };
@@ -87,7 +86,7 @@ export default function ToursCatalogClient({ initialTours = [] }) {
 
   const regionCounts = useMemo(() => {
     const counts = new Map();
-    entries.forEach((entry) => entry.region && counts.set(entry.region, (counts.get(entry.region) || 0) + 1));
+    entries.forEach((entry) => entry.regions.forEach((r) => counts.set(r, (counts.get(r) || 0) + 1)));
     return counts;
   }, [entries]);
 
@@ -103,7 +102,7 @@ export default function ToursCatalogClient({ initialTours = [] }) {
   const calendarGroupDates = useMemo(() => {
     const all = new Set();
     entries.forEach((entry) => {
-      if (region !== "all" && entry.region !== region) return;
+      if (region !== "all" && !entry.regions.includes(region)) return;
       if (!entry.view.hasGroup) return;
       entry.groupDateList.forEach((d) => all.add(d));
     });
@@ -115,7 +114,7 @@ export default function ToursCatalogClient({ initialTours = [] }) {
     return entries
       .filter((entry) => {
         const { view, raw } = entry;
-        if (region !== "all" && entry.region !== region) return false;
+        if (region !== "all" && !entry.regions.includes(region)) return false;
         if (type !== "all" && entry.type !== type) return false;
         if (format === "group" && !view.hasGroup) return false;
         if (format === "individual" && !view.hasPrivate) return false;
@@ -131,6 +130,7 @@ export default function ToursCatalogClient({ initialTours = [] }) {
             matchesMultiLang(raw.desc, q) ||
             matchesMultiLang(raw.destination, q) ||
             matchesMultiLang(raw.destinationLabel, q) ||
+            entry.regions.some((r) => matchesMultiLang(r, q)) ||
             view.stops.some((stop) => String(stop).toLowerCase().includes(q));
           if (!hit) return false;
         }

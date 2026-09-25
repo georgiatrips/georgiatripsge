@@ -11,6 +11,7 @@ import { BOOKING_STATUSES, STATUS_CONFIG } from "../lib/bookingModel";
 import { useAuth } from "../lib/AuthContext";
 import { useCurrency } from "../lib/currency/CurrencyContext";
 import { WA_LINK } from "../lib/shared";
+import { VEHICLES } from "../lib/vehicles";
 
 export default function BookingManager() {
   const { user } = useAuth() ?? {};
@@ -761,6 +762,9 @@ export default function BookingManager() {
                     <div><strong>ტური:</strong> {selectedBooking.tourTitle}</div>
                     <div><strong>თარიღი:</strong> {selectedBooking.trip?.date || selectedBooking.date}</div>
                     <div><strong>ტიპი:</strong> {selectedBooking.tourType === "group" ? "ჯგუფური" : "ინდივიდუალური"}</div>
+                    {selectedBooking.trip?.vehicle && (
+                      <div><strong>ავტომობილი:</strong> {VEHICLES[selectedBooking.trip.vehicle]?.nameKa || selectedBooking.trip.vehicle}</div>
+                    )}
                     <div><strong>მგზავრები:</strong> {selectedBooking.trip?.totalPeople || selectedBooking.people} ადამიანი</div>
                     <div><strong>ფასი:</strong> <strong style={{ color: "#0d9488", fontSize: "1.1rem" }}>₾{selectedBooking.pricing?.totalPrice || selectedBooking.price} GEL</strong></div>
                     {selectedBooking.pricing?.couponCode && (

@@ -15,6 +15,7 @@ import { tourPath, placePath } from "../lib/slugs";
 import { getTranslator, interpolate } from "../lib/i18n/translate";
 import { getLocalizedHref, getRequestLocale, SITE_URL } from "../lib/siteConfig";
 import { asLocalizedText } from "../lib/toursFirestore";
+import { getTourRegions, isMultiDayTour } from "../lib/toursShared";
 import { formatRegionName } from "../lib/placesMeta";
 import { INSTAGRAM_HANDLE, INSTAGRAM_LINK, PHONE_DISPLAY, PHONE_TEL, whatsappHref } from "../lib/shared";
 import {
@@ -105,15 +106,20 @@ export default async function HomePage({ params }) {
     return (a.nextDeparture?.date || "9999").localeCompare(b.nextDeparture?.date || "9999");
   });
 
-  const regionOfTour = new Map(rawList.map((raw) => [raw.id, kaText(raw.destination) || kaText(raw.destinationLabel)]));
+  // A tour can cover several regions; it counts (and shows up) in each one.
+  const regionsOfTour = new Map(rawList.map((raw) => [raw.id, getTourRegions(raw)]));
   const regionCounts = {};
-  regionOfTour.forEach((region) => {
-    if (region) regionCounts[region] = (regionCounts[region] || 0) + 1;
+  regionsOfTour.forEach((regions) => {
+    regions.forEach((region) => {
+      regionCounts[region] = (regionCounts[region] || 0) + 1;
+    });
   });
 
   const openDepartures = (tour) => tour.departures.filter((d) => d.freeSeats === null || d.freeSeats > 0);
   const searchDepartures = tours.flatMap((tour) =>
-    tour.hasGroup ? openDepartures(tour).map((d) => ({ date: d.date, region: regionOfTour.get(tour.id) || "" })) : []
+    tour.hasGroup
+      ? openDepartures(tour).flatMap((d) => (regionsOfTour.get(tour.id) || [""]).map((region) => ({ date: d.date, region })))
+      : []
   );
 
   const nextDepartures = tours
@@ -121,21 +127,34 @@ export default async function HomePage({ params }) {
     .sort((a, b) => a.departure.date.localeCompare(b.departure.date))
     .slice(0, 3);
 
+  // Tours with 2+ days (or marked multi-day) get their own homepage section.
+  const dayTours = tours.filter((tour) => !tour.isMultiDay);
+  const multiDayTours = tours.filter((tour) => tour.isMultiDay);
+  const helpCard = (hasTours) => ({
+    id: "custom-title",
+    title: t(hasTours ? "homepage.customTitle" : "homepage.toursEmptyHelpTitle"),
+    text: t("homepage.customText"),
+    ctaLabel: t("homepage.customCta"),
+    planHref: "#plan",
+    waHref: generalWa,
+  });
+
   // ---- Regions map: counts plus a few real tours and places for each region
   const toursByRegion = {};
   for (const tour of tours) {
-    const region = regionOfTour.get(tour.id);
-    if (!region) continue;
+    const regions = regionsOfTour.get(tour.id) || [];
+    if (!regions.length) continue;
     const next = tour.nextDeparture
       ? interpolate(t("tourCard.nextGroup"), { date: formatTourDate(tour.nextDeparture.date, lang, { day: "numeric", month: "short" }) })
       : "";
-    (toursByRegion[region] ||= []).push({
+    const entry = {
       id: tour.id,
       title: tour.title,
       img: tour.img || "",
       href: href(tourPath(tour)),
       meta: [tour.duration, next].filter(Boolean).join(" · "),
-    });
+    };
+    regions.forEach((region) => (toursByRegion[region] ||= []).push(entry));
   }
 
   const placeCounts = {};
@@ -265,7 +284,7 @@ export default async function HomePage({ params }) {
                           {tour.title}
                           <small>
                             <span className="gt-sr-only">{formatTourDate(departure.date, lang, { day: "numeric", month: "long" })} · </span>
-                            {[tour.duration, tour.region].filter(Boolean).join(" · ")}
+                            {[tour.duration, tour.regions.length > 1 ? `${tour.region} +${tour.regions.length - 1}` : tour.region].filter(Boolean).join(" · ")}
                           </small>
                           {isLowSeats(departure.freeSeats, tour.groupMax) && (
                             <small className="gt-departure-seats">{interpolate(t("tourDetail.groupSeatsHint"), { seats: departure.freeSeats, max: tour.groupMax })}</small>
@@ -290,17 +309,20 @@ export default async function HomePage({ params }) {
 
         </section>
 
-        {/* 2. Bookable tours */}
+        {/* 2. Bookable tours: day trips, then multi-day tours in their own
+            section. Shown whenever there are day trips, or when there are no
+            tours at all (the empty state invites a private trip instead). */}
+        {(dayTours.length > 0 || multiDayTours.length === 0) && (
         <section className="gt-section gt-section--paper" id="tours" aria-labelledby="tours-title">
           <div className="gt-container">
             <div className="gt-section-head gt-section-head--duo" data-reveal>
               <div>
-                <p className="gt-eyebrow">{t(tours.length ? "homepage.toursEyebrow" : "homepage.planEyebrow")}</p>
-                <h2 id="tours-title" className="gt-h2">{t(tours.length ? "homepage.toursTitle" : "homepage.toursEmptyTitle")}</h2>
+                <p className="gt-eyebrow">{t(dayTours.length ? "homepage.toursEyebrow" : "homepage.planEyebrow")}</p>
+                <h2 id="tours-title" className="gt-h2">{t(dayTours.length ? "homepage.toursTitle" : "homepage.toursEmptyTitle")}</h2>
               </div>
               <div className="gt-section-head-aside">
-                <p className="gt-lead">{t(tours.length ? "homepage.toursLead" : "homepage.toursEmptyLead")}</p>
-                {tours.length > 0 && (
+                <p className="gt-lead">{t(dayTours.length ? "homepage.toursLead" : "homepage.toursEmptyLead")}</p>
+                {dayTours.length > 0 && (
                   <Link href={href("/tours")} className="gt-link">
                     {t("homepage.toursAll")}
                     <ArrowRightIcon size={16} />
@@ -309,24 +331,47 @@ export default async function HomePage({ params }) {
               </div>
             </div>
 
-            {/* The plan-a-trip card fills whatever the last row leaves (0–6 tours).
+            {/* The plan-a-trip card fills whatever the last row leaves (0–6 tours);
+                it goes under the multi-day section instead when that one exists.
                 The hero photo is the LCP image; these cards sit below the fold and load lazily. */}
             <TourGrid
-              items={tours.slice(0, 6).map((tour) => ({ tour }))}
+              items={dayTours.slice(0, 6).map((tour) => ({ tour }))}
               lang={lang}
               t={t}
               reveal
-              help={{
-                id: "custom-title",
-                title: t(tours.length ? "homepage.customTitle" : "homepage.toursEmptyHelpTitle"),
-                text: t("homepage.customText"),
-                ctaLabel: t("homepage.customCta"),
-                planHref: "#plan",
-                waHref: generalWa,
-              }}
+              help={multiDayTours.length ? null : helpCard(dayTours.length)}
             />
           </div>
         </section>
+        )}
+
+        {multiDayTours.length > 0 && (
+          <section className="gt-section gt-section--paper" id="multiday-tours" aria-labelledby="multiday-title">
+            <div className="gt-container">
+              <div className="gt-section-head gt-section-head--duo" data-reveal>
+                <div>
+                  <p className="gt-eyebrow">{t("homepage.toursEyebrow")}</p>
+                  <h2 id="multiday-title" className="gt-h2">{t("toursPage.multiDay")}</h2>
+                </div>
+                <div className="gt-section-head-aside">
+                  <p className="gt-lead">{t("homepage.multiDayLead")}</p>
+                  <Link href={href("/tours?type=multiday")} className="gt-link">
+                    {t("homepage.multiDayAll")}
+                    <ArrowRightIcon size={16} />
+                  </Link>
+                </div>
+              </div>
+
+              <TourGrid
+                items={multiDayTours.slice(0, 6).map((tour) => ({ tour }))}
+                lang={lang}
+                t={t}
+                reveal
+                help={helpCard(true)}
+              />
+            </div>
+          </section>
+        )}
 
         {/* 3. Regions map */}
         <section className="gt-section gt-section--white" id="destinations" aria-labelledby="regions-title">

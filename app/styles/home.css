@@ -1171,3 +1171,9 @@ html[dir="rtl"] .gt-wizard-body { animation-name: gt-step-in-rtl; }
 }
 
 .gt-hero-dots button:disabled { cursor: default; opacity: 0.5; }
+
+/* Multi-day tours continue the day-tours section on the same paper
+   background, so the second heading needs no extra top gap. */
+main:has(.gt-hero) #tours + #multiday-tours {
+  padding-block-start: 0;
+}

@@ -30,6 +30,7 @@ import TourDetailInfoTabs from "../tour-detail/TourDetailInfoTabs";
 import TourDetailSchedule from "../tour-detail/TourDetailSchedule";
 import TourDetailGallery from "../tour-detail/TourDetailGallery";
 import TourBookingSidebar from "../tour-detail/TourBookingSidebar";
+import { VEHICLES, cheapestVehicleFor, getPrivateVehiclePrices } from "../../lib/vehicles";
 import TourDetailSimilarTours from "../tour-detail/TourDetailSimilarTours";
 import TourMobileBookingBar from "../tour-detail/TourMobileBookingBar";
 import TourDetailPromoBanners from "../tour-detail/TourDetailPromoBanners";
@@ -62,6 +63,7 @@ export default function TourDetailClient({
   const [messengerPref, setMessengerPref] = useState("WhatsApp");
   const [bookingNotes, setBookingNotes] = useState("");
   const [tourType, setTourType] = useState("group");
+  const [selectedVehicle, setSelectedVehicle] = useState("");
   const [couponCodeInput, setCouponCodeInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState("");
@@ -235,8 +237,21 @@ export default function TourDetailClient({
   const configuredPeopleMin = isFirestoreTour
     ? Number(tourType === "private" ? rawTour?.privateGroupMin : rawTour?.groupMin) || 1
     : 1;
+  // Private tours can be priced per vehicle; the customer picks one and the
+  // total follows it. Without vehicle prices the single private price applies.
+  const vehiclePrices = useMemo(() => getPrivateVehiclePrices(rawTour), [rawTour]);
+  const hasVehicleChoice = Object.keys(vehiclePrices).length > 0;
+  // A private group can't outgrow the largest vehicle the tour is offered in.
+  const largestVehicleSeats = hasVehicleChoice
+    ? Math.max(...Object.keys(vehiclePrices).map((key) => VEHICLES[key].capacityPax))
+    : Infinity;
   const groupMaxCap = isFirestoreTour
-    ? Math.max(configuredPeopleMin, Number(tourType === "private" ? rawTour?.privateGroupMax : rawTour?.groupMax) || 50)
+    ? Math.max(
+        configuredPeopleMin,
+        tourType === "private"
+          ? Math.min(Number(rawTour?.privateGroupMax) || 50, largestVehicleSeats)
+          : Number(rawTour?.groupMax) || 50
+      )
     : 50;
   const peopleMax =
     tourType === "group" && freeSeatsForSelected != null
@@ -257,8 +272,21 @@ export default function TourDetailClient({
   };
 
   const groupUnitPrice = parsePriceNum(tour?.priceGroup || tour?.price);
-  const privateTotalPrice = parsePriceNum(tour?.pricePrivate);
   const peopleCount = parseInt(bookingPeople, 10) || peopleMin;
+  const privateTotalPrice =
+    hasVehicleChoice && vehiclePrices[selectedVehicle] ? vehiclePrices[selectedVehicle] : parsePriceNum(tour?.pricePrivate);
+
+  // Keep a vehicle selected that seats the group: the cheapest one that fits,
+  // whenever the current choice is empty or too small.
+  useEffect(() => {
+    if (!hasVehicleChoice) return;
+    const current = vehiclePrices[selectedVehicle] != null ? selectedVehicle : "";
+    const fits = current && cheapestVehicleFor({ [current]: vehiclePrices[current] }, peopleCount) === current;
+    if (!fits) {
+      const next = cheapestVehicleFor(vehiclePrices, peopleCount) || current;
+      if (next !== selectedVehicle) setSelectedVehicle(next);
+    }
+  }, [hasVehicleChoice, vehiclePrices, selectedVehicle, peopleCount]);
 
   const baseTotalPrice =
     tourType === "group"
@@ -404,20 +432,24 @@ export default function TourDetailClient({
 
     try {
       const tourTitle = asLocalizedText(tour.title, lang);
+      // Field names match /api/bookings/create (it reads name/phone/people/
+      // date/couponCode); the price itself is recomputed on the server.
       const bookingData = {
+        type: "tour",
         tourId: tour.id,
         tourTitle,
-        customerName: bookingName,
-        customerPhone: bookingPhone,
-        peopleCount: parseInt(bookingPeople, 10) || peopleMin,
+        name: bookingName,
+        phone: bookingPhone,
+        people: parseInt(bookingPeople, 10) || peopleMin,
+        adults: parseInt(bookingPeople, 10) || peopleMin,
         tourType,
-        departureDate: selectedDate,
-        messengerPref,
+        vehicle: tourType === "private" && hasVehicleChoice ? selectedVehicle : "",
+        date: selectedDate,
+        channel: messengerPref,
         notes: bookingNotes,
-        appliedCoupon: appliedCoupon ? appliedCoupon.code : null,
-        totalPrice,
-        lang,
-        createdAt: new Date().toISOString(),
+        couponCode: appliedCoupon ? appliedCoupon.code : null,
+        price: totalPrice,
+        language: lang,
       };
 
       // The success page looks the booking up by its booking ID (plus the
@@ -581,6 +613,9 @@ export default function TourDetailClient({
             handleTourTypeChange={handleTourTypeChange}
             groupUnitPrice={groupUnitPrice}
             privateTotalPrice={privateTotalPrice}
+            vehiclePrices={vehiclePrices}
+            selectedVehicle={hasVehicleChoice ? selectedVehicle : ""}
+            setSelectedVehicle={setSelectedVehicle}
             bookingName={bookingName}
             setBookingName={setBookingName}
             selectedDate={selectedDate}

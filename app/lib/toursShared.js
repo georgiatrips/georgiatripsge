@@ -815,6 +815,37 @@ export function extractImageUrl(val) {
   return url;
 }
 
+/** Whole days in a stored duration ("2 დღე / 1 ღამე" → 2); hour-based → 0. */
+export function tourDurationDays(duration) {
+  const text = asLocalizedText(duration, "ka") || asLocalizedText(duration, "en");
+  const match = String(text || "").match(/(\d+)\s*(?:დღე|day|дн|дня|день|gün)/i);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
+/**
+ * A tour is multi-day when marked so, or when its duration spans 2+ days.
+ * The duration check covers tours saved as "2 დღე" while the type toggle was
+ * left on its "ერთდღიანი" default.
+ */
+export function isMultiDayTour(tour) {
+  if (!tour) return false;
+  return tour.type === "multiday" || tourDurationDays(tour.duration) >= 2;
+}
+
+/**
+ * Georgian region names a tour covers, primary first. New tours store
+ * `destinations` (array); older ones only a single `destination` string.
+ */
+export function getTourRegions(tour) {
+  if (!tour) return [];
+  const list = Array.isArray(tour.destinations)
+    ? tour.destinations.map((item) => asLocalizedText(item, "ka")).filter(Boolean)
+    : [];
+  if (list.length) return [...new Set(list)];
+  const single = asLocalizedText(tour.destinationLabel, "ka") || asLocalizedText(tour.destination, "ka");
+  return single ? [single] : [];
+}
+
 /** Normalize Firestore tour into the shape used by tour detail / cards */
 export function normalizeFirestoreTour(tour, lang = "ka", customPlaces = []) {
   if (!tour) return null;
@@ -919,8 +950,9 @@ export function normalizeFirestoreTour(tour, lang = "ka", customPlaces = []) {
     title,
     desc,
     duration,
-    type: tour.type || "oneday",
-    typeLabel: tour.type === "multiday" ? "მრავალდღიანი" : "ერთდღიანი",
+    type: isMultiDayTour(tour) ? "multiday" : "oneday",
+    typeLabel: isMultiDayTour(tour) ? "მრავალდღიანი" : "ერთდღიანი",
+    destinations: getTourRegions(tour),
     location: destLabel ? `📍 ${destLabel}` : "",
     destination: asLocalizedText(tour.destination, lang) || (typeof tour.destination === "string" ? tour.destination : ""),
     destinationLabel: destLabel,

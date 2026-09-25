@@ -3,6 +3,7 @@ import { collection, addDoc, setDoc, getDocs, query, where, serverTimestamp, doc
 import { db } from "../../../lib/firebase";
 import { generateBookingId, generateAccessToken, isValidPhone, BOOKING_STATUSES } from "../../../lib/bookingModel";
 import { validateCouponServer, recordCouponUsage } from "../../../lib/coupons";
+import { VEHICLES, getPrivateVehiclePrices } from "../../../lib/vehicles";
 
 // Short-term in-memory cache for anti-spam / duplicate prevention (60 seconds)
 const recentSubmissions = new Map();
@@ -38,6 +39,7 @@ export async function POST(request) {
       couponCode = null,
       language = "ka",
       source = {},
+      vehicle = "",
     } = body;
 
     // 1. Validate mandatory fields (fallback to Guest if name is empty)
@@ -74,6 +76,7 @@ export async function POST(request) {
     let unitPrice = 0;
     let baseTotalPrice = 0;
     let calculatedTourTitle = tourTitle || "Georgia Tour";
+    let bookedVehicle = VEHICLES[vehicle] ? vehicle : "";
 
     if (type === "tour" && tourId) {
       try {
@@ -88,7 +91,16 @@ export async function POST(request) {
             unitPrice = tPriceGroup > 0 ? tPriceGroup : (body.unitPrice || 0);
             baseTotalPrice = unitPrice * totalPeople;
           } else {
-            unitPrice = tPricePrivate > 0 ? tPricePrivate : (body.unitPrice || 0);
+            // Per-vehicle private price from the tour document, never the
+            // client's number. A vehicle the tour isn't offered in (or no
+            // vehicle) falls back to the tour's single private price.
+            const vehiclePrices = getPrivateVehiclePrices(tData);
+            if (bookedVehicle && vehiclePrices[bookedVehicle]) {
+              unitPrice = vehiclePrices[bookedVehicle];
+            } else {
+              if (Object.keys(vehiclePrices).length) bookedVehicle = "";
+              unitPrice = tPricePrivate > 0 ? tPricePrivate : (body.unitPrice || 0);
+            }
             baseTotalPrice = unitPrice;
           }
 
@@ -162,6 +174,7 @@ export async function POST(request) {
         adults: Math.max(1, parseInt(adults, 10) || totalPeople),
         children: Math.max(0, parseInt(children, 10) || 0),
         totalPeople,
+        vehicle: bookedVehicle,
       },
 
       pricing: {

@@ -2,9 +2,13 @@ import { getCachedTours, getCachedPlaces } from "./lib/server/cachedData";
 import { SITE_URL, SUPPORTED_LANGUAGES, getAlternateLanguages } from "./lib/siteConfig";
 import { tourPath, placePath } from "./lib/slugs";
 
-// Rebuilt at most hourly, and on demand when the admin panel saves content
-// (see /api/admin/revalidate), instead of querying Firestore on every crawl.
-export const revalidate = 3600;
+// sitemap.js is a metadata route: Next caches it at build time unless it opts
+// into dynamic rendering, and revalidatePath("/sitemap.xml") does not reach it.
+// That left tours and places added after the last deploy out of the sitemap
+// entirely. Rendering per request keeps it in step with Firestore; the data
+// itself still comes from the 1-hour cached getters, so crawls do not turn
+// into Firestore reads.
+export const dynamic = "force-dynamic";
 
 // Public, content-marketing routes only. Deliberately excludes /admin, /login,
 // /booking, /coupons (transactional/account-bound, not localized, no SEO

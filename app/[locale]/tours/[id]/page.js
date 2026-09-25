@@ -1,21 +1,48 @@
 import React, { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { asLocalizedText, extractImageUrl } from "../../../lib/toursShared";
+import { asLocalizedText, extractImageUrl, isMultiDayTour, tourDurationDays } from "../../../lib/toursShared";
 import { getCachedTourBySlugOrId, getCachedTours, getCachedPlaces, serializeForClient } from "../../../lib/server/cachedData";
 import { getContentSlug, placePath, tourPath } from "../../../lib/slugs";
 import TourDetailClient from "../../../components/tours/TourDetailClient";
 import { SITE_URL, getRequestLocale, buildLocalizedMetadata } from "../../../lib/siteConfig";
 import "./tourDetail.css";
 
-// "<tour title> – Day Tour from Batumi": the searched-for words that a bare
-// tour name lacks. A per-language `seoTitle` on the tour overrides it.
-const TITLE_SUFFIX = {
-  ka: { oneday: "ერთდღიანი ტური ბათუმიდან", multiday: "ტური ბათუმიდან" },
-  en: { oneday: "Day Tour from Batumi", multiday: "Tour from Batumi" },
-  ru: { oneday: "Однодневный тур из Батуми", multiday: "Тур из Батуми" },
-  tr: { oneday: "Batum'dan Günübirlik Tur", multiday: "Batum'dan Tur" },
-  ar: { oneday: "جولة ليوم واحد من باتومي", multiday: "جولة من باتومي" },
+// "<tour title> – Day Tour from Tbilisi": the words travellers actually search
+// with, which a bare tour name lacks. The departure city comes from the tour's
+// own `departure` field — a Kazbegi trip leaving Tbilisi must not be titled
+// "from Batumi". Batumi is the fallback because that is where the company is
+// based and where every tour without a stated departure starts.
+// A per-language `seoTitle` on the tour still overrides all of this.
+const DEPARTURE_LABEL = {
+  batumi: { en: "Batumi", ru: "Батуми", ar: "باتومي", ka: "ბათუმიდან", tr: "Batum'dan" },
+  tbilisi: { en: "Tbilisi", ru: "Тбилиси", ar: "تبليسي", ka: "თბილისიდან", tr: "Tiflis'ten" },
+  kutaisi: { en: "Kutaisi", ru: "Кутаиси", ar: "كوتايسي", ka: "ქუთაისიდან", tr: "Kutaisi'den" },
 };
+
+function departureCity(tour) {
+  const raw = `${asLocalizedText(tour?.departure, "ka")} ${asLocalizedText(tour?.destination, "ka")}`;
+  if (raw.includes("თბილის")) return "tbilisi";
+  if (raw.includes("ქუთაის")) return "kutaisi";
+  return "batumi";
+}
+
+function tourTitleSuffix(lang, city, days) {
+  const d = DEPARTURE_LABEL[city] || DEPARTURE_LABEL.batumi;
+  const multi = days >= 2;
+  switch (lang) {
+    case "ka":
+      return multi ? `${days}-დღიანი ტური ${d.ka}` : `ერთდღიანი ტური ${d.ka}`;
+    case "ru":
+      return multi ? `${days}-дневный тур из ${d.ru}` : `Однодневный тур из ${d.ru}`;
+    case "tr":
+      return multi ? `${d.tr} ${days} Günlük Tur` : `${d.tr} Günübirlik Tur`;
+    case "ar":
+      // Arabic day counts need dual/plural forms, so multi-day stays generic.
+      return multi ? `جولة متعددة الأيام من ${d.ar}` : `جولة ليوم واحد من ${d.ar}`;
+    default:
+      return multi ? `${days}-Day Tour from ${d.en}` : `Day Tour from ${d.en}`;
+  }
+}
 
 // Meta descriptions are cut at a word boundary near Google's snippet length.
 function toMetaDescription(text, max = 155) {
@@ -57,7 +84,7 @@ export async function generateMetadata({ params }) {
   const desc = asLocalizedText(tour.desc, lang) || asLocalizedText(tour.desc, "ka") || "Discover the best tours in Georgia with GeorgiaTrips.";
   const imgUrl = tour.img || `${SITE_URL}/hero.webp`;
 
-  const suffix = (TITLE_SUFFIX[lang] || TITLE_SUFFIX.en)[tour.type === "multiday" ? "multiday" : "oneday"];
+  const suffix = tourTitleSuffix(lang, departureCity(tour), isMultiDayTour(tour) ? tourDurationDays(tour.duration) || 2 : 1);
   const seoTitle = asLocalizedText(tour.seoTitle, lang) || `${title} – ${suffix}`;
 
   return buildLocalizedMetadata({
@@ -109,10 +136,15 @@ export default async function TourDetailPage({ params }) {
       })
     : undefined;
 
-  // "7 საათი" / "7 hours" -> PT7H. Only emitted when the tour really states one.
-  const durationHours = Number(
+  // "7 საათი" -> PT7H, "2 დღე / 1 ღამე" -> P2D. Parsing the number alone would
+  // publish a two-day trip as two hours.
+  const durationNumber = Number(
     String(asLocalizedText(rawTour.duration, "ka") || "").match(/\d+(?:\.\d+)?/)?.[0]
   );
+  const durationDays = tourDurationDays(rawTour.duration);
+  const isoDuration = durationDays >= 2
+    ? `P${durationDays}D`
+    : durationToIso8601(durationNumber);
 
   // Real photos of this tour, so Google can associate the images with it.
   const galleryImages = (Array.isArray(rawTour.gallery) ? rawTour.gallery : [])
@@ -134,7 +166,7 @@ export default async function TourDetailPage({ params }) {
             "description": desc,
             "image": galleryImages.length > 0 ? galleryImages : [rawTour.img || `${SITE_URL}/hero.webp`],
             "inLanguage": lang,
-            ...(durationToIso8601(durationHours) ? { "duration": durationToIso8601(durationHours) } : {}),
+            ...(isoDuration ? { "duration": isoDuration } : {}),
             ...(itinerary ? { "itinerary": { "@type": "ItemList", "itemListElement": itinerary } } : {}),
             // No Offer without a real price: "price": 0 would advertise a free tour.
             ...(offerPrice > 0 ? {

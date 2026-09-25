@@ -9,6 +9,9 @@ import { PHONE_TEL, whatsappHref } from "../../lib/shared";
 import TourPrice from "../TourPrice";
 import DatePicker from "../DatePicker";
 import { LocationIcon, PhoneIcon, ShieldCheckIcon, WalletIcon, WhatsAppIcon } from "../Icons";
+import { VEHICLES, VEHICLE_KEYS } from "../../lib/vehicles";
+
+const VEHICLE_ICONS = { sedan: "🚗", minivan: "🚐", jeep: "🚙", sprinter: "🚌" };
 
 export default function TourBookingSidebar({
   tour,
@@ -21,6 +24,9 @@ export default function TourBookingSidebar({
   handleTourTypeChange,
   groupUnitPrice,
   privateTotalPrice,
+  vehiclePrices = {},
+  selectedVehicle = "",
+  setSelectedVehicle,
   bookingName,
   setBookingName,
   selectedDate,
@@ -61,6 +67,8 @@ export default function TourBookingSidebar({
   // the form shows only what a booking needs. Opens by itself when in use.
   const [moreOpen, setMoreOpen] = useState(false);
   const showMore = moreOpen || Boolean(bookingNotes);
+  const offeredVehicles = VEHICLE_KEYS.filter((key) => vehiclePrices[key] != null);
+  const vehicleName = (key) => t(`transfersPage.vehicles.${key}.name`) || VEHICLES[key]?.nameKa || key;
 
   // Every statement here matches the site FAQ and tour data. Cancellation
   // uses the FAQ's 48-hour window (the sidebar previously said 24 hours).
@@ -168,6 +176,37 @@ export default function TourBookingSidebar({
             </div>
             {hasGroupSupport && !hasGroupDates && <p className="tdp-no-group-note">{t("tourDetail.noScheduleDesc")}</p>}
           </div>
+
+          {tourType === "private" && offeredVehicles.length > 0 && (
+            <div className="tdp-form-group">
+              <span className="tdp-form-label" id="booking-vehicle-label">{t("tourDetail.chooseVehicle")}</span>
+              <div className="tdp-vehicle-options" role="radiogroup" aria-labelledby="booking-vehicle-label">
+                {offeredVehicles.map((key) => {
+                  const capacity = VEHICLES[key].capacityPax;
+                  const tooSmall = peopleCount > capacity;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      role="radio"
+                      aria-checked={selectedVehicle === key}
+                      className={`tdp-vehicle-option${selectedVehicle === key ? " is-active" : ""}`}
+                      onClick={() => setSelectedVehicle?.(key)}
+                      disabled={tooSmall}
+                      title={tooSmall ? interpolate(t("transfersPage.capacityPax"), { count: capacity }) : undefined}
+                    >
+                      <span className="tdp-vehicle-icon" aria-hidden="true">{VEHICLE_ICONS[key]}</span>
+                      <span className="tdp-vehicle-text">
+                        <strong>{vehicleName(key)}</strong>
+                        <small>{interpolate(t("transfersPage.capacityPax"), { count: capacity })}</small>
+                      </span>
+                      <span className="tdp-vehicle-price">{format(vehiclePrices[key], lang)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="tdp-form-group">
             <label htmlFor="booking-date">{t("tourDetail.departureDate")}</label>
@@ -322,7 +361,9 @@ export default function TourBookingSidebar({
                 <small>
                   {tourType === "group"
                     ? interpolate(t("tourDetail.groupPriceCalc"), { price: groupUnitPrice, count: peopleCount })
-                    : t("tourDetail.privatePriceCalc")}
+                    : selectedVehicle
+                      ? `${vehicleName(selectedVehicle)} · ${t("tourDetail.privatePriceCalc")}`
+                      : t("tourDetail.privatePriceCalc")}
                 </small>
               </div>
               <div className="total-price-values">
