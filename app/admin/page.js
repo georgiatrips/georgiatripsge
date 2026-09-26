@@ -57,6 +57,11 @@ export default function AdminPage() {
   const { format } = useCurrency();
   const [title, setTitle] = useState(emptyLangObj());
   const [desc, setDesc] = useState(emptyLangObj());
+  // Practical details shown on the tour page only when filled in.
+  const [startTime, setStartTime] = useState("");
+  const [meetingPoint, setMeetingPoint] = useState(emptyLangObj());
+  const [includedText, setIncludedText] = useState(emptyLangObj());
+  const [excludedText, setExcludedText] = useState(emptyLangObj());
   const [type, setType] = useState("oneday");
   const [durationMode, setDurationMode] = useState("days");
   const [durationDays, setDurationDays] = useState("");
@@ -84,7 +89,8 @@ export default function AdminPage() {
   const effectivePricePrivate = hasVehiclePrices ? Math.min(...Object.values(filledVehiclePrices)) : pricePrivate;
   const [isVip, setIsVip] = useState(false);
   const [isPopular, setIsPopular] = useState(false);
-  const [selectedBadge, setSelectedBadge] = useState(TOUR_BADGE_OPTIONS[0]);
+  // "" = no badge. A badge is a claim ("top pick"), so it is opt-in.
+  const [selectedBadge, setSelectedBadge] = useState("");
   const [tourSection, setTourSection] = useState("");
   const [locations, setLocations] = useState([emptyLocation()]);
   const [availablePlaces, setAvailablePlaces] = useState([]);
@@ -415,6 +421,10 @@ export default function AdminPage() {
   const resetForm = () => {
     setTitle(emptyLangObj());
     setDesc(emptyLangObj());
+    setStartTime("");
+    setMeetingPoint(emptyLangObj());
+    setIncludedText(emptyLangObj());
+    setExcludedText(emptyLangObj());
     setType("oneday");
     setDurationMode("days");
     setDurationDays("");
@@ -433,7 +443,7 @@ export default function AdminPage() {
     setIsVip(false);
     setIsPopular(false);
     setIsPopular(false);
-    setSelectedBadge(TOUR_BADGE_OPTIONS[0]);
+    setSelectedBadge("");
     setTourSection("");
     setLocations([emptyLocation()]);
     setGallery([]);
@@ -490,10 +500,6 @@ export default function AdminPage() {
 
     if (itinerary.length === 0 || itinerary.some((location) => !location.title?.ka)) {
       setMessage({ type: "error", text: "შეიყვანეთ მარშრუტის ყველა ლოკაციის სახელი (ქართულად მაინც)" });
-      return;
-    }
-    if (!selectedBadge) {
-      setMessage({ type: "error", text: "აირჩიეთ badge ტურისთვის" });
       return;
     }
     const sectionLabel =
@@ -567,7 +573,11 @@ export default function AdminPage() {
             freeSeats: Math.max(0, Number(d.freeSeats) || 0),
           }))
         : [],
-      badge: selectedBadge,
+      badge: selectedBadge || "",
+      startTime: startTime.trim(),
+      meetingPoint,
+      includedText,
+      excludedText,
       tourSection,
       tourSectionLabel: sectionLabel,
       category: tourSection,
@@ -602,6 +612,10 @@ export default function AdminPage() {
     setEditingTourId(tour.id);
     setTitle(parseLocal(tour.title));
     setDesc(parseLocal(tour.desc));
+    setStartTime(typeof tour.startTime === "string" ? tour.startTime : "");
+    setMeetingPoint(parseLocal(tour.meetingPoint));
+    setIncludedText(parseLocal(tour.includedText));
+    setExcludedText(parseLocal(tour.excludedText));
     setType(tour.type || "oneday");
     const savedDuration = asLocalizedText(tour.duration);
     const durationNumbers = savedDuration.match(/\d+(?:[.,]\d+)?/g) || [];
@@ -625,7 +639,7 @@ export default function AdminPage() {
     setPriceGroup(tour.priceGroup ?? ""); setPricePrivate(tour.pricePrivate ?? "");
     const savedVehiclePrices = getPrivateVehiclePrices(tour);
     setVehiclePrices(Object.fromEntries(VEHICLE_KEYS.map((key) => [key, savedVehiclePrices[key] != null ? String(savedVehiclePrices[key]) : ""])));
-    setIsVip(!!tour.isVip); setIsPopular(!!tour.isPopular); setSelectedBadge(asLocalizedText(tour.badge) || TOUR_BADGE_OPTIONS[0]);
+    setIsVip(!!tour.isVip); setIsPopular(!!tour.isPopular); setSelectedBadge(asLocalizedText(tour.badge) || "");
     setTourSection(tour.tourSection || tour.category || "");
     setLocations(
       Array.isArray(tour.itinerary) && tour.itinerary.length
@@ -967,6 +981,50 @@ export default function AdminPage() {
                 placeholder="მოკლე აღწერა ტურის შესახებ..."
                 required
               />
+            </fieldset>
+
+            {/* What travellers ask before booking. Each block appears on the
+                tour page only when filled in; nothing generic is shown instead. */}
+            <fieldset className="admin-fieldset">
+              <legend>პრაქტიკული ინფორმაცია (ტურისტისთვის)</legend>
+              <p className="admin-hint">
+                ეს ველები ჩანს ტურის გვერდზე მხოლოდ შევსების შემთხვევაში. „ფასში შედის“ / „არ შედის“ — თითო პუნქტი ცალკე ხაზზე.
+              </p>
+              <div className="admin-field">
+                <label htmlFor="tour-start-time">გასვლის დრო</label>
+                <input
+                  id="tour-start-time"
+                  type="text"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  placeholder="მაგ: 09:00"
+                  maxLength={40}
+                />
+              </div>
+              <LocalizedInputGroup
+                label="აყვანის / შეხვედრის ადგილი"
+                value={meetingPoint}
+                onChange={setMeetingPoint}
+                placeholder="მაგ: აყვანა ბათუმის ნებისმიერი სასტუმროდან"
+              />
+              <LocalizedInputGroup
+                label="ფასში შედის (თითო ხაზზე ერთი)"
+                type="textarea"
+                value={includedText}
+                onChange={setIncludedText}
+                placeholder={"ტრანსპორტი\nმძღოლი\nღვინის დეგუსტაცია"}
+              />
+              <LocalizedInputGroup
+                label="ფასში არ შედის (თითო ხაზზე ერთი)"
+                type="textarea"
+                value={excludedText}
+                onChange={setExcludedText}
+                placeholder={"სადილი\nშესასვლელი ბილეთები"}
+              />
+            </fieldset>
+
+            <fieldset className="admin-fieldset">
+              <legend>ტურის პარამეტრები</legend>
               <div className="admin-grid-2">
                 <div className="admin-field">
                   <label>ტიპი</label>
@@ -1085,8 +1143,15 @@ export default function AdminPage() {
 
             <fieldset className="admin-fieldset">
               <legend>Badge (ბარათზე და ტურის გვერდზე)</legend>
-              <p className="admin-hint">აირჩიეთ ერთ-ერთი მზა badge — გამოჩნდება ტურის hero-ში და ბარათებზე.</p>
+              <p className="admin-hint">არასავალდებულო. badge გამოჩნდება ტურის hero-ში და ბარათებზე — გამოიყენეთ მხოლოდ მაშინ, როცა მართალია (მაგ. „მაღალი შეფასება“ მხოლოდ რეალური შეფასებებით).</p>
               <div className="admin-badge-grid">
+                <button
+                  type="button"
+                  className={`admin-pick-chip${!selectedBadge ? " is-active" : ""}`}
+                  onClick={() => setSelectedBadge("")}
+                >
+                  badge-ის გარეშე
+                </button>
                 {TOUR_BADGE_OPTIONS.map((label) => (
                   <button
                     key={label}

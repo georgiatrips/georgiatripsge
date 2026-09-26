@@ -38,7 +38,7 @@ export default function TourDetailInfoTabs({ tour }) {
           </div>
           <div className="tdp-min-info">
             <span className="tdp-min-label">{t("tourDetail.departureTime")}</span>
-            <strong className="tdp-min-value">{t("tourDetail.byAgreement")}</strong>
+            <strong className="tdp-min-value">{tour.startTime || t("tourDetail.byAgreement")}</strong>
           </div>
         </div>
 
@@ -56,6 +56,37 @@ export default function TourDetailInfoTabs({ tour }) {
           </div>
         </div>
       </div>
+
+      {tour.meetingPoint && (
+        <div className="tdp-min-card tdp-min-card--wide">
+          <div className="tdp-min-info">
+            <span className="tdp-min-label">{t("tourDetail.meetingPoint")}</span>
+            <strong className="tdp-min-value">{tour.meetingPoint}</strong>
+          </div>
+        </div>
+      )}
+
+      {/* Only what the admin entered for this tour — nothing generic. */}
+      {(tour.includes?.length > 0 || tour.excludes?.length > 0) && (
+        <div className="tdp-inclusions">
+          {tour.includes?.length > 0 && (
+            <div className="tdp-inclusions-col">
+              <h3>{t("tourDetail.included")}</h3>
+              <ul className="is-included">
+                {tour.includes.map((item) => <li key={item}>{item}</li>)}
+              </ul>
+            </div>
+          )}
+          {tour.excludes?.length > 0 && (
+            <div className="tdp-inclusions-col">
+              <h3>{t("tourDetail.notIncluded")}</h3>
+              <ul className="is-excluded">
+                {tour.excludes.map((item) => <li key={item}>{item}</li>)}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
     </article>
   );
 }

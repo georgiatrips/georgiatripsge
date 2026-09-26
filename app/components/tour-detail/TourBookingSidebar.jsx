@@ -58,6 +58,8 @@ export default function TourBookingSidebar({
   peopleCount,
   bookingSubmitting,
   handleBookingSubmit,
+  handleFormStart,
+  bookingError = "",
   user,
 }) {
   const { t, lang } = useLanguage();
@@ -128,7 +130,13 @@ export default function TourBookingSidebar({
           </p>
         </div>
 
-        <form className="tdp-booking-form" onSubmit={handleBookingSubmit} id="tour-booking-form">
+        <form
+          className="tdp-booking-form"
+          onSubmit={handleBookingSubmit}
+          id="tour-booking-form"
+          onFocusCapture={handleFormStart}
+          onPointerDownCapture={handleFormStart}
+        >
           <h3>{t("tourDetail.onlineBooking")}</h3>
           <p className="form-sub">{t("tourDetail.formSubtitle")}</p>
 
@@ -382,9 +390,20 @@ export default function TourBookingSidebar({
 
           <button type="submit" className="btn-tdp-submit" disabled={bookingSubmitting} aria-busy={bookingSubmitting || undefined}>
             <span>
-              {bookingSubmitting ? "…" : `${t("tourDetail.bookNow")}${totalPrice > 0 ? ` — ${format(totalPrice, lang)}` : ""}`}
+              {bookingSubmitting ? t("tourDetail.sending") : `${t("tourDetail.bookNow")}${totalPrice > 0 ? ` — ${format(totalPrice, lang)}` : ""}`}
             </span>
           </button>
+
+          {bookingError && (
+            <div className="tdp-booking-error" role="alert">
+              <strong>{t("tourDetail.bookingFailedTitle")}</strong>
+              <p>{t("tourDetail.bookingFailedText")}</p>
+              <a href={whatsappHref(bookingError)} target="_blank" rel="noopener noreferrer" className="gt-btn gt-btn--block tdp-booking-error-wa">
+                <WhatsAppIcon size={18} />
+                {t("tourDetail.sendOnWhatsapp")}
+              </a>
+            </div>
+          )}
 
           <ul className="tdp-trust-list">
             {trustItems.map((item) => (

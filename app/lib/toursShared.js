@@ -968,7 +968,7 @@ export function normalizeFirestoreTour(tour, lang = "ka", customPlaces = []) {
     hasPrivate,
     isVip: !!tour.isVip,
     isPopular: !!tour.isPopular,
-    badge: badgeRaw || "ახალი ტური",
+    badge: badgeRaw || "",
     tourSection,
     tourSectionLabel,
     img: mainTourImg,

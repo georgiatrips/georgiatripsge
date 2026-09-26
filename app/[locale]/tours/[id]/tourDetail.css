@@ -2427,3 +2427,81 @@
 .tdp-vehicle-option.is-active strong {
   color: #22557c;
 }
+
+/* ============================================================
+   PICKUP, INCLUDED / NOT INCLUDED (rendered only from tour data)
+   ============================================================ */
+.tdp-min-card--wide {
+  margin-top: 1.25rem !important;
+}
+
+.tdp-inclusions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.tdp-inclusions h3 {
+  margin: 0 0 0.6rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #1f2d3d;
+}
+
+.tdp-inclusions ul {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tdp-inclusions li {
+  position: relative;
+  padding-inline-start: 1.6rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: #334155;
+}
+
+.tdp-inclusions li::before {
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  font-weight: 800;
+}
+
+.tdp-inclusions .is-included li::before {
+  content: "✓";
+  color: #15803d;
+}
+
+.tdp-inclusions .is-excluded li::before {
+  content: "✕";
+  color: #b42318;
+}
+
+/* Booking request failed: a clear next step next to the button. */
+.tdp-booking-error {
+  margin-top: 0.9rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(180, 35, 24, 0.3);
+  border-radius: 12px;
+  background: #fef3f2;
+  color: #7a271a;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.tdp-booking-error p {
+  margin: 0.25rem 0 0.75rem;
+}
+
+.tdp-booking-error-wa {
+  background: var(--gt-wa, #1f7a64);
+  color: #ffffff;
+  gap: 0.5rem;
+}

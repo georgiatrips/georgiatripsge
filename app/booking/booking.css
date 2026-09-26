@@ -1,0 +1,239 @@
+/* Booking confirmation page (app/booking/success/[bookingId]/page.js). */
+
+.gt-bk-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--gt-paper, #f8fafc);
+}
+
+.gt-bk-main {
+  flex: 1;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: calc(var(--gt-header-h, 72px) + 1.5rem) 1rem 4rem;
+}
+
+.gt-bk-loading {
+  padding: 4rem 1rem;
+  text-align: center;
+  color: var(--gt-muted, #64748b);
+}
+
+.gt-bk-loading .spinner {
+  margin: 0 auto 1.25rem;
+}
+
+.gt-bk-card {
+  overflow: hidden;
+  border: 1px solid var(--gt-line, #e2e8f0);
+  border-radius: var(--gt-radius-xl, 22px);
+  background: var(--gt-white, #fff);
+  box-shadow: var(--gt-shadow, 0 12px 40px rgba(13, 35, 58, 0.08));
+}
+
+.gt-bk-card--error {
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.gt-bk-card--error h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.4rem;
+  color: var(--gt-ink, #1f2d3d);
+}
+
+.gt-bk-card--error p {
+  margin: 0 0 1.25rem;
+  color: var(--gt-muted, #64748b);
+}
+
+.gt-bk-head {
+  padding: 2.25rem 1.5rem 1.75rem;
+  text-align: center;
+  color: #fff;
+  background: var(--gt-navy-900, #0d233a);
+}
+
+.gt-bk-check {
+  display: inline-grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  margin-bottom: 1rem;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--gt-teal, #0d9488);
+}
+
+.gt-bk-head h1 {
+  margin: 0 0 0.4rem;
+  font-family: var(--gt-font-display, inherit);
+  font-size: clamp(1.4rem, 4.5vw, 1.75rem);
+  line-height: 1.2;
+}
+
+.gt-bk-head p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.gt-bk-ref {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 1.5rem 1.5rem 0;
+  padding: 1rem 1.15rem;
+  border: 1px dashed var(--gt-line-strong, #cbd5e1);
+  border-radius: var(--gt-radius, 14px);
+  background: var(--gt-stone, #f1f5f9);
+}
+
+.gt-bk-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gt-muted, #64748b);
+}
+
+.gt-bk-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.3rem;
+  letter-spacing: 0.02em;
+  color: var(--gt-ink, #1f2d3d);
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.gt-bk-status {
+  padding: 0.35rem 0.85rem;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.gt-bk-rows {
+  margin: 1.25rem 1.5rem 0;
+}
+
+.gt-bk-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--gt-line, #e2e8f0);
+}
+
+.gt-bk-row dt {
+  font-size: 0.92rem;
+  color: var(--gt-muted, #64748b);
+}
+
+.gt-bk-row dd {
+  margin: 0;
+  font-weight: 700;
+  text-align: end;
+  color: var(--gt-ink, #1f2d3d);
+}
+
+.gt-bk-row--total {
+  border-bottom: 0;
+}
+
+.gt-bk-row--total dd {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--gt-teal-700, #0f766e);
+}
+
+.gt-bk-cta {
+  margin: 0.5rem 1.5rem 0;
+  padding: 1.1rem;
+  border-radius: var(--gt-radius, 14px);
+  background: #f0fdf4;
+  text-align: center;
+}
+
+.gt-bk-cta p {
+  margin: 0 0 0.75rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #166534;
+}
+
+.gt-bk-phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+  font-weight: 700;
+  color: var(--gt-navy-900, #0d233a);
+  text-decoration: none;
+  direction: ltr;
+}
+
+.gt-bk-next {
+  margin: 1.5rem 1.5rem 0;
+}
+
+.gt-bk-next h2 {
+  margin: 0 0 0.6rem;
+  font-size: 1.05rem;
+  color: var(--gt-ink, #1f2d3d);
+}
+
+.gt-bk-next ol {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding-inline-start: 1.25rem;
+  color: var(--gt-ink-2, #334155);
+  line-height: 1.5;
+}
+
+.gt-bk-terms {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1.25rem 1.5rem 0;
+  padding: 1rem 0 0;
+  border-top: 1px solid var(--gt-line, #e2e8f0);
+  list-style: none;
+}
+
+.gt-bk-terms li {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gt-ink-2, #334155);
+}
+
+.gt-bk-terms svg {
+  flex: none;
+  color: var(--gt-teal, #0d9488);
+}
+
+.gt-bk-actions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.gt-bk-actions--row {
+  grid-template-columns: 1fr 1fr;
+  margin: 1.5rem;
+}
+
+@media (max-width: 420px) {
+  .gt-bk-actions--row {
+    grid-template-columns: 1fr;
+  }
+}

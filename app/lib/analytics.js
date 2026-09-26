@@ -852,7 +852,54 @@ export async function trackEvent(eventName, eventParams = {}) {
     isoTime: now.toISOString(),
   };
 
-  // 1. Log to Firestore
+  // 1. Dispatch to Meta Pixel (Facebook Ads)
+  if (typeof window !== "undefined" && window.fbq) {
+    try {
+      if (eventName === "click_whatsapp" || eventName === "click_call") {
+        window.fbq("track", "Contact", { content_name: eventName, ...eventParams });
+      } else if (eventName === "purchase" || eventName === "book_tour_success") {
+        const purchaseOpts = eventParams.eventId ? { eventID: String(eventParams.eventId) } : undefined;
+        window.fbq("track", "Purchase", {
+          content_name: eventParams.tourTitle || eventParams.content_name || "Tour Booking",
+          content_ids: eventParams.tourId ? [String(eventParams.tourId)] : (eventParams.content_ids || []),
+          content_type: "product",
+          value: Number(eventParams.price || eventParams.value) || 0,
+          currency: "GEL",
+          num_items: Number(eventParams.people || eventParams.num_items) || 1,
+        }, purchaseOpts);
+      } else if (eventName === "initiate_checkout" || eventName === "begin_checkout") {
+        window.fbq("track", "InitiateCheckout", {
+          content_name: eventParams.tourTitle || eventParams.label || "Book Tour",
+          content_ids: eventParams.tourId ? [String(eventParams.tourId)] : [],
+          value: Number(eventParams.price) || 0,
+          currency: "GEL",
+        });
+      } else if (eventName === "view_tour" || eventName === "view_tour_detail" || eventName === "view_item") {
+        window.fbq("track", "ViewContent", {
+          content_name: eventParams.tourTitle,
+          content_ids: eventParams.tourId ? [String(eventParams.tourId)] : [],
+          content_type: "product",
+          value: Number(eventParams.price) || 0,
+          currency: "GEL",
+        });
+      } else if (eventName === "book_transfer_success") {
+        // TransfersClient sends its own Meta "Lead" for this booking.
+      } else {
+        window.fbq("trackCustom", eventName, eventParams);
+      }
+    } catch (_) {}
+  }
+
+  // 2. Dispatch to Google Analytics 4 / Google Ads Tag
+  if (typeof window !== "undefined" && window.gtag) {
+    try {
+      const [gaName, gaParams] = toGa4Event(eventName, eventParams);
+      window.gtag("event", gaName, gaParams);
+    } catch (_) {}
+  }
+
+  // 3. Log to Firestore (after the pixels: this write can take seconds, and
+  //    Meta/GA must not wait on it or be lost when the visitor navigates away).
   {
     try {
       const { db, collection, doc, addDoc, setDoc, serverTimestamp } = await loadFirestore();
@@ -875,51 +922,42 @@ export async function trackEvent(eventName, eventParams = {}) {
       console.warn("Event track firestore error:", err);
     }
   }
+}
 
-  // 2. Dispatch to Meta Pixel (Facebook Ads)
-  if (typeof window !== "undefined" && window.fbq) {
-    try {
-      if (eventName === "click_whatsapp" || eventName === "click_call") {
-        window.fbq("track", "Contact", { content_name: eventName, ...eventParams });
-      } else if (eventName === "purchase" || eventName === "book_tour_success") {
-        const purchaseOpts = eventParams.eventId ? { eventID: String(eventParams.eventId) } : undefined;
-        window.fbq("track", "Purchase", {
-          content_name: eventParams.tourTitle || eventParams.content_name || "Tour Booking",
-          content_ids: eventParams.tourId ? [String(eventParams.tourId)] : (eventParams.content_ids || []),
-          content_type: "product",
-          value: Number(eventParams.price || eventParams.value) || 0,
-          currency: "GEL",
-          num_items: Number(eventParams.people || eventParams.num_items) || 1,
-        }, purchaseOpts);
-      } else if (eventName === "initiate_checkout" || eventName === "click_book_button") {
-        window.fbq("track", "InitiateCheckout", {
-          content_name: eventParams.tourTitle || eventParams.label || "Book Tour",
-          content_ids: eventParams.tourId ? [String(eventParams.tourId)] : [],
-          value: Number(eventParams.price) || 0,
-          currency: "GEL",
-        });
-      } else if (eventName === "view_tour" || eventName === "view_tour_detail") {
-        window.fbq("track", "ViewContent", {
-          content_name: eventParams.tourTitle,
-          content_ids: eventParams.tourId ? [String(eventParams.tourId)] : [],
-          content_type: "product",
-          value: Number(eventParams.price) || 0,
-          currency: "GEL",
-        });
-      } else if (eventName === "book_tour_submit") {
-        window.fbq("track", "Lead", { content_name: eventParams.tourTitle, value: Number(eventParams.price) || 0, currency: "GEL" });
-      } else {
-        window.fbq("trackCustom", eventName, eventParams);
-      }
-    } catch (_) {}
-  }
+// Booking-funnel events go to GA4 under its recommended names, with the
+// value/currency/items shape GA4 reports and Google Ads conversions expect.
+// A booking is a request paid on the day, so success is a lead, not a purchase.
+const GA4_FUNNEL_EVENTS = {
+  view_tour_detail: "view_item",
+  view_item: "view_item",
+  begin_checkout: "begin_checkout",
+  book_tour_success: "generate_lead",
+  book_transfer_success: "generate_lead",
+  book_tour_failed: "booking_failed",
+};
 
-  // 3. Dispatch to Google Analytics 4 / Google Ads Tag
-  if (typeof window !== "undefined" && window.gtag) {
-    try {
-      window.gtag("event", eventName, eventParams);
-    } catch (_) {}
-  }
+function toGa4Event(eventName, params = {}) {
+  const gaName = GA4_FUNNEL_EVENTS[eventName];
+  if (!gaName) return [eventName, params];
+  const value = Number(params.price ?? params.value) || 0;
+  const item = {
+    item_id: String(params.tourId || params.content_ids?.[0] || eventName),
+    item_name: params.tourTitle || params.content_name || "",
+    item_category: params.tourType || params.type || "",
+    price: value,
+    quantity: Number(params.people) || 1,
+  };
+  return [
+    gaName,
+    {
+      ...params,
+      currency: "GEL",
+      value,
+      items: [item],
+      ...(params.eventId || params.bookingId ? { transaction_id: String(params.eventId || params.bookingId) } : {}),
+      ...(eventName === "book_transfer_success" ? { lead_type: "transfer" } : eventName === "book_tour_success" ? { lead_type: "tour" } : {}),
+    },
+  ];
 }
 
 // ── Meta Pixel Dedicated Helper Functions ───────────────────

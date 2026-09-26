@@ -107,6 +107,18 @@ export default function ReviewManager({ onReviewsCountChange }) {
     }
   };
 
+  // Reviews sent from the app arrive with approved: false and stay off the
+  // website until published here.
+  const handleSetApproved = async (id, approved) => {
+    try {
+      await updateReview(id, { approved });
+      await refresh();
+    } catch (err) {
+      console.error(err);
+      setMessage({ type: "error", text: "სტატუსის შეცვლა ვერ მოხერხდა" });
+    }
+  };
+
   const handleSyncGoogle = async () => {
     setSyncing(true);
     setMessage(null);
@@ -319,6 +331,11 @@ export default function ReviewManager({ onReviewsCountChange }) {
                   </div>
                   <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", marginBottom: "0.4rem" }}>
                     <span className="admin-tag-pill">{review.time || "ახლახან"}</span>
+                    {review.approved === false && (
+                      <span className="admin-tag-pill" style={{ background: "rgba(234, 179, 8, 0.15)", color: "#facc15" }}>
+                        ⏳ მოდერაციაზე
+                      </span>
+                    )}
                     {review.source === "google" && (
                       <span className="admin-tag-pill" style={{ background: "rgba(66, 133, 244, 0.15)", color: "#60a5fa" }}>
                         🌐 Google
@@ -332,6 +349,15 @@ export default function ReviewManager({ onReviewsCountChange }) {
                 <div className="admin-entry-actions">
                   <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>ID: {review.id.slice(0, 8)}...</span>
                   <div style={{ display: "flex", gap: "0.4rem" }}>
+                    {review.approved === false ? (
+                      <button type="button" className="admin-action-btn edit" onClick={() => handleSetApproved(review.id, true)}>
+                        გამოქვეყნება
+                      </button>
+                    ) : review.source === "app" ? (
+                      <button type="button" className="admin-action-btn delete" onClick={() => handleSetApproved(review.id, false)}>
+                        დამალვა
+                      </button>
+                    ) : null}
                     <button type="button" className="admin-action-btn edit" onClick={() => startEdit(review)}>
                       რედაქტირება
                     </button>

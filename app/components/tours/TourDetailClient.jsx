@@ -19,9 +19,9 @@ import { formatPriceStr } from "../../lib/i18n/formatPriceStr";
 import { isValidPhone } from "../../lib/bookingModel";
 import { useAuth } from "../../lib/AuthContext";
 import { useCoupon } from "../../lib/CouponContext";
-import { trackMetaPurchase, trackMetaViewContent, trackMetaInitiateCheckout, trackEvent } from "../../lib/analytics";
+import { trackEvent } from "../../lib/analytics";
 import { getStoredMarketingAttribution } from "../../lib/utmTracker";
-import { toTourViews } from "../../lib/tourView";
+import { toTourViews, getUpcomingDepartures } from "../../lib/tourView";
 import { interpolate } from "../../lib/i18n/translateCore";
 
 import TourDetailHero from "../tour-detail/TourDetailHero";
@@ -36,6 +36,14 @@ import TourMobileBookingBar from "../tour-detail/TourMobileBookingBar";
 import TourDetailPromoBanners from "../tour-detail/TourDetailPromoBanners";
 import TourDetailFaq from "../tour-detail/TourDetailFaq";
 
+// Admin lists (included / not included) are stored one item per line.
+function toLines(text) {
+  return String(text || "")
+    .split(/\r?\n/)
+    .map((item) => item.replace(/^[\s•\-–*✓✔]+/, "").trim())
+    .filter(Boolean);
+}
+
 export default function TourDetailClient({
   initialTour = null,
   initialPlaces = [],
@@ -48,7 +56,7 @@ export default function TourDetailClient({
   const { lang, t, isEnglish } = useLanguage();
   const { format } = useCurrency();
   const { user } = useAuth() ?? {};
-  const { coupons } = useCoupon() ?? {};
+  const { coupons, bestCoupon } = useCoupon() ?? {};
 
   const [rawFsDoc, setRawFsDoc] = useState(initialTour);
   const [placesList, setPlacesList] = useState(initialPlaces);
@@ -62,7 +70,13 @@ export default function TourDetailClient({
   const [bookingPeople, setBookingPeople] = useState("2");
   const [messengerPref, setMessengerPref] = useState("WhatsApp");
   const [bookingNotes, setBookingNotes] = useState("");
-  const [tourType, setTourType] = useState("group");
+  // Start on the option that can actually be booked, so the server-rendered
+  // price and form already match (no group price when no group is scheduled).
+  const [tourType, setTourType] = useState(() =>
+    initialTour?.hasPrivate && !(initialTour?.hasGroup && getUpcomingDepartures(initialTour).some((d) => d.freeSeats !== 0))
+      ? "private"
+      : "group"
+  );
   const [selectedVehicle, setSelectedVehicle] = useState("");
   const [couponCodeInput, setCouponCodeInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
@@ -71,8 +85,12 @@ export default function TourDetailClient({
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
   const [lightboxImgIndex, setLightboxImgIndex] = useState(null);
   const [bookingSubmitting, setBookingSubmitting] = useState(false);
-  const [bookingSubmitted, setBookingSubmitted] = useState(false);
+  const [bookingError, setBookingError] = useState("");
   const bookingSidebarRef = useRef(null);
+  // Funnel events fire once per tour page view.
+  const formStartedRef = useRef(false);
+  // A coupon the visitor removed is not re-applied automatically.
+  const couponDismissedRef = useRef(false);
 
   // The phone booking bar tracks the hero and the booking form itself
   // (TourMobileBookingBar). This page used to do it with a scroll listener
@@ -111,45 +129,6 @@ export default function TourDetailClient({
     return () => { cancelled = true; };
   }, [initialPlaces]);
 
-  const TOUR_DEFAULTS = {
-    ka: {
-      meetingPoint: "სასტუმროდან ან მითითებული მისამართიდან გაყვანა",
-      dressCode: "კომფორტული ტანსაცმელი და მოსახერხებელი ფეხსაცმელი",
-      includes: ["კომფორტული ტრანსპორტირება", "გამოცდილი მძღოლისა და გიდის მომსახურება", "უფასო Wi-Fi და სასმელი წყალი"],
-      excludes: ["ლოკაციების შესასვლელი ბილეთები", "პირადი ხარჯები და კვება"],
-      payment: "გადახდა გამგზავრების დღეს (ნაღდი ანგარიშსწორებით)",
-    },
-    en: {
-      meetingPoint: "Pickup from your hotel or specified address",
-      dressCode: "Comfortable casual clothes and walking shoes",
-      includes: ["Comfortable transportation", "Professional driver and guide service", "Free Wi-Fi & Bottled Water"],
-      excludes: ["Entrance tickets to attractions", "Personal expenses and meals"],
-      payment: "Payment on the day of departure (Cash or Transfer)",
-    },
-    ru: {
-      meetingPoint: "Трансфер из отеля или по указанному адресу",
-      dressCode: "Удобная одежда и комфортная обувь",
-      includes: ["Комфортабельный транспорт", "Услуги опытного водителя и гида", "Бесплатный Wi-Fi и питьевая вода"],
-      excludes: ["Входные билеты на локации", "Личные расходы и питание"],
-      payment: "Оплата в день выезда (наличными или переводом)",
-    },
-    tr: {
-      meetingPoint: "Otelinizden veya belirtilen adresten karşılama",
-      dressCode: "Rahat kıyafetler ve yürüyüş ayakkabısı",
-      includes: ["Konforlu ulaşım", "Deneyimli sürücü ve rehber hizmeti", "Ücretsiz Wi-Fi ve şişe su"],
-      excludes: ["Giriş biletleri", "Kişisel harcamalar ve yemekler"],
-      payment: "Tur günü kalkışta ödeme (Nakit veya Havale)",
-    },
-    ar: {
-      meetingPoint: "الاستقبال من الفندق أو العنوان المحدد",
-      dressCode: "ملابس مريحة وأحذية مناسبة للمشي",
-      includes: ["مواصلات مريحة ومكيفة", "سائق ومرشد ذو خبرة", "واي فاي مجاني ومياه شرب"],
-      excludes: ["تذاكر دخول المعالم السياحية", "المصاريف الشخصية والوجبات"],
-      payment: "الدفع يوم الانطلاق (نقداً)",
-    },
-  };
-
-  const currDefaults = TOUR_DEFAULTS[lang] || TOUR_DEFAULTS.ka;
   const isFirestoreTour = !!fsTour;
   const rawTour = fsTour || rawFsDoc;
 
@@ -158,11 +137,12 @@ export default function TourDetailClient({
     : {
         ...rawTour,
         departure: translateLocation(rawTour.destinationLabel || rawTour.destination || "ბათუმი", lang),
-        meetingPoint: currDefaults.meetingPoint,
-        dressCode: currDefaults.dressCode,
-        includes: Array.isArray(rawTour.includes) && rawTour.includes.length ? rawTour.includes.map((i) => asLocalizedText(i, lang)) : currDefaults.includes,
-        excludes: Array.isArray(rawTour.excludes) && rawTour.excludes.length ? rawTour.excludes.map((i) => asLocalizedText(i, lang)) : currDefaults.excludes,
-        payment: currDefaults.payment,
+        // Only what the admin entered for this tour. The page used to carry
+        // generic defaults ("guide", "Wi-Fi") that no tour had confirmed.
+        startTime: typeof rawFsDoc?.startTime === "string" ? rawFsDoc.startTime.trim() : "",
+        meetingPoint: asLocalizedText(rawFsDoc?.meetingPoint, lang).trim(),
+        includes: toLines(asLocalizedText(rawFsDoc?.includedText, lang)),
+        excludes: toLines(asLocalizedText(rawFsDoc?.excludedText, lang)),
         highlights: [asLocalizedText(rawTour.desc, lang)],
         gallery: rawTour.gallery?.length ? rawTour.gallery : [rawTour.img].filter(Boolean),
         itinerary: rawTour.itinerary?.length
@@ -203,7 +183,17 @@ export default function TourDetailClient({
   ];
 
   // Upcoming group departures as full ISO dates (no year guessing).
-  const groupDatesIso = tourSchedule.flatMap((mGroup) => Object.values(mGroup?.isoByChip || {})).sort();
+  // Sold-out departures (0 free seats, as the admin stores them) are not
+  // offered; the homepage already hides them.
+  const soldOutIso = new Set(
+    (Array.isArray(rawTour?.departureDates) ? rawTour.departureDates : [])
+      .filter((e) => e && typeof e === "object" && e.date && e.freeSeats != null && Number(e.freeSeats) <= 0)
+      .map((e) => e.date)
+  );
+  const groupDatesIso = tourSchedule
+    .flatMap((mGroup) => Object.values(mGroup?.isoByChip || {}))
+    .filter((iso) => !soldOutIso.has(iso))
+    .sort();
   const hasGroupSupport = isFirestoreTour && rawTour ? !!rawTour.hasGroup : true;
   const hasPrivateSupport = isFirestoreTour && rawTour ? !!rawTour.hasPrivate : true;
   const hasGroupDates = hasGroupSupport && groupDatesIso.length > 0;
@@ -333,10 +323,42 @@ export default function TourDetailClient({
   };
 
   const handleRemoveCoupon = () => {
+    couponDismissedRef.current = true;
     setAppliedCoupon(null);
     setCouponSuccess("");
     setCouponError("");
     setCouponCodeInput("");
+  };
+
+  // Cards and the header already show prices with the visitor's coupon
+  // (welcome coupon, account coupons). Apply the same coupon here so the form
+  // total matches the price that brought them to this page.
+  const bestCouponCode = bestCoupon?.code || "";
+  useEffect(() => {
+    if (!bestCouponCode || appliedCoupon || couponDismissedRef.current) return;
+    handleApplyCoupon(bestCouponCode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bestCouponCode, appliedCoupon]);
+
+  useEffect(() => {
+    if (!tour?.id) return;
+    trackEvent("view_tour_detail", {
+      tourId: tour.id,
+      tourTitle: asLocalizedText(tour.title, lang),
+      price: parsePriceNum(tour.priceGroup || tour.pricePrivate),
+    }).catch?.(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tour?.id]);
+
+  const handleFormStart = () => {
+    if (formStartedRef.current || !tour) return;
+    formStartedRef.current = true;
+    trackEvent("begin_checkout", {
+      tourId: tour.id,
+      tourTitle: asLocalizedText(tour.title, lang),
+      tourType,
+      price: totalPrice,
+    }).catch?.(() => {});
   };
 
   const handleTourTypeChange = (newType) => {
@@ -356,7 +378,7 @@ export default function TourDetailClient({
 
   const pickScheduleDate = (chipDate) => {
     const iso = scheduleDateToIso(chipDate);
-    if (iso) {
+    if (iso && !soldOutIso.has(iso)) {
       setSelectedDate(iso);
       if (tourType !== "group") setTourType("group");
       scrollToBooking();
@@ -428,7 +450,9 @@ export default function TourDetailClient({
       return;
     }
     setPhoneError("");
+    setBookingError("");
     setBookingSubmitting(true);
+    const people = parseInt(bookingPeople, 10) || peopleMin;
 
     try {
       const tourTitle = asLocalizedText(tour.title, lang);
@@ -455,22 +479,37 @@ export default function TourDetailClient({
       // The success page looks the booking up by its booking ID (plus the
       // access token / phone kept in localStorage). It previously received
       // the tour ID, so it could never find the booking.
+      trackEvent("book_tour_submit", { tourId: tour.id, tourTitle, tourType, price: totalPrice, people }).catch?.(() => {});
       const { createBooking } = await import("../../lib/bookingsFirestore");
       const result = await createBooking(bookingData);
       const bookingId = result?.bookingId;
       if (!bookingId) throw new Error("Booking was not saved");
+      // The server's total (coupon re-validated there) is the one reported.
+      const serverTotal = Number(result.booking?.totalPrice);
+      trackEvent("book_tour_success", {
+        eventId: bookingId,
+        tourId: tour.id,
+        tourTitle,
+        tourType,
+        people,
+        price: Number.isFinite(serverTotal) ? serverTotal : totalPrice,
+      }).catch?.(() => {});
       try {
         if (result.accessToken) localStorage.setItem(`gt_token_${bookingId}`, result.accessToken);
         if (bookingPhone) localStorage.setItem(`gt_phone_${bookingId}`, bookingPhone);
       } catch (_) {}
-      setBookingSubmitted(true);
       router.push(`/booking/success/${encodeURIComponent(bookingId)}`);
     } catch (err) {
       console.error("Booking error:", err);
-      // Fallback to WhatsApp
-      const tourTitle = asLocalizedText(tour.title, lang);
-      const waMsg = interpolate(t("tourDetail.bookingFallbackWa"), { title: tourTitle, date: selectedDate || "—", people: bookingPeople });
-      window.open(`${WA_LINK}?text=${encodeURIComponent(waMsg)}`, "_blank", "noopener,noreferrer");
+      trackEvent("book_tour_failed", { tourId: tour.id, reason: String(err?.message || "").slice(0, 120) }).catch?.(() => {});
+      if (err?.isValidation) {
+        setPhoneError(t("tourDetail.phoneError"));
+      } else {
+        // Shown next to the button with a prefilled WhatsApp link. Opening
+        // WhatsApp from here was blocked as a pop-up (it runs after an await),
+        // so the visitor saw nothing happen.
+        setBookingError(interpolate(t("tourDetail.bookingFallbackWa"), { title: asLocalizedText(tour.title, lang), date: selectedDate || "—", people }));
+      }
     } finally {
       setBookingSubmitting(false);
     }
@@ -543,6 +582,8 @@ export default function TourDetailClient({
         groupMaxCap={groupMaxCap}
         scrollToBooking={scrollToBooking}
         openLightbox={openLightbox}
+        price={activePrice}
+        priceLabel={tourType === "private" || !hasGroupSupport ? priceTypeLabel : ""}
       />
 
       {/* 2. Main Content Grid */}
@@ -647,6 +688,8 @@ export default function TourDetailClient({
             peopleCount={peopleCount}
             bookingSubmitting={bookingSubmitting}
             handleBookingSubmit={handleBookingSubmit}
+            handleFormStart={handleFormStart}
+            bookingError={bookingError}
             user={user}
           />
 

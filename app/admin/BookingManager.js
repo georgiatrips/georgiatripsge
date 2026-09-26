@@ -10,7 +10,7 @@ import {
 import { BOOKING_STATUSES, STATUS_CONFIG } from "../lib/bookingModel";
 import { useAuth } from "../lib/AuthContext";
 import { useCurrency } from "../lib/currency/CurrencyContext";
-import { WA_LINK } from "../lib/shared";
+import { customerMessage, whatsappToCustomer, GOOGLE_REVIEW_URL } from "../lib/customerMessages";
 import { VEHICLES } from "../lib/vehicles";
 
 export default function BookingManager() {
@@ -845,28 +845,36 @@ export default function BookingManager() {
 
               {/* Direct WhatsApp Quick Chat */}
               <div style={{ display: "flex", gap: "0.75rem" }}>
-                <a
-                  href={`${WA_LINK}?text=${encodeURIComponent(`გამარჯობა ${selectedBooking.customer?.fullName || ""}, გიკავშირდებით GeorgiaTrips-იდან თქვენს ჯავშანთან (${selectedBooking.bookingId}) დაკავშირებით.`)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    flex: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "0.5rem",
-                    background: "#25D366",
-                    color: "#ffffff",
-                    padding: "0.8rem",
-                    borderRadius: "10px",
-                    fontWeight: 700,
-                    fontSize: "0.95rem",
-                    textDecoration: "none",
-                  }}
-                >
-                  <span>💬</span>
-                  <span>WhatsApp-ში მიწერა</span>
-                </a>
+                {/* Opens a chat with the customer's own number (this used to open the
+                    company's number, so "write to the customer" reached nobody). */}
+                {(() => {
+                  const phone = selectedBooking.customer?.whatsapp || selectedBooking.customer?.phone || selectedBooking.phone;
+                  const href = whatsappToCustomer(phone, customerMessage("hello", selectedBooking));
+                  return href ? (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        flex: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "0.5rem",
+                        background: "#25D366",
+                        color: "#ffffff",
+                        padding: "0.8rem",
+                        borderRadius: "10px",
+                        fontWeight: 700,
+                        fontSize: "0.95rem",
+                        textDecoration: "none",
+                      }}
+                    >
+                      <span>💬</span>
+                      <span>WhatsApp-ში მიწერა</span>
+                    </a>
+                  ) : null;
+                })()}
 
                 <a
                   href={`tel:${selectedBooking.customer?.phone || selectedBooking.phone}`}
@@ -890,6 +898,47 @@ export default function BookingManager() {
                   <span>დარეკვა</span>
                 </a>
               </div>
+
+              {/* Ready-made messages in the customer's booking language. The
+                  operator reviews and completes [brackets] in WhatsApp before sending. */}
+              {(() => {
+                const phone = selectedBooking.customer?.whatsapp || selectedBooking.customer?.phone || selectedBooking.phone;
+                const templates = [
+                  { kind: "confirm", label: "✅ დადასტურება", show: selectedBooking.status !== "cancelled" },
+                  { kind: "reminder", label: "⏰ შეხსენება (წინა დღეს)", show: selectedBooking.status === "confirmed" },
+                  { kind: "review", label: GOOGLE_REVIEW_URL ? "⭐ Google შეფასების თხოვნა" : "⭐ შეფასების თხოვნა", show: selectedBooking.status === "completed" },
+                ].filter((item) => item.show);
+                if (!whatsappToCustomer(phone) || templates.length === 0) return null;
+                return (
+                  <div style={{ marginTop: "0.75rem" }}>
+                    <p style={{ margin: "0 0 0.4rem", fontSize: "0.8rem", color: "#64748b", fontWeight: 600 }}>
+                      მზა შეტყობინება კლიენტს ({selectedBooking.customer?.language || "en"}):
+                    </p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                      {templates.map((item) => (
+                        <a
+                          key={item.kind}
+                          href={whatsappToCustomer(phone, customerMessage(item.kind, selectedBooking))}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{
+                            padding: "0.5rem 0.85rem",
+                            borderRadius: "999px",
+                            border: "1px solid #25D366",
+                            color: "#166534",
+                            background: "#f0fdf4",
+                            fontSize: "0.85rem",
+                            fontWeight: 700,
+                            textDecoration: "none",
+                          }}
+                        >
+                          {item.label}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>

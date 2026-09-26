@@ -6,9 +6,25 @@ import Link from "next/link";
 import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
 import { STATUS_CONFIG, getStatusLabel } from "../../../lib/bookingModel";
-import { WA_LINK } from "../../../lib/shared";
+import { WA_LINK, PHONE_DISPLAY, PHONE_TEL } from "../../../lib/shared";
 import { useLanguage } from "../../../lib/i18n/LanguageContext";
 import { getLocalizedHref } from "../../../lib/siteConfig";
+import { formatTourDate } from "../../../lib/tourView";
+import { WhatsAppIcon, PhoneIcon, ShieldCheckIcon, WalletIcon } from "../../../components/Icons";
+import "../../booking.css";
+
+// Shown right after a booking request. It is the moment a first-time customer
+// decides whether the company is real, so it reads like a ticket: what was
+// booked, the reference, what happens next, and the fastest way to reach us.
+// Everything shown comes from the saved booking or from the site's own terms.
+
+const WA_TEMPLATES = {
+  en: (b) => `Hello! I booked on your website and would like to confirm it.\n\nBooking no.: ${b.id}\nTour: ${b.tour}\nDate: ${b.date}\nTravellers: ${b.people}\nTotal: ₾${b.total}`,
+  ru: (b) => `Здравствуйте! Я оформил(а) бронирование на сайте и хочу его подтвердить.\n\nНомер брони: ${b.id}\nТур: ${b.tour}\nДата: ${b.date}\nТуристов: ${b.people}\nИтого: ₾${b.total}`,
+  tr: (b) => `Merhaba! Web sitenizden rezervasyon yaptım ve onaylamak istiyorum.\n\nRezervasyon no: ${b.id}\nTur: ${b.tour}\nTarih: ${b.date}\nKişi: ${b.people}\nToplam: ₾${b.total}`,
+  ar: (b) => `مرحباً! قمت بالحجز عبر موقعكم وأود تأكيده.\n\nرقم الحجز: ${b.id}\nالجولة: ${b.tour}\nالتاريخ: ${b.date}\nعدد المسافرين: ${b.people}\nالإجمالي: ₾${b.total}`,
+  ka: (b) => `გამარჯობა! საიტზე გავაფორმე ჯავშანი და მინდა დადასტურება.\n\nჯავშნის №: ${b.id}\nტური: ${b.tour}\nთარიღი: ${b.date}\nმგზავრები: ${b.people}\nჯამი: ₾${b.total}`,
+};
 
 export default function BookingSuccessPage() {
   const params = useParams();
@@ -30,10 +46,8 @@ export default function BookingSuccessPage() {
     let localPhone = "";
 
     try {
-      if (typeof window !== "undefined") {
-        localToken = localStorage.getItem(`gt_token_${bookingId}`) || "";
-        localPhone = localStorage.getItem(`gt_phone_${bookingId}`) || "";
-      }
+      localToken = localStorage.getItem(`gt_token_${bookingId}`) || "";
+      localPhone = localStorage.getItem(`gt_phone_${bookingId}`) || "";
     } catch (_) {}
 
     const tokenToUse = queryToken || localToken;
@@ -43,14 +57,11 @@ export default function BookingSuccessPage() {
       .then((res) => res.json())
       .then((data) => {
         if (!isMounted) return;
-        if (data.success && data.booking) {
-          setBooking(data.booking);
-        } else {
-          setError(data.error || (t("bookingSuccess.notFoundTitle") || "ჯავშნის მონაცემები ვერ მოიძებნა"));
-        }
+        if (data.success && data.booking) setBooking(data.booking);
+        else setError(t("bookingSuccess.notFoundTitle"));
       })
       .catch(() => {
-        if (isMounted) setError("კავშირის შეცდომა");
+        if (isMounted) setError(t("bookingSuccess.connectionError"));
       })
       .finally(() => {
         if (isMounted) setLoading(false);
@@ -61,269 +72,155 @@ export default function BookingSuccessPage() {
     };
   }, [bookingId, queryToken, t]);
 
-  const currentStatus = booking?.status || "pending";
-  const statusInfo = STATUS_CONFIG[currentStatus] || STATUS_CONFIG.pending;
-  const statusLabel = getStatusLabel(currentStatus, lang);
+  const status = booking?.status || "pending";
+  const statusInfo = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
 
-  const getLocalizedWaMessage = (b, l) => {
-    if (!b) return "";
-    const bId = b.bookingId;
-    const tour = b.tourTitle;
-    const date = b.date;
-    const people = b.totalPeople;
-    const price = b.totalPrice;
+  // "by_agreement" is the stored value for private tours booked without a day.
+  const dateText =
+    booking?.date && /^\d{4}-\d{2}-\d{2}$/.test(booking.date)
+      ? formatTourDate(booking.date, lang, { day: "numeric", month: "long", year: "numeric" })
+      : t("tourDetail.byAgreement");
+  const typeText =
+    booking?.type === "transfer"
+      ? ""
+      : booking?.tourType === "private"
+        ? t("tourDetail.privateTour")
+        : booking?.tourType === "group"
+          ? t("tourDetail.groupTour")
+          : "";
+  const vehicleName = booking?.vehicle ? t(`transfersPage.vehicles.${booking.vehicle}.name`) : "";
+  const vehicleText = vehicleName && !vehicleName.startsWith("transfersPage.") ? vehicleName : "";
 
-    if (l === "en") {
-      return `✈️ *GeorgiaTrips — Tour Booking*\n━━━━━━━━━━━━━━━━━━\n🆔 *Booking ID:* ${bId}\n📍 *Tour:* ${tour}\n📅 *Date:* ${date}\n👥 *Travelers:* ${people}\n💰 *Total Amount:* ₾${price} GEL\n\nHello! I have placed booking ${bId} on your website and would like to confirm it.`;
-    }
-    if (l === "ru") {
-      return `✈️ *GeorgiaTrips — Бронирование тура*\n━━━━━━━━━━━━━━━━━━\n🆔 *ID бронирования:* ${bId}\n📍 *Тур:* ${tour}\n📅 *Дата:* ${date}\n👥 *Туристы:* ${people}\n💰 *Итоговая стоимость:* ₾${price} GEL\n\nЗдравствуйте! Я оформил бронирование ${bId} на сайте и хочу его подтвердить.`;
-    }
-    if (l === "tr") {
-      return `✈️ *GeorgiaTrips — Tur Rezervasyonu*\n━━━━━━━━━━━━━━━━━━\n🆔 *Rezervasyon ID:* ${bId}\n📍 *Tur:* ${tour}\n📅 *Tarih:* ${date}\n👥 *Yolcular:* ${people}\n💰 *Toplam Tutar:* ₾${price} GEL\n\nMerhaba! Web sitenizden ${bId} numaralı rezervasyonu yaptım ve onaylamak istiyorum.`;
-    }
-    if (l === "ar") {
-      return `✈️ *GeorgiaTrips — حجز رحلة*\n━━━━━━━━━━━━━━━━━━\n🆔 *رقم الحجز:* ${bId}\n📍 *الرحلة:* ${tour}\n📅 *التاريخ:* ${date}\n👥 *المسافرون:* ${people}\n💰 *المبلغ الإجمالي:* ₾${price} GEL\n\nمرحباً! لقد قمت بإنشاء الحجز ${bId} عبر الموقع وأود تأكيده.`;
-    }
-    return `✈️ *GeorgiaTrips — ტურის ჯავშანი*\n━━━━━━━━━━━━━━━━━━\n🆔 *ჯავშნის ID:* ${bId}\n📍 *ტური:* ${tour}\n📅 *თარიღი:* ${date}\n👥 *მგზავრები:* ${people}\n💰 *ჯამური თანხა:* ₾${price} GEL\n\nგამარჯობა, საიტზე გავაფორმე ჯავშანი ${bId} და მინდა დადასტურება.`;
-  };
+  const waText = booking
+    ? (WA_TEMPLATES[lang] || WA_TEMPLATES.en)({
+        id: booking.bookingId,
+        tour: booking.tourTitle,
+        date: dateText,
+        people: booking.totalPeople,
+        total: booking.totalPrice,
+      })
+    : "";
 
-  const waMessage = getLocalizedWaMessage(booking, lang);
+  const rows = booking
+    ? [
+        { label: t("bookingSuccess.tourLabel"), value: booking.tourTitle },
+        typeText && { label: t("bookingSuccess.typeLabel"), value: typeText },
+        vehicleText && { label: t("bookingSuccess.vehicleLabel"), value: vehicleText },
+        { label: t("bookingSuccess.dateLabel"), value: dateText },
+        { label: t("bookingSuccess.peopleLabel"), value: String(booking.totalPeople ?? "") },
+      ].filter(Boolean)
+    : [];
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f8fafc" }}>
+    <div className="gt-bk-page">
       <Navbar />
 
-      <main style={{ flex: 1, padding: "3rem 1rem 5rem", maxWidth: "680px", margin: "0 auto", width: "100%" }}>
+      <main className="gt-bk-main">
         {loading ? (
-          <div style={{ textAlign: "center", padding: "4rem 1rem" }}>
-            <div className="spinner" style={{ margin: "0 auto 1.5rem" }} />
-            <p style={{ color: "#64748b", fontWeight: 500 }}>
-              {t("bookingSuccess.loading") || "ჯავშნის მონაცემები იტვირთება..."}
-            </p>
+          <div className="gt-bk-loading" role="status">
+            <div className="spinner" />
+            <p>{t("bookingSuccess.loading")}</p>
           </div>
         ) : error ? (
-          <div
-            style={{
-              background: "#ffffff",
-              padding: "2.5rem 2rem",
-              borderRadius: "20px",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.06)",
-              textAlign: "center",
-              border: "1px solid #fee2e2",
-            }}
-          >
-            <span style={{ fontSize: "3rem", display: "block", marginBottom: "1rem" }}>⚠️</span>
-            <h1 style={{ fontSize: "1.5rem", color: "#1f2d3d", marginBottom: "0.5rem" }}>
-              {t("bookingSuccess.notFoundTitle") || "ჯავშანი ვერ მოიძებნა"}
-            </h1>
-            <p style={{ color: "#64748b", fontSize: "0.95rem", marginBottom: "1.5rem" }}>{error}</p>
-            <Link
-              href="/booking/status"
-              style={{
-                display: "inline-block",
-                background: "#0d9488",
-                color: "#ffffff",
-                padding: "0.75rem 1.5rem",
-                borderRadius: "10px",
-                fontWeight: 600,
-                textDecoration: "none",
-              }}
-            >
-              {t("bookingSuccess.checkStatusByPhone") || "სტატუსის შემოწმება ნომრით"}
-            </Link>
+          <div className="gt-bk-card gt-bk-card--error">
+            <h1>{t("bookingSuccess.notFoundTitle")}</h1>
+            <p>{error}</p>
+            <div className="gt-bk-actions">
+              <Link href="/booking/status" className="gt-btn gt-btn--navy gt-btn--block">
+                {t("bookingSuccess.checkStatusLabel")}
+              </Link>
+              <a href={WA_LINK} target="_blank" rel="noopener noreferrer" className="gt-btn gt-btn--wa gt-btn--block">
+                <WhatsAppIcon size={18} />
+                WhatsApp
+              </a>
+            </div>
           </div>
         ) : (
-          <div
-            style={{
-              background: "#ffffff",
-              borderRadius: "24px",
-              boxShadow: "0 12px 40px rgba(13, 35, 58, 0.08)",
-              border: "1px solid rgba(226, 232, 240, 0.9)",
-              overflow: "hidden",
-            }}
-          >
-            {/* Top Accent Banner */}
-            <div
-              style={{
-                background: "#2a6592",
-                color: "#ffffff",
-                padding: "2.5rem 2rem 2rem",
-                textAlign: "center",
-              }}
-            >
-              <div
-                style={{
-                  width: "68px",
-                  height: "68px",
-                  background: "rgba(16, 185, 129, 0.2)",
-                  border: "2px solid #10b981",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "2rem",
-                  margin: "0 auto 1.2rem",
-                }}
-              >
-                ✓
+          <article className="gt-bk-card">
+            <header className="gt-bk-head">
+              <span className="gt-bk-check" aria-hidden="true">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+              </span>
+              <h1>{t("bookingSuccess.successTitle")}</h1>
+              <p>{t("bookingSuccess.successSubtitle")}</p>
+            </header>
+
+            <div className="gt-bk-ref">
+              <div>
+                <span className="gt-bk-label">{t("bookingSuccess.bookingIdLabel")}</span>
+                <strong className="gt-bk-id">{booking.bookingId}</strong>
               </div>
-              <h1 style={{ fontSize: "1.65rem", fontWeight: 800, margin: "0 0 0.4rem" }}>
-                {t("bookingSuccess.successTitle") || "ჯავშანი წარმატებით მიღებულია!"}
-              </h1>
-              <p style={{ color: "#cbd5e1", fontSize: "0.95rem", margin: 0 }}>
-                {t("bookingSuccess.successSubtitle") || "მადლობა, რომ ირჩევთ GeorgiaTrips-ს. თქვენი განაცხადი დარეგისტრირდა სისტემაში."}
-              </p>
+              <span
+                className="gt-bk-status"
+                style={{ color: statusInfo.color, background: statusInfo.bgColor, borderColor: statusInfo.borderColor }}
+              >
+                {getStatusLabel(status, lang)}
+              </span>
             </div>
 
-            {/* Content Body */}
-            <div style={{ padding: "2rem" }}>
-              {/* Booking ID & Status Chip */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  flexWrap: "wrap",
-                  gap: "0.75rem",
-                  padding: "1rem 1.25rem",
-                  background: "#f1f5f9",
-                  borderRadius: "14px",
-                  marginBottom: "1.5rem",
-                }}
+            <dl className="gt-bk-rows">
+              {rows.map((row) => (
+                <div key={row.label} className="gt-bk-row">
+                  <dt>{row.label}</dt>
+                  <dd>{row.value}</dd>
+                </div>
+              ))}
+              <div className="gt-bk-row gt-bk-row--total">
+                <dt>{t("bookingSuccess.totalLabel")}</dt>
+                <dd>₾{booking.totalPrice}</dd>
+              </div>
+            </dl>
+
+            {/* The primary action: messaging us is the fastest confirmation. */}
+            <section className="gt-bk-cta">
+              <p>{t("bookingSuccess.whatsappHint")}</p>
+              <a
+                href={`${WA_LINK}?text=${encodeURIComponent(waText)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="gt-btn gt-btn--wa gt-btn--lg gt-btn--block"
               >
-                <div>
-                  <span style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700, display: "block" }}>
-                    {t("bookingSuccess.bookingIdLabel") || "ჯავშნის ნომერი (ID)"}
-                  </span>
-                  <strong style={{ fontSize: "1.25rem", color: "#1f2d3d", fontFamily: "monospace", letterSpacing: "0.02em" }}>
-                    {booking.bookingId}
-                  </strong>
-                </div>
+                <WhatsAppIcon size={20} />
+                {t("bookingSuccess.confirmOnWhatsapp")}
+              </a>
+              <a href={`tel:${PHONE_TEL}`} className="gt-bk-phone">
+                <PhoneIcon size={15} />
+                {PHONE_DISPLAY}
+              </a>
+            </section>
 
-                <div
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "0.45rem",
-                    padding: "0.4rem 0.9rem",
-                    borderRadius: "999px",
-                    background: statusInfo.bgColor,
-                    border: `1px solid ${statusInfo.borderColor}`,
-                    color: statusInfo.color,
-                    fontWeight: 700,
-                    fontSize: "0.88rem",
-                  }}
-                >
-                  <span>{statusInfo.icon}</span>
-                  <span>{statusLabel}</span>
-                </div>
-              </div>
+            {status === "pending" && (
+              <section className="gt-bk-next">
+                <h2>{t("bookingSuccess.nextTitle")}</h2>
+                <ol>
+                  <li>{t("bookingSuccess.nextStep1")}</li>
+                  <li>{t("bookingSuccess.nextStep2")}</li>
+                </ol>
+              </section>
+            )}
 
-              {/* Status Explanation Box */}
-              <div
-                style={{
-                  padding: "1rem 1.25rem",
-                  borderRadius: "12px",
-                  background: "rgba(234, 179, 8, 0.08)",
-                  border: "1px solid rgba(234, 179, 8, 0.25)",
-                  color: "#854d0e",
-                  fontSize: "0.88rem",
-                  lineHeight: 1.5,
-                  marginBottom: "1.75rem",
-                }}
-              >
-                <strong>{t("bookingSuccess.whatNextTitle") || "ℹ️ რა ხდება შემდეგ?"}</strong> {t("bookingSuccess.whatNextDesc") || "თქვენი ჯავშანი მიღებულია და ოპერატორი ამოწმებს თავისუფალ ადგილებს. უმოკლეს დროში მიიღებთ შეტყობინებას WhatsApp-ზე ან ზარს დეტალების დასადასტურებლად."}
-              </div>
+            <ul className="gt-bk-terms">
+              <li>
+                <WalletIcon size={16} />
+                {t("tourDetail.trustPay")}
+              </li>
+              <li>
+                <ShieldCheckIcon size={16} />
+                {t("tourDetail.trustCancel")}
+              </li>
+            </ul>
 
-              {/* Details List */}
-              <div style={{ display: "grid", gap: "0.85rem", marginBottom: "2rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "0.75rem", borderBottom: "1px solid #e2e8f0" }}>
-                  <span style={{ color: "#64748b", fontSize: "0.9rem" }}>{t("bookingSuccess.tour") || "📍 ტური:"}</span>
-                  <strong style={{ color: "#1f2d3d", fontSize: "0.95rem", textAlign: "right" }}>{booking.tourTitle}</strong>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "0.75rem", borderBottom: "1px solid #e2e8f0" }}>
-                  <span style={{ color: "#64748b", fontSize: "0.9rem" }}>{t("bookingSuccess.date") || "📅 თარიღი:"}</span>
-                  <strong style={{ color: "#1f2d3d", fontSize: "0.95rem" }}>{booking.date}</strong>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "0.75rem", borderBottom: "1px solid #e2e8f0" }}>
-                  <span style={{ color: "#64748b", fontSize: "0.9rem" }}>{t("bookingSuccess.people") || "👥 მგზავრები:"}</span>
-                  <strong style={{ color: "#1f2d3d", fontSize: "0.95rem" }}>
-                    {(t("bookingSuccess.peopleCount") || "{count} ადამიანი").replace("{count}", booking.totalPeople)}
-                  </strong>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "0.75rem", borderBottom: "1px solid #e2e8f0" }}>
-                  <span style={{ color: "#64748b", fontSize: "0.9rem" }}>{t("bookingSuccess.totalCost") || "💰 ჯამური ღირებულება:"}</span>
-                  <strong style={{ color: "#0d9488", fontSize: "1.2rem", fontWeight: 800 }}>₾{booking.totalPrice} GEL</strong>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div style={{ display: "grid", gap: "0.85rem" }}>
-                <a
-                  href={`${WA_LINK}?text=${encodeURIComponent(waMessage)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "0.6rem",
-                    background: "var(--gt-wa, #1f7a64)",
-                    color: "#ffffff",
-                    padding: "0.95rem 1.5rem",
-                    borderRadius: "14px",
-                    fontWeight: 700,
-                    fontSize: "1rem",
-                    textDecoration: "none",
-                    boxShadow: "0 6px 20px rgba(37, 211, 102, 0.35)",
-                    transition: "all 0.2s ease",
-                  }}
-                >
-                  <span style={{ fontSize: "1.2rem" }}>💬</span>
-                  <span>{t("bookingSuccess.confirmOnWhatsapp") || "WhatsApp-ში დადასტურება"}</span>
-                </a>
-
-                <div style={{ display: "flex", gap: "0.75rem" }}>
-                  <Link
-                    href={`/booking/status?id=${encodeURIComponent(booking.bookingId)}`}
-                    style={{
-                      flex: 1,
-                      textAlign: "center",
-                      background: "#f1f5f9",
-                      color: "#334155",
-                      padding: "0.8rem 1rem",
-                      borderRadius: "12px",
-                      fontWeight: 600,
-                      fontSize: "0.9rem",
-                      textDecoration: "none",
-                      border: "1px solid #e2e8f0",
-                    }}
-                  >
-                    {t("bookingSuccess.checkStatus") || "🔍 სტატუსის შემოწმება"}
-                  </Link>
-
-                  <Link
-                    href={getLocalizedHref("/tours", lang)}
-                    style={{
-                      flex: 1,
-                      textAlign: "center",
-                      background: "#ffffff",
-                      color: "#1f2d3d",
-                      padding: "0.8rem 1rem",
-                      borderRadius: "12px",
-                      fontWeight: 600,
-                      fontSize: "0.9rem",
-                      textDecoration: "none",
-                      border: "1px solid #cbd5e1",
-                    }}
-                  >
-                    {t("bookingSuccess.otherTours") || "სხვა ტურები"}
-                  </Link>
-                </div>
-              </div>
+            <div className="gt-bk-actions gt-bk-actions--row">
+              <Link href={`/booking/status?id=${encodeURIComponent(booking.bookingId)}`} className="gt-btn gt-btn--outline">
+                {t("bookingSuccess.checkStatusLabel")}
+              </Link>
+              <Link href={getLocalizedHref("/tours", lang)} className="gt-btn gt-btn--outline">
+                {t("bookingSuccess.otherTours")}
+              </Link>
             </div>
-          </div>
+          </article>
         )}
       </main>
 

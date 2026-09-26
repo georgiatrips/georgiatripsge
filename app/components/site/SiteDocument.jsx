@@ -97,6 +97,7 @@ export default function SiteDocument({ lang, children }) {
             __html: `try{if(localStorage.getItem("gt_user_logged_in")==="true"){var d=document.documentElement;d.setAttribute("data-auth","in");d.style.setProperty("--gt-user-name",JSON.stringify(localStorage.getItem("gt_user_display_name")||""))}}catch(e){}`,
           }}
         />
+        <ViewTransitionErrorFilter />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
@@ -109,6 +110,19 @@ export default function SiteDocument({ lang, children }) {
         <link rel="dns-prefetch" href="https://connect.facebook.net" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
         <meta name="msvalidate.01" content="6176E8337649B075BA1BC245892D743E" />
+        {/* Command queues for GA4 and the Meta Pixel, defined before any page
+            code runs. The libraries themselves still load lazily (below) and
+            replay the queue; without these stubs, events fired while the page
+            was loading (tour views, form starts) were silently dropped. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}` +
+              (process.env.NEXT_PUBLIC_GA_ID ? `gtag('js',new Date());gtag('config','${process.env.NEXT_PUBLIC_GA_ID}');` : "") +
+              `!function(f){if(f.fbq)return;var n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[]}(window);` +
+              `fbq('init','4302985556633819');fbq('track','PageView');`,
+          }}
+        />
       </head>
       <body>
         <LanguageProvider initialLang={lang} messages={getMessages(lang)}>
@@ -116,7 +130,6 @@ export default function SiteDocument({ lang, children }) {
             <AuthProvider>
               <CouponProvider>
                 {/* Page changes crossfade; styles in styles/motion.css (.gt-page). */}
-                <ViewTransitionErrorFilter />
                 <ViewTransition default="gt-page">{children}</ViewTransition>
                 <Suspense fallback={null}>
                   <AnalyticsTracker />
@@ -132,20 +145,7 @@ export default function SiteDocument({ lang, children }) {
         </LanguageProvider>
 
         {/* Meta Pixel Code (Deferred afterInteractive to prevent render blocking) */}
-        <Script id="fb-pixel-init" strategy="lazyOnload">
-          {`
-            !function(f,b,e,v,n,t,s)
-            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-            n.queue=[];t=b.createElement(e);t.async=!0;
-            t.src=v;s=b.getElementsByTagName(e)[0];
-            s.parentNode.insertBefore(t,s)}(window, document,'script',
-            'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', '4302985556633819');
-            fbq('track', 'PageView');
-          `}
-        </Script>
+        <Script id="fb-pixel-lib" src="https://connect.facebook.net/en_US/fbevents.js" strategy="lazyOnload" />
         <noscript>
           <img
             height="1"
@@ -190,14 +190,6 @@ export default function SiteDocument({ lang, children }) {
               src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
               strategy="lazyOnload"
             />
-            <Script id="google-analytics" strategy="lazyOnload">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
-              `}
-            </Script>
           </>
         )}
 

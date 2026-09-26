@@ -14,6 +14,12 @@ import "../../styles/tour-card.css";
 export default function TourCard({ tour, lang, t, headingLevel = 3, eager = false, sizes, dateMatch = null }) {
   const Heading = `h${headingLevel}`;
   const tourHref = getLocalizedHref(`/tours/${encodeURIComponent(tour.slug || tour.id)}`, lang);
+  // The group price leads only while a group departure with free seats is
+  // scheduled. Otherwise the card led with a per-person price the tour page
+  // then showed as "not scheduled", and the bookable price was the private one.
+  const groupBookable = Boolean(tour.groupPrice && tour.departures?.some((d) => d.freeSeats !== 0));
+  const leadGroup = groupBookable || (tour.groupPrice && !tour.privatePrice);
+  const peopleMax = leadGroup ? tour.groupMax : tour.privateMax || tour.groupMax;
   const nextDate = tour.nextDeparture
     ? formatTourDate(tour.nextDeparture.date, lang, { day: "numeric", month: "short" })
     : "";
@@ -53,7 +59,7 @@ export default function TourCard({ tour, lang, t, headingLevel = 3, eager = fals
 
         <ul className="gt-tour-facts">
           {tour.duration && <li><ClockIcon size={15} />{tour.duration}</li>}
-          {tour.groupMax && <li><UsersIcon size={15} />{interpolate(t("tourCard.upTo"), { count: tour.groupMax })}</li>}
+          {peopleMax && <li><UsersIcon size={15} />{interpolate(t("tourCard.upTo"), { count: peopleMax })}</li>}
           {tour.stops.length > 1 && <li><RouteIcon size={15} />{interpolate(t("tourCard.stops"), { count: tour.stops.length })}</li>}
         </ul>
 
@@ -78,7 +84,7 @@ export default function TourCard({ tour, lang, t, headingLevel = 3, eager = fals
 
         <div className="gt-tour-card-foot">
           <div className="gt-tour-price">
-            {tour.groupPrice ? (
+            {leadGroup ? (
               <>
                 <span className="gt-tour-price-main">
                   <strong><TourPrice price={tour.groupPrice} lang={lang} variant="card" /></strong>
@@ -93,10 +99,22 @@ export default function TourCard({ tour, lang, t, headingLevel = 3, eager = fals
                 )}
               </>
             ) : tour.privatePrice ? (
-              <span className="gt-tour-price-main">
-                <strong><TourPrice price={tour.privatePrice} lang={lang} variant="card" /></strong>
-                <small>{t("tourCard.privateLabel")}</small>
-              </span>
+              <>
+                <span className="gt-tour-price-main">
+                  <strong><TourPrice price={tour.privatePrice} lang={lang} variant="card" /></strong>
+                  <small>
+                    {t("tourCard.privateLabel")}
+                    {tour.privateMax ? ` · ${interpolate(t("tourCard.privateUpTo"), { count: tour.privateMax })}` : ""}
+                  </small>
+                </span>
+                {tour.groupPrice && (
+                  <span className="gt-tour-price-alt">
+                    {t("tourCard.groupLabel")}:{" "}
+                    <strong><TourPrice price={tour.groupPrice} lang={lang} variant="card" showBadge={false} /></strong>
+                    {` ${t("tourCard.perPerson")} · ${t("tourCard.groupScheduledOnly")}`}
+                  </span>
+                )}
+              </>
             ) : null}
           </div>
 

@@ -57,6 +57,8 @@ export async function GET(request) {
         status: booking.status,
         tourTitle: booking.tourTitle,
         tourType: booking.tourType,
+        type: booking.type,
+        vehicle: booking.trip?.vehicle || "",
         date: booking.trip?.date,
         totalPeople: booking.trip?.totalPeople,
         adults: booking.trip?.adults,

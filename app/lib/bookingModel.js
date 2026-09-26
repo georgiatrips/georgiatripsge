@@ -72,25 +72,25 @@ export function generateBookingId() {
   const mm = String(now.getMonth() + 1).padStart(2, "0");
   const dd = String(now.getDate()).padStart(2, "0");
 
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let randomSuffix = "";
-  for (let i = 0; i < 4; i++) {
-    randomSuffix += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
+  return `GT-${yy}${mm}${dd}-${randomChars("ABCDEFGHJKLMNPQRSTUVWXYZ23456789", 4)}`;
+}
 
-  return `GT-${yy}${mm}${dd}-${randomSuffix}`;
+// Crypto-backed when available (browsers, Node 19+). The ID is also the
+// Firestore document ID, so a guessable or colliding value matters.
+function randomChars(chars, length) {
+  const values = new Uint32Array(length);
+  if (globalThis.crypto?.getRandomValues) globalThis.crypto.getRandomValues(values);
+  else for (let i = 0; i < length; i++) values[i] = Math.floor(Math.random() * 2 ** 32);
+  let out = "";
+  for (let i = 0; i < length; i++) out += chars.charAt(values[i] % chars.length);
+  return out;
 }
 
 /**
  * Generate a random cryptographically secure token for booking status verification
  */
 export function generateAccessToken() {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let token = "sec_";
-  for (let i = 0; i < 24; i++) {
-    token += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return token;
+  return `sec_${randomChars("abcdefghijklmnopqrstuvwxyz0123456789", 24)}`;
 }
 
 /**

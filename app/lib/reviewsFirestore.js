@@ -59,9 +59,10 @@ export async function createReview(data) {
 export async function updateReview(id, data) {
   try {
     const ref = doc(db, SITE_REVIEWS_COLLECTION, id);
+    // Partial updates (e.g. { approved }) must not reset the rating.
     await updateDoc(ref, {
       ...data,
-      rating: Number(data.rating) || 5,
+      ...(data.rating !== undefined ? { rating: Number(data.rating) || 5 } : {}),
       updatedAt: serverTimestamp(),
     });
   } catch (err) {

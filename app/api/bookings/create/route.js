@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
-import { collection, addDoc, setDoc, getDocs, query, where, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { NextResponse, after } from "next/server";
+import { setDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { generateBookingId, generateAccessToken, isValidPhone, BOOKING_STATUSES } from "../../../lib/bookingModel";
 import { validateCouponServer, recordCouponUsage } from "../../../lib/coupons";
 import { VEHICLES, getPrivateVehiclePrices } from "../../../lib/vehicles";
+import { notifyNewBooking } from "../../../lib/server/notifyBooking";
 
 // Short-term in-memory cache for anti-spam / duplicate prevention (60 seconds)
 const recentSubmissions = new Map();
@@ -77,6 +78,9 @@ export async function POST(request) {
     let baseTotalPrice = 0;
     let calculatedTourTitle = tourTitle || "Georgia Tour";
     let bookedVehicle = VEHICLES[vehicle] ? vehicle : "";
+    // True whenever the total below comes from the request body instead of
+    // Firestore, so the team knows to check it before confirming.
+    let clientPriced = false;
 
     if (type === "tour" && tourId) {
       try {
@@ -108,15 +112,18 @@ export async function POST(request) {
             calculatedTourTitle = typeof tData.title === "string" ? tData.title : (tData.title[language] || tData.title.ka || tourTitle);
           }
         } else {
-          // Fallback to trusted body price if tour not in firestore
+          // Tour not in Firestore: keep the request, flagged for a price check.
+          clientPriced = true;
           baseTotalPrice = Number(body.price) || Number(body.baseTotalPrice) || 0;
           unitPrice = totalPeople > 0 ? Math.round(baseTotalPrice / totalPeople) : baseTotalPrice;
         }
       } catch (err) {
+        clientPriced = true;
         baseTotalPrice = Number(body.price) || 0;
         unitPrice = totalPeople > 0 ? Math.round(baseTotalPrice / totalPeople) : baseTotalPrice;
       }
     } else {
+      clientPriced = true;
       baseTotalPrice = Number(body.price) || 0;
       unitPrice = baseTotalPrice;
     }
@@ -145,7 +152,14 @@ export async function POST(request) {
     const finalTotalPrice = Math.max(0, baseTotalPrice - discountAmount);
 
     // 5. Generate unique Booking ID & Secure Access Token
-    const bookingId = generateBookingId();
+    // The ID is the document ID: never reuse one, or setDoc would overwrite
+    // another customer's booking.
+    let bookingId = generateBookingId();
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const taken = await getDoc(doc(db, "bookings", bookingId)).then((snap) => snap.exists()).catch(() => false);
+      if (!taken) break;
+      bookingId = generateBookingId();
+    }
     const accessToken = generateAccessToken();
 
     // 6. Build structured booking document
@@ -185,6 +199,7 @@ export async function POST(request) {
         discountAmount,
         totalPrice: finalTotalPrice,
         currency: "GEL",
+        clientPriced,
       },
 
       source: {
@@ -222,6 +237,9 @@ export async function POST(request) {
 
     // 7. Save to Firestore (doc ID = bookingId)
     await setDoc(doc(db, "bookings", bookingId), bookingDoc);
+
+    // Alert the team after the response is sent, so the customer never waits on it.
+    after(() => notifyNewBooking(bookingDoc));
 
     // 8. Record coupon usage & increment count if discount was applied
     if (cleanCouponCode && discountAmount > 0) {

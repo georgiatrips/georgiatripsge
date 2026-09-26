@@ -31,6 +31,11 @@ export default function TourDetailHero({
   groupMaxCap,
   scrollToBooking,
   openLightbox,
+  // The price of the option the booking form starts on (group only when a
+  // group departure is actually scheduled), so the header never advertises
+  // a price the visitor cannot book.
+  price,
+  priceLabel,
 }) {
   const { t, lang } = useLanguage();
   const title = asLocalizedText(tour.title, lang);
@@ -117,11 +122,11 @@ export default function TourDetailHero({
                 <strong className="fact-value">{`${configuredPeopleMin}-${groupMaxCap} ${t("tourDetail.peopleSuffix")}`}</strong>
               </div>
             )}
-            {(tour.priceGroup || tour.pricePrivate) && (
+            {(price || tour.priceGroup || tour.pricePrivate) && (
               <div className="tdp-hero2-fact">
-                <span className="fact-label">{t("tourDetail.price")}</span>
+                <span className="fact-label">{priceLabel ? `${t("tourDetail.price")} · ${priceLabel}` : t("tourDetail.price")}</span>
                 <strong className="fact-value accent">
-                  <TourPrice price={tour.priceGroup || tour.pricePrivate} lang={lang} variant="hero" />
+                  <TourPrice price={price || tour.priceGroup || tour.pricePrivate} lang={lang} variant="hero" />
                 </strong>
               </div>
             )}

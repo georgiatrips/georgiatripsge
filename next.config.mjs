@@ -5,6 +5,12 @@ const nextConfig = {
   compress: true,
   reactStrictMode: true,
 
+  // Google Business place ID (not a secret — it is in every Maps link) for
+  // the review link the admin sends customers after a trip.
+  env: {
+    NEXT_PUBLIC_GOOGLE_REVIEW_PLACE_ID: process.env.GOOGLE_PLACE_ID || "",
+  },
+
   // Smooth page-to-page crossfades through React <ViewTransition> (see app/layout.js).
   experimental: {
     viewTransition: true,

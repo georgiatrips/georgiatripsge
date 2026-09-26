@@ -113,9 +113,11 @@ export default function AnalyticsTracker() {
         }
 
         // 4. Tour card / detail click
-        if (href.startsWith("/tours/") && href !== "/tours") {
+        // Tour links are locale-prefixed (/en/tours/<slug>).
+        const tourMatch = href.match(/^(?:\/[a-z]{2})?\/tours\/([^/?#]+)/);
+        if (tourMatch) {
           trackEvent("view_tour_click", {
-            targetTour: href.replace("/tours/", ""),
+            targetTour: tourMatch[1],
             label: trackLabel,
           });
           return;
