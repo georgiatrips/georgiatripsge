@@ -36,6 +36,7 @@ export default function HotelManager({ onHotelsCountChange }) {
   const [form, setForm] = useState(empty());
   const [hotels, setHotels] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [view, setView] = useState("list");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -122,6 +123,7 @@ export default function HotelManager({ onHotelsCountChange }) {
 
       setForm(empty());
       setEditingId(null);
+      setView("list");
       await refresh();
       setMessage("სასტუმრო წარმატებით შენახულია!");
     } catch (err) {
@@ -133,6 +135,7 @@ export default function HotelManager({ onHotelsCountChange }) {
 
   const edit = (hotel) => {
     setEditingId(hotel.id);
+    setView("form");
     setForm({
       name: parseLocal(hotel.name),
       city: parseLocal(hotel.city),
@@ -163,6 +166,7 @@ export default function HotelManager({ onHotelsCountChange }) {
 
     if (editingId === id) {
       setEditingId(null);
+      setView("list");
       setForm(empty());
     }
     await refresh();
@@ -176,14 +180,26 @@ export default function HotelManager({ onHotelsCountChange }) {
   });
 
   return (
-    <div className="admin-layout">
-      {/* FORM CARD */}
+    <div className="admin-catalog-wrap">
+      <div className="admin-catalog-bar">
+        <div className="admin-segment admin-catalog-switch" role="tablist">
+          <button type="button" role="tab" aria-selected={view === "list"} className={view === "list" ? "is-active" : ""} onClick={() => setView("list")}>
+            კატალოგი <span className="adm-badge">{hotels.length}</span>
+          </button>
+          <button type="button" role="tab" aria-selected={view === "form"} className={view === "form" ? "is-active" : ""} onClick={() => setView("form")}>
+            {editingId ? "რედაქტირება" : "+ დამატება"}
+          </button>
+        </div>
+      </div>
+        {message && <div className="admin-alert success">{message}</div>}
+        {error && <div className="admin-alert error">{error}</div>}
+      {view === "form" && (
       <form className="admin-form" onSubmit={submit}>
         <header className="admin-form-header">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h2>{editingId ? "🏨 სასტუმროს რედაქტირება" : "🏨 ახალი სასტუმროს დამატება"}</h2>
+            <h2>{editingId ? "სასტუმროს რედაქტირება" : "ახალი სასტუმროს დამატება"}</h2>
             {editingId && (
-              <span className="admin-tag-pill" style={{ background: "rgba(41,178,183,0.2)", color: "#29b2b7" }}>
+              <span className="admin-tag-pill price">
                 რედაქტირების რეჟიმი
               </span>
             )}
@@ -193,8 +209,6 @@ export default function HotelManager({ onHotelsCountChange }) {
           </p>
         </header>
 
-        {message && <div className="admin-alert success">{message}</div>}
-        {error && <div className="admin-alert error">{error}</div>}
 
         <fieldset className="admin-fieldset">
           <legend>მრავალენოვანი ინფორმაცია (თარგმანი)</legend>
@@ -236,7 +250,7 @@ export default function HotelManager({ onHotelsCountChange }) {
                 placeholder="მაგ: 250 ₾ / ღამე"
               />
               {form.priceFrom && (
-                <p className="admin-hint" style={{ color: "#38bdf8", marginTop: 4, fontWeight: 500, fontSize: "0.8rem" }}>
+                <p className="admin-hint" style={{ color: "var(--gt-primary)", marginTop: 4, fontWeight: 500, fontSize: "0.8rem" }}>
                   ⇄ ვალუტის გადაყვანა: {format(form.priceFrom)}
                 </p>
               )}
@@ -276,7 +290,7 @@ export default function HotelManager({ onHotelsCountChange }) {
               checked={form.isFeatured}
               onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })}
             />
-            <span>⭐ რეკომენდებული სასტუმრო (გამოჩნდება სიის თავში)</span>
+            <span>რეკომენდებული სასტუმრო (გამოჩნდება სიის თავში)</span>
           </label>
         </fieldset>
 
@@ -307,7 +321,7 @@ export default function HotelManager({ onHotelsCountChange }) {
               multiple
               onChange={uploadImages}
               disabled={saving || form.gallery.length >= MAX_PHOTOS}
-              style={{ padding: "0.5rem", background: "rgba(255,255,255,0.05)", borderRadius: "8px" }}
+              style={{ padding: "0.5rem", background: "#fff", borderRadius: "8px" }}
             />
           </div>
           {form.gallery.length > 0 ? (
@@ -347,6 +361,7 @@ export default function HotelManager({ onHotelsCountChange }) {
             onClick={() => {
               setForm(empty);
               setEditingId(null);
+      setView("list");
               setError("");
               setMessage("");
             }}
@@ -355,28 +370,30 @@ export default function HotelManager({ onHotelsCountChange }) {
           </button>
         </div>
       </form>
+      )}
 
       {/* CATALOG CARDS LIST */}
-      <aside className="admin-sidebar" style={{ width: "100%" }}>
+      {view === "list" && (
+      <aside className="admin-catalog">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
           <h2>სასტუმროების სია</h2>
           <span className="admin-tab-count">{hotels.length}</span>
         </div>
 
         {/* Search */}
-        <div style={{ marginBottom: "1.25rem" }}>
+        <div className="admin-catalog-filters">
           <input
             type="text"
-            placeholder="🔍 მოძებნეთ სასტუმრო ან ქალაქი..."
+            placeholder="მოძებნეთ სასტუმრო ან ქალაქი..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
               width: "100%",
               padding: "0.55rem 0.8rem",
               borderRadius: "8px",
-              border: "1px solid rgba(255,255,255,0.15)",
-              background: "rgba(255,255,255,0.06)",
-              color: "#fff",
+              border: "1px solid var(--gt-line)",
+              background: "#fff",
+              color: "var(--gt-ink)",
               fontSize: "0.88rem",
             }}
           />
@@ -385,7 +402,7 @@ export default function HotelManager({ onHotelsCountChange }) {
         {filteredHotels.length === 0 ? (
           <p className="admin-hint">სასტუმროები ვერ მოიძებნა.</p>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", maxHeight: "800px", overflowY: "auto", paddingRight: "4px" }}>
+          <div className="admin-catalog-grid">
             {filteredHotels.map((hotel) => {
               const mainImg =
                 extractImageUrl(hotel.img) ||
@@ -407,20 +424,20 @@ export default function HotelManager({ onHotelsCountChange }) {
                       <Image src={mainImg} alt="" fill sizes="72px" style={{ objectFit: "cover" }} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <h4 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      <h4 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 700, color: "var(--gt-ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {asLocalizedText(hotel.name)}
                       </h4>
                       <div className="admin-entry-tags">
                         <span className="admin-tag-pill">{asLocalizedText(hotel.city) || "საქართველო"}</span>
-                        {hotel.priceFrom && <span className="admin-tag-pill price">💰 {hotel.priceFrom}</span>}
-                        {hotel.rating && <span className="admin-tag-pill badge">⭐ {hotel.rating}</span>}
-                        {hotel.isFeatured && <span className="admin-tag-pill badge">✨ რეკომენდებული</span>}
+                        {hotel.priceFrom && <span className="admin-tag-pill price">{hotel.priceFrom}</span>}
+                        {hotel.rating && <span className="admin-tag-pill badge">{hotel.rating}</span>}
+                        {hotel.isFeatured && <span className="admin-tag-pill badge">რეკომენდებული</span>}
                       </div>
                     </div>
                   </div>
                   <div className="admin-entry-actions">
                     <a href={hotel.bookingUrl} target="_blank" rel="noopener noreferrer" className="admin-action-btn link">
-                      🏨 Booking ↗
+                      Booking ↗
                     </a>
                     <div style={{ display: "flex", gap: "0.5rem" }}>
                       <button
@@ -428,14 +445,14 @@ export default function HotelManager({ onHotelsCountChange }) {
                         className={`admin-action-btn edit ${editingId === hotel.id ? "is-editing" : ""}`}
                         onClick={() => edit(hotel)}
                       >
-                        ✏️ რედაქტირება
+                        რედაქტირება
                       </button>
                       <button
                         type="button"
                         className="admin-action-btn delete"
                         onClick={() => remove(hotel.id)}
                       >
-                        🗑️ წაშლა
+                        წაშლა
                       </button>
                     </div>
                   </div>
@@ -445,6 +462,7 @@ export default function HotelManager({ onHotelsCountChange }) {
           </div>
         )}
       </aside>
+      )}
     </div>
   );
 }

@@ -205,7 +205,6 @@ export default function CouponManager() {
       <div className="admin-card" style={{ background: "#ffffff", borderRadius: "18px", padding: "28px", border: "1px solid #e2e8f0", boxShadow: "0 10px 30px -10px rgba(0,0,0,0.05)", marginBottom: "2rem" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <span style={{ fontSize: "1.6rem" }}>{isEditing ? "✏️" : "➕"}</span>
             <div>
               <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--text-dark)", margin: 0 }}>
                 {isEditing ? `კუპონის რედაქტირება: ${editCode}` : "ახალი ფასდაკლების კუპონის შექმნა"}
@@ -271,7 +270,7 @@ export default function CouponManager() {
                 onChange={(e) => setFormData({ ...formData, discountPercent: e.target.value })}
                 required
                 className="admin-input"
-                style={{ width: "100%", padding: "10px 14px", borderRadius: "10px", border: "1.5px solid #cbd5e1", fontWeight: 800, color: "var(--teal)" }}
+                style={{ width: "100%", padding: "10px 14px", borderRadius: "10px", border: "1.5px solid #cbd5e1", fontWeight: 800, color: "var(--gt-primary)" }}
               />
             </div>
 
@@ -347,7 +346,7 @@ export default function CouponManager() {
                 <span>მხოლოდ 1 გამოყენება თითო IP-ზე</span>
               </label>
 
-              <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.88rem", fontWeight: 700, color: "#10b981", cursor: "pointer" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.88rem", fontWeight: 700, color: "#2f8a5d", cursor: "pointer" }}>
                 <input
                   type="checkbox"
                   checked={formData.active}
@@ -364,7 +363,7 @@ export default function CouponManager() {
               type="submit"
               disabled={saving}
               style={{
-                background: "var(--teal)",
+                background: "var(--gt-primary)",
                 color: "#081b29",
                 border: "none",
                 borderRadius: "12px",
@@ -372,10 +371,10 @@ export default function CouponManager() {
                 fontWeight: 900,
                 fontSize: "0.95rem",
                 cursor: "pointer",
-                boxShadow: "0 4px 15px rgba(41, 178, 183, 0.3)",
+                boxShadow: "0 4px 15px rgba(42, 101, 146, 0.25)",
               }}
             >
-              {saving ? "ინახება..." : isEditing ? "✓ ცვლილებების შენახვა" : "➕ კუპონის დამატება"}
+              {saving ? "ინახება..." : isEditing ? "✓ ცვლილებების შენახვა" : "კუპონის დამატება"}
             </button>
           </div>
         </form>
@@ -386,7 +385,7 @@ export default function CouponManager() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
           <div>
             <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--text-dark)", margin: 0 }}>
-              📋 აქტიური კუპონების სია ({coupons.length})
+              აქტიური კუპონების სია ({coupons.length})
             </h3>
             <p style={{ color: "var(--text-mute)", fontSize: "0.85rem", margin: 0 }}>
               მხოლოდ აქ არსებული და აქტიური კუპონებით მიიღებს მომხმარებელი ფასდაკლებას.
@@ -399,7 +398,7 @@ export default function CouponManager() {
             disabled={loading}
             style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
           >
-            <span>🔄 განახლება</span>
+            <span>განახლება</span>
           </button>
         </div>
 
@@ -427,11 +426,11 @@ export default function CouponManager() {
                   return (
                     <tr key={c.id || c.code} style={{ borderBottom: "1px solid #e2e8f0" }}>
                       <td style={{ padding: "12px 14px" }}>
-                        <span style={{ fontFamily: "monospace", fontWeight: 900, fontSize: "1rem", color: "var(--teal)", background: "rgba(41, 178, 183, 0.1)", padding: "4px 8px", borderRadius: "6px" }}>
+                        <span style={{ fontFamily: "monospace", fontWeight: 900, fontSize: "1rem", color: "var(--gt-primary)", background: "rgba(42, 101, 146, 0.08)", padding: "4px 8px", borderRadius: "6px" }}>
                           {c.code}
                         </span>
                       </td>
-                      <td style={{ padding: "12px 14px", fontWeight: 600, color: "#1e293b" }}>
+                      <td style={{ padding: "12px 14px", fontWeight: 600, color: "#1f2d3d" }}>
                         {c.title || "—"}
                         {c.expiresAt && (
                           <div style={{ fontSize: "0.75rem", color: "#64748b" }}>
@@ -440,7 +439,7 @@ export default function CouponManager() {
                         )}
                       </td>
                       <td style={{ padding: "12px 14px" }}>
-                        <strong style={{ color: "#fab418", fontSize: "1.05rem" }}>{c.discountPercent}% OFF</strong>
+                        <strong style={{ color: "#c9922a", fontSize: "1.05rem" }}>{c.discountPercent}% OFF</strong>
                         {c.maxDiscountGEL > 0 && (
                           <div style={{ fontSize: "0.75rem", color: "#64748b" }}>
                             Max ₾{c.maxDiscountGEL}
@@ -453,7 +452,7 @@ export default function CouponManager() {
                         </div>
                         {c.usageType !== "single" && (
                           <div style={{ width: "100px", height: "6px", background: "#e2e8f0", borderRadius: "3px", marginTop: "4px", overflow: "hidden" }}>
-                            <div style={{ width: `${percentUsed}%`, height: "100%", background: percentUsed >= 100 ? "#ef4444" : "var(--teal)" }} />
+                            <div style={{ width: `${percentUsed}%`, height: "100%", background: percentUsed >= 100 ? "#b42318" : "var(--gt-primary)" }} />
                           </div>
                         )}
                       </td>
@@ -480,18 +479,18 @@ export default function CouponManager() {
                           <button
                             type="button"
                             onClick={() => handleEditClick(c)}
-                            style={{ background: "#f1f5f9", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "6px 10px", cursor: "pointer", fontSize: "0.82rem" }}
+                            style={{ background: "#fff", border: "1px solid var(--gt-line-strong)", borderRadius: "8px", padding: "6px 10px", cursor: "pointer", fontSize: "0.82rem", color: "var(--gt-primary)" }}
                             title="რედაქტირება"
                           >
-                            ✏️
+                            რედაქტირება
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDeleteCoupon(c.code)}
-                            style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: "8px", padding: "6px 10px", cursor: "pointer", fontSize: "0.82rem", color: "#b91c1c" }}
+                            style={{ background: "#fff", border: "1px solid #f1c4bf", borderRadius: "8px", padding: "6px 10px", cursor: "pointer", fontSize: "0.82rem", color: "#b42318" }}
                             title="წაშლა"
                           >
-                            🗑️
+                            წაშლა
                           </button>
                         </div>
                       </td>
@@ -507,8 +506,8 @@ export default function CouponManager() {
       {/* 3. GLOBAL IP SECURITY CARD */}
       <div className="admin-card" style={{ background: "#ffffff", borderRadius: "18px", padding: "28px", border: "1px solid #e2e8f0", boxShadow: "0 10px 30px -10px rgba(0,0,0,0.05)" }}>
         <div style={{
-          background: limitOnePerIp ? "rgba(16, 185, 129, 0.08)" : "rgba(250, 180, 24, 0.1)",
-          border: `1.5px solid ${limitOnePerIp ? "#10b981" : "#fab418"}`,
+          background: limitOnePerIp ? "rgba(47, 138, 93, 0.08)" : "rgba(201, 146, 42, 0.1)",
+          border: `1.5px solid ${limitOnePerIp ? "#2f8a5d" : "#c9922a"}`,
           borderRadius: "14px",
           padding: "20px 24px",
           display: "flex",
@@ -520,7 +519,6 @@ export default function CouponManager() {
         }}>
           <div style={{ flex: 1, minWidth: "260px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-              <span style={{ fontSize: "1.2rem" }}>{limitOnePerIp ? "🛡️" : "🧪"}</span>
               <strong style={{ fontSize: "1.05rem", color: "var(--text-dark)" }}>
                 გლობალური 1 IP შეზღუდვის წესი
               </strong>
@@ -529,7 +527,7 @@ export default function CouponManager() {
                 fontWeight: 800,
                 padding: "3px 8px",
                 borderRadius: "10px",
-                background: limitOnePerIp ? "#10b981" : "#fab418",
+                background: limitOnePerIp ? "#2f8a5d" : "#c9922a",
                 color: "#ffffff"
               }}>
                 {limitOnePerIp ? "ჩართულია (STRICT)" : "გამორთულია (ტესტირება)"}
@@ -547,7 +545,7 @@ export default function CouponManager() {
             onClick={handleToggleLimit}
             disabled={saving}
             style={{
-              background: limitOnePerIp ? "#ef4444" : "#10b981",
+              background: limitOnePerIp ? "#b42318" : "#2f8a5d",
               color: "#ffffff",
               border: "none",
               borderRadius: "12px",
@@ -565,7 +563,7 @@ export default function CouponManager() {
         {/* Claimed IPs Section */}
         <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "1.25rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-            <h3 style={{ fontSize: "1rem", fontWeight: 800, color: "#0f172a", margin: 0 }}>
+            <h3 style={{ fontSize: "1rem", fontWeight: 800, color: "#1f2d3d", margin: 0 }}>
               დაფიქსირებული IP მისამართები ({claimedIps.length})
             </h3>
             {claimedIps.length > 0 && (
@@ -576,7 +574,7 @@ export default function CouponManager() {
                 disabled={saving}
                 style={{ fontSize: "0.8rem", padding: "6px 12px" }}
               >
-                🗑️ სიის გასუფთავება
+                სიის გასუფთავება
               </button>
             )}
           </div>
@@ -589,7 +587,7 @@ export default function CouponManager() {
             <div style={{ maxHeight: "200px", overflowY: "auto", background: "#f8fafc", borderRadius: "10px", padding: "8px 12px", border: "1px solid #e2e8f0" }}>
               {claimedIps.map((item, idx) => (
                 <div key={item.id || idx} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: idx < claimedIps.length - 1 ? "1px solid #e2e8f0" : "none", fontSize: "0.82rem" }}>
-                  <span style={{ fontFamily: "monospace", fontWeight: 700, color: "#0f172a" }}>{item.ip || item.id}</span>
+                  <span style={{ fontFamily: "monospace", fontWeight: 700, color: "#1f2d3d" }}>{item.ip || item.id}</span>
                   <span style={{ color: "#64748b" }}>
                     {item.claimedAt?.toDate ? item.claimedAt.toDate().toLocaleString("ka-GE") : "ახლახანს"}
                   </span>

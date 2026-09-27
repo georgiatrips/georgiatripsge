@@ -1267,6 +1267,7 @@
 
 .tf-field-search-icon { flex-shrink: 0; color: #94a3b8; }
 .tf-field:focus-within .tf-field-search-icon { color: var(--gt-primary); }
+.tf-field-type-icon { flex-shrink: 0; font-size: 1rem; line-height: 1; }
 
 .tf-field-input {
   flex: 1;
@@ -1476,6 +1477,34 @@
   border-radius: 11px;
   background: rgba(239, 68, 68, 0.1);
 }
+
+/* Result icon tint per place type from the map search. */
+.tf-dd-place-pin[data-type="hotel"] { background: rgba(59, 130, 246, 0.12); }
+.tf-dd-place-pin[data-type="sight"],
+.tf-dd-place-pin[data-type="church"] { background: rgba(245, 158, 11, 0.14); }
+.tf-dd-place-pin[data-type="nature"] { background: rgba(16, 185, 129, 0.13); }
+.tf-dd-place-pin[data-type="airport"],
+.tf-dd-place-pin[data-type="station"] { background: rgba(99, 102, 241, 0.12); }
+.tf-dd-place-pin[data-type="food"],
+.tf-dd-place-pin[data-type="shop"] { background: rgba(236, 72, 153, 0.11); }
+.tf-dd-place-pin[data-type="city"],
+.tf-dd-place-pin[data-type="village"],
+.tf-dd-place-pin[data-type="region"] { background: rgba(100, 116, 139, 0.12); }
+
+.tf-dd-place-tag {
+  display: inline-block;
+  margin-inline-end: 0.4rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+.tf-dd-place-tag[data-type="hotel"] { background: rgba(59, 130, 246, 0.12); color: #1d4ed8; }
+.tf-dd-place-tag[data-type="sight"],
+.tf-dd-place-tag[data-type="church"] { background: rgba(245, 158, 11, 0.15); color: #b45309; }
+.tf-dd-place-tag[data-type="nature"] { background: rgba(16, 185, 129, 0.14); color: #047857; }
 
 .tf-dd-place-text { display: flex; flex-direction: column; min-width: 0; }
 .tf-dd-place-name { font-size: 0.92rem; font-weight: 800; color: var(--gt-ink); }

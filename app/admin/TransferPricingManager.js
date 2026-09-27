@@ -171,7 +171,7 @@ export default function TransferPricingManager() {
       <div className="tp-card">
         <div className="tp-head">
           <div>
-            <h2 className="tp-title">🚕 ტრანსფერის ფასები კილომეტრის მიხედვით</h2>
+            <h2 className="tp-title">ტრანსფერის ფასები კილომეტრის მიხედვით</h2>
             <p className="admin-hint" style={{ margin: 0 }}>
               თითო უჯრაში — ფასი 1 კმ-ზე (₾). მგზავრობის მთელი მანძილი ითვლება იმ დიაპაზონის ტარიფით, რომელშიც ხვდება
               (მაგ: 120 კმ სედანით = 120 × „100–150 კმ“ ტარიფი). ცარიელი უჯრა იღებს უახლოეს შევსებულ ტარიფს.
@@ -186,7 +186,6 @@ export default function TransferPricingManager() {
                 <th className="tp-band-col">მანძილი (კმ)</th>
                 {TRANSFER_VEHICLE_KEYS.map((key) => (
                   <th key={key}>
-                    <span className="tp-veh-icon">{VEHICLE_LABELS[key].icon}</span>
                     {VEHICLE_LABELS[key].name}
                     <small>₾ / კმ</small>
                   </th>
@@ -254,14 +253,14 @@ export default function TransferPricingManager() {
           </table>
         </div>
 
-        {problem && <p className="tp-problem">⚠️ {problem}</p>}
+        {problem && <p className="tp-problem">{problem}</p>}
 
         <div className="tp-controls">
           <button type="button" className="tp-btn-outline" onClick={addBand}>
-            ➕ დიაპაზონის დამატება
+            დიაპაზონის დამატება
           </button>
           <label className="tp-surcharge">
-            <span>🏔️ სვანეთის დანამატი</span>
+            <span>სვანეთის დანამატი</span>
             <input
               type="number"
               min="0"
@@ -276,7 +275,7 @@ export default function TransferPricingManager() {
 
         <div className="admin-form-actions tp-actions">
           <button type="button" className="admin-btn-primary" onClick={handleSave} disabled={saving || !!problem}>
-            {saving ? "ინახება..." : "💾 ფასების შენახვა"}
+            {saving ? "ინახება..." : "ფასების შენახვა"}
           </button>
           <button type="button" className="admin-btn-ghost" onClick={handleFillDefaults} disabled={saving}>
             ↺ საწყისი ფასებით შევსება
@@ -285,7 +284,7 @@ export default function TransferPricingManager() {
       </div>
 
       <div className="tp-card">
-        <h3 className="tp-subtitle">🧮 ფასის შემოწმება</h3>
+        <h3 className="tp-subtitle">ფასის შემოწმება</h3>
         <p className="admin-hint">შეიყვანეთ მანძილი და ნახეთ, რა ფასს დაინახავს კლიენტი ამ ცხრილით (შენახვამდეც).</p>
         <div className="tp-preview-inputs">
           <label className="tp-surcharge">
@@ -310,7 +309,7 @@ export default function TransferPricingManager() {
             const rate = pricing ? getRatePerKm(pricing, key, km) : null;
             return (
               <div key={key} className="tp-preview-item">
-                <span className="tp-preview-name">{VEHICLE_LABELS[key].icon} {VEHICLE_LABELS[key].name}</span>
+                <span className="tp-preview-name">{VEHICLE_LABELS[key].name}</span>
                 <strong className="tp-preview-price">{fare != null ? `${fare} ₾` : "—"}</strong>
                 <span className="tp-preview-rate">{rate != null ? `${rate} ₾/კმ` : "ტარიფი არ არის"}</span>
               </div>

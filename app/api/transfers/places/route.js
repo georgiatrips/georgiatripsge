@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-// Place search for the transfer calculator's "To" field, limited to Georgia.
+// Place search for the transfer calculator's "From" and "To" fields, limited to Georgia.
 // Photon (OpenStreetMap geocoder built for type-ahead) needs no API key.
 export const dynamic = "force-dynamic";
 
@@ -12,6 +12,28 @@ const USER_AGENT = "GeorgiaTrips/1.0 (+https://www.georgiatrips.ge)";
 const CACHE_MS = 24 * 60 * 60 * 1000;
 const CACHE_MAX = 500;
 const cache = new Map(); // key -> { at, results }
+
+const HOTEL_VALUES = new Set(["hotel", "hostel", "guest_house", "motel", "apartment", "chalet", "alpine_hut", "camp_site"]);
+const SIGHT_VALUES = new Set(["attraction", "museum", "viewpoint", "artwork", "gallery", "zoo", "theme_park", "aquarium"]);
+const FOOD_VALUES = new Set(["restaurant", "cafe", "bar", "pub", "fast_food", "food_court"]);
+const REGION_VALUES = new Set(["state", "region", "province", "county", "district", "municipality"]);
+const LOW_PRIORITY_TYPES = new Set(["food", "shop", "street", "address"]);
+
+// Coarse place type from the OSM tag, so the list can show a matching icon.
+function placeType({ osm_key: k, osm_value: v, type }) {
+  if (k === "tourism" && HOTEL_VALUES.has(v)) return "hotel";
+  if (k === "aeroway") return "airport";
+  if ((k === "railway" && (v === "station" || v === "halt")) || (k === "amenity" && v === "bus_station")) return "station";
+  if (k === "amenity" && v === "place_of_worship") return "church";
+  if (k === "historic" || (k === "tourism" && SIGHT_VALUES.has(v))) return "sight";
+  if (k === "natural" || k === "waterway" || (k === "leisure" && (v === "park" || v === "nature_reserve")) || (k === "boundary" && v === "national_park")) return "nature";
+  if (k === "amenity" && FOOD_VALUES.has(v)) return "food";
+  if (k === "shop" || (k === "amenity" && v === "marketplace")) return "shop";
+  if (k === "place") return v === "city" || v === "town" ? "city" : REGION_VALUES.has(v) ? "region" : "village";
+  if (k === "highway") return "street";
+  if (k === "building" || type === "house") return "address";
+  return "place";
+}
 
 function describe(p) {
   const parts = [p.city, p.county, p.state].filter(Boolean);
@@ -34,7 +56,7 @@ export async function GET(request) {
   }
 
   try {
-    const url = `${PHOTON_URL}?q=${encodeURIComponent(q)}&limit=10&lang=${lang}&bbox=${GEORGIA_BBOX}`;
+    const url = `${PHOTON_URL}?q=${encodeURIComponent(q)}&limit=15&lang=${lang}&bbox=${GEORGIA_BBOX}`;
     const res = await fetch(url, {
       headers: { "User-Agent": USER_AGENT },
       signal: AbortSignal.timeout(6000),
@@ -57,11 +79,16 @@ export async function GET(request) {
         id: `${p.osm_type || ""}${p.osm_id || results.length}`,
         name: p.name,
         detail,
+        type: placeType(p),
         lat: Math.round(lat * 1e5) / 1e5,
         lng: Math.round(lng * 1e5) / 1e5,
       });
-      if (results.length >= 6) break;
     }
+    // Cafés, shops, streets and bare addresses are rarely the pickup/drop-off,
+    // so they go below hotels, sights and settlements (the first result is
+    // auto-picked when the field is left).
+    results.sort((a, b) => LOW_PRIORITY_TYPES.has(a.type) - LOW_PRIORITY_TYPES.has(b.type));
+    results.length = Math.min(results.length, 8);
 
     if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value);
     cache.set(key, { at: Date.now(), results });

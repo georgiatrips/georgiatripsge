@@ -233,3 +233,20 @@ export function WhatsAppIcon({ size = 18, className = "", style }) {
     </svg>
   );
 }
+
+// Admin panel navigation
+export function BarChartIcon(props) {
+  return <StrokeIcon {...props}><path d="M3 3v18h18" /><path d="M7 16v-5" /><path d="M12 16V7" /><path d="M17 16v-8" /></StrokeIcon>;
+}
+
+export function TicketIcon(props) {
+  return <StrokeIcon {...props}><path d="M3 9a3 3 0 0 0 0 6v3a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-3a3 3 0 0 0 0-6V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z" /><path d="M13 5v2" /><path d="M13 11v2" /><path d="M13 17v2" /></StrokeIcon>;
+}
+
+export function ClipboardIcon(props) {
+  return <StrokeIcon {...props}><rect x="8" y="2" width="8" height="4" rx="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="m9 14 2 2 4-4" /></StrokeIcon>;
+}
+
+export function MessageIcon(props) {
+  return <StrokeIcon {...props}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></StrokeIcon>;
+}

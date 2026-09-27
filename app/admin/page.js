@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { BarChartIcon, BedIcon, CarIcon, ClipboardIcon, LocationIcon, MessageIcon, MountainIcon, TicketIcon } from "../components/Icons";
 import DatePicker from "../components/DatePicker";
 import { GEORGIA_REGIONS } from "../lib/placesMeta";
 import { listPlaces } from "../lib/placesFirestore";
@@ -111,6 +112,7 @@ export default function AdminPage() {
   const [departureDates, setDepartureDates] = useState([]);
   const [saving, setSaving] = useState(false);
   const [editingTourId, setEditingTourId] = useState(null);
+  const [view, setView] = useState("list");
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(null);
   const [message, setMessage] = useState(null);
@@ -693,6 +695,7 @@ export default function AdminPage() {
       } catch (_) {}
       setMessage({ type: "success", text: editingTourId ? "ტური განახლებულია!" : `ტური შენახულია! ID: ${created.id}` });
       resetForm();
+      setView("list");
       await refreshList();
     } catch (err) {
       console.error(err);
@@ -707,6 +710,7 @@ export default function AdminPage() {
 
   const startTourEdit = (tour) => {
     setEditingTourId(tour.id);
+    setView("form");
     setTitle(parseLocal(tour.title));
     setDesc(parseLocal(tour.desc));
     setStartTime(typeof tour.startTime === "string" ? tour.startTime : "");
@@ -851,208 +855,113 @@ export default function AdminPage() {
     );
   }
 
+  const navGroups = [
+    {
+      label: "მიმოხილვა",
+      items: [
+        { key: "analytics", label: "ანალიტიკა", Icon: BarChartIcon, badge: liveVisitorsCount > 0 ? { text: `${liveVisitorsCount} ონლაინ`, tone: "live" } : null },
+      ],
+    },
+    {
+      label: "გაყიდვები",
+      items: [
+        { key: "bookings", label: "ჯავშნები", Icon: ClipboardIcon, badge: pendingBookingsCount > 0 ? { text: String(pendingBookingsCount), tone: "warn" } : null },
+        { key: "coupons", label: "კუპონები", Icon: TicketIcon },
+        { key: "transfers", label: "ტრანსფერის ფასები", Icon: CarIcon },
+      ],
+    },
+    {
+      label: "კონტენტი",
+      items: [
+        { key: "tours", label: "ტურები", Icon: MountainIcon, badge: { text: String(existingTours.length) } },
+        { key: "hotels", label: "სასტუმროები", Icon: BedIcon, badge: { text: String(hotelsCount) } },
+        { key: "places", label: "ადგილები", Icon: LocationIcon, badge: { text: String(placesCount) } },
+        { key: "reviews", label: "მიმოხილვები", Icon: MessageIcon, badge: { text: String(reviewsCount) } },
+      ],
+    },
+  ];
+
+  const SECTION_INFO = {
+    analytics: ["ანალიტიკა", "ვინ არის საიტზე, საიდან მოვიდა და რას აკეთებს."],
+    bookings: ["ჯავშნები", "ახალი მოთხოვნები, დადასტურება და სტატუსები."],
+    coupons: ["კუპონები", "ფასდაკლების კოდები და IP შეზღუდვები."],
+    transfers: ["ტრანსფერის ფასები", "ფასები მანძილისა და ავტომობილის მიხედვით."],
+    tours: ["ტურები", "ტურის დამატება, რედაქტირება და კატალოგი."],
+    hotels: ["სასტუმროები", "სასტუმროების სია საიტზე."],
+    places: ["ადგილები", "ტურისტული ადგილები ფოტოებითა და აღწერით."],
+    reviews: ["მიმოხილვები", "სტუმრების შეფასებები და Google-ის სინქრონიზაცია."],
+  };
+  const [sectionTitle, sectionText] = SECTION_INFO[activeTab] || SECTION_INFO.tours;
+
   return (
     <div className="admin-page">
       <Navbar active="admin" />
 
-      <section className="admin-hero">
-        <div className="admin-hero-bg">
-          <Image
-            src="/hero.webp"
-            alt=""
-            fill
-            priority
-            style={{ objectFit: "cover" }}
-            sizes="100vw"
-          />
-        </div>
-        <div className="admin-hero-scrim" />
-        <div className="admin-hero-content">
-          <span className="admin-hero-eyebrow">მართვის პანელი</span>
-          <h1 className="admin-hero-title">ადმინ პანელი</h1>
-          <p className="admin-hero-sub">მართეთ ტურები, სასტუმროები, ადგილები და მიმოხილვები მარტივად</p>
-        </div>
-      </section>
+      <div className="adm-shell">
+        {/* Grouped section menu: a side column on desktop, a scrolling strip on phones. */}
+        <nav className="adm-nav" aria-label="ადმინ პანელის განყოფილებები">
+          <p className="adm-nav-brand">მართვის პანელი</p>
+          {navGroups.map((group) => (
+            <div key={group.label} className="adm-nav-group">
+              <p className="adm-nav-label">{group.label}</p>
+              <ul>
+                {group.items.map(({ key, label, Icon, badge }) => (
+                  <li key={key}>
+                    <button
+                      type="button"
+                      className={`adm-nav-item${activeTab === key ? " is-active" : ""}`}
+                      aria-current={activeTab === key ? "page" : undefined}
+                      onClick={() => setActiveTab(key)}
+                    >
+                      <Icon size={18} />
+                      <span className="adm-nav-text">{label}</span>
+                      {badge && <span className={`adm-badge${badge.tone ? ` is-${badge.tone}` : ""}`}>{badge.text}</span>}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </nav>
 
-      <section className="admin-section">
-        <div className="container">
-          {/* CATEGORY TABS SWITCHER */}
-          <div className="admin-tabs-container">
-            <button
-              type="button"
-              className={`admin-nav-tab ${activeTab === "tours" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("tours")}
-            >
-              <span style={{ fontSize: "1.2rem" }}>🏔️</span>
-              <span>ტურები</span>
-              <span className="admin-tab-count">{existingTours.length}</span>
-            </button>
-            <button
-              type="button"
-              className={`admin-nav-tab ${activeTab === "hotels" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("hotels")}
-            >
-              <span style={{ fontSize: "1.2rem" }}>🏨</span>
-              <span>სასტუმროები</span>
-              <span className="admin-tab-count">{hotelsCount}</span>
-            </button>
-            <button
-              type="button"
-              className={`admin-nav-tab ${activeTab === "places" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("places")}
-            >
-              <span style={{ fontSize: "1.2rem" }}>📍</span>
-              <span>ადგილები</span>
-              <span className="admin-tab-count">{placesCount}</span>
-            </button>
-            <button
-              type="button"
-              className={`admin-nav-tab ${activeTab === "reviews" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("reviews")}
-            >
-              <span style={{ fontSize: "1.2rem" }}>⭐</span>
-              <span>მიმოხილვები</span>
-              <span className="admin-tab-count">{reviewsCount}</span>
-            </button>
-            <button
-              type="button"
-              className={`admin-nav-tab admin-nav-tab-analytics ${activeTab === "analytics" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("analytics")}
-            >
-              <span style={{ fontSize: "1.2rem" }}>📊</span>
-              <span>Live ანალიტიკა</span>
-              <span className="admin-tab-count live-pill">
-                <span className="admin-live-dot" />
-                {liveVisitorsCount}
-              </span>
-            </button>
-            <button
-              type="button"
-              className={`admin-nav-tab ${activeTab === "coupons" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("coupons")}
-            >
-              <span style={{ fontSize: "1.2rem" }}>🎟️</span>
-              <span>კუპონები & IP</span>
-              <span className="admin-tab-count" style={{ background: "#fab418", color: "#0f172a", fontWeight: 800 }}>10%</span>
-            </button>
-            <button
-              type="button"
-              className={`admin-nav-tab ${activeTab === "transfers" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("transfers")}
-            >
-              <span style={{ fontSize: "1.2rem" }}>🚕</span>
-              <span>ტრანსფერის ფასები</span>
-            </button>
-            <button
-              type="button"
-              className={`admin-nav-tab ${activeTab === "bookings" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("bookings")}
-            >
-              <span style={{ fontSize: "1.2rem" }}>📋</span>
-              <span>ჯავშნები</span>
-              {pendingBookingsCount > 0 ? (
-                <span className="admin-tab-count" style={{ background: "#eab308", color: "#0f172a", fontWeight: 800 }}>
-                  {pendingBookingsCount}
-                </span>
-              ) : (
-                <span className="admin-tab-count">0</span>
-              )}
-            </button>
-          </div>
-
-          {/* DASHBOARD STATS ROW */}
-          <div className="admin-stats-row">
-            <div
-              className={`admin-stat-card ${activeTab === "bookings" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("bookings")}
-            >
-              <div className="admin-stat-icon">📋</div>
-              <div className="admin-stat-info">
-                <strong style={{ color: pendingBookingsCount > 0 ? "#eab308" : "#0d9488" }}>
-                  {pendingBookingsCount > 0 ? `⏳ ${pendingBookingsCount} ახალი` : "ჯავშნები"}
-                </strong>
-                <span>ჯავშნების მართვა</span>
-              </div>
-            </div>
-            <div
-              className={`admin-stat-card ${activeTab === "tours" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("tours")}
-            >
-              <div className="admin-stat-icon">🏔️</div>
-              <div className="admin-stat-info">
-                <strong>{existingTours.length}</strong>
-                <span>ტურები კატალოგში</span>
-              </div>
-            </div>
-            <div
-              className={`admin-stat-card ${activeTab === "hotels" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("hotels")}
-            >
-              <div className="admin-stat-icon">🏨</div>
-              <div className="admin-stat-info">
-                <strong>{hotelsCount}</strong>
-                <span>სასტუმროები</span>
-              </div>
-            </div>
-            <div
-              className={`admin-stat-card ${activeTab === "places" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("places")}
-            >
-              <div className="admin-stat-icon">📍</div>
-              <div className="admin-stat-info">
-                <strong>{placesCount}</strong>
-                <span>ტურისტული ადგილები</span>
-              </div>
-            </div>
-            <div
-              className={`admin-stat-card ${activeTab === "reviews" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("reviews")}
-            >
-              <div className="admin-stat-icon">⭐</div>
-              <div className="admin-stat-info">
-                <strong>{reviewsCount}</strong>
-                <span>მიმოხილვები</span>
-              </div>
-            </div>
-            <div
-              className={`admin-stat-card ${activeTab === "analytics" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("analytics")}
-            >
-              <div className="admin-stat-icon">📊</div>
-              <div className="admin-stat-info">
-                <strong style={{ color: "#25d366" }}>
-                  🟢 {liveVisitorsCount} Online
-                </strong>
-                <span>Live ანალიტიკა</span>
-              </div>
-            </div>
-            <div
-              className={`admin-stat-card ${activeTab === "coupons" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("coupons")}
-            >
-              <div className="admin-stat-icon">🎟️</div>
-              <div className="admin-stat-info">
-                <strong style={{ color: "var(--teal)" }}>10% OFF</strong>
-                <span>კუპონის მართვა & IP</span>
-              </div>
-            </div>
-          </div>
+        <main className="adm-main">
+          <header className="adm-page-head">
+            <h1>{sectionTitle}</h1>
+            <p>{sectionText}</p>
+          </header>
 
           {/* TAB 1: TOURS MANAGEMENT */}
           {activeTab === "tours" && (
-            <div className="admin-layout">
+            <div className="admin-catalog-wrap">
+              <div className="admin-catalog-bar">
+                <div className="admin-segment admin-catalog-switch" role="tablist">
+                  <button type="button" role="tab" aria-selected={view === "list"} className={view === "list" ? "is-active" : ""} onClick={() => setView("list")}>
+                    კატალოგი <span className="adm-badge">{existingTours.length}</span>
+                  </button>
+                  <button type="button" role="tab" aria-selected={view === "form"} className={view === "form" ? "is-active" : ""} onClick={() => setView("form")}>
+                    {editingTourId ? "რედაქტირება" : "+ დამატება"}
+                  </button>
+                </div>
+              </div>
+            {message && (
+              <div className={`admin-alert ${message.type}`} role="status">
+                {message.text}
+              </div>
+            )}
+              {view === "form" && (
+
               <form className="admin-form" onSubmit={handleSubmit}>
                 <header className="admin-form-header">
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <h2>{editingTourId ? "🏔️ ტურის რედაქტირება" : "🏔️ ახალი ტურის დამატება"}</h2>
+                    <h2>{editingTourId ? "ტურის რედაქტირება" : "ახალი ტურის დამატება"}</h2>
                     {!editingTourId && (
                       <label className="admin-import-btn" title="მზა ტურის ფაილით (.json) ფორმის შევსება">
-                        📥 იმპორტი ფაილიდან
+                        იმპორტი ფაილიდან
                         <input type="file" accept="application/json,.json" onChange={importTourFromFile} hidden />
                       </label>
                     )}
                     {editingTourId && (
-                      <span className="admin-tag-pill" style={{ background: "rgba(41,178,183,0.2)", color: "#29b2b7" }}>
+                      <span className="admin-tag-pill price">
                         რედაქტირების რეჟიმი
                       </span>
                     )}
@@ -1060,11 +969,6 @@ export default function AdminPage() {
                   <p>შეავსეთ ველები და შეინახეთ. ფოტოები ინახება Cloudinary-ში.</p>
                 </header>
 
-            {message && (
-              <div className={`admin-alert ${message.type}`} role="status">
-                {message.text}
-              </div>
-            )}
 
             {/* Basic info */}
             <fieldset className="admin-fieldset">
@@ -1321,7 +1225,7 @@ export default function AdminPage() {
                       placeholder="100"
                     />
                     {Number(priceGroup) > 0 && (
-                      <div style={{ fontSize: "0.85rem", color: "#38bdf8", marginTop: 4, display: "flex", gap: "10px", fontWeight: 500 }}>
+                      <div style={{ fontSize: "0.85rem", color: "var(--gt-primary)", marginTop: 4, display: "flex", gap: "10px", fontWeight: 500 }}>
                         <span>⇄ <strong>${Math.round(priceGroup * 0.37)}</strong> USD</span>
                         <span><strong>€{Math.round(priceGroup * 0.34)}</strong> EUR</span>
                         <span><strong>{Math.round(priceGroup * 1.36)}</strong> AED</span>
@@ -1357,7 +1261,7 @@ export default function AdminPage() {
                       </p>
                     )}
                     {Number(effectivePricePrivate) > 0 && (
-                      <div style={{ fontSize: "0.85rem", color: "#38bdf8", marginTop: 4, display: "flex", gap: "10px", fontWeight: 500 }}>
+                      <div style={{ fontSize: "0.85rem", color: "var(--gt-primary)", marginTop: 4, display: "flex", gap: "10px", fontWeight: 500 }}>
                         <span>⇄ <strong>${Math.round(effectivePricePrivate * 0.37)}</strong> USD</span>
                         <span><strong>€{Math.round(effectivePricePrivate * 0.34)}</strong> EUR</span>
                         <span><strong>{Math.round(effectivePricePrivate * 1.36)}</strong> AED</span>
@@ -1368,7 +1272,7 @@ export default function AdminPage() {
               </div>
               {hasPrivate && (
                 <div className="admin-vehicle-prices">
-                  <p className="admin-vehicle-prices-title">🚗 ფასი მანქანის მიხედვით (არასავალდებულო)</p>
+                  <p className="admin-vehicle-prices-title">ფასი მანქანის მიხედვით (არასავალდებულო)</p>
                   <p className="admin-hint" style={{ margin: "0 0 0.6rem", fontSize: "0.8rem" }}>
                     შეავსეთ მხოლოდ ის მანქანები, რითაც ეს ტური ტარდება. ცარიელი ველი = ეს მანქანა არ შეთავაზდება.
                     თუ ყველა ცარიელია, მოქმედებს ზემოთ მითითებული ერთი ფასი.
@@ -1407,11 +1311,11 @@ export default function AdminPage() {
                     key={idx}
                     className="admin-location-card"
                     style={{
-                      border: "1px solid rgba(255, 255, 255, 0.12)",
+                      border: "1px solid var(--gt-line)",
                       borderRadius: "12px",
                       padding: "1.25rem",
                       marginBottom: "1.25rem",
-                      background: "rgba(15, 23, 42, 0.65)",
+                      background: "var(--gt-paper)",
                     }}
                   >
                     <div
@@ -1424,34 +1328,34 @@ export default function AdminPage() {
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                        <strong style={{ fontSize: "1rem", color: "#38bdf8" }}>
-                          📍 ლოკაცია #{idx + 1}
+                        <strong style={{ fontSize: "1rem", color: "var(--gt-primary)" }}>
+                          ლოკაცია #{idx + 1}
                         </strong>
                         {loc.placeId ? (
                           <span
                             style={{
                               fontSize: "0.75rem",
-                              background: "rgba(41, 178, 183, 0.2)",
-                              color: "#29b2b7",
+                              background: "var(--gt-primary-soft)",
+                              color: "var(--gt-primary-700)",
                               padding: "2px 8px",
                               borderRadius: "12px",
                               fontWeight: 600,
                             }}
                           >
-                            🏛️ ბაზიდან (Places)
+                            ბაზიდან (Places)
                           </span>
                         ) : isCustom ? (
                           <span
                             style={{
                               fontSize: "0.75rem",
-                              background: "rgba(168, 85, 247, 0.2)",
-                              color: "#c084fc",
+                              background: "var(--gt-stone)",
+                              color: "var(--gt-ink)",
                               padding: "2px 8px",
                               borderRadius: "12px",
                               fontWeight: 600,
                             }}
                           >
-                            ✍️ ინდივიდუალური / აქტივობა
+                            ინდივიდუალური / აქტივობა
                           </span>
                         ) : null}
                       </div>
@@ -1463,9 +1367,9 @@ export default function AdminPage() {
                           onClick={() => moveLocation(idx, idx - 1)}
                           title="გადატანა ზემოთ"
                           style={{
-                            background: idx === 0 ? "rgba(255,255,255,0.02)" : "rgba(56, 189, 248, 0.12)",
-                            border: idx === 0 ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(56, 189, 248, 0.3)",
-                            color: idx === 0 ? "rgba(255,255,255,0.25)" : "#38bdf8",
+                            background: idx === 0 ? "#fff" : "var(--gt-primary-soft)",
+                            border: idx === 0 ? "1px solid var(--gt-line)" : "1px solid #b9cfe0",
+                            color: idx === 0 ? "#b8c2cc" : "var(--gt-primary)",
                             borderRadius: "6px",
                             padding: "0.3rem 0.6rem",
                             fontSize: "0.8rem",
@@ -1476,7 +1380,7 @@ export default function AdminPage() {
                             gap: "3px",
                           }}
                         >
-                          ⬆️ ზემოთ
+                          ზემოთ
                         </button>
                         <button
                           type="button"
@@ -1484,9 +1388,9 @@ export default function AdminPage() {
                           onClick={() => moveLocation(idx, idx + 1)}
                           title="გადატანა ქვემოთ"
                           style={{
-                            background: idx === locations.length - 1 ? "rgba(255,255,255,0.02)" : "rgba(56, 189, 248, 0.12)",
-                            border: idx === locations.length - 1 ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(56, 189, 248, 0.3)",
-                            color: idx === locations.length - 1 ? "rgba(255,255,255,0.25)" : "#38bdf8",
+                            background: idx === locations.length - 1 ? "#fff" : "var(--gt-primary-soft)",
+                            border: idx === locations.length - 1 ? "1px solid var(--gt-line)" : "1px solid #b9cfe0",
+                            color: idx === locations.length - 1 ? "#b8c2cc" : "var(--gt-primary)",
                             borderRadius: "6px",
                             padding: "0.3rem 0.6rem",
                             fontSize: "0.8rem",
@@ -1497,22 +1401,22 @@ export default function AdminPage() {
                             gap: "3px",
                           }}
                         >
-                          ⬇️ ქვემოთ
+                          ქვემოთ
                         </button>
                         {locations.length > 1 && (
                           <button
                             type="button"
                             className="admin-btn-ghost"
                             style={{
-                              color: "#ef4444",
-                              borderColor: "rgba(239, 68, 68, 0.3)",
+                              color: "#b42318",
+                              borderColor: "#f1c4bf",
                               padding: "0.3rem 0.6rem",
                               fontSize: "0.8rem",
                             }}
                             onClick={() => removeLocation(idx)}
                             title="ლოკაციის წაშლა"
                           >
-                            🗑️ წაშლა
+                            წაშლა
                           </button>
                         )}
                       </div>
@@ -1533,13 +1437,13 @@ export default function AdminPage() {
                           fontSize: "0.85rem",
                           fontWeight: 600,
                           cursor: "pointer",
-                          background: !isCustom ? "rgba(41, 178, 183, 0.25)" : "rgba(255, 255, 255, 0.05)",
-                          color: !isCustom ? "#38bdf8" : "rgba(255, 255, 255, 0.6)",
-                          border: !isCustom ? "1px solid rgba(56, 189, 248, 0.4)" : "1px solid rgba(255, 255, 255, 0.1)",
+                          background: !isCustom ? "var(--gt-primary-soft)" : "#fff",
+                          color: !isCustom ? "var(--gt-primary)" : "var(--gt-muted)",
+                          border: !isCustom ? "1px solid #b9cfe0" : "1px solid var(--gt-line)",
                           transition: "all 0.2s",
                         }}
                       >
-                        🏛️ არსებული ადგილი (Places ბაზიდან)
+                        არსებული ადგილი (Places ბაზიდან)
                       </button>
                       <button
                         type="button"
@@ -1555,13 +1459,13 @@ export default function AdminPage() {
                           fontSize: "0.85rem",
                           fontWeight: 600,
                           cursor: "pointer",
-                          background: isCustom ? "rgba(168, 85, 247, 0.25)" : "rgba(255, 255, 255, 0.05)",
-                          color: isCustom ? "#c084fc" : "rgba(255, 255, 255, 0.6)",
-                          border: isCustom ? "1px solid rgba(168, 85, 247, 0.4)" : "1px solid rgba(255, 255, 255, 0.1)",
+                          background: isCustom ? "var(--gt-stone)" : "#fff",
+                          color: isCustom ? "var(--gt-ink)" : "var(--gt-muted)",
+                          border: isCustom ? "1px solid var(--gt-line-strong)" : "1px solid var(--gt-line)",
                           transition: "all 0.2s",
                         }}
                       >
-                        🍷 ინდივიდუალური ლოკაცია / აქტივობა (დეგუსტაცია, დაბრუნება...)
+                        ინდივიდუალური ლოკაცია / აქტივობა (დეგუსტაცია, დაბრუნება...)
                       </button>
                     </div>
 
@@ -1569,7 +1473,7 @@ export default function AdminPage() {
                     {!isCustom ? (
                       <div>
                         <div className="admin-field admin-place-search-field" style={{ position: "relative", marginBottom: "0.75rem" }}>
-                          <label style={{ fontSize: "0.88rem", color: "#e2e8f0" }}>ადგილის მოძებნა</label>
+                          <label style={{ fontSize: "0.88rem", color: "var(--gt-ink-2)" }}>ადგილის მოძებნა</label>
                           <input
                             value={loc.search || ""}
                             onChange={(e) => updateLocation(idx, "search", e.target.value)}
@@ -1604,8 +1508,8 @@ export default function AdminPage() {
                               marginTop: "0.75rem",
                               padding: "0.75rem 1rem",
                               borderRadius: "10px",
-                              background: "rgba(41, 178, 183, 0.08)",
-                              border: "1px solid rgba(41, 178, 183, 0.3)",
+                              background: "var(--gt-primary-soft)",
+                              border: "1px solid #b9cfe0",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "space-between",
@@ -1613,19 +1517,19 @@ export default function AdminPage() {
                             }}
                           >
                             <div style={{ display: "flex", alignItems: "center", gap: "0.85rem", minWidth: 0 }}>
-                              <div style={{ position: "relative", width: "52px", height: "52px", borderRadius: "8px", overflow: "hidden", flexShrink: 0, border: "1px solid rgba(255,255,255,0.2)" }}>
+                              <div style={{ position: "relative", width: "52px", height: "52px", borderRadius: "8px", overflow: "hidden", flexShrink: 0, border: "1px solid var(--gt-line)" }}>
                                 <Image src={extractImageUrl(loc.img) || "/hero.webp"} alt="" fill sizes="52px" style={{ objectFit: "cover" }} />
                               </div>
                               <div style={{ minWidth: 0 }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                                  <strong style={{ fontSize: "0.95rem", color: "#ffffff" }}>
+                                  <strong style={{ fontSize: "0.95rem", color: "var(--gt-ink)" }}>
                                     {asLocalizedText(loc.title, "ka") || "დამატებული ადგილი"}
                                   </strong>
-                                  <span style={{ fontSize: "0.72rem", background: "rgba(16, 185, 129, 0.25)", color: "#34d399", padding: "1px 6px", borderRadius: "4px", fontWeight: 600 }}>
+                                  <span style={{ fontSize: "0.72rem", background: "#e4f2ea", color: "#236b48", padding: "1px 6px", borderRadius: "4px", fontWeight: 600 }}>
                                     ✓ მრავალენოვანი
                                   </span>
                                 </div>
-                                <p style={{ margin: "2px 0 0", fontSize: "0.8rem", color: "rgba(255,255,255,0.65)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "420px" }}>
+                                <p style={{ margin: "2px 0 0", fontSize: "0.8rem", color: "var(--gt-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "420px" }}>
                                   {asLocalizedText(loc.desc, "ka") || "აღწერა შენახულია ბაზაში"}
                                 </p>
                               </div>
@@ -1650,9 +1554,9 @@ export default function AdminPage() {
                                 );
                               }}
                               style={{
-                                background: "rgba(255,255,255,0.08)",
-                                border: "1px solid rgba(255,255,255,0.2)",
-                                color: "#ffffff",
+                                background: "#fff",
+                                border: "1px solid var(--gt-line)",
+                                color: "var(--gt-ink)",
                                 padding: "5px 12px",
                                 borderRadius: "6px",
                                 fontSize: "0.78rem",
@@ -1667,7 +1571,7 @@ export default function AdminPage() {
                       </div>
                     ) : (
                       /* CUSTOM LOCATION / ACTIVITY MODE */
-                      <div style={{ background: "rgba(0,0,0,0.2)", padding: "1rem", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                      <div style={{ background: "var(--gt-paper)", padding: "1rem", borderRadius: "10px", border: "1px solid var(--gt-line)" }}>
                         <LocalizedInputGroup
                           label="ლოკაციის / აქტივობის სახელი"
                           value={loc.title}
@@ -1687,22 +1591,22 @@ export default function AdminPage() {
 
                         {/* Image upload / preview */}
                         <div style={{ marginTop: "0.5rem" }}>
-                          <label style={{ display: "block", marginBottom: "0.4rem", fontSize: "0.85rem", color: "#e2e8f0", fontWeight: 600 }}>
+                          <label style={{ display: "block", marginBottom: "0.4rem", fontSize: "0.85rem", color: "var(--gt-ink-2)", fontWeight: 600 }}>
                             ლოკაციის ფოტო (არასავალდებულო)
                           </label>
                           <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
                             {loc.img ? (
-                              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", background: "rgba(255,255,255,0.05)", padding: "6px 12px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", background: "#fff", padding: "6px 12px", borderRadius: "8px", border: "1px solid var(--gt-line)" }}>
                                 <div style={{ position: "relative", width: "48px", height: "48px", borderRadius: "6px", overflow: "hidden" }}>
                                   <Image src={extractImageUrl(loc.img)} alt="" fill sizes="48px" style={{ objectFit: "cover" }} />
                                 </div>
-                                <span style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.7)", maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                <span style={{ fontSize: "0.8rem", color: "var(--gt-muted)", maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                   ფოტო დამატებულია
                                 </span>
                                 <button
                                   type="button"
                                   onClick={() => updateLocation(idx, "img", "")}
-                                  style={{ background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.4)", color: "#f87171", padding: "3px 8px", borderRadius: "4px", fontSize: "0.75rem", cursor: "pointer" }}
+                                  style={{ background: "#fdecea", border: "1px solid #f1c4bf", color: "#b42318", padding: "3px 8px", borderRadius: "4px", fontSize: "0.75rem", cursor: "pointer" }}
                                 >
                                   ✕ წაშლა
                                 </button>
@@ -1712,9 +1616,9 @@ export default function AdminPage() {
                             <label
                               style={{
                                 padding: "0.4rem 0.85rem",
-                                background: "rgba(56, 189, 248, 0.15)",
-                                border: "1px solid rgba(56, 189, 248, 0.35)",
-                                color: "#38bdf8",
+                                background: "var(--gt-primary-soft)",
+                                border: "1px solid #b9cfe0",
+                                color: "var(--gt-primary)",
                                 borderRadius: "6px",
                                 fontSize: "0.82rem",
                                 fontWeight: 600,
@@ -1724,7 +1628,7 @@ export default function AdminPage() {
                                 gap: "6px",
                               }}
                             >
-                              📷 {uploading ? "იტვირთება..." : loc.img ? "ფოტოს შეცვლა" : "ფოტოს ატვირთვა"}
+                              {uploading ? "იტვირთება..." : loc.img ? "ფოტოს შეცვლა" : "ფოტოს ატვირთვა"}
                               <input
                                 type="file"
                                 accept="image/*"
@@ -1751,9 +1655,9 @@ export default function AdminPage() {
 
             {/* Gallery */}
             <fieldset className="admin-fieldset">
-              <legend>📸 ფოტოგალერეა (Cloudinary & ლოკაციების ფოტოები)</legend>
+              <legend>ფოტოგალერეა (Cloudinary & ლოკაციების ფოტოები)</legend>
               <p className="admin-hint" style={{ marginBottom: "1rem" }}>
-                💡 ლოკაციის არჩევისას მისი ყველა ფოტო ავტომატურად გადმოყვება აქ (ხელახლა ატვირთვის გარეშე). ასევე შეგიძლიათ დაამატოთ ნებისმიერი სხვა ფოტო.
+                ლოკაციის არჩევისას მისი ყველა ფოტო ავტომატურად გადმოყვება აქ (ხელახლა ატვირთვის გარეშე). ასევე შეგიძლიათ დაამატოთ ნებისმიერი სხვა ფოტო.
               </p>
               
               <div className="admin-gallery-controls" style={{ display: "flex", gap: "1rem", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap" }}>
@@ -1766,9 +1670,9 @@ export default function AdminPage() {
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "6px",
-                    background: "rgba(41, 178, 183, 0.2)",
-                    border: "1px solid rgba(41, 178, 183, 0.4)",
-                    color: "#fff",
+                    background: "var(--gt-primary-soft)",
+                    border: "1px solid #b9cfe0",
+                    color: "var(--gt-ink)",
                     padding: "0.55rem 1.1rem",
                     borderRadius: "8px",
                     fontWeight: 600
@@ -1785,7 +1689,7 @@ export default function AdminPage() {
                     style={{ display: "none" }}
                   />
                 </label>
-                {uploading && <span className="admin-hint" style={{ margin: 0, color: "#fab418" }}>⏳ იტვირთება{uploadProgress ? ` ${uploadProgress.done}/${uploadProgress.total}` : ""}...</span>}
+                {uploading && <span className="admin-hint" style={{ margin: 0, color: "#8a6116" }}>იტვირთება{uploadProgress ? ` ${uploadProgress.done}/${uploadProgress.total}` : ""}...</span>}
                 {gallery.length > 0 && <span className="admin-hint" style={{ margin: 0 }}>სულ: {gallery.length} ფოტო</span>}
               </div>
 
@@ -1814,11 +1718,11 @@ export default function AdminPage() {
                           key={`${url}-${idx}`}
                           className="admin-gallery-card"
                           style={{
-                            background: "rgba(13, 35, 58, 0.75)",
-                            border: isCover ? "2px solid #fab418" : "1px solid rgba(255, 255, 255, 0.15)",
+                            background: "#fff",
+                            border: isCover ? "2px solid var(--gt-primary)" : "1px solid var(--gt-line)",
                             borderRadius: "12px",
                             padding: "0.6rem",
-                            boxShadow: isCover ? "0 0 16px rgba(250, 180, 24, 0.35)" : "0 4px 12px rgba(0,0,0,0.2)",
+                            boxShadow: isCover ? "0 0 0 3px rgba(42, 101, 146, 0.18)" : "none",
                             display: "flex",
                             flexDirection: "column",
                             gap: "0.5rem",
@@ -1832,7 +1736,7 @@ export default function AdminPage() {
                               aspectRatio: "16/10",
                               borderRadius: "8px",
                               overflow: "hidden",
-                              background: "#0a192f",
+                              background: "var(--gt-stone)",
                             }}
                           >
                             <Image src={url} alt="" fill sizes="240px" style={{ objectFit: "cover" }} />
@@ -1845,8 +1749,8 @@ export default function AdminPage() {
                                   top: "6px",
                                   left: "6px",
                                   zIndex: 2,
-                                  background: "linear-gradient(135deg, #fab418 0%, #f59e0b 100%)",
-                                  color: "#0d233a",
+                                  background: "var(--gt-primary)",
+                                  color: "#fff",
                                   fontSize: "0.72rem",
                                   fontWeight: 800,
                                   padding: "3px 7px",
@@ -1854,7 +1758,7 @@ export default function AdminPage() {
                                   boxShadow: "0 2px 6px rgba(0,0,0,0.3)"
                                 }}
                               >
-                                ⭐ მთავარი ფოტო
+                                მთავარი ფოტო
                               </div>
                             )}
 
@@ -1891,8 +1795,8 @@ export default function AdminPage() {
 
                           {/* Place Name Edit Input */}
                           <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-                            <label style={{ fontSize: "0.74rem", color: "#94a3b8", fontWeight: 600, display: "flex", alignItems: "center", gap: "4px" }}>
-                              📍 ადგილის სახელი:
+                            <label style={{ fontSize: "0.74rem", color: "var(--gt-muted)", fontWeight: 600, display: "flex", alignItems: "center", gap: "4px" }}>
+                              ადგილის სახელი:
                             </label>
                             <input
                               type="text"
@@ -1904,9 +1808,9 @@ export default function AdminPage() {
                                 padding: "0.35rem 0.5rem",
                                 fontSize: "0.8rem",
                                 borderRadius: "6px",
-                                background: "rgba(255, 255, 255, 0.08)",
-                                border: "1px solid rgba(255, 255, 255, 0.18)",
-                                color: "#ffffff",
+                                background: "#fff",
+                                border: "1px solid var(--gt-line)",
+                                color: "var(--gt-ink)",
                               }}
                             />
                             
@@ -1929,9 +1833,9 @@ export default function AdminPage() {
                                         fontSize: "0.68rem",
                                         padding: "2px 6px",
                                         borderRadius: "4px",
-                                        background: locTitle === loc.name ? "rgba(41, 178, 183, 0.4)" : "rgba(255, 255, 255, 0.06)",
-                                        border: locTitle === loc.name ? "1px solid #29b2b7" : "1px solid rgba(255, 255, 255, 0.1)",
-                                        color: locTitle === loc.name ? "#38bdf8" : "#94a3b8",
+                                        background: locTitle === loc.name ? "var(--gt-primary-soft)" : "#fff",
+                                        border: locTitle === loc.name ? "1px solid var(--gt-primary)" : "1px solid var(--gt-line)",
+                                        color: locTitle === loc.name ? "var(--gt-primary)" : "var(--gt-muted)",
                                         cursor: "pointer",
                                         whiteSpace: "nowrap",
                                         maxWidth: "100%",
@@ -1955,7 +1859,7 @@ export default function AdminPage() {
                               justifyContent: "space-between",
                               marginTop: "auto",
                               paddingTop: "4px",
-                              borderTop: "1px solid rgba(255,255,255,0.08)",
+                              borderTop: "1px solid var(--gt-line)",
                             }}
                           >
                             {!isCover ? (
@@ -1963,9 +1867,9 @@ export default function AdminPage() {
                                 type="button"
                                 onClick={() => setCoverImage(idx)}
                                 style={{
-                                  background: "rgba(250, 180, 24, 0.15)",
-                                  border: "1px solid rgba(250, 180, 24, 0.4)",
-                                  color: "#fab418",
+                                  background: "#fbefd5",
+                                  border: "1px solid #ecd39c",
+                                  color: "#8a6116",
                                   fontSize: "0.72rem",
                                   fontWeight: 700,
                                   padding: "3px 8px",
@@ -1973,10 +1877,10 @@ export default function AdminPage() {
                                   cursor: "pointer",
                                 }}
                               >
-                                ⭐ მთავარად
+                                მთავარად
                               </button>
                             ) : (
-                              <span style={{ fontSize: "0.72rem", color: "#fab418", fontWeight: 700 }}>
+                              <span style={{ fontSize: "0.72rem", color: "#8a6116", fontWeight: 700 }}>
                                 ✓ მთავარი
                               </span>
                             )}
@@ -1989,9 +1893,9 @@ export default function AdminPage() {
                                   onClick={() => moveGalleryImage(idx, -1)}
                                   title="მარცხნივ"
                                   style={{
-                                    background: "rgba(255,255,255,0.12)",
-                                    border: "1px solid rgba(255,255,255,0.15)",
-                                    color: "#fff",
+                                    background: "#fff",
+                                    border: "1px solid var(--gt-line)",
+                                    color: "var(--gt-ink)",
                                     width: "24px",
                                     height: "24px",
                                     borderRadius: "4px",
@@ -2011,9 +1915,9 @@ export default function AdminPage() {
                                   onClick={() => moveGalleryImage(idx, 1)}
                                   title="მარჯვნივ"
                                   style={{
-                                    background: "rgba(255,255,255,0.12)",
-                                    border: "1px solid rgba(255,255,255,0.15)",
-                                    color: "#fff",
+                                    background: "#fff",
+                                    border: "1px solid var(--gt-line)",
+                                    color: "var(--gt-ink)",
                                     width: "24px",
                                     height: "24px",
                                     borderRadius: "4px",
@@ -2034,7 +1938,7 @@ export default function AdminPage() {
                     })}
                 </div>
               ) : (
-                <p className="admin-hint" style={{ textAlign: "center", padding: "1.5rem", border: "1px dashed rgba(255,255,255,0.15)", borderRadius: "10px" }}>
+                <p className="admin-hint" style={{ textAlign: "center", padding: "1.5rem", border: "1px dashed var(--gt-line-strong)", borderRadius: "10px" }}>
                   გალერეაში ფოტოები ჯერ არ არის. აირჩიეთ ლოკაცია ზემოთ ან დააჭირეთ „+ დამატებითი ფოტოების ატვირთვა“-ს.
                 </p>
               )}
@@ -2105,46 +2009,34 @@ export default function AdminPage() {
               <button type="submit" className="admin-btn-primary" disabled={saving || uploading}>
                 {saving ? "ინახება..." : editingTourId ? "ცვლილებების შენახვა" : "ტურის შენახვა"}
               </button>
-              <button type="button" className="admin-btn-ghost" onClick={resetForm}>
+              <button type="button" className="admin-btn-ghost" onClick={() => { resetForm(); setView("list"); }}>
                 გასუფთავება
               </button>
             </div>
           </form>
+          )}
 
           {/* TOURS CATALOG SIDEBAR CARDS */}
-          <aside className="admin-sidebar" style={{ width: "100%" }}>
+          {view === "list" && (
+          <aside className="admin-catalog">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
               <h2>ტურების კატალოგი</h2>
-              <span className="admin-tab-count">{existingTours.length}</span>
+              <span className="adm-badge">{existingTours.length}</span>
             </div>
 
             {/* Search & Filter */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginBottom: "1.25rem" }}>
+            <div className="admin-catalog-filters">
               <input
-                type="text"
-                placeholder="🔍 მოძებნეთ ტური..."
+                type="search"
+                className="adm-input"
+                placeholder="მოძებნეთ ტური..."
                 value={tourSearchQuery}
                 onChange={(e) => setTourSearchQuery(e.target.value)}
-                style={{
-                  padding: "0.55rem 0.8rem",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  background: "rgba(255,255,255,0.06)",
-                  color: "#fff",
-                  fontSize: "0.88rem",
-                }}
               />
               <select
+                className="adm-input"
                 value={tourRegionFilter}
                 onChange={(e) => setTourRegionFilter(e.target.value)}
-                style={{
-                  padding: "0.5rem 0.8rem",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  background: "rgba(15,23,42,0.8)",
-                  color: "#fff",
-                  fontSize: "0.85rem",
-                }}
               >
                 <option value="all">ყველა რეგიონი ({existingTours.length})</option>
                 {GEORGIA_REGIONS.map((r) => (
@@ -2160,7 +2052,7 @@ export default function AdminPage() {
             ) : existingTours.length === 0 ? (
               <p className="admin-hint">ჯერ ტურები არ არის დამატებული.</p>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", maxHeight: "850px", overflowY: "auto", paddingRight: "4px" }}>
+              <div className="admin-catalog-grid">
                 {existingTours
                   .filter((tour) => {
                     const titleKa = asLocalizedText(tour.title, "ka").toLowerCase();
@@ -2193,7 +2085,7 @@ export default function AdminPage() {
                             <Image src={mainImg} alt="" fill sizes="72px" style={{ objectFit: "cover" }} />
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <h4 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            <h4 className="adm-entry-title">
                               {asLocalizedText(tItem.title)}
                             </h4>
                             <div className="admin-entry-tags">
@@ -2208,7 +2100,7 @@ export default function AdminPage() {
                               })()}
                               {(tItem.priceGroup || tItem.pricePrivate) && (
                                 <span className="admin-tag-pill price">
-                                  💰 {format(tItem.priceGroup || tItem.pricePrivate)}
+                                  {format(tItem.priceGroup || tItem.pricePrivate)}
                                 </span>
                               )}
                               {tItem.badge && <span className="admin-tag-pill badge">{asLocalizedText(tItem.badge)}</span>}
@@ -2217,7 +2109,7 @@ export default function AdminPage() {
                         </div>
                         <div className="admin-entry-actions">
                           <Link href={`/ka/tours/${tItem.id}`} className="admin-action-btn link" target="_blank">
-                            საიტზე ნახვა →
+                            ნახვა ↗
                           </Link>
                           <div style={{ display: "flex", gap: "0.4rem" }}>
                             <button type="button" className="admin-action-btn edit" onClick={() => startTourEdit(tItem)}>
@@ -2234,6 +2126,7 @@ export default function AdminPage() {
               </div>
             )}
           </aside>
+          )}
         </div>
           )}
 
@@ -2271,8 +2164,8 @@ export default function AdminPage() {
           {activeTab === "bookings" && (
             <BookingManager />
           )}
-        </div>
-      </section>
+        </main>
+      </div>
 
       <Footer />
     </div>

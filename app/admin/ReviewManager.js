@@ -27,6 +27,7 @@ export default function ReviewManager({ onReviewsCountChange }) {
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [view, setView] = useState("list");
   const [form, setForm] = useState(emptyForm());
   const [message, setMessage] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -69,6 +70,7 @@ export default function ReviewManager({ onReviewsCountChange }) {
       }
       setForm(emptyForm());
       setEditingId(null);
+      setView("list");
       await refresh();
     } catch (err) {
       console.error(err);
@@ -80,6 +82,7 @@ export default function ReviewManager({ onReviewsCountChange }) {
 
   const startEdit = (review) => {
     setEditingId(review.id);
+    setView("form");
     setForm({
       name: review.name,
       rating: review.rating,
@@ -98,6 +101,7 @@ export default function ReviewManager({ onReviewsCountChange }) {
       await deleteReview(id);
       if (editingId === id) {
         setEditingId(null);
+      setView("list");
         setForm(emptyForm());
       }
       await refresh();
@@ -151,37 +155,50 @@ export default function ReviewManager({ onReviewsCountChange }) {
   });
 
   return (
-    <div className="admin-layout">
-      {/* FORM CARD */}
+    <div className="admin-catalog-wrap">
+      <div className="admin-catalog-bar">
+        <div className="admin-segment admin-catalog-switch" role="tablist">
+          <button type="button" role="tab" aria-selected={view === "list"} className={view === "list" ? "is-active" : ""} onClick={() => setView("list")}>
+            კატალოგი <span className="adm-badge">{reviews.length}</span>
+          </button>
+          <button type="button" role="tab" aria-selected={view === "form"} className={view === "form" ? "is-active" : ""} onClick={() => setView("form")}>
+            {editingId ? "რედაქტირება" : "+ დამატება"}
+          </button>
+        </div>
+        <button type="button" className="admin-btn-add admin-catalog-action" onClick={handleSyncGoogle} disabled={syncing}>
+          {syncing ? "სინქრონიზაცია..." : "Google-იდან სინქრონიზაცია"}
+        </button>
+      </div>
+        {message && (
+          <div className={`admin-alert ${message.type}`} role="status">
+            {message.text}
+          </div>
+        )}
+      {view === "form" && (
       <form className="admin-form" onSubmit={handleSubmit}>
         <header className="admin-form-header">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h2>{editingId ? "⭐ მიმოხილვის რედაქტირება" : "⭐ ახალი მიმოხილვის დამატება"}</h2>
+            <h2>{editingId ? "მიმოხილვის რედაქტირება" : "ახალი მიმოხილვის დამატება"}</h2>
             <button
               type="button"
               className="admin-btn-ghost"
               onClick={handleSyncGoogle}
               disabled={syncing}
               style={{
-                background: "rgba(56, 189, 248, 0.12)",
-                color: "#38bdf8",
-                border: "1px solid rgba(56, 189, 248, 0.3)",
+                background: "var(--gt-primary-soft)",
+                color: "var(--gt-primary)",
+                border: "1px solid #b9cfe0",
                 borderRadius: "8px",
                 padding: "0.4rem 0.8rem",
                 fontSize: "0.82rem",
               }}
             >
-              {syncing ? "სინქრონიზაცია..." : "🔄 Google Maps სინქრონიზაცია"}
+              {syncing ? "სინქრონიზაცია..." : "Google Maps სინქრონიზაცია"}
             </button>
           </div>
           <p>მიმოხილვები ავტომატურად გამოჩნდება მთავარ გვერდზე და ტურების დეტალებში.</p>
         </header>
 
-        {message && (
-          <div className={`admin-alert ${message.type}`} role="status">
-            {message.text}
-          </div>
-        )}
 
         <fieldset className="admin-fieldset">
           <legend>მიმოხილვის მონაცემები</legend>
@@ -261,6 +278,7 @@ export default function ReviewManager({ onReviewsCountChange }) {
               className="admin-btn-ghost"
               onClick={() => {
                 setEditingId(null);
+      setView("list");
                 setForm(emptyForm());
               }}
             >
@@ -269,27 +287,29 @@ export default function ReviewManager({ onReviewsCountChange }) {
           )}
         </div>
       </form>
+      )}
 
       {/* CATALOG CARDS LIST */}
-      <aside className="admin-sidebar" style={{ width: "100%" }}>
+      {view === "list" && (
+      <aside className="admin-catalog">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
           <h2>მიმოხილვების სია</h2>
           <span className="admin-tab-count">{reviews.length}</span>
         </div>
 
         {/* Search & Filter */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginBottom: "1.25rem" }}>
+        <div className="admin-catalog-filters">
           <input
             type="text"
-            placeholder="🔍 მოძებნეთ სახელით ან ტექსტით..."
+            placeholder="მოძებნეთ სახელით ან ტექსტით..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
               padding: "0.55rem 0.8rem",
               borderRadius: "8px",
-              border: "1px solid rgba(255,255,255,0.15)",
-              background: "rgba(255,255,255,0.06)",
-              color: "#fff",
+              border: "1px solid var(--gt-line)",
+              background: "#fff",
+              color: "var(--gt-ink)",
               fontSize: "0.88rem",
             }}
           />
@@ -299,9 +319,9 @@ export default function ReviewManager({ onReviewsCountChange }) {
             style={{
               padding: "0.5rem 0.8rem",
               borderRadius: "8px",
-              border: "1px solid rgba(255,255,255,0.15)",
-              background: "rgba(15,23,42,0.8)",
-              color: "#fff",
+              border: "1px solid var(--gt-line)",
+              background: "#fff",
+              color: "var(--gt-ink)",
               fontSize: "0.85rem",
             }}
           >
@@ -319,35 +339,35 @@ export default function ReviewManager({ onReviewsCountChange }) {
         ) : filteredReviews.length === 0 ? (
           <p className="admin-hint">მიმოხილვები ვერ მოიძებნა.</p>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", maxHeight: "800px", overflowY: "auto", paddingRight: "4px" }}>
+          <div className="admin-catalog-grid">
             {filteredReviews.map((review) => (
-              <div key={review.id} className="admin-entry-card">
+              <div key={review.id} className="admin-entry-card is-text">
                 <div style={{ padding: "0.85rem" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.35rem" }}>
-                    <strong style={{ color: "#fff", fontSize: "0.95rem" }}>{review.name}</strong>
-                    <span style={{ color: "#fab418", fontSize: "0.85rem" }}>
+                    <strong style={{ color: "var(--gt-ink)", fontSize: "0.95rem" }}>{review.name}</strong>
+                    <span style={{ color: "#8a6116", fontSize: "0.85rem" }}>
                       {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
                     </span>
                   </div>
                   <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", marginBottom: "0.4rem" }}>
                     <span className="admin-tag-pill">{review.time || "ახლახან"}</span>
                     {review.approved === false && (
-                      <span className="admin-tag-pill" style={{ background: "rgba(234, 179, 8, 0.15)", color: "#facc15" }}>
-                        ⏳ მოდერაციაზე
+                      <span className="admin-tag-pill badge">
+                        მოდერაციაზე
                       </span>
                     )}
                     {review.source === "google" && (
-                      <span className="admin-tag-pill" style={{ background: "rgba(66, 133, 244, 0.15)", color: "#60a5fa" }}>
-                        🌐 Google
+                      <span className="admin-tag-pill price">
+                        Google
                       </span>
                     )}
                   </div>
-                  <p style={{ margin: 0, color: "#cbd5e1", fontSize: "0.84rem", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                  <p style={{ margin: 0, color: "var(--gt-ink-2)", fontSize: "0.84rem", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                     {review.text}
                   </p>
                 </div>
                 <div className="admin-entry-actions">
-                  <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>ID: {review.id.slice(0, 8)}...</span>
+                  <span style={{ fontSize: "0.75rem", color: "var(--gt-muted)" }}>ID: {review.id.slice(0, 8)}...</span>
                   <div style={{ display: "flex", gap: "0.4rem" }}>
                     {review.approved === false ? (
                       <button type="button" className="admin-action-btn edit" onClick={() => handleSetApproved(review.id, true)}>
@@ -371,6 +391,7 @@ export default function ReviewManager({ onReviewsCountChange }) {
           </div>
         )}
       </aside>
+      )}
     </div>
   );
 }

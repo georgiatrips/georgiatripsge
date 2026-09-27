@@ -95,9 +95,9 @@ export default function LocalizedInputGroup({
       style={{
         marginBottom: "1.25rem",
         padding: "1rem",
-        backgroundColor: "#0f172a",
+        backgroundColor: "var(--gt-paper)",
         borderRadius: "10px",
-        border: "1px solid rgba(255, 255, 255, 0.1)",
+        border: "1px solid var(--gt-line)",
       }}
     >
       <div
@@ -109,11 +109,11 @@ export default function LocalizedInputGroup({
         }}
       >
         <label style={{ margin: 0, color: "#f8fafc", fontSize: "0.95rem", fontWeight: 600 }}>
-          {label} {required && <span style={{ color: "#ef4444" }}>*</span>}
+          {label} {required && <span style={{ color: "#b42318" }}>*</span>}
         </label>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           {translateError && (
-            <span style={{ fontSize: "0.75rem", color: "#f87171" }}>
+            <span style={{ fontSize: "0.75rem", color: "#b42318" }}>
               {translateError}
             </span>
           )}
@@ -128,15 +128,15 @@ export default function LocalizedInputGroup({
               display: "flex",
               alignItems: "center",
               gap: "0.35rem",
-              background: "rgba(56, 189, 248, 0.12)",
-              color: "#38bdf8",
-              border: "1px solid rgba(56, 189, 248, 0.3)",
+              background: "var(--gt-primary-soft)",
+              color: "var(--gt-primary)",
+              border: "1px solid #b9cfe0",
               borderRadius: "6px",
               cursor: translating || !getValueForLang("ka") ? "not-allowed" : "pointer",
               opacity: translating || !getValueForLang("ka") ? 0.6 : 1,
             }}
           >
-            {translating ? "⏳ ითარგმნება..." : "🌐 ავტო-თარგმნა (KA → ALL)"}
+            {translating ? "ითარგმნება..." : "ავტო-თარგმნა (KA → ALL)"}
           </button>
         </div>
       </div>
@@ -153,9 +153,9 @@ export default function LocalizedInputGroup({
           >
             <span
               style={{
-                backgroundColor: code === "ka" ? "rgba(41, 178, 183, 0.25)" : "rgba(255, 255, 255, 0.08)",
-                color: code === "ka" ? "#29b2b7" : "#cbd5e1",
-                border: code === "ka" ? "1px solid rgba(41, 178, 183, 0.4)" : "1px solid rgba(255, 255, 255, 0.1)",
+                backgroundColor: code === "ka" ? "var(--gt-primary-soft)" : "#fff",
+                color: code === "ka" ? "var(--gt-primary-700)" : "#cbd5e1",
+                border: code === "ka" ? "1px solid #b9cfe0" : "1px solid var(--gt-line)",
                 padding: "0.35rem 0.45rem",
                 borderRadius: "6px",
                 fontSize: "0.72rem",
@@ -182,10 +182,10 @@ export default function LocalizedInputGroup({
                 dir={code === "ar" ? "rtl" : "ltr"}
                 style={{
                   flex: 1,
-                  background: "rgba(255, 255, 255, 0.05)",
-                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  background: "#fff",
+                  border: "1px solid var(--gt-line)",
                   borderRadius: "6px",
-                  color: "#fff",
+                  color: "var(--gt-ink)",
                   padding: "0.5rem 0.75rem",
                   fontSize: "0.88rem",
                 }}
@@ -201,10 +201,10 @@ export default function LocalizedInputGroup({
                 dir={code === "ar" ? "rtl" : "ltr"}
                 style={{
                   flex: 1,
-                  background: "rgba(255, 255, 255, 0.05)",
-                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  background: "#fff",
+                  border: "1px solid var(--gt-line)",
                   borderRadius: "6px",
-                  color: "#fff",
+                  color: "var(--gt-ink)",
                   padding: "0.5rem 0.75rem",
                   fontSize: "0.88rem",
                 }}

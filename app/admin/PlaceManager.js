@@ -23,6 +23,7 @@ export default function PlaceManager({ onPlacesCountChange }) {
   const [form, setForm] = useState(empty());
   const [places, setPlaces] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [view, setView] = useState("list");
   const [saving, setSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(null);
   const [message, setMessage] = useState("");
@@ -69,6 +70,7 @@ export default function PlaceManager({ onPlacesCountChange }) {
       } catch (_) {}
       setForm(empty());
       setEditingId(null);
+      setView("list");
       await refresh();
       setMessage("ადგილი წარმატებით შენახულია!");
     } catch (error) {
@@ -98,6 +100,7 @@ export default function PlaceManager({ onPlacesCountChange }) {
 
   const edit = (place) => {
     setEditingId(place.id);
+    setView("form");
     setForm({
       title: parseLocal(place.title),
       desc: parseLocal(place.desc),
@@ -122,6 +125,7 @@ export default function PlaceManager({ onPlacesCountChange }) {
     } catch (_) {}
     if (editingId === id) {
       setEditingId(null);
+      setView("list");
       setForm(empty());
     }
     await refresh();
@@ -136,14 +140,29 @@ export default function PlaceManager({ onPlacesCountChange }) {
   });
 
   return (
-    <div className="admin-layout">
-      {/* FORM CARD */}
+    <div className="admin-catalog-wrap">
+      <div className="admin-catalog-bar">
+        <div className="admin-segment admin-catalog-switch" role="tablist">
+          <button type="button" role="tab" aria-selected={view === "list"} className={view === "list" ? "is-active" : ""} onClick={() => setView("list")}>
+            კატალოგი <span className="adm-badge">{places.length}</span>
+          </button>
+          <button type="button" role="tab" aria-selected={view === "form"} className={view === "form" ? "is-active" : ""} onClick={() => setView("form")}>
+            {editingId ? "რედაქტირება" : "+ დამატება"}
+          </button>
+        </div>
+      </div>
+        {message && (
+          <div className={`admin-alert ${message.includes("წარმატებით") ? "success" : "error"}`}>
+            {message}
+          </div>
+        )}
+      {view === "form" && (
       <form className="admin-form" onSubmit={submit}>
         <header className="admin-form-header">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h2>{editingId ? "📍 ადგილის რედაქტირება" : "📍 ახალი ადგილის დამატება"}</h2>
+            <h2>{editingId ? "ადგილის რედაქტირება" : "ახალი ადგილის დამატება"}</h2>
             {editingId && (
-              <span className="admin-tag-pill" style={{ background: "rgba(41,178,183,0.2)", color: "#29b2b7" }}>
+              <span className="admin-tag-pill price">
                 რედაქტირების რეჟიმი
               </span>
             )}
@@ -151,11 +170,6 @@ export default function PlaceManager({ onPlacesCountChange }) {
           <p>ადგილები გამოიყენება ტურების მარშრუტებში და ცალკე ლოკაციების კატალოგში.</p>
         </header>
 
-        {message && (
-          <div className={`admin-alert ${message.includes("წარმატებით") ? "success" : "error"}`}>
-            {message}
-          </div>
-        )}
 
         <fieldset className="admin-fieldset">
           <legend>მრავალენოვანი ინფორმაცია (თარგმანი)</legend>
@@ -194,7 +208,7 @@ export default function PlaceManager({ onPlacesCountChange }) {
               checked={form.isPopular}
               onChange={(e) => setForm({ ...form, isPopular: e.target.checked })}
             />
-            <span>⭐ პოპულარული ადგილი (გამოჩნდება გამორჩეულებში)</span>
+            <span>პოპულარული ადგილი (გამოჩნდება გამორჩეულებში)</span>
           </label>
         </fieldset>
 
@@ -207,11 +221,11 @@ export default function PlaceManager({ onPlacesCountChange }) {
               multiple
               onChange={handleUpload}
               disabled={saving || Boolean(uploadProgress)}
-              style={{ padding: "0.5rem", background: "rgba(255,255,255,0.05)", borderRadius: "8px" }}
+              style={{ padding: "0.5rem", background: "#fff", borderRadius: "8px" }}
             />
             {uploadProgress && (
-              <span className="admin-hint" style={{ margin: "0 0 0 0.75rem", color: "#fab418" }}>
-                ⏳ იტვირთება {uploadProgress.done}/{uploadProgress.total}...
+              <span className="admin-hint" style={{ margin: "0 0 0 0.75rem", color: "#8a6116" }}>
+                იტვირთება {uploadProgress.done}/{uploadProgress.total}...
               </span>
             )}
           </div>
@@ -256,6 +270,7 @@ export default function PlaceManager({ onPlacesCountChange }) {
               onClick={() => {
                 setForm(empty);
                 setEditingId(null);
+      setView("list");
               }}
             >
               გაუქმება
@@ -263,27 +278,29 @@ export default function PlaceManager({ onPlacesCountChange }) {
           )}
         </div>
       </form>
+      )}
 
       {/* CATALOG CARDS LIST */}
-      <aside className="admin-sidebar" style={{ width: "100%" }}>
+      {view === "list" && (
+      <aside className="admin-catalog">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
           <h2>ადგილების კატალოგი</h2>
           <span className="admin-tab-count">{places.length}</span>
         </div>
 
         {/* Search & Filter */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginBottom: "1.25rem" }}>
+        <div className="admin-catalog-filters">
           <input
             type="text"
-            placeholder="🔍 მოძებნეთ ადგილი..."
+            placeholder="მოძებნეთ ადგილი..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
               padding: "0.55rem 0.8rem",
               borderRadius: "8px",
-              border: "1px solid rgba(255,255,255,0.15)",
-              background: "rgba(255,255,255,0.06)",
-              color: "#fff",
+              border: "1px solid var(--gt-line)",
+              background: "#fff",
+              color: "var(--gt-ink)",
               fontSize: "0.88rem",
             }}
           />
@@ -293,9 +310,9 @@ export default function PlaceManager({ onPlacesCountChange }) {
             style={{
               padding: "0.5rem 0.8rem",
               borderRadius: "8px",
-              border: "1px solid rgba(255,255,255,0.15)",
-              background: "rgba(15,23,42,0.8)",
-              color: "#fff",
+              border: "1px solid var(--gt-line)",
+              background: "#fff",
+              color: "var(--gt-ink)",
               fontSize: "0.85rem",
             }}
           >
@@ -311,7 +328,7 @@ export default function PlaceManager({ onPlacesCountChange }) {
         {filteredPlaces.length === 0 ? (
           <p className="admin-hint">ადგილები ვერ მოიძებნა.</p>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", maxHeight: "800px", overflowY: "auto", paddingRight: "4px" }}>
+          <div className="admin-catalog-grid">
             {filteredPlaces.map((place) => {
               const mainImg =
                 extractImageUrl(place.img) ||
@@ -333,18 +350,18 @@ export default function PlaceManager({ onPlacesCountChange }) {
                       <Image src={mainImg} alt="" fill sizes="72px" style={{ objectFit: "cover" }} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <h4 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      <h4 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 700, color: "var(--gt-ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {asLocalizedText(place.title)}
                       </h4>
                       <div className="admin-entry-tags">
                         <span className="admin-tag-pill">{asLocalizedText(place.region)}</span>
-                        {place.isPopular && <span className="admin-tag-pill badge">⭐ პოპულარული</span>}
+                        {place.isPopular && <span className="admin-tag-pill badge">პოპულარული</span>}
                       </div>
                     </div>
                   </div>
                   <div className="admin-entry-actions">
                     <Link href={`/ka/places/${place.id}`} className="admin-action-btn link" target="_blank">
-                      👁️ ნახვა ↗
+                      ნახვა ↗
                     </Link>
                     <div style={{ display: "flex", gap: "0.5rem" }}>
                       <button
@@ -352,14 +369,14 @@ export default function PlaceManager({ onPlacesCountChange }) {
                         className={`admin-action-btn edit ${editingId === place.id ? "is-editing" : ""}`}
                         onClick={() => edit(place)}
                       >
-                        ✏️ რედაქტირება
+                        რედაქტირება
                       </button>
                       <button
                         type="button"
                         className="admin-action-btn delete"
                         onClick={() => remove(place.id)}
                       >
-                        🗑️ წაშლა
+                        წაშლა
                       </button>
                     </div>
                   </div>
@@ -369,6 +386,7 @@ export default function PlaceManager({ onPlacesCountChange }) {
           </div>
         )}
       </aside>
+      )}
     </div>
   );
 }

@@ -182,200 +182,53 @@ export default function BookingManager() {
 
   return (
     <div style={{ padding: "0.5rem 0 3rem" }}>
-      {/* ── METRICS DASHBOARD SUMMARY ────────────────────────── */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
-          gap: "1rem",
-          marginBottom: "2rem",
-        }}
-      >
-        <div
-          onClick={() => setStatusFilter("all")}
-          style={{
-            background: "#ffffff",
-            padding: "1.1rem 1.25rem",
-            borderRadius: "16px",
-            border: statusFilter === "all" ? "2px solid #0d9488" : "1px solid #e2e8f0",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-            cursor: "pointer",
-            transition: "all 0.15s ease",
-          }}
-        >
-          <span style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>
-            სულ ჯავშნები
-          </span>
-          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#0f172a", marginTop: "0.25rem" }}>
-            {metrics.total}
-          </div>
-        </div>
-
-        <div
-          onClick={() => setStatusFilter(BOOKING_STATUSES.PENDING)}
-          style={{
-            background: "#ffffff",
-            padding: "1.1rem 1.25rem",
-            borderRadius: "16px",
-            border: statusFilter === BOOKING_STATUSES.PENDING ? "2px solid #eab308" : "1px solid #fef08a",
-            boxShadow: "0 2px 8px rgba(234, 179, 8, 0.1)",
-            cursor: "pointer",
-            transition: "all 0.15s ease",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "0.8rem", color: "#854d0e", fontWeight: 700, textTransform: "uppercase" }}>
-              ⏳ მოლოდინში
-            </span>
-            {metrics.pending > 0 && (
-              <span
-                style={{
-                  background: "#eab308",
-                  color: "#ffffff",
-                  fontSize: "0.75rem",
-                  padding: "0.15rem 0.5rem",
-                  borderRadius: "999px",
-                  fontWeight: 800,
-                }}
-              >
-                {metrics.pending} ახალი
-              </span>
-            )}
-          </div>
-          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#a16207", marginTop: "0.25rem" }}>
-            {metrics.pending}
-          </div>
-        </div>
-
-        <div
-          onClick={() => setStatusFilter(BOOKING_STATUSES.CONFIRMED)}
-          style={{
-            background: "#ffffff",
-            padding: "1.1rem 1.25rem",
-            borderRadius: "16px",
-            border: statusFilter === BOOKING_STATUSES.CONFIRMED ? "2px solid #10b981" : "1px solid #e2e8f0",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-            cursor: "pointer",
-            transition: "all 0.15s ease",
-          }}
-        >
-          <span style={{ fontSize: "0.8rem", color: "#065f46", fontWeight: 700, textTransform: "uppercase" }}>
-            ✅ დადასტურებული
-          </span>
-          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#10b981", marginTop: "0.25rem" }}>
-            {metrics.confirmed}
-          </div>
-        </div>
-
-        <div
-          onClick={() => setStatusFilter(BOOKING_STATUSES.CANCELLED)}
-          style={{
-            background: "#ffffff",
-            padding: "1.1rem 1.25rem",
-            borderRadius: "16px",
-            border: statusFilter === BOOKING_STATUSES.CANCELLED ? "2px solid #ef4444" : "1px solid #e2e8f0",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-            cursor: "pointer",
-            transition: "all 0.15s ease",
-          }}
-        >
-          <span style={{ fontSize: "0.8rem", color: "#991b1b", fontWeight: 700, textTransform: "uppercase" }}>
-            ❌ გაუქმებული
-          </span>
-          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#ef4444", marginTop: "0.25rem" }}>
-            {metrics.cancelled}
-          </div>
-        </div>
-
-        <div
-          onClick={() => setStatusFilter(BOOKING_STATUSES.COMPLETED)}
-          style={{
-            background: "#ffffff",
-            padding: "1.1rem 1.25rem",
-            borderRadius: "16px",
-            border: statusFilter === BOOKING_STATUSES.COMPLETED ? "2px solid #3b82f6" : "1px solid #e2e8f0",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-            cursor: "pointer",
-            transition: "all 0.15s ease",
-          }}
-        >
-          <span style={{ fontSize: "0.8rem", color: "#1e40af", fontWeight: 700, textTransform: "uppercase" }}>
-            🎉 დასრულებული
-          </span>
-          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#3b82f6", marginTop: "0.25rem" }}>
-            {metrics.completed}
-          </div>
-        </div>
-
-        <div
-          style={{
-            background: "linear-gradient(135deg, #0d233a 0%, #0f365d 100%)",
-            color: "#ffffff",
-            padding: "1.1rem 1.25rem",
-            borderRadius: "16px",
-            boxShadow: "0 4px 15px rgba(13, 35, 58, 0.15)",
-          }}
-        >
-          <span style={{ fontSize: "0.75rem", color: "#94a3b8", fontWeight: 700, textTransform: "uppercase" }}>
-            ჯამური ღირებულება
-          </span>
-          <div style={{ fontSize: "1.55rem", fontWeight: 800, color: "#5eead4", marginTop: "0.25rem" }}>
-            ₾{metrics.totalValue.toLocaleString()}
-          </div>
+      {/* Status cards double as the status filter: one row, one click. */}
+      <div className="bk-status-row" role="group" aria-label="ჯავშნის სტატუსი">
+        {[
+          { key: "all", label: "ყველა", value: metrics.total, tone: "all" },
+          { key: BOOKING_STATUSES.PENDING, label: "მოლოდინში", value: metrics.pending, tone: "pending" },
+          { key: BOOKING_STATUSES.CONFIRMED, label: "დადასტურებული", value: metrics.confirmed, tone: "confirmed" },
+          { key: BOOKING_STATUSES.COMPLETED, label: "დასრულებული", value: metrics.completed, tone: "completed" },
+          { key: BOOKING_STATUSES.CANCELLED, label: "გაუქმებული", value: metrics.cancelled, tone: "cancelled" },
+        ].map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            className={`bk-status is-${item.tone}${statusFilter === item.key ? " is-active" : ""}`}
+            aria-pressed={statusFilter === item.key}
+            onClick={() => setStatusFilter(item.key)}
+          >
+            <span className="bk-status-label">{item.label}</span>
+            <strong>{item.value}</strong>
+            {item.tone === "pending" && item.value > 0 && <span className="bk-status-new">ახალი</span>}
+          </button>
+        ))}
+        <div className="bk-status bk-status--total">
+          <span className="bk-status-label">ჯამური ღირებულება</span>
+          <strong>₾{metrics.totalValue.toLocaleString()}</strong>
         </div>
       </div>
 
-      {/* ── FILTER & SEARCH BAR ──────────────────────────────── */}
+      {/* ── SEARCH & SORT ──────────────────────────────── */}
       <div
         style={{
           background: "#ffffff",
-          padding: "1.25rem",
-          borderRadius: "16px",
-          border: "1px solid #e2e8f0",
-          boxShadow: "0 2px 10px rgba(0,0,0,0.03)",
+          padding: "1rem",
+          borderRadius: "14px",
+          border: "1px solid var(--gt-line)",
           display: "flex",
           flexWrap: "wrap",
           gap: "1rem",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: "1.5rem",
+          marginBottom: "1.25rem",
         }}
       >
-        {/* Status Pills */}
-        <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-          {[
-            { key: "all", label: "ყველა" },
-            { key: BOOKING_STATUSES.PENDING, label: "⏳ მოლოდინში" },
-            { key: BOOKING_STATUSES.CONFIRMED, label: "✅ დადასტურებული" },
-            { key: BOOKING_STATUSES.CANCELLED, label: "❌ გაუქმებული" },
-            { key: BOOKING_STATUSES.COMPLETED, label: "🎉 დასრულებული" },
-          ].map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => setStatusFilter(item.key)}
-              style={{
-                padding: "0.45rem 0.9rem",
-                borderRadius: "10px",
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                border: "none",
-                cursor: "pointer",
-                background: statusFilter === item.key ? "#0d233a" : "#f1f5f9",
-                color: statusFilter === item.key ? "#ffffff" : "#475569",
-                transition: "all 0.15s ease",
-              }}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-
         {/* Search & Sort Controls */}
         <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap", flex: 1, justifyContent: "flex-end" }}>
           <input
             type="text"
-            placeholder="🔍 ძებნა (ID, სახელი, ტელეფონი, ტური)..."
+            placeholder="ძებნა (ID, სახელი, ტელეფონი, ტური)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
@@ -467,7 +320,7 @@ export default function BookingManager() {
                       onMouseEnter={(e) => (e.currentTarget.style.background = "#f8fafc")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
                     >
-                      <td style={{ padding: "0.85rem 1rem", fontFamily: "monospace", fontWeight: 700, color: "#0f172a" }}>
+                      <td style={{ padding: "0.85rem 1rem", fontFamily: "monospace", fontWeight: 700, color: "#1f2d3d" }}>
                         {b.bookingId || b.id}
                       </td>
 
@@ -491,7 +344,7 @@ export default function BookingManager() {
                         </span>
                       </td>
 
-                      <td style={{ padding: "0.85rem 1rem", fontWeight: 600, color: "#1e293b", maxWidth: "190px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      <td style={{ padding: "0.85rem 1rem", fontWeight: 600, color: "#1f2d3d", maxWidth: "190px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {b.tourTitle || "ტური"}
                       </td>
 
@@ -499,14 +352,14 @@ export default function BookingManager() {
                         {b.trip?.date || b.date || "—"}
                       </td>
 
-                      <td style={{ padding: "0.85rem 1rem", fontWeight: 600, color: "#0f172a" }}>
+                      <td style={{ padding: "0.85rem 1rem", fontWeight: 600, color: "#1f2d3d" }}>
                         {b.customer?.fullName || b.name || "—"}
                       </td>
 
                       <td style={{ padding: "0.85rem 1rem" }}>
                         <a
                           href={`tel:${phone}`}
-                          style={{ color: "#0d9488", textDecoration: "none", fontWeight: 600 }}
+                          style={{ color: "#2a6592", textDecoration: "none", fontWeight: 600 }}
                         >
                           {phone || "—"}
                         </a>
@@ -516,7 +369,7 @@ export default function BookingManager() {
                         {b.trip?.totalPeople || b.people || 1} პერს.
                       </td>
 
-                      <td style={{ padding: "0.85rem 1rem", fontWeight: 800, color: "#0d9488" }}>
+                      <td style={{ padding: "0.85rem 1rem", fontWeight: 800, color: "#2a6592" }}>
                         ₾{price}
                       </td>
 
@@ -543,7 +396,7 @@ export default function BookingManager() {
                           type="button"
                           onClick={() => setSelectedBooking(b)}
                           style={{
-                            background: "#0d9488",
+                            background: "#2a6592",
                             color: "#ffffff",
                             border: "none",
                             padding: "0.45rem 0.85rem",
@@ -613,7 +466,7 @@ export default function BookingManager() {
                 <span style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", fontWeight: 700 }}>
                   ჯავშნის დეტალები
                 </span>
-                <h3 style={{ margin: 0, fontSize: "1.3rem", color: "#0f172a", fontFamily: "monospace" }}>
+                <h3 style={{ margin: 0, fontSize: "1.3rem", color: "#1f2d3d", fontFamily: "monospace" }}>
                   {selectedBooking.bookingId || selectedBooking.id}
                 </h3>
               </div>
@@ -643,7 +496,7 @@ export default function BookingManager() {
                     borderRadius: "10px",
                     marginBottom: "1.25rem",
                     background: actionMessage.type === "success" ? "#ecfdf5" : "#fef2f2",
-                    color: actionMessage.type === "success" ? "#065f46" : "#991b1b",
+                    color: actionMessage.type === "success" ? "#236b48" : "#a3231a",
                     border: actionMessage.type === "success" ? "1px solid #a7f3d0" : "1px solid #fecaca",
                     fontSize: "0.9rem",
                     fontWeight: 600,
@@ -669,7 +522,7 @@ export default function BookingManager() {
               >
                 <div>
                   <span style={{ fontSize: "0.8rem", color: "#64748b", display: "block" }}>მიმდინარე სტატუსი:</span>
-                  <strong style={{ fontSize: "1.1rem", color: "#0f172a" }}>
+                  <strong style={{ fontSize: "1.1rem", color: "#1f2d3d" }}>
                     {STATUS_CONFIG[selectedBooking.status]?.icon} {STATUS_CONFIG[selectedBooking.status]?.labelKa || selectedBooking.status}
                   </strong>
                 </div>
@@ -681,7 +534,7 @@ export default function BookingManager() {
                       disabled={actionLoading}
                       onClick={() => setConfirmModalOpen(true)}
                       style={{
-                        background: "#10b981",
+                        background: "#2f8a5d",
                         color: "#ffffff",
                         border: "none",
                         padding: "0.5rem 0.95rem",
@@ -701,7 +554,7 @@ export default function BookingManager() {
                       disabled={actionLoading}
                       onClick={() => setCancelModalOpen(true)}
                       style={{
-                        background: "#ef4444",
+                        background: "#b42318",
                         color: "#ffffff",
                         border: "none",
                         padding: "0.5rem 0.95rem",
@@ -721,7 +574,7 @@ export default function BookingManager() {
                       disabled={actionLoading}
                       onClick={() => setCompleteModalOpen(true)}
                       style={{
-                        background: "#3b82f6",
+                        background: "#2a6592",
                         color: "#ffffff",
                         border: "none",
                         padding: "0.5rem 0.95rem",
@@ -731,7 +584,7 @@ export default function BookingManager() {
                         cursor: "pointer",
                       }}
                     >
-                      🎉 დასრულება
+                      დასრულება
                     </button>
                   )}
                 </div>
@@ -741,12 +594,12 @@ export default function BookingManager() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", marginBottom: "1.5rem" }}>
                 {/* Customer Information */}
                 <div style={{ background: "#f8fafc", padding: "1.2rem", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
-                  <h4 style={{ margin: "0 0 0.75rem", fontSize: "0.95rem", color: "#0d233a", fontWeight: 800 }}>
-                    👤 მომხმარებლის მონაცემები
+                  <h4 style={{ margin: "0 0 0.75rem", fontSize: "0.95rem", color: "#1f2d3d", fontWeight: 800 }}>
+                    მომხმარებლის მონაცემები
                   </h4>
                   <div style={{ display: "grid", gap: "0.5rem", fontSize: "0.88rem" }}>
                     <div><strong>სახელი:</strong> {selectedBooking.customer?.fullName || selectedBooking.name || "—"}</div>
-                    <div><strong>ტელეფონი:</strong> <a href={`tel:${selectedBooking.customer?.phone || selectedBooking.phone}`} style={{ color: "#0d9488" }}>{selectedBooking.customer?.phone || selectedBooking.phone || "—"}</a></div>
+                    <div><strong>ტელეფონი:</strong> <a href={`tel:${selectedBooking.customer?.phone || selectedBooking.phone}`} style={{ color: "#2a6592" }}>{selectedBooking.customer?.phone || selectedBooking.phone || "—"}</a></div>
                     <div><strong>მესინჯერი:</strong> {selectedBooking.customer?.messengerPref || selectedBooking.channel || "WhatsApp"}</div>
                     <div><strong>ენა:</strong> {selectedBooking.customer?.language || selectedBooking.language || "ka"}</div>
                     {selectedBooking.customer?.email && <div><strong>ელ.ფოსტა:</strong> {selectedBooking.customer.email}</div>}
@@ -755,8 +608,8 @@ export default function BookingManager() {
 
                 {/* Trip & Pricing */}
                 <div style={{ background: "#f8fafc", padding: "1.2rem", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
-                  <h4 style={{ margin: "0 0 0.75rem", fontSize: "0.95rem", color: "#0d233a", fontWeight: 800 }}>
-                    📍 ტურისა და ფასის დეტალები
+                  <h4 style={{ margin: "0 0 0.75rem", fontSize: "0.95rem", color: "#1f2d3d", fontWeight: 800 }}>
+                    ტურისა და ფასის დეტალები
                   </h4>
                   <div style={{ display: "grid", gap: "0.5rem", fontSize: "0.88rem" }}>
                     <div><strong>ტური:</strong> {selectedBooking.tourTitle}</div>
@@ -766,7 +619,7 @@ export default function BookingManager() {
                       <div><strong>ავტომობილი:</strong> {VEHICLES[selectedBooking.trip.vehicle]?.nameKa || selectedBooking.trip.vehicle}</div>
                     )}
                     <div><strong>მგზავრები:</strong> {selectedBooking.trip?.totalPeople || selectedBooking.people} ადამიანი</div>
-                    <div><strong>ფასი:</strong> <strong style={{ color: "#0d9488", fontSize: "1.1rem" }}>₾{selectedBooking.pricing?.totalPrice || selectedBooking.price} GEL</strong></div>
+                    <div><strong>ფასი:</strong> <strong style={{ color: "#2a6592", fontSize: "1.1rem" }}>₾{selectedBooking.pricing?.totalPrice || selectedBooking.price} GEL</strong></div>
                     {selectedBooking.pricing?.couponCode && (
                       <div style={{ color: "#0284c7" }}><strong>კუპონი:</strong> {selectedBooking.pricing.couponCode} (-{selectedBooking.pricing.discountPercent || 10}%)</div>
                     )}
@@ -776,8 +629,8 @@ export default function BookingManager() {
 
               {/* Marketing Attribution */}
               <div style={{ background: "#f0fdf4", padding: "1.2rem", borderRadius: "12px", border: "1px solid #bbf7d0", marginBottom: "1.5rem" }}>
-                <h4 style={{ margin: "0 0 0.75rem", fontSize: "0.95rem", color: "#166534", fontWeight: 800 }}>
-                  📊 მარკეტინგული ატრიბუცია (Ads Tracking)
+                <h4 style={{ margin: "0 0 0.75rem", fontSize: "0.95rem", color: "#236b48", fontWeight: 800 }}>
+                  მარკეტინგული ატრიბუცია (Ads Tracking)
                 </h4>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.6rem", fontSize: "0.85rem" }}>
                   <div><strong>Source:</strong> {selectedBooking.source?.utm_source || "direct / organic"}</div>
@@ -796,7 +649,7 @@ export default function BookingManager() {
               {(selectedBooking.notes?.customerNotes || selectedBooking.notes) && typeof (selectedBooking.notes?.customerNotes || selectedBooking.notes) === "string" && (
                 <div style={{ background: "#fffbeb", padding: "1rem 1.25rem", borderRadius: "12px", border: "1px solid #fde68a", marginBottom: "1.5rem" }}>
                   <strong style={{ color: "#92400e", fontSize: "0.9rem", display: "block", marginBottom: "0.3rem" }}>
-                    📝 მომხმარებლის შენიშვნა:
+                    მომხმარებლის შენიშვნა:
                   </strong>
                   <p style={{ margin: 0, fontSize: "0.88rem", color: "#78350f" }}>
                     {selectedBooking.notes?.customerNotes || selectedBooking.notes}
@@ -806,8 +659,8 @@ export default function BookingManager() {
 
               {/* Admin Internal Notes Textarea */}
               <div style={{ marginBottom: "1.5rem" }}>
-                <label style={{ display: "block", fontWeight: 700, fontSize: "0.9rem", color: "#0f172a", marginBottom: "0.4rem" }}>
-                  🔒 ადმინის შიდა ჩანაწერები (მომხმარებელი ვერ ხედავს)
+                <label style={{ display: "block", fontWeight: 700, fontSize: "0.9rem", color: "#1f2d3d", marginBottom: "0.4rem" }}>
+                  ადმინის შიდა ჩანაწერები (მომხმარებელი ვერ ხედავს)
                 </label>
                 <textarea
                   rows={3}
@@ -829,7 +682,7 @@ export default function BookingManager() {
                   disabled={actionLoading}
                   style={{
                     marginTop: "0.5rem",
-                    background: "#0d233a",
+                    background: "var(--gt-primary)",
                     color: "#ffffff",
                     border: "none",
                     padding: "0.45rem 1rem",
@@ -861,7 +714,7 @@ export default function BookingManager() {
                         alignItems: "center",
                         justifyContent: "center",
                         gap: "0.5rem",
-                        background: "#25D366",
+                        background: "#1f7a64",
                         color: "#ffffff",
                         padding: "0.8rem",
                         borderRadius: "10px",
@@ -870,7 +723,6 @@ export default function BookingManager() {
                         textDecoration: "none",
                       }}
                     >
-                      <span>💬</span>
                       <span>WhatsApp-ში მიწერა</span>
                     </a>
                   ) : null;
@@ -885,7 +737,7 @@ export default function BookingManager() {
                     justifyContent: "center",
                     gap: "0.5rem",
                     background: "#f1f5f9",
-                    color: "#0f172a",
+                    color: "#1f2d3d",
                     padding: "0.8rem",
                     borderRadius: "10px",
                     fontWeight: 700,
@@ -894,7 +746,6 @@ export default function BookingManager() {
                     border: "1px solid #cbd5e1",
                   }}
                 >
-                  <span>📞</span>
                   <span>დარეკვა</span>
                 </a>
               </div>
@@ -904,9 +755,9 @@ export default function BookingManager() {
               {(() => {
                 const phone = selectedBooking.customer?.whatsapp || selectedBooking.customer?.phone || selectedBooking.phone;
                 const templates = [
-                  { kind: "confirm", label: "✅ დადასტურება", show: selectedBooking.status !== "cancelled" },
-                  { kind: "reminder", label: "⏰ შეხსენება (წინა დღეს)", show: selectedBooking.status === "confirmed" },
-                  { kind: "review", label: GOOGLE_REVIEW_URL ? "⭐ Google შეფასების თხოვნა" : "⭐ შეფასების თხოვნა", show: selectedBooking.status === "completed" },
+                  { kind: "confirm", label: "დადასტურება", show: selectedBooking.status !== "cancelled" },
+                  { kind: "reminder", label: "შეხსენება (წინა დღეს)", show: selectedBooking.status === "confirmed" },
+                  { kind: "review", label: GOOGLE_REVIEW_URL ? "Google შეფასების თხოვნა" : "შეფასების თხოვნა", show: selectedBooking.status === "completed" },
                 ].filter((item) => item.show);
                 if (!whatsappToCustomer(phone) || templates.length === 0) return null;
                 return (
@@ -924,8 +775,8 @@ export default function BookingManager() {
                           style={{
                             padding: "0.5rem 0.85rem",
                             borderRadius: "999px",
-                            border: "1px solid #25D366",
-                            color: "#166534",
+                            border: "1px solid #1f7a64",
+                            color: "#236b48",
                             background: "#f0fdf4",
                             fontSize: "0.85rem",
                             fontWeight: 700,
@@ -959,8 +810,7 @@ export default function BookingManager() {
           }}
         >
           <div style={{ background: "#ffffff", padding: "2rem", borderRadius: "16px", maxWidth: "440px", width: "100%", textAlign: "center" }}>
-            <span style={{ fontSize: "2.5rem", display: "block", marginBottom: "0.75rem" }}>✅</span>
-            <h3 style={{ margin: "0 0 0.5rem", fontSize: "1.25rem", color: "#0f172a" }}>ჯავშნის დადასტურება?</h3>
+            <h3 style={{ margin: "0 0 0.5rem", fontSize: "1.25rem", color: "#1f2d3d" }}>ჯავშნის დადასტურება?</h3>
             <p style={{ color: "#64748b", fontSize: "0.9rem", margin: "0 0 1.5rem" }}>
               დარწმუნებული ხართ, რომ გსურთ ჯავშნის <strong>{selectedBooking?.bookingId}</strong> დადასტურება?
             </p>
@@ -976,7 +826,7 @@ export default function BookingManager() {
                 type="button"
                 onClick={() => handleUpdateStatus(BOOKING_STATUSES.CONFIRMED)}
                 disabled={actionLoading}
-                style={{ flex: 1, padding: "0.7rem", borderRadius: "8px", border: "none", background: "#10b981", color: "#ffffff", fontWeight: 700, cursor: "pointer" }}
+                style={{ flex: 1, padding: "0.7rem", borderRadius: "8px", border: "none", background: "#2f8a5d", color: "#ffffff", fontWeight: 700, cursor: "pointer" }}
               >
                 {actionLoading ? "მუშავდება..." : "დიახ, დადასტურება"}
               </button>
@@ -1000,8 +850,7 @@ export default function BookingManager() {
           }}
         >
           <div style={{ background: "#ffffff", padding: "2rem", borderRadius: "16px", maxWidth: "460px", width: "100%" }}>
-            <span style={{ fontSize: "2.5rem", display: "block", textAlign: "center", marginBottom: "0.75rem" }}>❌</span>
-            <h3 style={{ margin: "0 0 0.5rem", fontSize: "1.25rem", color: "#0f172a", textAlign: "center" }}>ჯავშნის გაუქმება</h3>
+            <h3 style={{ margin: "0 0 0.5rem", fontSize: "1.25rem", color: "#1f2d3d", textAlign: "center" }}>ჯავშნის გაუქმება</h3>
             <p style={{ color: "#64748b", fontSize: "0.9rem", margin: "0 0 1.25rem", textAlign: "center" }}>
               გთხოვთ მიუთითოთ გაუქმების მიზეზი (ეს გამოუჩნდება მომხმარებელს სტატუსის გვერდზე):
             </p>
@@ -1041,7 +890,7 @@ export default function BookingManager() {
                 type="button"
                 onClick={() => handleUpdateStatus(BOOKING_STATUSES.CANCELLED, cancellationReasonInput || "ადმინისტრატორის მიერ გაუქმებული")}
                 disabled={actionLoading}
-                style={{ flex: 1, padding: "0.7rem", borderRadius: "8px", border: "none", background: "#ef4444", color: "#ffffff", fontWeight: 700, cursor: "pointer" }}
+                style={{ flex: 1, padding: "0.7rem", borderRadius: "8px", border: "none", background: "#b42318", color: "#ffffff", fontWeight: 700, cursor: "pointer" }}
               >
                 {actionLoading ? "მუშავდება..." : "ჯავშნის გაუქმება"}
               </button>
@@ -1065,8 +914,7 @@ export default function BookingManager() {
           }}
         >
           <div style={{ background: "#ffffff", padding: "2rem", borderRadius: "16px", maxWidth: "440px", width: "100%", textAlign: "center" }}>
-            <span style={{ fontSize: "2.5rem", display: "block", marginBottom: "0.75rem" }}>🎉</span>
-            <h3 style={{ margin: "0 0 0.5rem", fontSize: "1.25rem", color: "#0f172a" }}>ტურის დასრულება?</h3>
+            <h3 style={{ margin: "0 0 0.5rem", fontSize: "1.25rem", color: "#1f2d3d" }}>ტურის დასრულება?</h3>
             <p style={{ color: "#64748b", fontSize: "0.9rem", margin: "0 0 1.5rem" }}>
               მონიშნეთ ჯავშანი <strong>{selectedBooking?.bookingId}</strong> როგორც წარმატებით შესრულებული.
             </p>
@@ -1082,7 +930,7 @@ export default function BookingManager() {
                 type="button"
                 onClick={() => handleUpdateStatus(BOOKING_STATUSES.COMPLETED)}
                 disabled={actionLoading}
-                style={{ flex: 1, padding: "0.7rem", borderRadius: "8px", border: "none", background: "#3b82f6", color: "#ffffff", fontWeight: 700, cursor: "pointer" }}
+                style={{ flex: 1, padding: "0.7rem", borderRadius: "8px", border: "none", background: "#2a6592", color: "#ffffff", fontWeight: 700, cursor: "pointer" }}
               >
                 {actionLoading ? "მუშავდება..." : "დიახ, დასრულება"}
               </button>
