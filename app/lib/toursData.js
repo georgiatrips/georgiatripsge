@@ -34,7 +34,7 @@ export const ALL_TOURS = [
     pricePrivate: "₾400",
     dates: ["07.28", "07.29", "08.01"],
     badge: "TOP 2 პოპულარული",
-    img: "/batumi.png",
+    img: "/adjara.jpg",
     category: "popular"
   },
   {
@@ -88,7 +88,7 @@ export const ALL_TOURS = [
     pricePrivate: "₾450",
     dates: ["07.27", "07.29", "07.31"],
     badge: "ისტორია & კულტურა",
-    img: "/tbilisi.png",
+    img: "/tbilisi.webp",
     category: "culture"
   },
   {
@@ -106,7 +106,7 @@ export const ALL_TOURS = [
     pricePrivate: "₾950",
     dates: ["07.28", "08.01", "08.05"],
     badge: "UNESCO მემკვიდრეობა",
-    img: "/mestia.png",
+    img: "/mestia.webp",
     category: "culture"
   },
   {
@@ -124,7 +124,7 @@ export const ALL_TOURS = [
     pricePrivate: "₾520",
     dates: ["07.29", "07.31", "08.03"],
     badge: "ღვინის სამშობლო",
-    img: "/kakheti.png",
+    img: "/kakheti.webp",
     category: "taste"
   },
   {
@@ -142,7 +142,7 @@ export const ALL_TOURS = [
     pricePrivate: "₾280",
     dates: ["07.27", "07.29", "07.31"],
     badge: "ეთნო გასტრონომია",
-    img: "/villa.png",
+    img: "/villa.webp",
     category: "taste"
   },
   {
@@ -160,7 +160,7 @@ export const ALL_TOURS = [
     pricePrivate: "₾350",
     dates: ["07.27", "07.28", "07.30"],
     badge: "ალპური თავგადასავალი",
-    img: "/batumi.png",
+    img: "/adjara.jpg",
     category: "adventure"
   },
   {
@@ -232,7 +232,7 @@ export const ALL_TOURS = [
     pricePrivate: "₾580",
     dates: ["07.28", "07.29", "07.31"],
     badge: "სეზონური ჰაილაითი",
-    img: "/gudauri.png",
+    img: "/gudauri.webp",
     category: "seasons"
   },
   {
@@ -460,15 +460,15 @@ export function getTourDetails(tour) {
         "ტრადიციული აჭარული ოჯახური სუფრა"
       ],
       gallery: [
-        "/batumi.png",
+        "/adjara.jpg",
         "https://images.unsplash.com/photo-1540202404-d0c7fe46a087?w=800&q=80",
-        "/villa.png"
+        "/villa.webp"
       ],
       itinerary: [
-        { title: "ჭოროხისა და აჭარისწყლის შესართავი", desc: "ორი მდინარის შეერთების ულამაზესი ხედი.", img: "/batumi.png" },
+        { title: "ჭოროხისა და აჭარისწყლის შესართავი", desc: "ორი მდინარის შეერთების ულამაზესი ხედი.", img: "/adjara.jpg" },
         { title: "მირვეთის ჩანჩქერი & ბამბუკის ტყე", desc: "სასეირნო ბილიკი საიდუმლო ჩანჩქერამდე.", img: "https://images.unsplash.com/photo-1540202404-d0c7fe46a087?w=800&q=80" },
-        { title: "თამარ მეფის ხიდი & მახუნცეთის ჩანჩქერი", desc: "XII საუკუნის თაღოვანი ხიდი და 50მ ჩანჩქერი.", img: "/villa.png" },
-        { title: "აჭარული ტრადიციული სუფრა", desc: "საოჯახო მარანი, ფოლკლორი, აჭარული ხინკალი და ღვინის დეგუსტაცია.", img: "/batumi.png" }
+        { title: "თამარ მეფის ხიდი & მახუნცეთის ჩანჩქერი", desc: "XII საუკუნის თაღოვანი ხიდი და 50მ ჩანჩქერი.", img: "/villa.webp" },
+        { title: "აჭარული ტრადიციული სუფრა", desc: "საოჯახო მარანი, ფოლკლორი, აჭარული ხინკალი და ღვინის დეგუსტაცია.", img: "/adjara.jpg" }
       ],
       reviews: []
     },
@@ -492,12 +492,12 @@ export function getTourDetails(tour) {
       ],
       gallery: [
         "https://images.unsplash.com/photo-1565008576549-57569a49371d?w=800&q=80",
-        "/gudauri.png",
+        "/gudauri.webp",
         "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80"
       ],
       itinerary: [
         { title: "ჟინვალის წყალსაცავი & ანანურის ციხე", desc: "ფოტო-პაუზა ჟინვალზე და XVII საუკუნის ციხესიმაგრე.", img: "https://images.unsplash.com/photo-1565008576549-57569a49371d?w=800&q=80" },
-        { title: "გუდაურის პანორამული მონუმენტი", desc: "ხალხთა მეგობრობის მონუმენტი 2200მ სიმაღლეზე.", img: "/gudauri.png" },
+        { title: "გუდაურის პანორამული მონუმენტი", desc: "ხალხთა მეგობრობის მონუმენტი 2200მ სიმაღლეზე.", img: "/gudauri.webp" },
         { title: "გერგეთის სამების ტაძარი", desc: "4x4 დელიკებით ასვლა 2170მ-ზე მყინვარწვერის ხედით.", img: "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80" },
         { title: "სადილი ფასანაურში", desc: "ნამდვილი მთის ხინკლის დაგემოვნება.", img: "https://images.unsplash.com/photo-1540202404-d0c7fe46a087?w=800&q=80" }
       ],

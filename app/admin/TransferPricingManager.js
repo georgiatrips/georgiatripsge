@@ -25,10 +25,7 @@ function toForm(pricing) {
   const p = normalizeTransferPricing(pricing);
   const vehicles = {};
   for (const key of TRANSFER_VEHICLE_KEYS) {
-    vehicles[key] = {
-      rates: p.vehicles[key].rates.map(str),
-      minFare: str(p.vehicles[key].minFare),
-    };
+    vehicles[key] = { rates: p.vehicles[key].rates.map(str) };
   }
   return { bands: p.bands.map(str), vehicles, svanetiSurchargePct: str(p.svanetiSurchargePct) };
 }
@@ -81,9 +78,6 @@ export default function TransferPricingManager() {
     });
   };
 
-  const setMinFare = (key, value) => {
-    setForm((f) => ({ ...f, vehicles: { ...f.vehicles, [key]: { ...f.vehicles[key], minFare: value } } }));
-  };
 
   const setBand = (idx, value) => {
     setForm((f) => {
@@ -256,23 +250,6 @@ export default function TransferPricingManager() {
                   </tr>
                 );
               })}
-              <tr className="tp-minfare-row">
-                <td className="tp-band-col">მინიმალური ფასი (₾)</td>
-                {TRANSFER_VEHICLE_KEYS.map((key) => (
-                  <td key={key}>
-                    <input
-                      type="number"
-                      min="0"
-                      inputMode="numeric"
-                      value={form.vehicles[key].minFare}
-                      onChange={(e) => setMinFare(key, e.target.value)}
-                      className="tp-input"
-                      aria-label={`${VEHICLE_LABELS[key].name} — მინიმალური ფასი`}
-                    />
-                  </td>
-                ))}
-                <td />
-              </tr>
             </tbody>
           </table>
         </div>

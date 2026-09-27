@@ -14,10 +14,10 @@ export const TRANSFER_VEHICLE_KEYS = ["sedan", "minivan", "jeep", "sprinter"];
 export const DEFAULT_TRANSFER_PRICING = {
   bands: [50, 100, 150, 200, 300],
   vehicles: {
-    sedan: { rates: [2.5, 2.2, 2.0, 1.8, 1.7, 1.2], minFare: 35 },
-    minivan: { rates: [2.0, 2.0, 2.0, 2.0, 2.0, 2.0], minFare: 55 },
-    jeep: { rates: [2.5, 2.5, 2.5, 2.5, 2.5, 2.5], minFare: 65 },
-    sprinter: { rates: [3.0, 3.0, 3.0, 3.0, 3.0, 3.0], minFare: 110 },
+    sedan: { rates: [2.5, 2.2, 2.0, 1.8, 1.7, 1.2] },
+    minivan: { rates: [2.0, 2.0, 2.0, 2.0, 2.0, 2.0] },
+    jeep: { rates: [2.5, 2.5, 2.5, 2.5, 2.5, 2.5] },
+    sprinter: { rates: [3.0, 3.0, 3.0, 3.0, 3.0, 3.0] },
   },
   svanetiSurchargePct: 10,
 };
@@ -52,10 +52,9 @@ export function normalizeTransferPricing(raw) {
     // last rate keeps its place.
     const rates = bandPairs.map((p) => toNumberOrNull(oldRates[p.i]));
     rates.push(toNumberOrNull(oldRates[rawBands.length]));
-    vehicles[key] = {
-      rates,
-      minFare: toNumberOrNull(v.minFare) ?? 0,
-    };
+    // No minimum fare: a trip costs distance × its band's rate. A minFare
+    // left in older saved pricing is dropped here, so the next save removes it.
+    vehicles[key] = { rates };
   }
 
   return {
@@ -92,8 +91,7 @@ export function getTransferFare(pricing, vehicleKey, distanceKm, { isSvaneti = f
   if (rate == null) return null;
   let raw = Math.max(0, Number(distanceKm) || 0) * rate;
   if (isSvaneti) raw *= 1 + (pricing.svanetiSurchargePct || 0) / 100;
-  const minFare = pricing.vehicles?.[vehicleKey]?.minFare || 0;
-  return Math.max(minFare, Math.round(raw));
+  return Math.round(raw);
 }
 
 /** "0–50", "50–100", …, "300+" labels for each rate slot. */

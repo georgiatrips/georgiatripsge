@@ -316,7 +316,7 @@ export default function HotelManager({ onHotelsCountChange }) {
                 .filter((url) => Boolean(url && url.trim()))
                 .map((url, index) => (
                   <div className="admin-gallery-item" key={url || index}>
-                    <Image src={url || "/placeholder.svg"} alt="" fill sizes="120px" style={{ objectFit: "cover" }} />
+                    <Image src={url || "/hero.webp"} alt="" fill sizes="120px" style={{ objectFit: "cover" }} />
                   <button
                     type="button"
                     className="admin-gallery-remove"

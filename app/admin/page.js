@@ -44,6 +44,18 @@ import {
 
 const emptyVehiclePrices = () => Object.fromEntries(VEHICLE_KEYS.map((key) => [key, ""]));
 
+// Every photo of a place (cover + gallery) as trimmed, de-duplicated URLs.
+function placePhotoUrls(place) {
+  const urls = [];
+  const add = (u) => {
+    const url = typeof u === "string" ? u.trim() : u?.url?.trim();
+    if (url && !urls.includes(url)) urls.push(url);
+  };
+  add(place?.img);
+  (Array.isArray(place?.gallery) ? place.gallery : []).forEach(add);
+  return urls;
+}
+
 const emptyLocation = () => ({
   placeId: "",
   search: "",
@@ -241,19 +253,8 @@ export default function AdminPage() {
       )
     );
 
-    // Extract all photos of this location (place.img and place.gallery) without re-uploading to Cloudinary
-    const placePhotos = [];
-    if (place.img && typeof place.img === "string" && place.img.trim()) {
-      placePhotos.push(place.img.trim());
-    }
-    if (Array.isArray(place.gallery)) {
-      place.gallery.forEach((g) => {
-        const u = typeof g === "string" ? g.trim() : g?.url?.trim();
-        if (u && !placePhotos.includes(u)) {
-          placePhotos.push(u);
-        }
-      });
-    }
+    // All photos of this location (place.img and place.gallery), reused without re-uploading to Cloudinary
+    const placePhotos = placePhotoUrls(place);
 
     if (placePhotos.length > 0) {
       setGallery((prev) => {
@@ -450,6 +451,102 @@ export default function AdminPage() {
     setDatePick("");
     setDepartureDates([]);
     setEditingTourId(null);
+  };
+
+  // Fills the whole form from a prepared tour file (.json), so a tour drafted
+  // outside the admin is saved here under the admin's own login. Stops name a
+  // place by id (resolved from the Places catalog, photos included, exactly as
+  // when picked by hand) or carry their own title/desc as a custom stop.
+  const importTourFromFile = async (event) => {
+    const input = event.target;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+    try {
+      const data = JSON.parse(await file.text());
+      const placesById = new Map(availablePlaces.map((place) => [place.id, place]));
+      const stops = Array.isArray(data.itinerary) ? data.itinerary : [];
+      const missing = stops.filter((stop) => stop.placeId && !placesById.has(stop.placeId));
+      if (missing.length) {
+        throw new Error(`ადგილები ვერ მოიძებნა კატალოგში: ${missing.map((stop) => stop.placeId).join(", ")}`);
+      }
+
+      resetForm();
+      setTitle(parseLocal(data.title));
+      setDesc(parseLocal(data.desc));
+      setStartTime(typeof data.startTime === "string" ? data.startTime : "");
+      setMeetingPoint(parseLocal(data.meetingPoint));
+      setIncludedText(parseLocal(data.includedText));
+      setExcludedText(parseLocal(data.excludedText));
+      setType(data.type === "multiday" ? "multiday" : "oneday");
+      if (data.durationHours) {
+        setDurationMode("hours");
+        setDurationHours(String(data.durationHours));
+      } else {
+        setDurationMode("days");
+        setDurationDays(String(data.durationDays || 1));
+        setDurationNights(String(data.durationNights ?? 0));
+      }
+      const regions = (Array.isArray(data.destinations) ? data.destinations : []).filter((r) => GEORGIA_REGIONS.includes(r));
+      if (regions.length) setDestinations(regions);
+      setHasGroup(Boolean(data.hasGroup));
+      setHasPrivate(data.hasPrivate !== false);
+      setPriceGroup(data.priceGroup != null ? String(data.priceGroup) : "");
+      setPricePrivate(data.pricePrivate != null ? String(data.pricePrivate) : "");
+      setVehiclePrices(
+        Object.fromEntries(VEHICLE_KEYS.map((key) => [key, Number(data.privateVehiclePrices?.[key]) > 0 ? String(data.privateVehiclePrices[key]) : ""]))
+      );
+      if (data.groupMin) setGroupMin(String(data.groupMin));
+      if (data.groupMax) setGroupMax(String(data.groupMax));
+      if (data.privateGroupMin) setPrivateGroupMin(String(data.privateGroupMin));
+      if (data.privateGroupMax) setPrivateGroupMax(String(data.privateGroupMax));
+      setIsPopular(Boolean(data.isPopular));
+      setIsVip(Boolean(data.isVip));
+      setSelectedBadge(TOUR_BADGE_OPTIONS.includes(data.badge) ? data.badge : "");
+      setTourSection(TOUR_SECTIONS.some((section) => section.value === data.tourSection) ? data.tourSection : "");
+
+      const newLocations = [];
+      const newGallery = [];
+      const seenPhotos = new Set();
+      for (const stop of stops) {
+        const place = stop.placeId ? placesById.get(stop.placeId) : null;
+        if (place) {
+          const placeTitle = asLocalizedText(place.title, "ka") || "ადგილი";
+          const photos = placePhotoUrls(place);
+          newLocations.push({
+            ...emptyLocation(),
+            mode: "place",
+            placeId: place.id,
+            search: placeTitle,
+            title: parseLocal(place.title),
+            desc: parseLocal(place.desc),
+            img: photos[0] || "",
+          });
+          photos.forEach((url) => {
+            if (seenPhotos.has(url)) return;
+            seenPhotos.add(url);
+            newGallery.push({ url, locationTitle: placeTitle, placeId: place.id });
+          });
+        } else {
+          newLocations.push({
+            ...emptyLocation(),
+            mode: "custom",
+            title: parseLocal(stop.title),
+            desc: parseLocal(stop.desc),
+            img: typeof stop.img === "string" ? stop.img : "",
+          });
+        }
+      }
+      setLocations(newLocations.length ? newLocations : [emptyLocation()]);
+      setGallery(newGallery);
+      setMessage({
+        type: "success",
+        text: `ტური ჩაიტვირთა ფაილიდან: ${newLocations.length} გაჩერება, ${newGallery.length} ფოტო. გადაამოწმეთ და დააჭირეთ „შენახვას“ — მანამდე საიტზე არაფერი ემატება.`,
+      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      setMessage({ type: "error", text: `იმპორტი ვერ მოხერხდა: ${err.message}` });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -948,6 +1045,12 @@ export default function AdminPage() {
                 <header className="admin-form-header">
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <h2>{editingTourId ? "🏔️ ტურის რედაქტირება" : "🏔️ ახალი ტურის დამატება"}</h2>
+                    {!editingTourId && (
+                      <label className="admin-import-btn" title="მზა ტურის ფაილით (.json) ფორმის შევსება">
+                        📥 იმპორტი ფაილიდან
+                        <input type="file" accept="application/json,.json" onChange={importTourFromFile} hidden />
+                      </label>
+                    )}
                     {editingTourId && (
                       <span className="admin-tag-pill" style={{ background: "rgba(41,178,183,0.2)", color: "#29b2b7" }}>
                         რედაქტირების რეჟიმი
