@@ -84,20 +84,18 @@ export default function LoginPage() {
   }, [searchParams]);
 
   // Back from Facebook after a full-page redirect (phones): finish the sign-in.
+  // No cancellation guard: the first call consumes the token from the URL, so
+  // a Strict Mode re-run finds nothing and the first call must report back.
   useEffect(() => {
-    let cancelled = false;
     completeFacebookRedirect()
       .then((redirected) => {
-        if (cancelled || !redirected) return;
+        if (!redirected) return;
         claimWelcomeCoupon();
         setSuccess(t("loginPage.welcomeRedirect"));
         setTimeout(() => router.push("/"), 900);
       })
-      .catch((e) => {
-        if (!cancelled) setError(getErrorMessage(e.code, t));
-      });
-    return () => { cancelled = true; };
-    // Runs once per page load; getRedirectResult only yields a result once.
+      .catch((e) => setError(getErrorMessage(e.code, t)));
+    // Runs once per page load: the token is removed from the URL on first read.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

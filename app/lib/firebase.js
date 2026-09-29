@@ -5,8 +5,7 @@ import {
   setPersistence,
   browserLocalPersistence,
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithCredential,
   GoogleAuthProvider,
   FacebookAuthProvider,
   createUserWithEmailAndPassword,
@@ -21,9 +20,9 @@ import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAuLpaONrIUwnJJ3ycgzWWlSTiujotfo4U",
-  // Set NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=www.georgiatrips.ge once the /__/auth
-  // proxy (next.config.mjs) and the OAuth redirect URIs are registered — see
-  // the notes above signInWithFacebook.
+  // Production sets NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=www.georgiatrips.ge: the
+  // popup helper is then served from our own domain (/__/auth rewrite in
+  // next.config.mjs) instead of firebaseapp.com.
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "georgiatripsge.firebaseapp.com",
   projectId: "georgiatripsge",
   storageBucket: "georgiatripsge.firebasestorage.app",
@@ -57,15 +56,22 @@ export async function signInWithGoogle() {
 }
 
 // ── Facebook Sign In ─────────────────────────────────────────
-// Phones (iOS Safari, Android Chrome and above all the Facebook / Instagram
-// in-app browsers) block or lose the popup window, so there we send the whole
-// tab to Facebook and finish in completeFacebookRedirect() on return.
+// Desktop: Firebase popup. Phones (iOS Safari, Android Chrome, the Facebook /
+// Instagram in-app browsers) block or lose popups, so there the whole tab goes
+// to Facebook's login dialog and completeFacebookRedirect() finishes on /login.
 //
-// The redirect flow keeps its state in storage that Safari and Chrome no
-// longer share between two sites, so it only works when the Firebase auth
-// handler is served from our own domain (authDomain === this host, see the
-// /__/auth rewrite in next.config.mjs). Until that is configured the popup is
-// used, exactly as before.
+// That redirect is ours rather than Firebase's signInWithRedirect: Firebase
+// keeps the pending sign-in in sessionStorage, which belongs to a single tab,
+// and on phones Facebook often hands the visitor back in another tab (or via
+// its own app) — "missing initial state". Our CSRF state lives in
+// localStorage, shared by every tab of the site. The redirect URI
+// (<origin>/login) must be listed under Valid OAuth Redirect URIs in the
+// Facebook app.
+const FACEBOOK_APP_ID = "1676479996735231";
+const FACEBOOK_STATE_KEY = "gt_fb_oauth_state";
+const FACEBOOK_STATE_TTL_MS = 30 * 60 * 1000;
+const FACEBOOK_RETURN_PARAMS = ["state", "error", "error_code", "error_reason", "error_description"];
+
 function isMobileBrowser() {
   if (typeof navigator === "undefined") return false;
   const ua = navigator.userAgent || "";
@@ -73,33 +79,87 @@ function isMobileBrowser() {
   return /Android|iPhone|iPad|iPod|FBAN|FBAV|Instagram|Mobile/i.test(ua) || iPadOS;
 }
 
-function canUseRedirect() {
-  return typeof window !== "undefined" && auth.config.authDomain === window.location.hostname;
+function facebookRedirectUri() {
+  return `${window.location.origin}/login`;
 }
 
-// Resolves to the user when returning from Facebook, null when this page load
-// is not a redirect return. Sign-in errors are thrown.
+function randomState() {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function redirectToFacebook() {
+  const state = randomState();
+  localStorage.setItem(FACEBOOK_STATE_KEY, JSON.stringify({ state, createdAt: Date.now() }));
+  const params = new URLSearchParams({
+    client_id: FACEBOOK_APP_ID,
+    redirect_uri: facebookRedirectUri(),
+    response_type: "token",
+    scope: "email,public_profile",
+    state,
+  });
+  window.location.assign(`https://www.facebook.com/dialog/oauth?${params}`);
+}
+
+function authError(code) {
+  return Object.assign(new Error(code), { code });
+}
+
+// Resolves to the user when this page load is the return from Facebook's
+// dialog, null otherwise. Sign-in errors are thrown.
 export async function completeFacebookRedirect() {
-  const result = await getRedirectResult(auth);
-  return result?.user ?? null;
+  if (typeof window === "undefined") return null;
+  const hash = new URLSearchParams(window.location.hash.slice(1));
+  const query = new URLSearchParams(window.location.search);
+  const accessToken = hash.get("access_token");
+  const error = query.get("error") || hash.get("error");
+  if (!accessToken && !error) return null;
+
+  const returnedState = hash.get("state") || query.get("state");
+  let saved = null;
+  try {
+    saved = JSON.parse(localStorage.getItem(FACEBOOK_STATE_KEY) || "null");
+    localStorage.removeItem(FACEBOOK_STATE_KEY);
+  } catch (_) {}
+
+  // The token must not stay in the address bar or the history.
+  FACEBOOK_RETURN_PARAMS.forEach((name) => query.delete(name));
+  const search = query.toString();
+  window.history.replaceState(null, "", `${window.location.pathname}${search ? `?${search}` : ""}`);
+
+  if (error) {
+    throw authError(error === "access_denied" ? "auth/popup-closed-by-user" : `auth/facebook-${error}`);
+  }
+  if (
+    !saved ||
+    saved.state !== returnedState ||
+    Date.now() - saved.createdAt > FACEBOOK_STATE_TTL_MS
+  ) {
+    throw authError("auth/facebook-state-mismatch");
+  }
+  try {
+    const result = await signInWithCredential(auth, FacebookAuthProvider.credential(accessToken));
+    return result.user;
+  } catch (e) {
+    // The login page maps invalid-credential to "wrong email or password".
+    if (e.code === "auth/invalid-credential") throw authError("auth/facebook-invalid-token");
+    throw e;
+  }
 }
 
 // Returns the user, or null when the page is navigating away to Facebook.
 export async function signInWithFacebook() {
-  const provider = createFacebookProvider();
-  if (isMobileBrowser() && canUseRedirect()) {
-    await signInWithRedirect(auth, provider);
+  if (isMobileBrowser()) {
+    redirectToFacebook();
     return null;
   }
   try {
-    const result = await signInWithPopup(auth, provider);
+    const result = await signInWithPopup(auth, createFacebookProvider());
     return result.user;
   } catch (e) {
-    if (
-      canUseRedirect() &&
-      (e.code === "auth/popup-blocked" || e.code === "auth/operation-not-supported-in-this-environment")
-    ) {
-      await signInWithRedirect(auth, provider);
+    if (e.code === "auth/popup-blocked" || e.code === "auth/operation-not-supported-in-this-environment") {
+      redirectToFacebook();
       return null;
     }
     throw e;
