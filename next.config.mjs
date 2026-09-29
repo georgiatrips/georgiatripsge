@@ -67,6 +67,16 @@ const nextConfig = {
       },
     ];
   },
+  // Firebase sign-in helper pages, served from our own domain. Safari and
+  // Chrome block the storage the redirect flow shares with
+  // georgiatripsge.firebaseapp.com, so on phones the handler has to live on
+  // the same site. Only used once NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN points here.
+  async rewrites() {
+    return [
+      { source: "/__/auth/:path*", destination: "https://georgiatripsge.firebaseapp.com/__/auth/:path*" },
+      { source: "/__/firebase/:path*", destination: "https://georgiatripsge.firebaseapp.com/__/firebase/:path*" },
+    ];
+  },
   async redirects() {
     return [
       // The pre-migration static site lived on .html URLs. Google still lists

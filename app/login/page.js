@@ -13,6 +13,7 @@ import { useCoupon } from "../lib/CouponContext";
 import {
   signInWithGoogle,
   signInWithFacebook,
+  completeFacebookRedirect,
   signUpWithEmail,
   signInWithEmail,
   resetPassword,
@@ -49,7 +50,8 @@ function getErrorMessage(code, t) {
     "auth/email-not-verified": t("loginPage.authErrors.emailNotVerified"),
     "auth/invalid-credential": t("loginPage.authErrors.invalidCredential"),
   };
-  return map[code] || t("loginPage.authErrors.defaultError");
+  // Unmapped codes stay visible so a customer's screenshot says what failed.
+  return map[code] || `${t("loginPage.authErrors.defaultError")}${code ? ` (${code})` : ""}`;
 }
 
 // ── Main Component ────────────────────────────────────────────
@@ -80,6 +82,24 @@ export default function LoginPage() {
       setTab(tabParam);
     }
   }, [searchParams]);
+
+  // Back from Facebook after a full-page redirect (phones): finish the sign-in.
+  useEffect(() => {
+    let cancelled = false;
+    completeFacebookRedirect()
+      .then((redirected) => {
+        if (cancelled || !redirected) return;
+        claimWelcomeCoupon();
+        setSuccess(t("loginPage.welcomeRedirect"));
+        setTimeout(() => router.push("/"), 900);
+      })
+      .catch((e) => {
+        if (!cancelled) setError(getErrorMessage(e.code, t));
+      });
+    return () => { cancelled = true; };
+    // Runs once per page load; getRedirectResult only yields a result once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Loading state while checking Firebase auth session
   if (user === undefined) {
@@ -123,7 +143,10 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
     try {
-      await signInWithFacebook();
+      const facebookUser = await signInWithFacebook();
+      // null: the tab is navigating to Facebook; completeFacebookRedirect()
+      // finishes the sign-in when Facebook sends the visitor back here.
+      if (!facebookUser) return;
       claimWelcomeCoupon();
       showSuccess(t("loginPage.welcomeRedirect"));
       setTimeout(() => router.push("/"), 900);
