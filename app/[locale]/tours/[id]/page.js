@@ -1,9 +1,10 @@
 import React, { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { asLocalizedText, extractImageUrl, isMultiDayTour, tourDurationDays } from "../../../lib/toursShared";
-import { getCachedTourBySlugOrId, getCachedTours, getCachedPlaces, serializeForClient } from "../../../lib/server/cachedData";
+import { getCachedTourBySlugOrId, getCachedTours, getCachedPlaces, getCachedReviews, serializeForClient } from "../../../lib/server/cachedData";
 import { getContentSlug, placePath, tourPath } from "../../../lib/slugs";
 import TourDetailClient from "../../../components/tours/TourDetailClient";
+import { visibleReviews } from "../../../components/site/ReviewsSection";
 import { SITE_URL, getRequestLocale, buildLocalizedMetadata } from "../../../lib/siteConfig";
 import "./tourDetail.css";
 
@@ -100,10 +101,11 @@ export default async function TourDetailPage({ params }) {
   const { locale, id: tourId } = await params;
   const lang = getRequestLocale(locale);
 
-  const [rawTour, allTours, places] = await Promise.all([
+  const [rawTour, allTours, places, rawReviews] = await Promise.all([
     getCachedTourBySlugOrId(tourId),
     getCachedTours(),
     getCachedPlaces(),
+    getCachedReviews(),
   ]);
 
   if (!rawTour) notFound();
@@ -111,6 +113,8 @@ export default async function TourDetailPage({ params }) {
   const cleanTour = serializeForClient(rawTour);
   const cleanAllTours = serializeForClient(allTours);
   const cleanPlaces = serializeForClient(places);
+  // Company-wide guest reviews (the newest three), trimmed to what the section renders.
+  const reviews = visibleReviews(rawReviews, 3).map(({ id, name, rating, text, source }) => ({ id, name, rating, text, source }));
 
   const title = rawTour ? asLocalizedText(rawTour.title, lang) || asLocalizedText(rawTour.title, "ka") || "Tour in Georgia" : "Tour";
   const desc = rawTour ? asLocalizedText(rawTour.desc, lang) || asLocalizedText(rawTour.desc, "ka") || "" : "";
@@ -206,6 +210,7 @@ export default async function TourDetailPage({ params }) {
           initialTour={cleanTour}
           initialAllTours={cleanAllTours}
           initialPlaces={cleanPlaces}
+          reviews={reviews}
         />
       </Suspense>
     </>

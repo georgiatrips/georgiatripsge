@@ -9,6 +9,7 @@ import {
   upsertGoogleReviews,
 } from "../lib/reviewsFirestore";
 import { useLanguage } from "../lib/i18n/LanguageContext";
+import { adminFetch } from "../lib/apiClient";
 
 const emptyForm = () => ({
   name: "",
@@ -51,6 +52,18 @@ export default function ReviewManager({ onReviewsCountChange }) {
     refresh();
   }, []);
 
+  // The homepage and tour pages read reviews through a one-hour cache; expire
+  // it so a saved, published or deleted review shows on the site right away.
+  const revalidateReviews = async () => {
+    try {
+      await adminFetch("/api/admin/revalidate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tag: "reviews" }),
+      });
+    } catch (_) {}
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -68,6 +81,7 @@ export default function ReviewManager({ onReviewsCountChange }) {
         await createReview(form);
         setMessage({ type: "success", text: "მიმოხილვა დამატებულია!" });
       }
+      await revalidateReviews();
       setForm(emptyForm());
       setEditingId(null);
       setView("list");
@@ -99,6 +113,7 @@ export default function ReviewManager({ onReviewsCountChange }) {
     if (!confirm("დარწმუნებული ხართ, რომ გსურთ მიმოხილვის წაშლა?")) return;
     try {
       await deleteReview(id);
+      await revalidateReviews();
       if (editingId === id) {
         setEditingId(null);
       setView("list");
@@ -116,6 +131,7 @@ export default function ReviewManager({ onReviewsCountChange }) {
   const handleSetApproved = async (id, approved) => {
     try {
       await updateReview(id, { approved });
+      await revalidateReviews();
       await refresh();
     } catch (err) {
       console.error(err);
@@ -133,6 +149,7 @@ export default function ReviewManager({ onReviewsCountChange }) {
         throw new Error(data.message || data.error || "Google-დან მიმოხილვების მიღება ვერ მოხერხდა");
       }
       const results = await upsertGoogleReviews(data.data.reviews);
+      await revalidateReviews();
       const created = results.filter((r) => r.action === "created").length;
       const updated = results.filter((r) => r.action === "updated").length;
       setMessage({

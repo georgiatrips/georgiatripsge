@@ -6,6 +6,7 @@ import { getTransferPricing, saveTransferPricing } from "../lib/transfers/pricin
 import {
   DEFAULT_TRANSFER_PRICING,
   TRANSFER_VEHICLE_KEYS,
+  findFareDrops,
   getRatePerKm,
   getTransferFare,
   normalizeTransferPricing,
@@ -25,7 +26,7 @@ function toForm(pricing) {
   const p = normalizeTransferPricing(pricing);
   const vehicles = {};
   for (const key of TRANSFER_VEHICLE_KEYS) {
-    vehicles[key] = { rates: p.vehicles[key].rates.map(str) };
+    vehicles[key] = { rates: p.vehicles[key].rates.map(str), minFare: str(p.vehicles[key].minFare) };
   }
   return { bands: p.bands.map(str), vehicles, svanetiSurchargePct: str(p.svanetiSurchargePct) };
 }
@@ -78,6 +79,9 @@ export default function TransferPricingManager() {
     });
   };
 
+  const setMinFare = (key, value) => {
+    setForm((f) => ({ ...f, vehicles: { ...f.vehicles, [key]: { ...f.vehicles[key], minFare: value } } }));
+  };
 
   const setBand = (idx, value) => {
     setForm((f) => {
@@ -157,6 +161,10 @@ export default function TransferPricingManager() {
     return <div className="tp-wrap"><p className="admin-hint">ფასები იტვირთება...</p></div>;
   }
 
+  // Bounds where a longer trip is priced below a shorter one (a typo in the table).
+  const drops = pricing
+    ? TRANSFER_VEHICLE_KEYS.flatMap((key) => findFareDrops(pricing, key).map((d) => ({ key, ...d })))
+    : [];
   const rowCount = form.bands.length + 1;
   const km = Number(previewKm) || 0;
 
@@ -173,8 +181,10 @@ export default function TransferPricingManager() {
           <div>
             <h2 className="tp-title">ტრანსფერის ფასები კილომეტრის მიხედვით</h2>
             <p className="admin-hint" style={{ margin: 0 }}>
-              თითო უჯრაში — ფასი 1 კმ-ზე (₾). მგზავრობის მთელი მანძილი ითვლება იმ დიაპაზონის ტარიფით, რომელშიც ხვდება
-              (მაგ: 120 კმ სედანით = 120 × „100–150 კმ“ ტარიფი). ცარიელი უჯრა იღებს უახლოეს შევსებულ ტარიფს.
+              თითო უჯრაში — ფასი 1 კმ-ზე (₾) დიაპაზონის ბოლოს. „100–150 კმ“ და 2 ₾ ნიშნავს, რომ 150 კმ-ის ფასია 300 ₾;
+              ორ ზღვარს შორის ფასი თანაბრად იზრდება (125 კმ = 260 ₾), 300 კმ-ს ზემოთ კი ყოველი დამატებითი კმ ბოლო ტარიფით
+              ემატება. ასე გრძელი მარშრუტი არასდროს ჯდება იაფად, ვიდრე მოკლე. „მინიმალური ფასი“ არის უმოკლესი
+              მგზავრობის ფასი. ცარიელი უჯრა იღებს უახლოეს შევსებულ ტარიფს.
             </p>
           </div>
         </div>
@@ -250,10 +260,45 @@ export default function TransferPricingManager() {
                 );
               })}
             </tbody>
+            <tfoot>
+              <tr className="tp-min-row">
+                <td className="tp-band-col">მინიმალური ფასი (₾)</td>
+                {TRANSFER_VEHICLE_KEYS.map((key) => (
+                  <td key={key}>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      inputMode="numeric"
+                      placeholder="—"
+                      value={form.vehicles[key].minFare ?? ""}
+                      onChange={(e) => setMinFare(key, e.target.value)}
+                      className={`tp-input${form.vehicles[key].minFare === "" ? " is-empty" : ""}`}
+                      aria-label={`${VEHICLE_LABELS[key].name}, მინიმალური ფასი`}
+                    />
+                  </td>
+                ))}
+                <td />
+              </tr>
+            </tfoot>
           </table>
         </div>
 
         {problem && <p className="tp-problem">{problem}</p>}
+
+        {drops.length > 0 && (
+          <div className="tp-warning" role="alert">
+            <strong>⚠ ცხრილში ტარიფი ისეთია, რომ გრძელი მანძილი მოკლეზე იაფი გამოდის:</strong>
+            <ul>
+              {drops.map((d) => (
+                <li key={`${d.key}-${d.bound}`}>
+                  {VEHICLE_LABELS[d.key].name}: {d.bound} კმ = {d.fare} ₾, ხოლო {d.prevBound} კმ = {d.prevFare} ₾.
+                  საიტზე ამ მონაკვეთში ფასი {d.prevFare} ₾-ზე რჩება. შეასწორეთ ამ ორი სტრიქონის ტარიფი.
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="tp-controls">
           <button type="button" className="tp-btn-outline" onClick={addBand}>

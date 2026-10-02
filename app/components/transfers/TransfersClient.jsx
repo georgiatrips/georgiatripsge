@@ -8,8 +8,9 @@ import PageHero from "../PageHero";
 import DatePicker from "../DatePicker";
 import PlaceSearchField, { usePlaceField } from "./PlaceSearchField";
 import { WA_LINK, WhatsAppIcon } from "../../lib/shared";
-import { CheckIcon } from "../Icons";
+import { CalendarIcon, CarIcon, CheckIcon, ClockIcon, LuggageIcon, RouteIcon, UsersIcon } from "../Icons";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
+import { useCurrency } from "../../lib/currency/CurrencyContext";
 import { isValidPhone } from "../../lib/bookingModel";
 import { trackEvent } from "../../lib/analytics";
 import {
@@ -20,8 +21,29 @@ import {
 } from "../../lib/transfers/routeCalculator";
 import { TRANSFER_VEHICLE_KEYS, normalizeTransferPricing } from "../../lib/transfers/pricing";
 
+const MAX_PASSENGERS = Math.max(...TRANSFER_VEHICLE_KEYS.map((key) => TRANSFER_VEHICLES[key]?.capacityPax || 0));
+// Smallest vehicle first, so a growing group moves to the next one that seats it.
+const VEHICLES_BY_CAPACITY = [...TRANSFER_VEHICLE_KEYS].sort(
+  (a, b) => TRANSFER_VEHICLES[a].capacityPax - TRANSFER_VEHICLES[b].capacityPax
+);
+
+const INTL_LOCALE = { ka: "ka-GE", en: "en-GB", ru: "ru-RU", tr: "tr-TR", ar: "ar-u-nu-latn" };
+
+function formatTripDate(iso, lang) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  try {
+    return new Intl.DateTimeFormat(INTL_LOCALE[lang] || "en-GB", { weekday: "short", day: "numeric", month: "short" }).format(
+      new Date(y, m - 1, d)
+    );
+  } catch {
+    return iso;
+  }
+}
+
 export default function TransfersClient({ pricing: pricingProp }) {
   const { t, lang, isEnglish } = useLanguage();
+  const { currency, format: formatCurrency } = useCurrency();
   const pricing = useMemo(() => normalizeTransferPricing(pricingProp), [pricingProp]);
 
   const [openField, setOpenField] = useState(null); // "pickup" | "dropoff" | null
@@ -30,10 +52,11 @@ export default function TransfersClient({ pricing: pricingProp }) {
   const dropoffRef = useRef(null);
   const pickupInputRef = useRef(null);
   const dropoffInputRef = useRef(null);
+  const phoneInputRef = useRef(null);
 
   const [selectedVehicleKey, setSelectedVehicleKey] = useState("sedan");
   const [transferDate, setTransferDate] = useState("");
-  const [transferTime, setTransferTime] = useState("12:00");
+  const [transferTime, setTransferTime] = useState("");
   const [passengerCount, setPassengerCount] = useState("2");
   const [contactName, setContactName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
@@ -144,6 +167,18 @@ export default function TransfersClient({ pricing: pricingProp }) {
     }
   };
 
+  const passengers = Math.min(MAX_PASSENGERS, Math.max(1, parseInt(passengerCount, 10) || 1));
+
+  // A group that outgrows the selected vehicle moves to the smallest one that seats it.
+  const setPassengers = (count) => {
+    const next = Math.min(MAX_PASSENGERS, Math.max(1, count || 1));
+    setPassengerCount(String(next));
+    if (TRANSFER_VEHICLES[selectedVehicleKey].capacityPax < next) {
+      const fit = VEHICLES_BY_CAPACITY.find((key) => TRANSFER_VEHICLES[key].capacityPax >= next);
+      if (fit) setSelectedVehicleKey(fit);
+    }
+  };
+
   const perks = [
     { icon: "🪧", title: t("transfersPage.p1Title") || "აეროპორტის დახვედრა", desc: t("transfersPage.p1Desc") || "მძღოლი დაგხვდებათ ჩამოსვლის დარბაზში სახელიანი აბრით." },
     { icon: "🛡️", title: t("transfersPage.p2Title") || "ფრენის მონიტორინგი", desc: t("transfersPage.p2Desc") || "თვალს ვადევნებთ თქვენს ფრენას. დაგვიანებაზე ლოდინი უფასოა." },
@@ -188,6 +223,10 @@ export default function TransfersClient({ pricing: pricingProp }) {
       to: "სად",
       vehicle: "ავტომობილი",
       viaMapShort: "რუკით",
+      passengers: "მგზავრები",
+      maxPax: "მაქს. {n} მგზავრი",
+      date: "თარიღი",
+      time: "დრო",
     },
     en: {
       cancellation: "Free cancellation up to 24h before",
@@ -225,6 +264,10 @@ export default function TransfersClient({ pricing: pricingProp }) {
       to: "To",
       vehicle: "Vehicle",
       viaMapShort: "Map route",
+      passengers: "Passengers",
+      maxPax: "Max {n} passengers",
+      date: "Date",
+      time: "Time",
     },
     ru: {
       cancellation: "Бесплатная отмена за 24ч",
@@ -262,6 +305,10 @@ export default function TransfersClient({ pricing: pricingProp }) {
       to: "Куда",
       vehicle: "Автомобиль",
       viaMapShort: "По карте",
+      passengers: "Пассажиры",
+      maxPax: "Макс. {n} пасс.",
+      date: "Дата",
+      time: "Время",
     },
     tr: {
       cancellation: "24 saat öncesine kadar ücretsiz iptal",
@@ -299,6 +346,10 @@ export default function TransfersClient({ pricing: pricingProp }) {
       to: "Nereye",
       vehicle: "Araç",
       viaMapShort: "Harita",
+      passengers: "Yolcu",
+      maxPax: "En fazla {n} yolcu",
+      date: "Tarih",
+      time: "Saat",
     },
     ar: {
       cancellation: "إلغاء مجاني حتى 24 ساعة قبل الموعد",
@@ -336,6 +387,10 @@ export default function TransfersClient({ pricing: pricingProp }) {
       to: "إلى",
       vehicle: "السيارة",
       viaMapShort: "عبر الخريطة",
+      passengers: "الركاب",
+      maxPax: "حتى {n} ركاب",
+      date: "التاريخ",
+      time: "الوقت",
     },
   };
 
@@ -354,6 +409,8 @@ export default function TransfersClient({ pricing: pricingProp }) {
     const cleanPhone = contactPhone.trim();
     if (!isValidPhone(cleanPhone)) {
       setPhoneError(t("tourDetail.invalidPhoneError") || "გთხოვთ მიუთითოთ სწორი ტელეფონის ნომერი (მაგ: +995 5XX XX XX XX)");
+      // On phones the button sits far below the field; bring the error into view.
+      phoneInputRef.current?.focus();
       return;
     }
     setPhoneError("");
@@ -510,7 +567,10 @@ export default function TransfersClient({ pricing: pricingProp }) {
       lines.push(`🗺️ ${ui.to}: https://maps.google.com/?q=${to.value.lat},${to.value.lng}`);
     }
 
-    window.open(`${WA_LINK}?text=${encodeURIComponent(lines.filter(Boolean).join("\n"))}`, "_blank");
+    // Safari blocks a new tab opened after the awaited booking call; fall back to this tab.
+    const waUrl = `${WA_LINK}?text=${encodeURIComponent(lines.filter(Boolean).join("\n"))}`;
+    const waTab = window.open(waUrl, "_blank");
+    if (!waTab) window.location.href = waUrl;
   };
 
   return (
@@ -529,350 +589,352 @@ export default function TransfersClient({ pricing: pricingProp }) {
       {/* SECTION 1: SMART AI ROUTE & PRICE CALCULATOR */}
       <section className="section tf-calculator-section" id="transfer-calculator">
         <div className="container" style={{ maxWidth: "1200px" }}>
-          <div className="tf-calc-card">
-            <header className="tf-calc-head">
-              <span className="tf-ai-badge">{ui.aiBadge}</span>
-              <h2 className="tf-calc-title">{ui.calcTitle}</h2>
-              <p className="tf-calc-subtitle">{ui.calcSub}</p>
-            </header>
+          <header className="tf-calc-head">
+            <span className="tf-ai-badge">{ui.aiBadge}</span>
+            <h2 className="tf-calc-title">{ui.calcTitle}</h2>
+            <p className="tf-calc-subtitle">{ui.calcSub}</p>
+          </header>
 
-            <form onSubmit={handleTransferSubmit} className="tf-calc-form">
-              <div className="tf-calc-main">
-                <section className="tf-step tf-step--route">
-                  <div className="tf-step-head">
-                    <span className="tf-step-num">1</span>
-                    <h3 className="tf-step-title">{ui.stepRoute}</h3>
-                  </div>
-                  {/* ROUTE BAR: FROM ⇄ TO, both accept any place in Georgia */}
-                  <div className="tf-route-bar">
-                    <PlaceSearchField
-                      field={from}
-                      id="tf-pickup"
-                      label={t("transfersPage.pickupLabel") || "აყვანის მისამართი (საიდან)"}
-                      placeholder={ui.pickupSearchPlaceholder}
-                      dot="start"
-                      fieldRef={pickupRef}
-                      inputRef={pickupInputRef}
-                      isOpen={openField === "pickup"}
-                      setOpen={openSetter("pickup")}
-                      ui={ui}
-                      lang={lang}
-                      getLocationLabel={getLocationLabel}
-                    />
+          <form onSubmit={handleTransferSubmit} className="tf-calc-form">
+            <div className="tf-calc-main">
+              <section className="tf-step tf-step--route">
+                <div className="tf-step-head">
+                  <span className="tf-step-num">1</span>
+                  <h3 className="tf-step-title">{ui.stepRoute}</h3>
+                </div>
+                {/* ROUTE BAR: FROM ⇄ TO, both accept any place in Georgia */}
+                <div className="tf-route-bar">
+                  <PlaceSearchField
+                    field={from}
+                    id="tf-pickup"
+                    label={t("transfersPage.pickupLabel") || "აყვანის მისამართი (საიდან)"}
+                    placeholder={ui.pickupSearchPlaceholder}
+                    dot="start"
+                    fieldRef={pickupRef}
+                    inputRef={pickupInputRef}
+                    isOpen={openField === "pickup"}
+                    setOpen={openSetter("pickup")}
+                    ui={ui}
+                    lang={lang}
+                    getLocationLabel={getLocationLabel}
+                  />
 
-                    <button
-                      type="button"
-                      className="tf-btn-swap"
-                      onClick={handleSwapLocations}
-                      disabled={!canSwap}
-                      title={ui.swap}
-                      aria-label={ui.swap}
-                    >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16" />
-                      </svg>
-                    </button>
+                  <button
+                    type="button"
+                    className="tf-btn-swap"
+                    onClick={handleSwapLocations}
+                    disabled={!canSwap}
+                    title={ui.swap}
+                    aria-label={ui.swap}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16" />
+                    </svg>
+                  </button>
 
-                    <PlaceSearchField
-                      field={to}
-                      id="tf-dropoff"
-                      label={t("transfersPage.dropoffLabel") || "ჩასვლის მისამართი (სად)"}
-                      placeholder={ui.dropoffSearchPlaceholder}
-                      dot="end"
-                      fieldRef={dropoffRef}
-                      inputRef={dropoffInputRef}
-                      isOpen={openField === "dropoff"}
-                      setOpen={openSetter("dropoff")}
-                      ui={ui}
-                      lang={lang}
-                      getLocationLabel={getLocationLabel}
-                    />
-                  </div>
+                  <PlaceSearchField
+                    field={to}
+                    id="tf-dropoff"
+                    label={t("transfersPage.dropoffLabel") || "ჩასვლის მისამართი (სად)"}
+                    placeholder={ui.dropoffSearchPlaceholder}
+                    dot="end"
+                    fieldRef={dropoffRef}
+                    inputRef={dropoffInputRef}
+                    isOpen={openField === "dropoff"}
+                    setOpen={openSetter("dropoff")}
+                    ui={ui}
+                    lang={lang}
+                    getLocationLabel={getLocationLabel}
+                  />
+                </div>
 
-                  {(from.error || to.error) && <p className="tf-route-error">⚠️ {ui.pickDropoff}</p>}
-                </section>
+                {(from.error || to.error) && <p className="tf-route-error" role="alert">{ui.pickDropoff}</p>}
+              </section>
 
-                <section className="tf-step">
-                  <div className="tf-step-head">
-                    <span className="tf-step-num">2</span>
-                    <h3 className="tf-step-title">{ui.stepVehicle}</h3>
-                  </div>
-                  <div className="tf-vehicles-grid" role="radiogroup" aria-label={t("transfersPage.vehicleLabel") || "Vehicle"}>
-                    {fleetKeys.map((key) => {
-                      const data = TRANSFER_VEHICLES[key];
-                      const vMeta = t(`transfersPage.vehicles.${key}`) || {};
-                      const isSelected = selectedVehicleKey === key;
-                      const calculatedPrice = quote?.allVehiclePrices[key];
+              <section className="tf-step">
+                <div className="tf-step-head">
+                  <span className="tf-step-num">2</span>
+                  <h3 className="tf-step-title">{ui.stepVehicle}</h3>
 
-                      return (
-                        <div
-                          key={key}
-                          role="radio"
-                          aria-checked={isSelected}
-                          tabIndex={0}
-                          onClick={() => handleSelectVehicle(key)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              handleSelectVehicle(key);
-                            }
-                          }}
-                          className={`tf-vehicle-tile${isSelected ? " is-selected" : ""}`}
-                        >
-                          <span className={`tf-v-radio${isSelected ? " is-on" : ""}`} aria-hidden="true">
-                            {isSelected && <CheckIcon size={12} />}
-                          </span>
-                          <div className="tf-v-img-wrap">
-                            <Image
-                              src={data.img}
-                              alt={vMeta.name || data.nameKa}
-                              width={130}
-                              height={80}
-                              style={{ objectFit: "contain" }}
-                            />
-                          </div>
-
-                          <div className="tf-v-tile-body">
-                            <h4 className="tf-v-name">{vMeta.name || data.nameKa}</h4>
-                            <div className="tf-v-specs">
-                              <span>👥 {data.capacityPax} {ui.pax}</span>
-                              <span>🧳 {data.capacityBags} {ui.bags}</span>
-                            </div>
-                            <div className="tf-v-calculated-price">
-                              <span className="tf-v-p-label">{ui.totalPrice}</span>
-                              <span className="tf-v-p-amount">{calculatedPrice != null ? `~${calculatedPrice} ₾` : "—"}</span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </section>
-
-                <section className="tf-step">
-                  <div className="tf-step-head">
-                    <span className="tf-step-num">3</span>
-                    <h3 className="tf-step-title">{ui.stepDetails}</h3>
-                  </div>
-                  {/* DATE, TIME & PASSENGERS ROW */}
-                  <div className="tf-inputs-row">
-                    <div>
-                      <label className="tf-label">{t("transfersPage.dateLabel") || "მგზავრობის თარიღი"}</label>
-                      <DatePicker
-                        value={transferDate}
-                        onChange={(dStr) => setTransferDate(dStr)}
-                        placeholder={t("transfersPage.datePlaceholder") || "აირჩიეთ თარიღი"}
-                        direction="down"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="tf-label">{t("transfersPage.timeLabel") || "მგზავრობის / ფრენის დრო"}</label>
+                  {/* Passengers sit with the vehicles: the group size decides which ones fit. */}
+                  <div className="tf-pax">
+                    <label className="tf-pax-label" htmlFor="tf-passengers">
+                      <UsersIcon size={15} />
+                      {ui.passengers}
+                    </label>
+                    <div className="tf-stepper-wrap">
+                      <button
+                        type="button"
+                        className="tf-stepper-btn"
+                        onClick={() => setPassengers(passengers - 1)}
+                        disabled={passengers <= 1}
+                        aria-label={`${ui.passengers} −1`}
+                      >
+                        −
+                      </button>
                       <input
-                        type="text"
-                        placeholder={t("transfersPage.timePlaceholder") || "მაგ: 14:30"}
-                        value={transferTime}
-                        onChange={(e) => setTransferTime(e.target.value)}
-                        className="tf-input-styled"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="tf-label">{t("transfersPage.passengersLabel") || "მგზავრთა რაოდენობა"}</label>
-                      <div className="tf-stepper-wrap">
-                        <button
-                          type="button"
-                          className="tf-stepper-btn"
-                          onClick={() => setPassengerCount(String(Math.max(1, parseInt(passengerCount || "1", 10) - 1)))}
-                          disabled={parseInt(passengerCount, 10) <= 1}
-                        >
-                          −
-                        </button>
-                        <input
-                          type="number"
-                          min="1"
-                          max={TRANSFER_VEHICLES[selectedVehicleKey]?.capacityPax || 16}
-                          value={passengerCount}
-                          onChange={(e) => setPassengerCount(e.target.value)}
-                          required
-                          className="tf-stepper-input"
-                        />
-                        <button
-                          type="button"
-                          className="tf-stepper-btn"
-                          onClick={() => {
-                            const maxPax = TRANSFER_VEHICLES[selectedVehicleKey]?.capacityPax || 16;
-                            setPassengerCount(String(Math.min(maxPax, parseInt(passengerCount || "1", 10) + 1)));
-                          }}
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* CONTACT DETAILS */}
-                  <div className="tf-contact-grid">
-                    <div>
-                      <label className="tf-label">{t("tourDetail.yourName") || "თქვენი სახელი"}</label>
-                      <input
-                        type="text"
-                        placeholder={t("tourDetail.namePlaceholder") || "მაგ: გიორგი"}
-                        value={contactName}
-                        onChange={(e) => setContactName(e.target.value)}
-                        className="tf-input-styled"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="tf-label">{t("transfersPage.phoneLabel") || "ტელეფონის ნომერი / WhatsApp"}</label>
-                      <input
-                        type="tel"
-                        placeholder={t("transfersPage.phonePlaceholder") || "+995 5XX XX XX XX"}
-                        value={contactPhone}
-                        onChange={(e) => {
-                          setContactPhone(e.target.value);
-                          if (phoneError) setPhoneError("");
-                        }}
+                        id="tf-passengers"
+                        type="number"
+                        inputMode="numeric"
+                        min="1"
+                        max={MAX_PASSENGERS}
+                        value={passengerCount}
+                        onChange={(e) => (e.target.value === "" ? setPassengerCount("") : setPassengers(parseInt(e.target.value, 10)))}
+                        onBlur={() => setPassengerCount(String(passengers))}
                         required
-                        className="tf-input-styled"
-                        style={phoneError ? { borderColor: "#ef4444", boxShadow: "0 0 0 3px rgba(239, 68, 68, 0.2)" } : {}}
+                        className="tf-stepper-input"
                       />
-                      {phoneError && (
-                        <p style={{ color: "#ef4444", fontSize: "0.82rem", marginTop: "0.35rem", fontWeight: 600 }}>
-                          ⚠️ {phoneError}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="tf-field-full">
-                      <label className="tf-label">{t("transfersPage.flightLabel") || "ფრენის ნომერი / შენიშვნა"}</label>
-                      <textarea
-                        rows={2}
-                        placeholder={t("transfersPage.flightPlaceholder") || "მაგ: ფრენის ნომერი TK382, 3 ჩემოდანი..."}
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        className="tf-input-styled"
-                      />
+                      <button
+                        type="button"
+                        className="tf-stepper-btn"
+                        onClick={() => setPassengers(passengers + 1)}
+                        disabled={passengers >= MAX_PASSENGERS}
+                        aria-label={`${ui.passengers} +1`}
+                      >
+                        +
+                      </button>
                     </div>
                   </div>
-                </section>
-              </div>
+                </div>
 
-              <aside className="tf-calc-aside">
-                <div
-                  className={`tf-ticket${routeLoading ? " is-loading" : ""}${quote ? " has-quote" : ""}`}
-                  aria-live="polite"
-                  aria-busy={routeLoading}
-                >
-                  <div className="tf-ticket-head">
-                    <span className="tf-ticket-kicker">{ui.tripSummary}</span>
-                    {route?.source === "map" && !routeLoading && <span className="tf-ticket-chip">🗺️ {ui.viaMapShort}</span>}
+                <div className="tf-vehicles-grid" role="radiogroup" aria-label={t("transfersPage.vehicleLabel") || "Vehicle"}>
+                  {fleetKeys.map((key) => {
+                    const data = TRANSFER_VEHICLES[key];
+                    const vMeta = t(`transfersPage.vehicles.${key}`) || {};
+                    const isSelected = selectedVehicleKey === key;
+                    const fits = data.capacityPax >= passengers;
+                    const calculatedPrice = quote?.allVehiclePrices[key];
+
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        role="radio"
+                        aria-checked={isSelected}
+                        aria-disabled={!fits}
+                        onClick={() => fits && handleSelectVehicle(key)}
+                        className={`tf-vehicle-tile${isSelected ? " is-selected" : ""}${fits ? "" : " is-unfit"}`}
+                      >
+                        <span className="tf-v-radio" aria-hidden="true">
+                          {isSelected && <CheckIcon size={12} />}
+                        </span>
+                        <span className="tf-v-img-wrap">
+                          <Image
+                            src={data.img}
+                            alt=""
+                            width={130}
+                            height={80}
+                            style={{ objectFit: "contain" }}
+                          />
+                        </span>
+
+                        <span className="tf-v-tile-body">
+                          <span className="tf-v-name">{vMeta.name || data.nameKa}</span>
+                          {fits ? (
+                            <span className="tf-v-specs">
+                              <span><UsersIcon size={13} /> {data.capacityPax} {ui.pax}</span>
+                              <span><LuggageIcon size={13} /> {data.capacityBags} {ui.bags}</span>
+                            </span>
+                          ) : (
+                            <span className="tf-v-unfit">{ui.maxPax.replace("{n}", data.capacityPax)}</span>
+                          )}
+                        </span>
+
+                        <span className="tf-v-price">
+                          {routeLoading ? (
+                            <span className="tf-skel tf-skel--tile-price" aria-hidden="true" />
+                          ) : calculatedPrice != null ? (
+                            `~${calculatedPrice} ₾`
+                          ) : (
+                            "—"
+                          )}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <section className="tf-step">
+                <div className="tf-step-head">
+                  <span className="tf-step-num">3</span>
+                  <h3 className="tf-step-title">{ui.stepDetails}</h3>
+                </div>
+
+                <div className="tf-details-grid">
+                  <div>
+                    <label className="tf-label" htmlFor="tf-date">{t("transfersPage.dateLabel") || "მგზავრობის თარიღი"}</label>
+                    <DatePicker
+                      id="tf-date"
+                      value={transferDate}
+                      onChange={(dStr) => setTransferDate(dStr)}
+                      placeholder={t("transfersPage.datePlaceholder") || "აირჩიეთ თარიღი"}
+                      direction="down"
+                    />
                   </div>
 
-                  <div className="tf-ticket-route">
-                    <div className="tf-ticket-stop">
-                      <span className="tf-ticket-dot tf-ticket-dot--start" aria-hidden="true" />
-                      <div className="tf-ticket-stop-text">
-                        <span className="tf-ticket-stop-label">{ui.from}</span>
-                        <strong className="tf-ticket-stop-name">{from.name || "—"}</strong>
-                        {from.detail && <span className="tf-ticket-stop-detail">{from.detail}</span>}
-                      </div>
-                    </div>
-                    <div className="tf-ticket-track" aria-hidden="true">
-                      <span className="tf-ticket-car" />
-                    </div>
-                    <div className="tf-ticket-stop">
-                      <span className="tf-ticket-dot tf-ticket-dot--end" aria-hidden="true" />
-                      <div className="tf-ticket-stop-text">
-                        <span className="tf-ticket-stop-label">{ui.to}</span>
-                        <strong className="tf-ticket-stop-name">{to.name || "—"}</strong>
-                        {to.detail && <span className="tf-ticket-stop-detail">{to.detail}</span>}
-                      </div>
-                    </div>
+                  <div>
+                    <label className="tf-label" htmlFor="tf-time">{t("transfersPage.timeLabel") || "მგზავრობის / ფრენის დრო"}</label>
+                    <input
+                      id="tf-time"
+                      type="time"
+                      value={transferTime}
+                      onChange={(e) => setTransferTime(e.target.value)}
+                      className="tf-input-styled"
+                    />
                   </div>
 
-                  {routeLoading ? (
-                    <div className="tf-ticket-loading">
-                      <div className="tf-radar" aria-hidden="true">
-                        <span className="tf-radar-ring" />
-                        <span className="tf-radar-ring tf-radar-ring--2" />
-                        <span className="tf-radar-pin">📍</span>
-                      </div>
-                      <div className="tf-ticket-loading-text">
-                        <strong>{ui.calculating}</strong>
-                        <span className="tf-skel tf-skel--light" />
-                        <span className="tf-skel tf-skel--light tf-skel--short" />
-                      </div>
-                    </div>
-                  ) : quote ? (
-                    <div className="tf-ticket-metrics">
-                      <div className="tf-ticket-metric">
-                        <span className="tf-ticket-metric-icon" aria-hidden="true">📏</span>
-                        <strong>{quote.distanceKm} {ui.km}</strong>
-                        <span>{ui.distance}</span>
-                      </div>
-                      <div className="tf-ticket-metric">
-                        <span className="tf-ticket-metric-icon" aria-hidden="true">⏱️</span>
-                        <strong>{quote.formattedDuration}</strong>
-                        <span>{ui.estTime}</span>
-                      </div>
-                      <div className="tf-ticket-metric">
-                        <span className="tf-ticket-metric-icon" aria-hidden="true">🚘</span>
-                        <strong>{selectedVehicleName}</strong>
-                        <span>{ui.vehicle}</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="tf-ticket-empty">📍 {ui.pickDropoff}</p>
-                  )}
+                  <div>
+                    <label className="tf-label" htmlFor="tf-name">{t("tourDetail.yourName") || "თქვენი სახელი"}</label>
+                    <input
+                      id="tf-name"
+                      type="text"
+                      autoComplete="name"
+                      placeholder={t("tourDetail.namePlaceholder") || "მაგ: გიორგი"}
+                      value={contactName}
+                      onChange={(e) => setContactName(e.target.value)}
+                      className="tf-input-styled"
+                    />
+                  </div>
 
-                  <div className="tf-ticket-price">
-                    <span className="tf-price-label">{ui.totalPrice}</span>
-                    {routeLoading ? (
-                      <span className="tf-skel tf-skel--price" aria-hidden="true" />
-                    ) : (
-                      <span key={`${quote?.priceGEL}-${selectedVehicleKey}`} className="tf-price-val">
-                        {quote?.priceGEL != null ? `~${quote.priceGEL} ₾` : "—"}
-                      </span>
+                  <div>
+                    <label className="tf-label" htmlFor="tf-phone">{t("transfersPage.phoneLabel") || "ტელეფონის ნომერი / WhatsApp"}</label>
+                    <input
+                      id="tf-phone"
+                      ref={phoneInputRef}
+                      type="tel"
+                      autoComplete="tel"
+                      placeholder={t("transfersPage.phonePlaceholder") || "+995 5XX XX XX XX"}
+                      value={contactPhone}
+                      onChange={(e) => {
+                        setContactPhone(e.target.value);
+                        if (phoneError) setPhoneError("");
+                      }}
+                      required
+                      aria-invalid={!!phoneError}
+                      aria-describedby={phoneError ? "tf-phone-error" : undefined}
+                      className={`tf-input-styled${phoneError ? " has-error" : ""}`}
+                    />
+                    {phoneError && (
+                      <p id="tf-phone-error" className="tf-input-error" role="alert">
+                        {phoneError}
+                      </p>
                     )}
                   </div>
+
+                  <div className="tf-field-full">
+                    <label className="tf-label" htmlFor="tf-notes">{t("transfersPage.flightLabel") || "ფრენის ნომერი / შენიშვნა"}</label>
+                    <textarea
+                      id="tf-notes"
+                      rows={2}
+                      placeholder={t("transfersPage.flightPlaceholder") || "მაგ: ფრენის ნომერი TK382, 3 ჩემოდანი..."}
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      className="tf-input-styled"
+                    />
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <aside className="tf-calc-aside">
+              <div className={`tf-summary${routeLoading ? " is-loading" : ""}`} aria-busy={routeLoading}>
+                <div className="tf-summary-top">
+                  <div className="tf-summary-head">
+                    <span className="tf-summary-kicker">{ui.tripSummary}</span>
+                    {route?.source === "map" && !routeLoading && <span className="tf-summary-chip">{ui.viaMapShort}</span>}
+                  </div>
+
+                  <ol className="tf-summary-route">
+                    <li className="tf-summary-stop tf-summary-stop--start">
+                      <span className="tf-summary-dot" aria-hidden="true" />
+                      <div className="tf-summary-stop-text">
+                        <span className="tf-summary-stop-label">{ui.from}</span>
+                        <strong className="tf-summary-stop-name">{from.name || "—"}</strong>
+                        {from.detail && <span className="tf-summary-stop-detail">{from.detail}</span>}
+                      </div>
+                    </li>
+
+                    <li className="tf-summary-leg">
+                      {routeLoading ? (
+                        <span className="tf-summary-leg-info">
+                          <span className="tf-mini-radar" aria-hidden="true"><span /></span>
+                          {ui.calculating}
+                        </span>
+                      ) : quote ? (
+                        <span className="tf-summary-leg-info">
+                          <span title={ui.distance}><RouteIcon size={14} /> {quote.distanceKm} {ui.km}</span>
+                          <span title={ui.estTime}><ClockIcon size={14} /> {quote.formattedDuration}</span>
+                        </span>
+                      ) : (
+                        <span className="tf-summary-leg-empty">{ui.pickDropoff}</span>
+                      )}
+                    </li>
+
+                    <li className="tf-summary-stop tf-summary-stop--end">
+                      <span className="tf-summary-dot" aria-hidden="true" />
+                      <div className="tf-summary-stop-text">
+                        <span className="tf-summary-stop-label">{ui.to}</span>
+                        <strong className="tf-summary-stop-name">{to.name || "—"}</strong>
+                        {to.detail && <span className="tf-summary-stop-detail">{to.detail}</span>}
+                      </div>
+                    </li>
+                  </ol>
+                </div>
+
+                <dl className="tf-summary-rows">
+                  <div className="tf-summary-row">
+                    <dt><CarIcon size={16} /> {ui.vehicle}</dt>
+                    <dd>{selectedVehicleName}</dd>
+                  </div>
+                  <div className="tf-summary-row">
+                    <dt><UsersIcon size={16} /> {ui.passengers}</dt>
+                    <dd>{passengers}</dd>
+                  </div>
+                  <div className="tf-summary-row">
+                    <dt><CalendarIcon size={16} /> {ui.date}</dt>
+                    <dd className={transferDate ? "" : "is-empty"}>{formatTripDate(transferDate, lang) || "—"}</dd>
+                  </div>
+                  <div className="tf-summary-row">
+                    <dt><ClockIcon size={16} /> {ui.time}</dt>
+                    <dd className={transferTime ? "" : "is-empty"}>{transferTime || "—"}</dd>
+                  </div>
+                </dl>
+
+                <div className="tf-summary-total" aria-live="polite">
+                  <span className="tf-price-label">{ui.totalPrice}</span>
+                  {routeLoading ? (
+                    <span className="tf-skel tf-skel--price" aria-hidden="true" />
+                  ) : (
+                    <span key={`${quote?.priceGEL}-${selectedVehicleKey}`} className="tf-price">
+                      <span className="tf-price-val">{quote?.priceGEL != null ? `~${quote.priceGEL} ₾` : "—"}</span>
+                      {quote?.priceGEL != null && currency !== "GEL" && (
+                        <span className="tf-price-alt">≈ {formatCurrency(quote.priceGEL, lang)}</span>
+                      )}
+                    </span>
+                  )}
                 </div>
 
                 {/* SUBMIT BUTTON */}
                 <div className="tf-submit-wrap">
                   <button type="submit" className="btn-tf-whatsapp" disabled={isSubmitting}>
-                    <WhatsAppIcon width={24} height={24} />
-                    <span>
-                      {quote?.priceGEL
-                        ? `${t("transfersPage.submitBtn") || "დაჯავშნა WhatsApp-ზე"} (~${quote.priceGEL} ₾)`
-                        : t("transfersPage.submitBtn") || "დაჯავშნა WhatsApp-ზე"}
-                    </span>
+                    <WhatsAppIcon />
+                    <span>{t("transfersPage.submitBtn") || "დაჯავშნა WhatsApp-ზე"}</span>
                   </button>
 
                   {/* TRUST BADGES */}
-                  <div className="tf-trust-badges-grid" dir={lang === "ar" ? "rtl" : "ltr"}>
-                    <div className="tf-trust-badge-item">
-                      <span className="tf-trust-badge-icon"><CheckIcon size={16} /></span>
-                      <span className="tf-trust-badge-text">{ui.cancellation}</span>
-                    </div>
-                    <div className="tf-trust-badge-item">
-                      <span className="tf-trust-badge-icon"><CheckIcon size={16} /></span>
-                      <span className="tf-trust-badge-text">{ui.payOnArrival}</span>
-                    </div>
-                    <div className="tf-trust-badge-item">
-                      <span className="tf-trust-badge-icon"><CheckIcon size={16} /></span>
-                      <span className="tf-trust-badge-text">{ui.instantWa}</span>
-                    </div>
-                    <div className="tf-trust-badge-item">
-                      <span className="tf-trust-badge-icon"><CheckIcon size={16} /></span>
-                      <span className="tf-trust-badge-text">{ui.guaranteed}</span>
-                    </div>
-                  </div>
+                  <ul className="tf-trust-badges-grid">
+                    {[ui.cancellation, ui.payOnArrival, ui.instantWa, ui.guaranteed].map((text) => (
+                      <li key={text} className="tf-trust-badge-item">
+                        <span className="tf-trust-badge-icon"><CheckIcon size={14} /></span>
+                        <span className="tf-trust-badge-text">{text}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              </aside>
-            </form>
-          </div>
+              </div>
+            </aside>
+          </form>
         </div>
       </section>
 

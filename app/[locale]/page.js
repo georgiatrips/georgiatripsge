@@ -5,6 +5,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import TourPrice from "../components/TourPrice";
 import TourGrid from "../components/site/TourGrid";
+import ReviewsSection, { visibleReviews } from "../components/site/ReviewsSection";
 import TripPlannerForm from "../components/homepage/TripPlannerForm";
 import HeroSearch from "../components/homepage/HeroSearch";
 import GeorgiaMap from "../components/homepage/GeorgiaMap";
@@ -21,7 +22,7 @@ import { INSTAGRAM_HANDLE, INSTAGRAM_LINK, PHONE_DISPLAY, PHONE_TEL, whatsappHre
 import {
   ArrowRightIcon, BriefcaseIcon, CalendarIcon, CarIcon, CheckIcon, CompassIcon, HeadsetIcon,
   InstagramIcon, PhoneIcon, PlaneIcon, PlusIcon, RouteIcon, ShieldCheckIcon,
-  StarIcon, UsersIcon, WalletIcon, WhatsAppIcon,
+  UsersIcon, WalletIcon, WhatsAppIcon,
 } from "../components/Icons";
 import "../styles/home.css";
 import "../styles/tour-card.css";
@@ -199,9 +200,7 @@ export default async function HomePage({ params }) {
     .sort((a, b) => Number(Boolean(b.isPopular)) - Number(Boolean(a.isPopular)))
     .slice(0, 5);
 
-  const reviews = (Array.isArray(rawReviews) ? rawReviews : [])
-    .filter((r) => r && typeof r.text === "string" && r.text.trim() && Number(r.rating) >= 1 && r.hidden !== true && r.approved !== false)
-    .slice(0, 6);
+  const reviews = visibleReviews(rawReviews);
 
   const faqs = FAQ_KEYS.map(([q, a]) => ({ q: t(q), a: t(a) }));
   const faqJsonLd = {
@@ -603,32 +602,7 @@ export default async function HomePage({ params }) {
         </section>
 
         {/* 8. Reviews — only when real reviews exist */}
-        {reviews.length > 0 && (
-          <section className="gt-section gt-section--white gt-reviews-section" aria-labelledby="reviews-title">
-            <div className="gt-container">
-              <div className="gt-section-head" data-reveal>
-                <p className="gt-eyebrow">{t("homepage.reviewsEyebrow")}</p>
-                <h2 id="reviews-title" className="gt-h2">{t("homepage.reviewsTitle")}</h2>
-              </div>
-              <ul className="gt-review-grid" data-count={reviews.length} data-reveal-group>
-                {reviews.map((review) => (
-                  <li key={review.id} className="gt-review">
-                    <span className="gt-stars" role="img" aria-label={`${Math.round(Number(review.rating))}/5`}>
-                      {[1, 2, 3, 4, 5].map((n) => (
-                        <StarIcon key={n} size={16} fill={n <= Math.round(Number(review.rating)) ? "currentColor" : "none"} color="currentColor" />
-                      ))}
-                    </span>
-                    <blockquote>{review.text}</blockquote>
-                    <div className="gt-review-author">
-                      <strong>{review.name}</strong>
-                      {review.source === "google" && <small>{t("homepage.reviewGoogle")}</small>}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </section>
-        )}
+        <ReviewsSection reviews={reviews} t={t} />
 
         {/* 9. FAQ */}
         <section className="gt-section gt-section--stone" id="faq" aria-labelledby="faq-title">

@@ -32,6 +32,7 @@ import TourDetailGallery from "../tour-detail/TourDetailGallery";
 import TourBookingSidebar from "../tour-detail/TourBookingSidebar";
 import { VEHICLES, cheapestVehicleFor, getPrivateVehiclePrices } from "../../lib/vehicles";
 import TourDetailSimilarTours from "../tour-detail/TourDetailSimilarTours";
+import ReviewsSection from "../site/ReviewsSection";
 import TourMobileBookingBar from "../tour-detail/TourMobileBookingBar";
 import TourDetailPromoBanners from "../tour-detail/TourDetailPromoBanners";
 import TourDetailFaq from "../tour-detail/TourDetailFaq";
@@ -48,6 +49,7 @@ export default function TourDetailClient({
   initialTour = null,
   initialPlaces = [],
   initialAllTours = [],
+  reviews = [],
 }) {
   const params = useParams();
   const router = useRouter();
@@ -696,13 +698,16 @@ export default function TourDetailClient({
         </div>
       </section>
 
-      {/* 3. Similar & Popular Tours Section */}
+      {/* 3. Guest reviews — only when real reviews exist */}
+      <ReviewsSection reviews={reviews} t={t} />
+
+      {/* 4. Similar & Popular Tours Section */}
       <TourDetailSimilarTours tours={otherTourViews} />
 
-      {/* 4. Special Excursions Contact Banner */}
+      {/* 5. Special Excursions Contact Banner */}
       <TourDetailPromoBanners />
 
-      {/* 5. FAQ Section */}
+      {/* 6. FAQ Section */}
       <TourDetailFaq
         tourFaqs={tourFaqs}
         openFaqIndex={openFaqIndex}

@@ -91,32 +91,40 @@ export async function upsertGoogleReviews(googleReviews = []) {
   const results = [];
   for (const item of googleReviews) {
     try {
+      const googleReviewId = item.id || item.googleReviewId || "";
+      const name = item.author_name || item.name;
       const q = query(
         collection(db, SITE_REVIEWS_COLLECTION),
-        where("googleReviewId", "==", item.id || item.googleReviewId || "")
+        where("googleReviewId", "==", googleReviewId)
       );
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        const existingDoc = snap.docs[0];
+      let existingDoc = (await getDocs(q)).docs[0];
+      // A Google review typed in by hand has no id yet: claim it by author
+      // name instead of adding the same review a second time.
+      if (!existingDoc && googleReviewId && name) {
+        const byName = await getDocs(query(collection(db, SITE_REVIEWS_COLLECTION), where("name", "==", name)));
+        existingDoc = byName.docs.find((d) => d.data().source === "google" && !d.data().googleReviewId);
+      }
+      if (existingDoc) {
         await updateDoc(doc(db, SITE_REVIEWS_COLLECTION, existingDoc.id), {
-          name: item.author_name || item.name,
+          name,
           rating: item.rating || 5,
           text: item.text || "",
           time: item.relative_time_description || item.time || "",
           avatar: item.profile_photo_url || item.avatar || "",
           source: "google",
+          googleReviewId,
           updatedAt: serverTimestamp(),
         });
         results.push({ action: "updated", id: existingDoc.id });
       } else {
         const newRef = await addDoc(collection(db, SITE_REVIEWS_COLLECTION), {
-          name: item.author_name || item.name,
+          name,
           rating: item.rating || 5,
           text: item.text || "",
           time: item.relative_time_description || item.time || "",
           avatar: item.profile_photo_url || item.avatar || "",
           source: "google",
-          googleReviewId: item.id || item.googleReviewId || "",
+          googleReviewId,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });

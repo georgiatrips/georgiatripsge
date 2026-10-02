@@ -1007,52 +1007,6 @@ html[dir="rtl"] .gt-wizard-body { animation-name: gt-step-in-rtl; }
   .gt-transfer-actions .gt-btn { flex: 1 1 100%; }
 }
 
-/* ---------- Reviews ---------- */
-
-/* Only real reviews are shown, so the count varies (1–6): one is a single wide
-   quote, 2 and 4 sit in pairs, 3 and 6 in threes, 5 as three plus two. */
-.gt-review-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 1rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-@media (min-width: 640px) {
-  .gt-review-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .gt-review-grid[data-count="1"] { grid-template-columns: minmax(0, 46rem); justify-content: center; }
-}
-
-@media (min-width: 640px) and (max-width: 999px) {
-  .gt-review-grid > :last-child:nth-child(odd):not(:only-child) { grid-column: 1 / -1; }
-}
-
-@media (min-width: 1000px) {
-  .gt-review-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-  .gt-review-grid > * { grid-column: span 2; }
-  .gt-review-grid[data-count="2"] > *,
-  .gt-review-grid[data-count="4"] > *,
-  .gt-review-grid[data-count="5"] > :nth-child(n + 4) { grid-column: span 3; }
-  .gt-review-grid[data-count="1"] > * { grid-column: auto; }
-}
-
-.gt-review {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  padding: 1.4rem;
-  border: 1px solid var(--gt-line);
-  border-radius: var(--gt-radius-lg);
-  background: var(--gt-white);
-}
-
-.gt-stars { display: inline-flex; gap: 2px; color: var(--gt-gold); }
-.gt-review blockquote { margin: 0; line-height: 1.65; color: var(--gt-ink-2); }
-.gt-review-author { display: grid; margin-block-start: auto; }
-.gt-review-author small { color: var(--gt-muted); }
-
 /* ---------- FAQ ---------- */
 
 /* Photo (with the WhatsApp card on it) beside the questions. Both columns
