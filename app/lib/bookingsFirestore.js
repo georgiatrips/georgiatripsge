@@ -22,9 +22,17 @@ const BOOKINGS_COLLECTION = "bookings";
  */
 export async function createBooking(payload) {
   try {
+    // A coupon only counts for a signed-in user, so the server needs to know
+    // who is booking.
+    const headers = { "Content-Type": "application/json" };
+    try {
+      const { auth } = await import("./firebase");
+      const token = await auth.currentUser?.getIdToken();
+      if (token) headers.Authorization = `Bearer ${token}`;
+    } catch (_) {}
     const res = await fetch("/api/bookings/create", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(payload),
     });
 

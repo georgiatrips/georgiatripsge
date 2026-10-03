@@ -26,13 +26,13 @@ export function CouponProvider({ children }) {
   const { user } = useAuth() ?? {};
   const { format } = useCurrency();
   const [coupons, setCoupons] = useState([]);
-  const [isClaimedGuest, setIsClaimedGuest] = useState(false);
 
   // Initialize and load coupons from localStorage and user profile
   useEffect(() => {
     try {
-      const savedClaimed = localStorage.getItem(CLAIMED_KEY) === "true";
-      setIsClaimedGuest(savedClaimed);
+      // Older versions gave a signed-out visitor 10% off for good once they
+      // had clicked the welcome popup; that flag no longer means anything.
+      localStorage.removeItem(CLAIMED_KEY);
 
       const savedCoupons = localStorage.getItem(STORAGE_KEY);
       if (savedCoupons) {
@@ -108,18 +108,12 @@ export function CouponProvider({ children }) {
     };
   }, [user]);
 
-  // Determine active available coupons (not used)
+  // Coupons are for signed-in users only: a signed-out visitor sees and pays
+  // the full price (the welcome popup sends them to sign up for WELCOME10).
   const activeCoupons = useMemo(() => {
-    // If user is logged in, they always have their coupons
-    if (user) {
-      return coupons.filter((c) => !c.isUsed);
-    }
-    // If user is guest but claimed the coupon via popup
-    if (isClaimedGuest) {
-      return [{ code: "WELCOME10", discountPercent: 10, isUsed: false }];
-    }
+    if (!user) return [];
     return coupons.filter((c) => !c.isUsed);
-  }, [user, coupons, isClaimedGuest]);
+  }, [user, coupons]);
 
   // Find the MAXIMUM discount percentage among all available coupons
   // e.g., if user has 10% and 12% coupons -> maxDiscountPercent = 12
@@ -163,13 +157,9 @@ export function CouponProvider({ children }) {
     });
   }, []);
 
-  // Mark coupon as claimed for guest
-  const claimWelcomeCoupon = useCallback(() => {
-    setIsClaimedGuest(true);
-    try {
-      localStorage.setItem(CLAIMED_KEY, "true");
-    } catch (_) {}
-  }, []);
+  // Kept for the popup and login page, which call it. Every signed-in user
+  // already gets WELCOME10 (see above), so there is nothing to store.
+  const claimWelcomeCoupon = useCallback(() => {}, []);
 
   /**
    * Calculate discounted price with currency formatting

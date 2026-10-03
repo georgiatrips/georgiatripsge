@@ -296,6 +296,11 @@ export default function TourDetailClient({
 
   const handleApplyCoupon = async (codeToApply) => {
     const code = (codeToApply || couponCodeInput).trim().toUpperCase();
+    if (!user) {
+      setCouponError(t("bookingCoupon.signInRequired") || "კუპონის გამოსაყენებლად შედით ანგარიშში");
+      setCouponSuccess("");
+      return;
+    }
     if (!code) {
       setCouponError(t("bookingCoupon.enterCode") || "შეიყვანეთ კუპონის კოდი");
       return;
@@ -335,6 +340,14 @@ export default function TourDetailClient({
   // Cards and the header already show prices with the visitor's coupon
   // (welcome coupon, account coupons). Apply the same coupon here so the form
   // total matches the price that brought them to this page.
+  // Signing out mid-booking takes the discount away with it.
+  useEffect(() => {
+    if (!user && appliedCoupon) {
+      setAppliedCoupon(null);
+      setCouponSuccess("");
+    }
+  }, [user, appliedCoupon]);
+
   const bestCouponCode = bestCoupon?.code || "";
   useEffect(() => {
     if (!bestCouponCode || appliedCoupon || couponDismissedRef.current) return;

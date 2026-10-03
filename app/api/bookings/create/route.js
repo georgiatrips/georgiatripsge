@@ -5,6 +5,7 @@ import { generateBookingId, generateAccessToken, isValidPhone, BOOKING_STATUSES 
 import { validateCouponServer, recordCouponUsage } from "../../../lib/coupons";
 import { VEHICLES, getPrivateVehiclePrices } from "../../../lib/vehicles";
 import { notifyNewBooking } from "../../../lib/server/notifyBooking";
+import { requireAuthenticatedUser } from "../../../lib/server/adminAuth";
 
 // Short-term in-memory cache for anti-spam / duplicate prevention (60 seconds)
 const recentSubmissions = new Map();
@@ -140,12 +141,19 @@ export async function POST(request) {
     let discountAmount = 0;
     let cleanCouponCode = null;
 
-    if (couponCode && typeof couponCode === "string" && couponCode.trim()) {
+    // Coupons are for signed-in users only: without a valid sign-in token the
+    // code is ignored and the booking keeps the full price.
+    const couponUser =
+      couponCode && typeof couponCode === "string" && couponCode.trim()
+        ? (await requireAuthenticatedUser(request)).user || null
+        : null;
+
+    if (couponUser) {
       const couponValidation = await validateCouponServer({
         code: couponCode,
         baseTotalPrice,
         ip: clientIp,
-        userId: body.userId || "",
+        userId: couponUser.uid || couponUser.user_id || "",
       });
 
       if (couponValidation.valid) {

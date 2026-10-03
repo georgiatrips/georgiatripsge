@@ -795,6 +795,7 @@ export const en = {
     "dismissBtn": "Maybe later, thanks"
   },
   "bookingCoupon": {
+    "signInRequired": "Sign in to use a coupon",
     "title": "Discount Coupon",
     "placeholder": "e.g. WELCOME10",
     "applyBtn": "Apply",
