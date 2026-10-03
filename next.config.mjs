@@ -11,9 +11,8 @@ const nextConfig = {
     NEXT_PUBLIC_GOOGLE_REVIEW_PLACE_ID: process.env.GOOGLE_PLACE_ID || "",
   },
 
-  // Smooth page-to-page crossfades through React <ViewTransition> (see app/layout.js).
+  // Page changes switch instantly: the owner found the crossfade distracting.
   experimental: {
-    viewTransition: true,
     // app/global-not-found.js: there are several root layouts ([locale],
     // admin, login, booking, coupons), so no single one can host the 404.
     globalNotFound: true,

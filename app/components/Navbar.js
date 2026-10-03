@@ -170,7 +170,7 @@ export default function Navbar({ active = "home", overlay }) {
   return (
     <>
       <a className="gt-skip-link" href="#gt-content">{t("site.skip")}</a>
-      <header className={`gt-header${isTransparent ? " is-transparent" : ""}${scrolled ? " is-scrolled" : ""}`} style={{ viewTransitionName: "site-header" }}>
+      <header className={`gt-header${isTransparent ? " is-transparent" : ""}${scrolled ? " is-scrolled" : ""}`}>
         <div className="gt-header-bar">
           <Link href={href("/")} className="gt-brand" aria-label={`GeorgiaTrips — ${t("nav.home")}`}>
             <BrandLogo width={42} height={42} priority />

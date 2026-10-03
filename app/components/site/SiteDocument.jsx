@@ -2,7 +2,7 @@
 // (public, statically rendered pages) and the account/admin root layouts.
 // It must not read cookies() or headers(): that would make every public page
 // render dynamically on each request.
-import { Suspense, ViewTransition } from "react";
+import { Suspense } from "react";
 import { Noto_Sans_Georgian, Noto_Serif_Georgian, Playfair_Display, Noto_Sans_Arabic, Noto_Naskh_Arabic } from "next/font/google";
 import Script from "next/script";
 import "../../globals.css";
@@ -22,7 +22,6 @@ import CookieConsent from "../CookieConsent";
 import AnalyticsTracker from "../AnalyticsTracker";
 import WelcomeCouponPopup from "../WelcomeCouponPopup";
 import ScrollReveal from "./ScrollReveal";
-import ViewTransitionErrorFilter from "./ViewTransitionErrorFilter";
 
 // Variable fonts: one file per family/subset instead of one per weight.
 const notoGeorgian = Noto_Sans_Georgian({
@@ -97,7 +96,6 @@ export default function SiteDocument({ lang, children }) {
             __html: `try{if(localStorage.getItem("gt_user_logged_in")==="true"){var d=document.documentElement;d.setAttribute("data-auth","in");d.style.setProperty("--gt-user-name",JSON.stringify(localStorage.getItem("gt_user_display_name")||""))}}catch(e){}`,
           }}
         />
-        <ViewTransitionErrorFilter />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
@@ -129,8 +127,7 @@ export default function SiteDocument({ lang, children }) {
           <CurrencyProvider>
             <AuthProvider>
               <CouponProvider>
-                {/* Page changes crossfade; styles in styles/motion.css (.gt-page). */}
-                <ViewTransition default="gt-page">{children}</ViewTransition>
+                {children}
                 <Suspense fallback={null}>
                   <AnalyticsTracker />
                 </Suspense>

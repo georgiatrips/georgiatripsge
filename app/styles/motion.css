@@ -60,21 +60,11 @@ html[dir="rtl"].gt-js [data-reveal] .gt-eyebrow::before { transform-origin: righ
 html.gt-js [data-reveal].is-in .gt-eyebrow::before { scale: 1 1; }
 html.gt-js [data-reveal].gt-instant .gt-eyebrow::before { transition: none; }
 
-/* ---------- Page entrance (first viewport, CSS only) ---------- */
-
-@keyframes gt-rise {
-  from { opacity: 0; translate: 0 26px; }
-  to { opacity: 1; translate: none; }
-}
+/* ---------- Shared keyframes & hero scroll depth ---------- */
 
 @keyframes gt-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
-}
-
-@keyframes gt-settle {
-  from { scale: 1.1; }
-  to { scale: 1; }
 }
 
 @keyframes gt-drift {
@@ -82,20 +72,9 @@ html.gt-js [data-reveal].gt-instant .gt-eyebrow::before { transition: none; }
   to { translate: 0 14vh; }
 }
 
-/* One short, quiet entrance for the first screen (no long staggers): page
-   changes are handled by the view transition below, so this stays subtle. */
+/* The first screen appears as is: no entrance animation on load or page
+   change. Inner-page photos keep their gentle scroll depth where supported. */
 @media (prefers-reduced-motion: no-preference) {
-  .gt-hero-copy,
-  .gt-hero-card,
-  .page-hero-kicker,
-  .page-hero-title,
-  .page-hero-sub {
-    animation: gt-rise-soft 0.45s var(--gt-ease-out) both;
-  }
-
-  .gt-hero-card { animation-delay: 0.08s; }
-
-  /* Inner-page photos keep their gentle scroll depth where supported. */
   @supports (animation-timeline: scroll()) {
     .page-hero-bg img {
       animation: gt-drift linear both;
@@ -105,43 +84,113 @@ html.gt-js [data-reveal].gt-instant .gt-eyebrow::before { transition: none; }
   }
 }
 
-@keyframes gt-rise-soft {
-  from { opacity: 0; translate: 0 10px; }
-  to { opacity: 1; translate: none; }
+/* ---------- Route loader (app/[locale]/loading.js) ----------
+   Fades in after a short pause, so quick page changes never flash it. */
+
+.gt-loader {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  padding: 2rem 1rem;
+  animation: gt-fade-in 0.35s ease 0.2s both;
 }
 
-/* ---------- Page transitions (View Transitions API) ----------
-   Navigations crossfade the page content with a short upward settle; the
-   header is its own layer and stays perfectly still. Browsers without
-   support simply switch pages instantly. */
-
-::view-transition-group(.gt-page) { animation-duration: 0.32s; }
-
-::view-transition-old(.gt-page) {
-  animation: 0.16s ease-in both gt-vt-out;
+.gt-loader-logo {
+  width: 92px;
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 10px 14px rgba(42, 101, 146, 0.16));
 }
 
-::view-transition-new(.gt-page) {
-  animation: 0.32s cubic-bezier(0.16, 1, 0.3, 1) 0.06s both gt-vt-in;
+/* One 2.8s loop: bar 4–32%, down stroke 26–50%, arrowhead 46–58%,
+   shine 58–84%, fade out 86–97%. */
+.gt-loader-stroke {
+  fill: none;
+  stroke: #fff;
+  stroke-linecap: round;
+  stroke-dasharray: 100 100;
+  stroke-dashoffset: 100;
+  animation: 2.8s infinite both;
+}
+.gt-loader-stroke--bar { animation-name: gt-logo-bar; }
+.gt-loader-stroke--down { animation-name: gt-logo-down; }
+
+.gt-loader-arrow {
+  fill: #fff;
+  stroke: #fff;
+  stroke-width: 14;
+  stroke-linejoin: round;
+  opacity: 0;
+  animation: gt-logo-arrow 2.8s infinite both;
 }
 
-::view-transition-group(site-header) { animation: none; z-index: 100; }
-::view-transition-old(site-header) { display: none; }
-::view-transition-new(site-header) { animation: none; }
+.gt-loader-shine { animation: gt-logo-shine 2.8s infinite both; }
+.gt-loader-mark { animation: gt-logo-fade 2.8s infinite both; }
 
-@keyframes gt-vt-out {
-  to { opacity: 0; }
+@keyframes gt-logo-bar {
+  0%, 4% { stroke-dashoffset: 100; animation-timing-function: cubic-bezier(0.5, 0, 0.2, 1); }
+  32%, 100% { stroke-dashoffset: 0; }
+}
+@keyframes gt-logo-down {
+  0%, 26% { stroke-dashoffset: 100; animation-timing-function: cubic-bezier(0.5, 0, 0.2, 1); }
+  50%, 100% { stroke-dashoffset: 0; }
+}
+@keyframes gt-logo-arrow {
+  0%, 46% { opacity: 0; }
+  58%, 100% { opacity: 1; }
+}
+@keyframes gt-logo-shine {
+  0%, 58% { transform: translateX(0); animation-timing-function: cubic-bezier(0.5, 0, 0.2, 1); }
+  84%, 100% { transform: translateX(390px); }
+}
+@keyframes gt-logo-fade {
+  0%, 86% { opacity: 1; }
+  97%, 100% { opacity: 0; }
 }
 
-@keyframes gt-vt-in {
-  from { opacity: 0; translate: 0 12px; }
-  to { opacity: 1; translate: none; }
+.gt-loader-word {
+  color: var(--gt-ink);
+  font-size: 1.15rem;
+  margin-top: -0.2rem;
 }
 
+.gt-loader-dots { display: inline-flex; gap: 6px; }
+.gt-loader-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gt-primary);
+  opacity: 0.25;
+  animation: gt-loader-dot 1.2s ease-in-out infinite;
+}
+.gt-loader-dots i:nth-child(2) { animation-delay: 0.15s; }
+.gt-loader-dots i:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes gt-loader-dot {
+  0%, 100% { opacity: 0.25; scale: 0.8; }
+  40% { opacity: 1; scale: 1.15; }
+}
+
+/* The loader keeps its motion under prefers-reduced-motion on purpose: it is
+   small, centred progress feedback (like a spinner), and with Windows
+   "Animation effects" off a static picture looked like a frozen page. These
+   undo the global 0.01ms override in globals.css for the loader only. */
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(.gt-page),
-  ::view-transition-new(.gt-page) { animation: 0.2s ease both gt-fade-in; }
-  ::view-transition-old(.gt-page) { animation-direction: reverse; }
+  .gt-loader .gt-loader-stroke,
+  .gt-loader .gt-loader-arrow,
+  .gt-loader .gt-loader-shine,
+  .gt-loader .gt-loader-mark {
+    animation-duration: 2.8s !important;
+    animation-iteration-count: infinite !important;
+  }
+
+  .gt-loader .gt-loader-dots i {
+    animation-duration: 1.2s !important;
+    animation-iteration-count: infinite !important;
+  }
 }
 
 /* ---------- Micro-interactions ---------- */
@@ -164,12 +213,6 @@ html[dir="rtl"] .gt-btn:hover svg.gt-flip-rtl { translate: -3px 0; }
 
   html.gt-js [data-reveal="image"] img { scale: none !important; transition: none !important; }
   html.gt-js [data-reveal] .gt-eyebrow::before { scale: 1 1 !important; transition: none !important; }
-
-  .gt-hero-copy,
-  .gt-hero-card,
-  .page-hero-kicker,
-  .page-hero-title,
-  .page-hero-sub { animation: gt-fade-in 0.4s ease both; }
 
   .gt-btn,
   .gt-card,
