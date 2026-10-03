@@ -1,4 +1,4 @@
-import { listFirestoreTours } from "../toursFirestore";
+import { listFirestoreTours, isTourActive } from "../toursFirestore";
 import { listPlaces } from "../placesFirestore";
 import { listReviews } from "../reviewsFirestore";
 import { SITE_URL, SUPPORTED_LANGUAGES } from "../siteConfig";
@@ -75,8 +75,9 @@ async function mapLimited(items, limit, fn) {
 }
 
 export async function runSeoHealthCheck() {
+  // Switched-off tours are not on the site, so they are not checked.
   const [tours, places, reviews] = await Promise.all([
-    listFirestoreTours(),
+    listFirestoreTours().then((list) => list.filter(isTourActive)),
     listPlaces(true),
     listReviews().catch(() => []),
   ]);

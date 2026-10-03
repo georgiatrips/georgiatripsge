@@ -1004,3 +1004,14 @@ export function getContentSlug(item) {
   if (typeof item.slug === "string" && item.slug.trim()) return item.slug.trim();
   return slugify(asLocalizedText(item.title, "en")) || String(item.id || "");
 }
+
+/** A tour is live unless the admin switched it off (`active: false`). */
+export function isTourActive(tour) {
+  return Boolean(tour) && tour.active !== false;
+}
+
+/** Our internal tour number as shown in the admin and in the tour lists: GT-07. */
+export function formatTourNumber(number) {
+  const n = parseInt(number, 10);
+  return n > 0 ? `GT-${String(n).padStart(2, "0")}` : "";
+}

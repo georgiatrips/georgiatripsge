@@ -111,7 +111,7 @@ export default function TourDetailClient({
           const tours = await listFirestoreTours();
           raw = tours.find((item) => item.id === tourId || getContentSlug(item) === tourId) || null;
         }
-        if (!cancelled) setRawFsDoc(raw || null);
+        if (!cancelled) setRawFsDoc(raw && raw.active !== false ? raw : null);
       } catch (error) {
         console.error("Unable to load tour details", error);
         if (!cancelled) setRawFsDoc(null);

@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import { listFirestoreTours, getFirestoreTourById } from "../toursFirestore";
+import { listFirestoreTours, getFirestoreTourById, isTourActive } from "../toursFirestore";
 import { ALL_TOURS as staticTours } from "../toursData";
 import { listPlaces } from "../placesFirestore";
 import { listPostSummaries } from "../postsFirestore";
@@ -46,15 +46,15 @@ export function serializeForClient(data) {
 }
 
 /**
- * Cached getter for all Tours across the site.
- * Cached for 1 hour, tagged with 'tours'.
+ * Cached getter for all Tours across the site — switched-off tours
+ * (`active: false`) are left out. Cached for 1 hour, tagged with 'tours'.
  */
 export const getCachedTours = unstable_cache(
   async () => {
     try {
       const fsTours = await listFirestoreTours();
       if (Array.isArray(fsTours) && fsTours.length > 0) {
-        return serializeForClient(fsTours);
+        return serializeForClient(fsTours.filter(isTourActive));
       }
       return serializeForClient(staticTours);
     } catch (err) {
@@ -88,7 +88,7 @@ const cachedTourById = (tourId) =>
         console.error(`[getCachedTourById] Error for ${tourId}:`, err);
       }
       tour ??= staticTours.find((t) => t.id === tourId) || null;
-      if (!tour) throw new Error(TOUR_NOT_FOUND);
+      if (!isTourActive(tour)) throw new Error(TOUR_NOT_FOUND);
       return serializeForClient(tour);
     },
     [`tour-detail-${tourId}`],

@@ -69,7 +69,7 @@ const FLEET = [
   { key: "sedan", img: "/1car.webp", pax: 3, bags: 2 },
   { key: "minivan", img: "/2car.webp", pax: 6, bags: 5 },
   { key: "jeep", img: "/3car.webp", pax: 4, bags: 3 },
-  { key: "sprinter", img: "/4car.webp", pax: 16, bags: 14 },
+  { key: "sprinter", img: "/4car.webp", pax: 19, bags: 14 },
 ];
 
 const kaText = (value) => (typeof value === "string" ? value : value?.ka || "");

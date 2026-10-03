@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useEffect, useState, useRef } from "react";
-import { normalizeFirestoreTour } from "./toursShared";
+import { isTourActive, normalizeFirestoreTour } from "./toursShared";
 import { useLanguage } from "./i18n/LanguageContext";
 
 // Module-level cache for raw Firestore documents to avoid repeated fetches
@@ -69,7 +69,7 @@ export function useAllTours() {
   }, []);
 
   const allTours = useMemo(() => {
-    return firestoreTours.map((t) => normalizeFirestoreTour(t, lang)).filter(Boolean);
+    return firestoreTours.filter(isTourActive).map((t) => normalizeFirestoreTour(t, lang)).filter(Boolean);
   }, [firestoreTours, lang]);
 
   return { allTours, firestoreTours, loading };

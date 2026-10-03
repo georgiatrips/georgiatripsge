@@ -88,6 +88,12 @@ export async function POST(request) {
         const tourSnap = await getDoc(tourRef);
         if (tourSnap.exists()) {
           const tData = tourSnap.data();
+          if (tData.active === false) {
+            return NextResponse.json(
+              { success: false, error: "ეს ტური დროებით არ იჯავშნება / This tour is currently unavailable" },
+              { status: 400 }
+            );
+          }
           const tPriceGroup = Number(tData.priceGroupNum) || (parseInt(String(tData.priceGroup || "0").replace(/\D/g, ""), 10) || 0);
           const tPricePrivate = Number(tData.pricePrivateNum) || (parseInt(String(tData.pricePrivate || "0").replace(/\D/g, ""), 10) || 0);
 

@@ -41,6 +41,8 @@ import {
   firestoreErrorMessage,
   extractImageUrl,
   getTourRegions,
+  isTourActive,
+  formatTourNumber,
 } from "../lib/toursFirestore";
 
 const emptyVehiclePrices = () => Object.fromEntries(VEHICLE_KEYS.map((key) => [key, ""]));
@@ -84,9 +86,9 @@ export default function AdminPage() {
   // single `destination` field that older code and filters still read).
   const [destinations, setDestinations] = useState([GEORGIA_REGIONS[0]]);
   const [groupMin, setGroupMin] = useState("1");
-  const [groupMax, setGroupMax] = useState("18");
+  const [groupMax, setGroupMax] = useState("19");
   const [privateGroupMin, setPrivateGroupMin] = useState("1");
-  const [privateGroupMax, setPrivateGroupMax] = useState("18");
+  const [privateGroupMax, setPrivateGroupMax] = useState("19");
   const [hasGroup, setHasGroup] = useState(true);
   const [hasPrivate, setHasPrivate] = useState(true);
   const [priceGroup, setPriceGroup] = useState("");
@@ -105,6 +107,11 @@ export default function AdminPage() {
   // "" = no badge. A badge is a claim ("top pick"), so it is opt-in.
   const [selectedBadge, setSelectedBadge] = useState("");
   const [tourSection, setTourSection] = useState("");
+  // Our internal number (GT-07), the same one the tour has in the tour list
+  // files, so a tour on the site and its entry there can be matched.
+  const [tourNumber, setTourNumber] = useState("");
+  // Off = the tour stays in the admin but disappears from the site.
+  const [isActive, setIsActive] = useState(true);
   const [locations, setLocations] = useState([emptyLocation()]);
   const [availablePlaces, setAvailablePlaces] = useState([]);
   const [gallery, setGallery] = useState([]);
@@ -133,6 +140,8 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("tours");
   const [tourSearchQuery, setTourSearchQuery] = useState("");
   const [tourRegionFilter, setTourRegionFilter] = useState("all");
+  const [tourStatusFilter, setTourStatusFilter] = useState("all");
+  const [togglingTourId, setTogglingTourId] = useState(null);
   const [hotelsCount, setHotelsCount] = useState(0);
   const [placesCount, setPlacesCount] = useState(0);
   const [reviewsCount, setReviewsCount] = useState(0);
@@ -401,7 +410,7 @@ export default function AdminPage() {
       setMessage({ type: "error", text: "ეს თარიღი უკვე დამატებულია" });
       return;
     }
-    const maxSeats = Math.max(1, parseInt(groupMax, 10) || 18);
+    const maxSeats = Math.max(1, parseInt(groupMax, 10) || 19);
     setDepartureDates((prev) =>
       [...prev, { date: datePick, freeSeats: maxSeats }].sort((a, b) =>
         a.date.localeCompare(b.date)
@@ -435,9 +444,9 @@ export default function AdminPage() {
     setDurationHours("");
     setDestinations([GEORGIA_REGIONS[0]]);
     setGroupMin("1");
-    setGroupMax("18");
+    setGroupMax("19");
     setPrivateGroupMin("1");
-    setPrivateGroupMax("18");
+    setPrivateGroupMax("19");
     setHasGroup(true);
     setHasPrivate(true);
     setPriceGroup("");
@@ -445,9 +454,10 @@ export default function AdminPage() {
     setVehiclePrices(emptyVehiclePrices());
     setIsVip(false);
     setIsPopular(false);
-    setIsPopular(false);
     setSelectedBadge("");
     setTourSection("");
+    setTourNumber("");
+    setIsActive(true);
     setLocations([emptyLocation()]);
     setGallery([]);
     setDatePick("");
@@ -506,6 +516,8 @@ export default function AdminPage() {
       setIsVip(Boolean(data.isVip));
       setSelectedBadge(TOUR_BADGE_OPTIONS.includes(data.badge) ? data.badge : "");
       setTourSection(TOUR_SECTIONS.some((section) => section.value === data.tourSection) ? data.tourSection : "");
+      setTourNumber(parseInt(data.tourNumber, 10) > 0 ? String(parseInt(data.tourNumber, 10)) : "");
+      setIsActive(data.active !== false);
 
       const newLocations = [];
       const newGallery = [];
@@ -604,6 +616,18 @@ export default function AdminPage() {
     const sectionLabel =
       TOUR_SECTIONS.find((s) => s.value === tourSection)?.label || "";
 
+    const tourNumberValue = parseInt(tourNumber, 10) > 0 ? parseInt(tourNumber, 10) : null;
+    const numberOwner = tourNumberValue
+      ? existingTours.find((item) => item.id !== editingTourId && Number(item.tourNumber) === tourNumberValue)
+      : null;
+    if (numberOwner) {
+      setMessage({
+        type: "error",
+        text: `${formatTourNumber(tourNumberValue)} უკვე აქვს ტურს „${asLocalizedText(numberOwner.title, "ka")}“ — აირჩიეთ სხვა ნომერი`,
+      });
+      return;
+    }
+
     const minN = Math.max(1, parseInt(groupMin, 10) || 1);
     const maxN = Math.max(minN, parseInt(groupMax, 10) || minN);
     const privateMinN = Math.max(1, parseInt(privateGroupMin, 10) || 1);
@@ -680,6 +704,8 @@ export default function AdminPage() {
       tourSection,
       tourSectionLabel: sectionLabel,
       category: tourSection,
+      tourNumber: tourNumberValue,
+      active: isActive,
     };
 
     try {
@@ -733,15 +759,17 @@ export default function AdminPage() {
     }
     const savedRegions = getTourRegions(tour).filter((region) => GEORGIA_REGIONS.includes(region));
     setDestinations(savedRegions.length ? savedRegions : [GEORGIA_REGIONS[0]]);
-    setGroupMin(String(tour.groupMin || 1)); setGroupMax(String(tour.groupMax || 18));
+    setGroupMin(String(tour.groupMin || 1)); setGroupMax(String(tour.groupMax || 19));
     setPrivateGroupMin(String(tour.privateGroupMin || tour.groupMin || 1));
-    setPrivateGroupMax(String(tour.privateGroupMax || tour.groupMax || 18));
+    setPrivateGroupMax(String(tour.privateGroupMax || tour.groupMax || 19));
     setHasGroup(!!tour.hasGroup); setHasPrivate(!!tour.hasPrivate);
     setPriceGroup(tour.priceGroup ?? ""); setPricePrivate(tour.pricePrivate ?? "");
     const savedVehiclePrices = getPrivateVehiclePrices(tour);
     setVehiclePrices(Object.fromEntries(VEHICLE_KEYS.map((key) => [key, savedVehiclePrices[key] != null ? String(savedVehiclePrices[key]) : ""])));
     setIsVip(!!tour.isVip); setIsPopular(!!tour.isPopular); setSelectedBadge(asLocalizedText(tour.badge) || "");
     setTourSection(tour.tourSection || tour.category || "");
+    setTourNumber(parseInt(tour.tourNumber, 10) > 0 ? String(parseInt(tour.tourNumber, 10)) : "");
+    setIsActive(isTourActive(tour));
     setLocations(
       Array.isArray(tour.itinerary) && tour.itinerary.length
         ? tour.itinerary.map((location) => ({
@@ -773,6 +801,32 @@ export default function AdminPage() {
     );
     setDepartureDates(Array.isArray(tour.departureDates) ? tour.departureDates : []);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Switches a tour on/off the site without touching anything else in it.
+  const toggleTourActive = async (tour) => {
+    const nextActive = !isTourActive(tour);
+    setTogglingTourId(tour.id);
+    setMessage(null);
+    try {
+      await updateFirestoreTour(tour.id, { active: nextActive });
+      setExistingTours((prev) => prev.map((item) => (item.id === tour.id ? { ...item, active: nextActive } : item)));
+      try {
+        await adminFetch("/api/admin/revalidate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tag: "tours", changed: [tourPath(tour)] }),
+        });
+      } catch (_) {}
+      setMessage({
+        type: "success",
+        text: `„${asLocalizedText(tour.title, "ka")}“ ${nextActive ? "ჩაირთო — ისევ ჩანს საიტზე" : "გაითიშა — საიტზე აღარ ჩანს და არ იჯავშნება"}`,
+      });
+    } catch (err) {
+      setMessage({ type: "error", text: firestoreErrorMessage(err) });
+    } finally {
+      setTogglingTourId(null);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -973,6 +1027,28 @@ export default function AdminPage() {
             {/* Basic info */}
             <fieldset className="admin-fieldset">
               <legend>ძირითადი ინფორმაცია</legend>
+              <div className="admin-field">
+                <label htmlFor="tour-number">ტურის ნომერი</label>
+                <div className="admin-inline-inputs">
+                  <span>GT-</span>
+                  <input
+                    id="tour-number"
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={tourNumber}
+                    onChange={(e) => setTourNumber(e.target.value)}
+                    placeholder={String(
+                      Math.max(0, ...existingTours.map((item) => Number(item.tourNumber) || 0)) + 1
+                    )}
+                  />
+                </div>
+                <p className="admin-hint">ჩვენი შიდა ნომერი — იგივე, რაც ტურების სიის ფაილში (travel-batumi-tours.md). საიტის სტუმრებს არ უჩანთ.</p>
+              </div>
+              <label className="admin-check">
+                <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
+                <span>ტური ჩართულია — ჩანს საიტზე და იჯავშნება</span>
+              </label>
               <LocalizedInputGroup
                 label="ტურის სახელი"
                 value={title}
@@ -2045,6 +2121,15 @@ export default function AdminPage() {
                   </option>
                 ))}
               </select>
+              <select
+                className="adm-input"
+                value={tourStatusFilter}
+                onChange={(e) => setTourStatusFilter(e.target.value)}
+              >
+                <option value="all">ყველა სტატუსი</option>
+                <option value="active">ჩართული ({existingTours.filter(isTourActive).length})</option>
+                <option value="inactive">გათიშული ({existingTours.filter((tour) => !isTourActive(tour)).length})</option>
+              </select>
             </div>
 
             {loadingList ? (
@@ -2061,16 +2146,22 @@ export default function AdminPage() {
                     const q = tourSearchQuery.toLowerCase();
                     const matchesSearch = !q || titleKa.includes(q) || titleEn.includes(q) || regions.some((r) => r.toLowerCase().includes(q));
                     const matchesRegion = tourRegionFilter === "all" || regions.includes(tourRegionFilter);
-                    return matchesSearch && matchesRegion;
+                    const matchesStatus =
+                      tourStatusFilter === "all" || (tourStatusFilter === "active") === isTourActive(tour);
+                    const code = formatTourNumber(tour.tourNumber).toLowerCase();
+                    return (matchesSearch || (q && code.includes(q))) && matchesRegion && matchesStatus;
                   })
+                  // Numbered tours in number order, then the rest newest first.
+                  .sort((a, b) => (Number(a.tourNumber) || Infinity) - (Number(b.tourNumber) || Infinity))
                   .map((tItem) => {
+                    const active = isTourActive(tItem);
                     const mainImg =
                       extractImageUrl(tItem.img) ||
                       extractImageUrl(tItem.image) ||
                       (tItem.gallery && extractImageUrl(tItem.gallery[0])) ||
                       "/hero.webp";
                     return (
-                      <div key={tItem.id} className="admin-entry-card">
+                      <div key={tItem.id} className={`admin-entry-card${active ? "" : " is-inactive"}`}>
                         <div style={{ display: "flex", gap: "0.8rem", padding: "0.8rem" }}>
                           <div
                             style={{
@@ -2086,9 +2177,13 @@ export default function AdminPage() {
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <h4 className="adm-entry-title">
+                              {formatTourNumber(tItem.tourNumber) && (
+                                <span className="admin-tour-number">{formatTourNumber(tItem.tourNumber)}</span>
+                              )}
                               {asLocalizedText(tItem.title)}
                             </h4>
                             <div className="admin-entry-tags">
+                              {!active && <span className="admin-tag-pill is-off">გათიშულია</span>}
                               {(() => {
                                 const regions = getTourRegions(tItem);
                                 return (
@@ -2108,10 +2203,22 @@ export default function AdminPage() {
                           </div>
                         </div>
                         <div className="admin-entry-actions">
-                          <Link href={`/ka/tours/${tItem.id}`} className="admin-action-btn link" target="_blank">
-                            ნახვა ↗
-                          </Link>
+                          {active ? (
+                            <Link href={`/ka/tours/${tItem.id}`} className="admin-action-btn link" target="_blank">
+                              ნახვა ↗
+                            </Link>
+                          ) : (
+                            <span />
+                          )}
                           <div style={{ display: "flex", gap: "0.4rem" }}>
+                            <button
+                              type="button"
+                              className={`admin-action-btn ${active ? "toggle-off" : "toggle-on"}`}
+                              onClick={() => toggleTourActive(tItem)}
+                              disabled={togglingTourId === tItem.id}
+                            >
+                              {togglingTourId === tItem.id ? "..." : active ? "გათიშვა" : "ჩართვა"}
+                            </button>
                             <button type="button" className="admin-action-btn edit" onClick={() => startTourEdit(tItem)}>
                               რედაქტირება
                             </button>

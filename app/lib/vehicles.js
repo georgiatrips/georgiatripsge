@@ -28,7 +28,7 @@ export const VEHICLES = {
   sprinter: {
     key: "sprinter",
     nameKa: "VIP სპრინტერი",
-    capacityPax: 16,
+    capacityPax: 19,
     capacityBags: 14,
     img: "/4car.webp",
   },

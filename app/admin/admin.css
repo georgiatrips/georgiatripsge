@@ -1302,3 +1302,26 @@
 
 /* Reviews have no photo: keep their text card as it is. */
 .admin-catalog-grid .admin-entry-card.is-text > div:first-child { padding: 0.85rem !important; }
+
+/* Tour number (GT-07) and the on/off switch in the tours catalog. */
+.admin-tour-number {
+  display: inline-block;
+  margin-right: 0.4rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 5px;
+  background: #1e293b;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  vertical-align: 0.1em;
+  font-variant-numeric: tabular-nums;
+}
+.admin-tag-pill.is-off { background: #fdecea; color: #b42318; font-weight: 700; }
+.admin-entry-card.is-inactive > div:first-child { opacity: 0.55; }
+.admin-entry-card.is-inactive { border-style: dashed; }
+.admin-action-btn.toggle-off { color: #92400e; }
+.admin-action-btn.toggle-off:hover { background: #fef3c7; }
+.admin-action-btn.toggle-on { border-color: #bfdfcc; background: #eef7f1; color: #236b48; }
+.admin-action-btn.toggle-on:hover { background: #e4f2ea; }
+.admin-action-btn:disabled { opacity: 0.6; cursor: wait; }
