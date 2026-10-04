@@ -59,7 +59,7 @@ export function getUpcomingDepartures(raw) {
 /** Only real, low seat counts are worth surfacing; a full bus is not scarcity. */
 export function isLowSeats(freeSeats, capacity) {
   if (typeof freeSeats !== "number" || freeSeats <= 0) return false;
-  return freeSeats <= Math.min(6, Math.max(1, Math.floor((capacity || 18) / 3)));
+  return freeSeats <= Math.min(6, Math.max(1, Math.floor((capacity || 19) / 3)));
 }
 
 function regionLabel(name, lang) {

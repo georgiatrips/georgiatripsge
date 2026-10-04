@@ -14,6 +14,8 @@ export const REGIONS_TRANSLATIONS = {
   "შიდა ქართლი": { ka: "შიდა ქართლი", en: "Shida Kartli", ru: "Шида-Картли", tr: "Şida Kartli", ar: "شيدا كارتلي" },
   "ქვემო ქართლი": { ka: "ქვემო ქართლი", en: "Kvemo Kartli", ru: "Квемо-Картли", tr: "Kvemo Kartli", ar: "كيفيمو كارتلي" },
   "თბილისი": { ka: "თბილისი", en: "Tbilisi", ru: "Тбилиси", tr: "Tiflis", ar: "تبليسي" },
+  // Not a Georgian region — only for places on the Batumi → Turkey day trip.
+  "თურქეთი": { ka: "თურქეთი", en: "Turkey", ru: "Турция", tr: "Türkiye", ar: "تركيا" },
 };
 
 export function formatRegionName(regionName, lang = "ka") {

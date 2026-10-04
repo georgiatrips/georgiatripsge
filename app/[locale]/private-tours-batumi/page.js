@@ -43,7 +43,7 @@ const CONTENT = {
     fleet: [
       { icon: "🚗", name: "Executive Sedan", cap: "1 - 3 Passengers", desc: "Ideal for couples and solo travelers looking for refined comfort and agility on mountain roads." },
       { icon: "🚐", name: "Mercedes-Benz Vito / V-Class", cap: "4 - 7 Passengers", desc: "Spacious luxury minivan with leather seating, climate control, and large luggage capacity." },
-      { icon: "🚌", name: "Mercedes Sprinter VIP", cap: "8 - 18 Passengers", desc: "High-capacity luxury minibus for family reunions, corporate retreats, and group travels." }
+      { icon: "🚌", name: "Mercedes Sprinter VIP", cap: "8 - 19 Passengers", desc: "High-capacity luxury minibus for family reunions, corporate retreats, and group travels." }
     ],
     toursTitle: "Featured Private Itineraries from Batumi",
     toursDesc: "All tours below include private vehicle, personal driver/guide, fuel, and hotel pickup.",
@@ -74,7 +74,7 @@ const CONTENT = {
     fleet: [
       { icon: "🚗", name: "Комфортный седан", cap: "1 - 3 Пассажира", desc: "Идеально для пар и индивидуальных путешественников." },
       { icon: "🚐", name: "Mercedes-Benz Vito / V-Class", cap: "4 - 7 Пассажиров", desc: "Просторный минивэн с кожаным салоном и раздельным климат-контролем." },
-      { icon: "🚌", name: "Mercedes Sprinter VIP", cap: "8 - 18 Пассажиров", desc: "Премиальный микроавтобус для больших семей и дружеских компаний." }
+      { icon: "🚌", name: "Mercedes Sprinter VIP", cap: "8 - 19 Пассажиров", desc: "Премиальный микроавтобус для больших семей и дружеских компаний." }
     ],
     toursTitle: "Рекомендуемые индивидуальные туры",
     toursDesc: "Все программы включают индивидуальный трансфер, личного гида и все дорожные расходы.",
@@ -105,7 +105,7 @@ const CONTENT = {
     fleet: [
       { icon: "🚗", name: "პრემიუმ სედანი", cap: "1 - 3 მგზავრი", desc: "იდეალურია წყვილებისთვის და მცირე ჯგუფებისთვის." },
       { icon: "🚐", name: "Mercedes-Benz Vito / V-Class", cap: "4 - 7 მგზავრი", desc: "ფართო VIP მინივენი ტყავის სალონითა და კონდიცირებით." },
-      { icon: "🚌", name: "Mercedes Sprinter VIP", cap: "8 - 18 მგზავრი", desc: "კომფორტული მიკროავტობუსი დიდი ჯგუფებისთვის." }
+      { icon: "🚌", name: "Mercedes Sprinter VIP", cap: "8 - 19 მგზავრი", desc: "კომფორტული მიკროავტობუსი დიდი ჯგუფებისთვის." }
     ],
     toursTitle: "რჩეული ინდივიდუალური ტურები",
     toursDesc: "ყველა ტური მოიცავს ტრანსპორტს, საწვავს, მძღოლს და სასტუმროდან მომსახურებას.",

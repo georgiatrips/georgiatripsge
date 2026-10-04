@@ -38,7 +38,7 @@ const CONTENT = {
     ],
     ratesTitle: "Fixed Rates from Batumi Airport (BUS)",
     ratesDesc: "Transparent pricing per vehicle, not per person. Choose the vehicle class that matches your group.",
-    tableHeaders: ["Destination", "Distance / Time", "Sedan (1-3 pax)", "Minivan (4-7 pax)", "VIP Sprinter (8-18)"],
+    tableHeaders: ["Destination", "Distance / Time", "Sedan (1-3 pax)", "Minivan (4-7 pax)", "VIP Sprinter (8-19)"],
     rates: [
       { dest: "Batumi City Center / Boulevard", dist: "6 km / 12 mins", km: 6 },
       { dest: "Gonio & Kvariati Resorts", dist: "10 km / 15 mins", km: 10 },
@@ -71,7 +71,7 @@ const CONTENT = {
     ],
     ratesTitle: "Фиксированные тарифы из аэропорта Батуми (BUS)",
     ratesDesc: "Цена указана за весь автомобиль, а не за человека.",
-    tableHeaders: ["Направление", "Расстояние / Время", "Седан (1-3 чел)", "Минивэн (4-7 чел)", "Спринтер (8-18)"],
+    tableHeaders: ["Направление", "Расстояние / Время", "Седан (1-3 чел)", "Минивэн (4-7 чел)", "Спринтер (8-19)"],
     rates: [
       { dest: "Центр Батуми / Бульвар", dist: "6 км / 12 мин", km: 6 },
       { dest: "Курорты Гонио и Квариати", dist: "10 км / 15 мин", km: 10 },
@@ -104,7 +104,7 @@ const CONTENT = {
     ],
     ratesTitle: "ფიქსირებული ტარიფები ბათუმის აეროპორტიდან",
     ratesDesc: "ფასი მოცემულია მთლიან ავტომობილზე.",
-    tableHeaders: ["მიმართულება", "მანძილი / დრო", "სედანი (1-3 მგზ)", "მინივენი (4-7 მგზ)", "სპრინტერი (8-18)"],
+    tableHeaders: ["მიმართულება", "მანძილი / დრო", "სედანი (1-3 მგზ)", "მინივენი (4-7 მგზ)", "სპრინტერი (8-19)"],
     rates: [
       { dest: "ბათუმის ცენტრი / ბულვარი", dist: "6 კმ / 12 წთ", km: 6 },
       { dest: "გონიო და კვარიათი", dist: "10 კმ / 15 წთ", km: 10 },
