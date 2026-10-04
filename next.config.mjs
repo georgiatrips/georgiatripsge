@@ -5,6 +5,12 @@ const nextConfig = {
   compress: true,
   reactStrictMode: true,
 
+  // Ties the browser's code to the deployment that served it. After a deploy,
+  // a page opened earlier does a full reload on its next navigation instead of
+  // requesting code files the new deployment no longer has, which crashed it
+  // into the error page. Vercel provides both variables; locally it is unset.
+  deploymentId: process.env.VERCEL_DEPLOYMENT_ID || process.env.VERCEL_GIT_COMMIT_SHA || undefined,
+
   // Google Business place ID (not a secret — it is in every Maps link) for
   // the review link the admin sends customers after a trip.
   env: {

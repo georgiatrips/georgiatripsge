@@ -1,4 +1,4 @@
-const CACHE_NAME = "georgiatrips-v4";
+const CACHE_NAME = "georgiatrips-v5";
 const STATIC_ASSETS = [
   "/logo.png",
   "/manifest.json",
@@ -66,9 +66,10 @@ self.addEventListener("fetch", (event) => {
           }
           return networkResponse;
         })
-        .catch((err) => {
-          return new Response("Network error", { status: 408, headers: { "Content-Type": "text/plain" } });
-        });
+        // A real network failure, not a made-up text response: the browser then
+        // reports the file as failed to load (which the page recovers from by
+        // reloading) instead of trying to run "Network error" as JavaScript.
+        .catch(() => Response.error());
     })
   );
 });

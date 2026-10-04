@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "../lib/i18n/LanguageContext";
+import { reloadOnce } from "../lib/errorRecovery";
 
 const ERROR_TEXTS = {
   ka: {
@@ -37,13 +38,20 @@ const ERROR_TEXTS = {
   },
 };
 
-export default function Error({ error, reset }) {
+// Most page errors are fixed by one reload (a page opened before a deploy, a
+// file that failed to download), so the first try is a silent reload; the
+// message below only appears if the error comes straight back.
+export default function Error({ error }) {
   const { lang } = useLanguage();
   const t = ERROR_TEXTS[lang] || ERROR_TEXTS.ka;
+  const [reloading, setReloading] = useState(true);
 
   useEffect(() => {
     console.error("App Error Boundary caught:", error);
+    setReloading(reloadOnce());
   }, [error]);
+
+  if (reloading) return <div style={{ minHeight: "70vh" }} aria-busy="true" />;
 
   return (
     <div
@@ -76,7 +84,7 @@ export default function Error({ error, reset }) {
         </p>
         <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
           <button
-            onClick={() => reset()}
+            onClick={() => window.location.reload()}
             style={{
               padding: "0.75rem 1.5rem",
               background: "var(--gt-primary, #2a6592)",

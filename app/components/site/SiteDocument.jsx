@@ -96,6 +96,15 @@ export default function SiteDocument({ lang, children }) {
             __html: `try{if(localStorage.getItem("gt_user_logged_in")==="true"){var d=document.documentElement;d.setAttribute("data-auth","in");d.style.setProperty("--gt-user-name",JSON.stringify(localStorage.getItem("gt_user_display_name")||""))}}catch(e){}`,
           }}
         />
+        {/* A site code file (/_next/static) that fails to load, typically a page
+            opened before a deploy, would break the page before React's error
+            screens can help: reload once instead (same key and cool-down as
+            app/lib/errorRecovery.js, so a real bug can't cause a loop). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var K="gt-error-reload-at",C=30000,R=/ChunkLoadError|Loading (CSS )?chunk|Failed to load chunk|dynamically imported module|Importing a module script failed|Unable to preload CSS/i;function r(){try{var l=+sessionStorage.getItem(K)||0;if(Date.now()-l<C)return;sessionStorage.setItem(K,String(Date.now()))}catch(e){return}location.reload()}addEventListener("error",function(e){var t=e.target;if(t&&t!==window&&(t.tagName==="SCRIPT"||t.tagName==="LINK")){if(String(t.src||t.href||"").indexOf("/_next/static/")>-1)r();return}var x=e.error;if(R.test((x&&(x.name+" "+x.message))||e.message||""))r()},true);addEventListener("unhandledrejection",function(e){var x=e.reason;if(x&&R.test((x.name||"")+" "+(x.message||"")))r()})})();`,
+          }}
+        />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
