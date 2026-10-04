@@ -795,6 +795,7 @@ export const ka = {
     "dismissBtn": "მოგვიანებით, მადლობა"
   },
   "bookingCoupon": {
+    "alreadyUsed": "ეს კუპონი უკვე გამოიყენეთ",
     "signInRequired": "კუპონის გამოსაყენებლად შედით ანგარიშში",
     "title": "ფასდაკლების კუპონი",
     "placeholder": "მაგ: WELCOME10",

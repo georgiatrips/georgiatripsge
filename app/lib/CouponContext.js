@@ -94,6 +94,19 @@ export function CouponProvider({ children }) {
         console.warn("Error fetching user coupons from Firestore:", err);
       }
 
+      // Mark coupons this user has already booked with, so a used single-use
+      // coupon is no longer applied or offered.
+      try {
+        const { getCouponByCode, hasUserUsedCoupon } = await import("./coupons");
+        await Promise.all(
+          list.map(async (c) => {
+            if (c.isUsed || !user.uid) return;
+            const coupon = await getCouponByCode(c.code);
+            if (coupon?.usageType === "single" && (await hasUserUsedCoupon(c.code, user.uid))) c.isUsed = true;
+          })
+        );
+      } catch (_) {}
+
       if (isMounted) {
         setCoupons(list);
         try {

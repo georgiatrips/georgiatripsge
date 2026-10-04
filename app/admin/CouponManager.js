@@ -6,6 +6,7 @@ import {
   createCoupon,
   updateCoupon,
   deleteCoupon,
+  countCouponUses,
 } from "../lib/coupons";
 import {
   getCouponSettings,
@@ -51,7 +52,9 @@ export default function CouponManager() {
         getCouponSettings(),
         listClaimedIps(),
       ]);
-      setCoupons(couponList);
+      // Real number of uses, from the usage records.
+      const counts = await Promise.all(couponList.map((c) => countCouponUses(c.code || c.id)));
+      setCoupons(couponList.map((c, i) => ({ ...c, usedCount: Math.max(parseInt(c.usedCount, 10) || 0, counts[i]) })));
       setLimitOnePerIp(settings.limitOnePerIp === true);
       setClaimedIps(ips);
     } catch (err) {
@@ -302,7 +305,7 @@ export default function CouponManager() {
                 style={{ width: "100%", padding: "10px 14px", borderRadius: "10px", border: "1.5px solid #cbd5e1", fontWeight: 700 }}
               >
                 <option value="multiple">მრავალჯერადი (Multiple Uses)</option>
-                <option value="single">ერთჯერადი (Single Use - 1 time)</option>
+                <option value="single">ერთჯერადი — ყველას შეუძლია, თითოეულს 1-ჯერ</option>
                 <option value="unlimited">შეუზღუდავი (Unlimited)</option>
               </select>
             </div>
@@ -314,8 +317,9 @@ export default function CouponManager() {
               <input
                 type="number"
                 min="1"
-                disabled={formData.usageType === "single"}
-                value={formData.usageType === "single" ? 1 : formData.maxUses}
+                disabled={formData.usageType !== "multiple"}
+                placeholder={formData.usageType === "multiple" ? "" : "შეუზღუდავი"}
+                value={formData.usageType === "multiple" ? formData.maxUses : ""}
                 onChange={(e) => setFormData({ ...formData, maxUses: e.target.value })}
                 className="admin-input"
                 style={{ width: "100%", padding: "10px 14px", borderRadius: "10px", border: "1.5px solid #cbd5e1" }}
@@ -448,9 +452,11 @@ export default function CouponManager() {
                       </td>
                       <td style={{ padding: "12px 14px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <span style={{ fontWeight: 800 }}>{used} / {c.usageType === "single" ? "1 (ერთჯერადი)" : max}</span>
+                          <span style={{ fontWeight: 800 }}>
+                            {c.usageType === "single" ? `${used} ადამიანი · თითოეულს 1-ჯერ` : c.usageType === "unlimited" ? `${used} · შეუზღუდავი` : `${used} / ${max}`}
+                          </span>
                         </div>
-                        {c.usageType !== "single" && (
+                        {c.usageType === "multiple" && (
                           <div style={{ width: "100px", height: "6px", background: "#e2e8f0", borderRadius: "3px", marginTop: "4px", overflow: "hidden" }}>
                             <div style={{ width: `${percentUsed}%`, height: "100%", background: percentUsed >= 100 ? "#b42318" : "var(--gt-primary)" }} />
                           </div>

@@ -102,7 +102,8 @@ export async function isIpClaimed(ip) {
 export async function listClaimedIps() {
   try {
     const snap = await getDocs(collection(db, CLAIMED_IPS_COLLECTION));
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    // Per-user coupon records ("use__…") live here too; they are not IPs.
+    return snap.docs.filter((d) => !d.id.startsWith("use__")).map((d) => ({ id: d.id, ...d.data() }));
   } catch (err) {
     console.warn("Failed to list claimed IPs:", err);
     return [];
@@ -115,7 +116,8 @@ export async function listClaimedIps() {
 export async function clearAllClaimedIps() {
   try {
     const snap = await getDocs(collection(db, CLAIMED_IPS_COLLECTION));
-    const deletePromises = snap.docs.map((d) => deleteDoc(d.ref));
+    // Keeps the per-user coupon records, so single-use coupons stay used.
+    const deletePromises = snap.docs.filter((d) => !d.id.startsWith("use__")).map((d) => deleteDoc(d.ref));
     await Promise.all(deletePromises);
     return true;
   } catch (err) {

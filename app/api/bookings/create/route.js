@@ -260,7 +260,8 @@ export async function POST(request) {
       recordCouponUsage({
         code: cleanCouponCode,
         ip: clientIp,
-        userId: body.userId || "",
+        userId: couponUser?.uid || "",
+        bookingId,
       }).catch((err) => console.error("[api/bookings/create] Coupon usage record error:", err));
     }
 

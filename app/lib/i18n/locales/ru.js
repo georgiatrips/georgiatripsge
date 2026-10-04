@@ -795,6 +795,7 @@ export const ru = {
     "dismissBtn": "Позже, спасибо"
   },
   "bookingCoupon": {
+    "alreadyUsed": "Вы уже использовали этот купон",
     "signInRequired": "Войдите в аккаунт, чтобы использовать купон",
     "title": "Купон на скидку",
     "placeholder": "напр: WELCOME10",

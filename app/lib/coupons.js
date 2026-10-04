@@ -8,13 +8,58 @@ import {
   updateDoc,
   deleteDoc,
   serverTimestamp,
-  increment,
   query,
   orderBy,
+  where,
+  getCountFromServer,
 } from "firebase/firestore";
-import { isIpClaimed, recordClaimedIp } from "./couponSettings";
+import { recordClaimedIp } from "./couponSettings";
 
 export const COUPONS_COLLECTION = "coupons";
+
+// One document per (coupon, user) once that user has booked with the coupon.
+// Kept in claimed_coupon_ips because its rules already let anyone create a
+// document but only an admin change or delete one, so a user cannot erase
+// their own record to use a single-use coupon again.
+const REDEMPTIONS_COLLECTION = "claimed_coupon_ips";
+const redemptionId = (code, uid) =>
+  `use__${String(code).trim().toUpperCase()}__${String(uid).replace(/[^A-Za-z0-9_-]/g, "_")}`;
+
+/** True when this user has already booked with this coupon. */
+export async function hasUserUsedCoupon(code, uid) {
+  if (!code || !uid) return false;
+  try {
+    const snap = await getDoc(doc(db, REDEMPTIONS_COLLECTION, redemptionId(code, uid)));
+    return snap.exists();
+  } catch (err) {
+    console.warn("hasUserUsedCoupon error:", err);
+    return false;
+  }
+}
+
+async function recordUse(id, code, data) {
+  const ref = doc(db, REDEMPTIONS_COLLECTION, id);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return;
+  await setDoc(ref, { type: "coupon_use", code: String(code).trim().toUpperCase(), usedAt: serverTimestamp(), ...data });
+}
+
+/**
+ * How many bookings have used this coupon, counted from the usage records
+ * (the coupon's own usedCount field can only be written by an admin, so the
+ * booking server cannot keep it up to date).
+ */
+export async function countCouponUses(code) {
+  if (!code) return 0;
+  try {
+    const q = query(collection(db, REDEMPTIONS_COLLECTION), where("code", "==", String(code).trim().toUpperCase()));
+    const snap = await getCountFromServer(q);
+    return snap.data().count || 0;
+  } catch (err) {
+    console.warn("countCouponUses error:", err);
+    return 0;
+  }
+}
 
 /**
  * Default fallback coupons if Firestore is empty or bootstrap is needed
@@ -201,27 +246,27 @@ export async function validateCouponServer({
     }
   }
 
-  // Check usage limits
-  const maxUses = parseInt(coupon.maxUses, 10) || 0;
-  const usedCount = parseInt(coupon.usedCount, 10) || 0;
-  if (maxUses > 0 && usedCount >= maxUses) {
-    return {
-      valid: false,
-      discountPercent: 0,
-      discountAmount: 0,
-      reason: "კუპონის გამოყენების ლიმიტი ამოწურულია",
-    };
-  }
-
-  // Check IP restriction if enabled
-  if (coupon.limitOnePerIp && ip) {
-    const alreadyClaimed = await isIpClaimed(ip);
-    if (alreadyClaimed && coupon.usageType === "single") {
+  // Single use = every signed-in user may use it, each of them once. It has
+  // no overall limit (older single coupons were saved with maxUses 1).
+  if (coupon.usageType === "single") {
+    if (!userId) {
+      return { valid: false, discountPercent: 0, discountAmount: 0, reason: "კუპონის გამოსაყენებლად შედით ანგარიშში" };
+    }
+    if (await hasUserUsedCoupon(cleanCode, userId)) {
+      return { valid: false, discountPercent: 0, discountAmount: 0, reason: "ეს კუპონი უკვე გამოიყენეთ" };
+    }
+  } else if (coupon.usageType !== "unlimited") {
+    // Multiple use: a shared limit for everyone together.
+    const maxUses = parseInt(coupon.maxUses, 10) || 0;
+    const usedCount = maxUses > 0
+      ? Math.max(parseInt(coupon.usedCount, 10) || 0, await countCouponUses(cleanCode))
+      : 0;
+    if (maxUses > 0 && usedCount >= maxUses) {
       return {
         valid: false,
         discountPercent: 0,
         discountAmount: 0,
-        reason: "ამ IP მისამართიდან კუპონი უკვე გამოყენებულია",
+        reason: "კუპონის გამოყენების ლიმიტი ამოწურულია",
       };
     }
   }
@@ -248,24 +293,26 @@ export async function validateCouponServer({
 /**
  * Increment coupon usage upon confirmed booking
  */
-export async function recordCouponUsage({ code, ip = "", userId = "" }) {
+export async function recordCouponUsage({ code, ip = "", userId = "", bookingId = "" }) {
   if (!code) return;
   const cleanCode = String(code).trim().toUpperCase();
-  try {
-    const docRef = doc(db, COUPONS_COLLECTION, cleanCode);
-    const snap = await getDoc(docRef);
-    if (snap.exists()) {
-      await updateDoc(docRef, {
-        usedCount: increment(1),
-        lastUsedAt: serverTimestamp(),
-      });
-    }
 
-    // Record IP in claimed IPs list
-    if (ip) {
-      await recordClaimedIp(ip, userId);
+  // One usage record per use. Single-use coupons are keyed by the user, so the
+  // same person cannot use them twice; the others by booking, so they count
+  // towards the shared limit.
+  try {
+    const coupon = await getCouponByCode(cleanCode);
+    if (coupon?.usageType === "single") {
+      if (userId) await recordUse(redemptionId(cleanCode, userId), cleanCode, { userId, bookingId });
+    } else if (bookingId) {
+      await recordUse(redemptionId(cleanCode, `bk_${bookingId}`), cleanCode, { userId, bookingId });
     }
   } catch (err) {
-    console.error("recordCouponUsage error:", err);
+    console.error("recordCouponUsage: usage record failed:", err);
+  }
+
+  // Record IP in claimed IPs list
+  if (ip) {
+    await recordClaimedIp(ip, userId);
   }
 }

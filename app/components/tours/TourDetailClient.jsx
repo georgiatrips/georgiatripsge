@@ -310,6 +310,15 @@ export default function TourDetailClient({
         (c) => c.code.toUpperCase() === code && c.active !== false
       ) || (await import("../../lib/coupons").then((m) => m.getCouponByCode(code)));
 
+      if (foundCoupon && foundCoupon.active !== false && foundCoupon.usageType === "single" && user?.uid) {
+        const { hasUserUsedCoupon } = await import("../../lib/coupons");
+        if (await hasUserUsedCoupon(foundCoupon.code, user.uid)) {
+          setCouponError(t("bookingCoupon.alreadyUsed") || "ეს კუპონი უკვე გამოიყენეთ");
+          setCouponSuccess("");
+          return;
+        }
+      }
+
       if (foundCoupon && foundCoupon.active !== false) {
         const pct = Number(foundCoupon.discountPercent) || 10;
         setAppliedCoupon({

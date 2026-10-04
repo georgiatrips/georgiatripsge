@@ -6,6 +6,7 @@ import {
   subscribeToBookings,
   updateBookingStatusAdmin,
   updateBookingNotesAdmin,
+  deleteBookingsAdmin,
 } from "../lib/bookingsFirestore";
 import { BOOKING_STATUSES, STATUS_CONFIG } from "../lib/bookingModel";
 import { useAuth } from "../lib/AuthContext";
@@ -35,6 +36,12 @@ export default function BookingManager() {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionMessage, setActionMessage] = useState(null);
 
+  // Selection for bulk delete (Firestore document IDs).
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [listMessage, setListMessage] = useState(null);
+
   // Real-time listener for bookings
   useEffect(() => {
     let active = true;
@@ -58,6 +65,16 @@ export default function BookingManager() {
       unsubscribe();
     };
   }, []);
+
+  // Drop selections whose booking no longer exists (deleted elsewhere).
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      if (prev.size === 0) return prev;
+      const alive = new Set(bookings.map((b) => b.id));
+      const next = new Set([...prev].filter((id) => alive.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [bookings]);
 
   // Sync admin notes input when selecting a booking
   useEffect(() => {
@@ -165,6 +182,31 @@ export default function BookingManager() {
     }
   };
 
+  const toggleSelected = (id) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const handleDeleteSelected = async () => {
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+    setDeleting(true);
+    try {
+      const count = await deleteBookingsAdmin(ids);
+      setSelectedIds(new Set());
+      setDeleteModalOpen(false);
+      setListMessage({ type: "success", text: `წაიშალა ${count} ჯავშანი` });
+    } catch (err) {
+      console.error("deleteBookingsAdmin error:", err);
+      setListMessage({ type: "error", text: "ჯავშნების წაშლა ვერ მოხერხდა" });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   // Handle Save Internal Admin Notes
   const handleSaveNotes = async () => {
     if (!selectedBooking) return;
@@ -263,6 +305,59 @@ export default function BookingManager() {
         </div>
       </div>
 
+      {/* ── SELECTION BAR ──────────────────────────────── */}
+      {(selectedIds.size > 0 || listMessage) && (
+        <div
+          role="status"
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "0.75rem",
+            padding: "0.75rem 1rem",
+            marginBottom: "0.75rem",
+            borderRadius: "12px",
+            border: `1px solid ${selectedIds.size > 0 || listMessage?.type === "error" ? "#fecaca" : "#bbf7d0"}`,
+            background: selectedIds.size > 0 || listMessage?.type === "error" ? "#fef2f2" : "#f0fdf4",
+          }}
+        >
+          {selectedIds.size > 0 ? (
+            <>
+              <strong style={{ color: "#7f1d1d", fontSize: "0.9rem" }}>მონიშნულია {selectedIds.size} ჯავშანი</strong>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedIds(new Set())}
+                  style={{ padding: "0.45rem 0.85rem", borderRadius: "8px", border: "1px solid #cbd5e1", background: "#ffffff", fontWeight: 600, cursor: "pointer", fontSize: "0.85rem" }}
+                >
+                  მონიშვნის მოხსნა
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeleteModalOpen(true)}
+                  style={{ padding: "0.45rem 0.95rem", borderRadius: "8px", border: "none", background: "#b42318", color: "#ffffff", fontWeight: 700, cursor: "pointer", fontSize: "0.85rem" }}
+                >
+                  წაშლა ({selectedIds.size})
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <span style={{ fontWeight: 600, fontSize: "0.9rem", color: listMessage.type === "error" ? "#7f1d1d" : "#14532d" }}>{listMessage.text}</span>
+              <button
+                type="button"
+                onClick={() => setListMessage(null)}
+                aria-label="დახურვა"
+                style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: "1rem", color: "#64748b" }}
+              >
+                ✕
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
       {/* ── BOOKINGS DATA TABLE ──────────────────────────────── */}
       <div
         style={{
@@ -277,6 +372,22 @@ export default function BookingManager() {
           <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.9rem" }}>
             <thead>
               <tr style={{ background: "#f8fafc", borderBottom: "1.5px solid #e2e8f0", color: "#475569", fontWeight: 700, fontSize: "0.8rem", textTransform: "uppercase" }}>
+                <th style={{ padding: "0.9rem 0.5rem 0.9rem 1rem", width: "36px" }}>
+                  <input
+                    type="checkbox"
+                    aria-label="ყველას მონიშვნა"
+                    style={{ width: "17px", height: "17px", cursor: "pointer" }}
+                    checked={filteredBookings.length > 0 && filteredBookings.every((b) => selectedIds.has(b.id))}
+                    onChange={(e) => {
+                      const on = e.target.checked;
+                      setSelectedIds((prev) => {
+                        const next = new Set(prev);
+                        filteredBookings.forEach((b) => (on ? next.add(b.id) : next.delete(b.id)));
+                        return next;
+                      });
+                    }}
+                  />
+                </th>
                 <th style={{ padding: "0.9rem 1rem" }}>ID</th>
                 <th style={{ padding: "0.9rem 1rem" }}>სტატუსი</th>
                 <th style={{ padding: "0.9rem 1rem" }}>ტური</th>
@@ -292,13 +403,13 @@ export default function BookingManager() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={10} style={{ padding: "3rem", textAlign: "center", color: "#64748b" }}>
+                  <td colSpan={11} style={{ padding: "3rem", textAlign: "center", color: "#64748b" }}>
                     იტვირთება ჯავშნები...
                   </td>
                 </tr>
               ) : filteredBookings.length === 0 ? (
                 <tr>
-                  <td colSpan={10} style={{ padding: "3rem", textAlign: "center", color: "#64748b" }}>
+                  <td colSpan={11} style={{ padding: "3rem", textAlign: "center", color: "#64748b" }}>
                     ჯავშნები არ მოიძებნა.
                   </td>
                 </tr>
@@ -314,12 +425,22 @@ export default function BookingManager() {
                     <tr
                       key={b.id || b.bookingId}
                       style={{
+                        background: selectedIds.has(b.id) ? "#fef2f2" : "#ffffff",
                         borderBottom: "1px solid #f1f5f9",
                         transition: "background 0.15s ease",
                       }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = "#f8fafc")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = selectedIds.has(b.id) ? "#fef2f2" : "#ffffff")}
                     >
+                      <td style={{ padding: "0.85rem 0.5rem 0.85rem 1rem" }}>
+                        <input
+                          type="checkbox"
+                          aria-label={`მონიშვნა ${b.bookingId || b.id}`}
+                          style={{ width: "17px", height: "17px", cursor: "pointer" }}
+                          checked={selectedIds.has(b.id)}
+                          onChange={() => toggleSelected(b.id)}
+                        />
+                      </td>
                       <td style={{ padding: "0.85rem 1rem", fontFamily: "monospace", fontWeight: 700, color: "#1f2d3d" }}>
                         {b.bookingId || b.id}
                       </td>
@@ -893,6 +1014,51 @@ export default function BookingManager() {
                 style={{ flex: 1, padding: "0.7rem", borderRadius: "8px", border: "none", background: "#b42318", color: "#ffffff", fontWeight: 700, cursor: "pointer" }}
               >
                 {actionLoading ? "მუშავდება..." : "ჯავშნის გაუქმება"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── DELETE SELECTED MODAL ─────────────────────────────── */}
+      {deleteModalOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.7)",
+            zIndex: 10000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "1rem",
+          }}
+        >
+          <div style={{ background: "#ffffff", padding: "2rem", borderRadius: "16px", maxWidth: "460px", width: "100%", textAlign: "center" }}>
+            <h3 style={{ margin: "0 0 0.5rem", fontSize: "1.25rem", color: "#1f2d3d" }}>წავშალოთ {selectedIds.size} ჯავშანი?</h3>
+            <p style={{ color: "#64748b", fontSize: "0.9rem", margin: "0 0 0.75rem" }}>
+              ჯავშნები სამუდამოდ წაიშლება და მათი აღდგენა ვეღარ მოხერხდება.
+            </p>
+            <p style={{ color: "#475569", fontSize: "0.8rem", margin: "0 0 1.5rem", fontFamily: "monospace", wordBreak: "break-word" }}>
+              {bookings.filter((b) => selectedIds.has(b.id)).slice(0, 8).map((b) => b.bookingId || b.id).join(", ")}
+              {selectedIds.size > 8 ? ` და კიდევ ${selectedIds.size - 8}` : ""}
+            </p>
+            <div style={{ display: "flex", gap: "0.75rem" }}>
+              <button
+                type="button"
+                onClick={() => setDeleteModalOpen(false)}
+                disabled={deleting}
+                style={{ flex: 1, padding: "0.7rem", borderRadius: "8px", border: "1px solid #cbd5e1", background: "#f8fafc", fontWeight: 600, cursor: "pointer" }}
+              >
+                უკან
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteSelected}
+                disabled={deleting}
+                style={{ flex: 1, padding: "0.7rem", borderRadius: "8px", border: "none", background: "#b42318", color: "#ffffff", fontWeight: 700, cursor: "pointer" }}
+              >
+                {deleting ? "იშლება..." : "დიახ, წაშლა"}
               </button>
             </div>
           </div>

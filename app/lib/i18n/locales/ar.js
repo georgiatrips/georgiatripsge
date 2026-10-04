@@ -795,6 +795,7 @@ export const ar = {
     "dismissBtn": "ربما لاحقاً، شكراً"
   },
   "bookingCoupon": {
+    "alreadyUsed": "لقد استخدمتم هذه القسيمة من قبل",
     "signInRequired": "سجّلوا الدخول لاستخدام القسيمة",
     "title": "قسيمة الخصم",
     "placeholder": "مثال: WELCOME10",

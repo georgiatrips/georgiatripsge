@@ -795,6 +795,7 @@ export const tr = {
     "dismissBtn": "Daha sonra, teşekkürler"
   },
   "bookingCoupon": {
+    "alreadyUsed": "Bu kuponu zaten kullandınız",
     "signInRequired": "Kupon kullanmak için giriş yapın",
     "title": "İndirim Kuponu",
     "placeholder": "örn: WELCOME10",

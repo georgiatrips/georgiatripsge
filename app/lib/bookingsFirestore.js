@@ -10,6 +10,7 @@ import {
   doc,
   updateDoc,
   onSnapshot,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { normalizeBooking, BOOKING_STATUSES } from "./bookingModel";
@@ -184,6 +185,19 @@ export async function updateBookingStatusAdmin(docId, newStatus, meta = {}) {
     console.error("updateBookingStatusAdmin error:", err);
     throw err;
   }
+}
+
+/**
+ * Admin action: permanently delete bookings (Firestore document IDs).
+ */
+export async function deleteBookingsAdmin(docIds = []) {
+  const ids = docIds.filter(Boolean);
+  for (let i = 0; i < ids.length; i += 400) {
+    const batch = writeBatch(db);
+    ids.slice(i, i + 400).forEach((id) => batch.delete(doc(db, BOOKINGS_COLLECTION, id)));
+    await batch.commit();
+  }
+  return ids.length;
 }
 
 /**

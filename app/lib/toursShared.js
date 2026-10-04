@@ -752,32 +752,38 @@ export function cleanFirestorePayload(obj) {
 export function groupDepartureDates(departureDates = [], lang = "ka") {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
+  // Grouped by year and month, so January of next year comes after this
+  // December instead of before October.
   const grouped = new Map();
+  const seen = new Set();
 
   for (const entry of departureDates) {
     const iso = typeof entry === "string" ? entry : entry?.date;
-    if (!iso) continue;
+    if (!iso || seen.has(iso)) continue;
     const [y, m, d] = iso.split("-").map(Number);
     if (!y || !m || !d) continue;
     const target = new Date(y, m - 1, d);
     target.setHours(0, 0, 0, 0);
     if (target < now) continue;
+    seen.add(iso);
 
-    const monthIndex = m - 1;
-    if (!grouped.has(monthIndex)) grouped.set(monthIndex, []);
-    grouped.get(monthIndex).push({
+    const key = y * 12 + (m - 1);
+    if (!grouped.has(key)) grouped.set(key, { year: y, monthIndex: m - 1, dates: [] });
+    grouped.get(key).dates.push({
       chip: `${String(d).padStart(2, "0")}.${String(m).padStart(2, "0")}`,
       date: iso,
       freeSeats: typeof entry === "object" ? Number(entry.freeSeats) || 0 : 0,
     });
   }
 
+  const thisYear = now.getFullYear();
   return Array.from(grouped.entries())
     .sort((a, b) => a[0] - b[0])
-    .map(([monthIndex, dates]) => ({
-      monthName: translateMonthName(monthIndex, lang),
-      monthIndex,
-      dates: dates.sort((a, b) => a.date.localeCompare(b.date)),
+    .map(([, g]) => ({
+      monthName: translateMonthName(g.monthIndex, lang) + (g.year !== thisYear ? ` ${g.year}` : ""),
+      monthIndex: g.monthIndex,
+      year: g.year,
+      dates: g.dates.sort((a, b) => a.date.localeCompare(b.date)),
     }))
     .filter((g) => g.dates.length > 0);
 }
