@@ -1,6 +1,7 @@
 import React, { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getCachedPlaces, getCachedPlaceBySlugOrId, getCachedTours } from "../../../lib/server/cachedData";
+import { placeCardPayload } from "../../../lib/server/clientPayload";
 import { getContentSlug, placePath } from "../../../lib/slugs";
 import { asLocalizedText } from "../../../lib/toursFirestore";
 import { formatRegionName } from "../../../lib/placesMeta";
@@ -15,6 +16,26 @@ const BREADCRUMB_COPY = {
   tr: { home: "Ana Sayfa", places: "Görülecek Yerler" },
   ar: { home: "الرئيسية", places: "المعالم السياحية" },
 };
+
+// The client renders up to three "similar" and three "popular" place cards and
+// three tours that stop here. Only those, with only the card fields, are sent:
+// passing every place and tour made each place page ~2 MB of HTML.
+const RELATED_LIMIT = 3;
+
+function relatedPlacesFor(place, places) {
+  const others = (places || []).filter((item) => item?.id && item.id !== place.id);
+  const similar = others.filter((item) => item.region === place.region).slice(0, RELATED_LIMIT);
+  const popular = others.filter((item) => item.isPopular).slice(0, RELATED_LIMIT);
+  const picked = new Map([...similar, ...popular].map((item) => [item.id, placeCardPayload(item)]));
+  return [...picked.values()];
+}
+
+function toursStoppingAt(place, tours) {
+  return (tours || [])
+    .filter((tour) => (tour.itinerary || []).some((stop) => stop?.placeId === place.id))
+    .slice(0, RELATED_LIMIT)
+    .map(({ id, slug, title, img, duration }) => ({ id, slug, title, img, duration, itinerary: [{ placeId: place.id }] }));
+}
 
 // Pre-render the current places at build time; new ones render on first request.
 export async function generateStaticParams() {
@@ -95,7 +116,11 @@ export default async function PlaceDetailPage({ params }) {
         />
       )}
       <Suspense fallback={<div style={{ padding: "4rem", textAlign: "center", color: "#1f2d3d" }}>...</div>}>
-        <PlaceDetailClient initialPlace={place} initialAllPlaces={places} initialTours={tours} />
+        <PlaceDetailClient
+          initialPlace={place}
+          initialAllPlaces={relatedPlacesFor(place, places)}
+          initialTours={toursStoppingAt(place, tours)}
+        />
       </Suspense>
     </>
   );

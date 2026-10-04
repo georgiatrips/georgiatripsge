@@ -2,6 +2,7 @@ import React, { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { asLocalizedText, extractImageUrl, isMultiDayTour, tourDurationDays } from "../../../lib/toursShared";
 import { getCachedTourBySlugOrId, getCachedTours, getCachedPlaces, getCachedReviews, serializeForClient } from "../../../lib/server/cachedData";
+import { placesLinkedFrom, tourCardPayload } from "../../../lib/server/clientPayload";
 import { getContentSlug, placePath, tourPath } from "../../../lib/slugs";
 import TourDetailClient from "../../../components/tours/TourDetailClient";
 import { visibleReviews } from "../../../components/site/ReviewsSection";
@@ -60,6 +61,18 @@ const BREADCRUMB_COPY = {
   tr: { home: "Ana Sayfa", tours: "Turlar" },
   ar: { home: "الرئيسية", tours: "الجولات" },
 };
+
+// The client needs the places this tour links to (for localized stop and photo
+// titles) and a handful of other tours for the "other tours" cards.
+const OTHER_TOUR_CANDIDATES = 6;
+
+function otherTourCandidates(currentTour, tours) {
+  return (tours || [])
+    .filter((tour) => tour?.id && tour.id !== currentTour.id)
+    .sort((a, b) => Number(Boolean(b.isPopular)) - Number(Boolean(a.isPopular)))
+    .slice(0, OTHER_TOUR_CANDIDATES)
+    .map((tour) => tourCardPayload(tour));
+}
 
 // Pre-render the current tours at build time; tours added later are rendered
 // on first request and then cached like the rest (see [locale]/layout.js).
@@ -208,8 +221,8 @@ export default async function TourDetailPage({ params }) {
       <Suspense fallback={<div style={{ padding: "4rem", textAlign: "center", color: "#1f2d3d" }}>...</div>}>
         <TourDetailClient
           initialTour={cleanTour}
-          initialAllTours={cleanAllTours}
-          initialPlaces={cleanPlaces}
+          initialAllTours={otherTourCandidates(rawTour, cleanAllTours)}
+          initialPlaces={placesLinkedFrom([rawTour], cleanPlaces)}
           reviews={reviews}
         />
       </Suspense>

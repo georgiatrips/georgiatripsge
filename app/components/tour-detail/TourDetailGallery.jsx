@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { interpolate } from "../../lib/i18n/translateCore";
 import { asLocalizedText } from "../../lib/toursShared";
+import { preloadLightboxPhoto } from "./TourLightbox";
 
 // Long galleries (some tours have 20+ photos) start with six photos, which fill
 // whole rows at two and three columns, and open fully on request.
@@ -40,6 +41,8 @@ export default function TourDetailGallery({ tour, resolvePhotoPlaceTitle, openLi
                 className="tdp-gallery-item"
                 style={{ position: "relative" }}
                 onClick={() => openLightbox(idx)}
+                onPointerEnter={() => preloadLightboxPhoto(src)}
+                onTouchStart={() => preloadLightboxPhoto(src)}
                 aria-label={`${place || `${title} ${idx + 1}`} — ${t("tourDetail.enlarge")}`}
               >
                 <Image src={src} alt={place || `${title} ${idx + 1}`} fill sizes="(max-width: 768px) 50vw, 300px" style={{ objectFit: "cover" }} />

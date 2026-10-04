@@ -1,7 +1,9 @@
 import { unstable_cache } from "next/cache";
 import { listFirestoreTours, getFirestoreTourById, isTourActive } from "../toursFirestore";
 import { ALL_TOURS as staticTours } from "../toursData";
-import { listPlaces } from "../placesFirestore";
+import { collection, getDocs, limit, query, where } from "firebase/firestore";
+import { db } from "../firebase";
+import { listPlaces, normalizePlace } from "../placesFirestore";
 import { listPostSummaries } from "../postsFirestore";
 import { listHotels } from "../hotelsFirestore";
 import { findBySlugOrId, getContentSlug } from "../slugs";
@@ -227,13 +229,36 @@ export const getCachedTransferPricing = unstable_cache(
 export async function getCachedTourBySlugOrId(param) {
   const tours = await getCachedTours();
   const { item } = findBySlugOrId(tours, param);
-  return item || (await getCachedTourById(param));
+  if (item) return item;
+  const byId = await getCachedTourById(param);
+  if (byId) return byId;
+  const bySlug = await findBySlugUncached("tours", param);
+  return isTourActive(bySlug) ? serializeForClient(bySlug) : null;
 }
 
 /** Same as getCachedTourBySlugOrId, for places. */
 export async function getCachedPlaceBySlugOrId(param) {
   const places = await getCachedPlaces();
-  return findBySlugOrId(places, param).item;
+  const { item } = findBySlugOrId(places, param);
+  if (item) return item;
+  const bySlug = await findBySlugUncached("places", param);
+  return bySlug ? serializeForClient(normalizePlace(bySlug)) : null;
+}
+
+// An item saved within the last cache hour is missing from the cached lists.
+// Look its slug up directly, so the new page renders instead of a not-found
+// that ISR would then keep serving long after the item exists.
+async function findBySlugUncached(collectionName, slug) {
+  const key = decodeURIComponent(String(slug || ""));
+  if (!key) return null;
+  try {
+    const snap = await getDocs(query(collection(db, collectionName), where("slug", "==", key), limit(1)));
+    const found = snap.docs[0];
+    return found ? { id: found.id, ...found.data() } : null;
+  } catch (err) {
+    console.error(`[findBySlugUncached] ${collectionName}/${key}:`, err);
+    return null;
+  }
 }
 
 /**

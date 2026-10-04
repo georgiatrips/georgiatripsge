@@ -86,7 +86,14 @@ export default function PlaceDetailClient({ initialPlace = null, initialAllPlace
               {place.gallery?.length > 0 && (
                 <div className="place-gallery">
                   {place.gallery.map((image, index) => (
-                    <Image key={`${image}-${index}`} src={image} alt={`${asLocalizedText(place.title, lang)} ${index + 1}`} width={900} height={600} />
+                    <Image
+                      key={`${image}-${index}`}
+                      src={image}
+                      alt={`${asLocalizedText(place.title, lang)} ${index + 1}`}
+                      width={900}
+                      height={600}
+                      sizes={place.gallery.length === 1 ? "(max-width: 1100px) 100vw, 880px" : "(max-width: 640px) 100vw, (max-width: 1100px) 50vw, 440px"}
+                    />
                   ))}
                 </div>
               )}

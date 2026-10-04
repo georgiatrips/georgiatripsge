@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
 import { getCachedPlaces } from "../../lib/server/cachedData";
+import { placeCardPayload } from "../../lib/server/clientPayload";
 import { asLocalizedText } from "../../lib/toursFirestore";
 import PlacesCatalogClient from "../../components/places/PlacesCatalogClient";
 import { SITE_URL, getRequestLocale, buildLocalizedMetadata } from "../../lib/siteConfig";
@@ -64,7 +65,7 @@ export default async function PlacesPage({ params }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(placesJsonLd) }}
       />
       <Suspense fallback={<div className="places-state">...</div>}>
-        <PlacesCatalogClient initialPlaces={places} />
+        <PlacesCatalogClient initialPlaces={places.map((place) => placeCardPayload(place, { descLang: lang }))} />
       </Suspense>
     </>
   );

@@ -2,6 +2,7 @@ import { NextResponse, after } from "next/server";
 import { revalidateTag, revalidatePath } from "next/cache";
 import { requireAdmin } from "../../../lib/server/adminAuth";
 import { submitToIndexNow } from "../../../lib/server/indexNow";
+import { SUPPORTED_LANGUAGES } from "../../../lib/siteConfig";
 
 const CORE_TAGS = ["tours", "places", "posts", "hotels", "reviews", "transfers"];
 
@@ -35,6 +36,15 @@ export async function POST(request) {
     // pick up additions and deletions.
     revalidatePath("/sitemap.xml");
     revalidatePath("/content-index.json");
+    // Detail pages are cached per URL; refresh the saved item's page in every
+    // language so an edit (or a page first rendered before the item existed)
+    // shows up immediately.
+    const changedPaths = (Array.isArray(changed) ? changed : [])
+      .filter((p) => typeof p === "string" && /^\/(tours|places)\/[^/]+$/.test(p))
+      .slice(0, 20);
+    for (const p of changedPaths) {
+      for (const locale of SUPPORTED_LANGUAGES) revalidatePath(`/${locale}${p}`);
+    }
     if (Array.isArray(changed) && changed.length > 0) {
       after(() =>
         submitToIndexNow(changed).catch((err) => console.warn("[indexNow]", err.message))

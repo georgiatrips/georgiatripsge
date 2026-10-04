@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "../Navbar";
@@ -36,6 +35,7 @@ import ReviewsSection from "../site/ReviewsSection";
 import TourMobileBookingBar from "../tour-detail/TourMobileBookingBar";
 import TourDetailPromoBanners from "../tour-detail/TourDetailPromoBanners";
 import TourDetailFaq from "../tour-detail/TourDetailFaq";
+import TourLightbox from "../tour-detail/TourLightbox";
 
 // Admin lists (included / not included) are stored one item per line.
 function toLines(text) {
@@ -123,13 +123,15 @@ export default function TourDetailClient({
   }, [tourId, initialTour]);
 
   useEffect(() => {
-    if (initialPlaces && initialPlaces.length > 0) return;
+    // The server sends exactly the places this tour links to (possibly none);
+    // only a client-side fallback render without that data loads them here.
+    if (initialTour) return;
     let cancelled = false;
     import("../../lib/placesFirestore").then(({ listPlaces }) => listPlaces()).then((list) => {
       if (!cancelled && Array.isArray(list)) setPlacesList(list);
     }).catch(() => {});
     return () => { cancelled = true; };
-  }, [initialPlaces]);
+  }, [initialTour]);
 
   const isFirestoreTour = !!fsTour;
   const rawTour = fsTour || rawFsDoc;
@@ -453,19 +455,7 @@ export default function TourDetailClient({
   };
 
   const openLightbox = (idx) => setLightboxImgIndex(idx);
-  const closeLightbox = () => setLightboxImgIndex(null);
-  const prevLightboxImg = (e) => {
-    e.stopPropagation();
-    if (tour?.gallery?.length) {
-      setLightboxImgIndex((prev) => (prev > 0 ? prev - 1 : tour.gallery.length - 1));
-    }
-  };
-  const nextLightboxImg = (e) => {
-    e.stopPropagation();
-    if (tour?.gallery?.length) {
-      setLightboxImgIndex((prev) => (prev < tour.gallery.length - 1 ? prev + 1 : 0));
-    }
-  };
+  const closeLightbox = useCallback(() => setLightboxImgIndex(null), []);
 
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
@@ -737,34 +727,16 @@ export default function TourDetailClient({
       />
 
       {/* Lightbox Modal */}
-      {lightboxImgIndex !== null && tour.gallery && (
-        <div className="tdp-lightbox-overlay" onClick={closeLightbox}>
-          <div className="tdp-lightbox-content" onClick={(e) => e.stopPropagation()}>
-            <button type="button" className="lb-close" onClick={closeLightbox} aria-label={t("common.close")}>✕</button>
-            <button type="button" className="lb-nav lb-prev" onClick={prevLightboxImg} aria-label={t("datePicker.prevMonth")}>‹</button>
-            <div className="lb-image-wrapper">
-              <Image
-                src={tour.gallery[lightboxImgIndex]}
-                alt={resolvePhotoPlaceTitle(tour.gallery[lightboxImgIndex], lightboxImgIndex) || asLocalizedText(tour.title, lang)}
-                width={1200}
-                height={800}
-                style={{ objectFit: "contain", maxHeight: "85vh", width: "auto" }}
-              />
-            </div>
-            <button type="button" className="lb-nav lb-next" onClick={nextLightboxImg} aria-label={t("datePicker.nextMonth")}>›</button>
-            <div className="lb-counter" style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "center" }}>
-              {(() => {
-                const cleanLoc = resolvePhotoPlaceTitle(tour.gallery[lightboxImgIndex], lightboxImgIndex);
-                return cleanLoc ? (
-                  <span style={{ color: "var(--gt-primary, #2a6592)", fontWeight: 700, fontSize: "0.95rem" }}>
-                    📍 {cleanLoc}
-                  </span>
-                ) : null;
-              })()}
-              <span>{lightboxImgIndex + 1} / {tour.gallery.length}</span>
-            </div>
-          </div>
-        </div>
+      {lightboxImgIndex !== null && tour.gallery?.length > 0 && (
+        <TourLightbox
+          photos={tour.gallery}
+          index={lightboxImgIndex}
+          onIndexChange={setLightboxImgIndex}
+          onClose={closeLightbox}
+          resolveTitle={resolvePhotoPlaceTitle}
+          altBase={asLocalizedText(tour.title, lang)}
+          labels={{ close: t("common.close"), prev: t("datePicker.prevMonth"), next: t("datePicker.nextMonth") }}
+        />
       )}
 
       {/* Booking bar for phones: price, WhatsApp and a jump to the booking form */}

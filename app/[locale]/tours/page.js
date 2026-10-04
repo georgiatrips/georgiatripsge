@@ -1,6 +1,7 @@
 import React, { Suspense } from "react";
 import { asLocalizedText } from "../../lib/toursFirestore";
 import { getCachedTours, serializeForClient } from "../../lib/server/cachedData";
+import { tourCardPayload } from "../../lib/server/clientPayload";
 import ToursCatalogClient from "../../components/tours/ToursCatalogClient";
 import { SITE_URL, getRequestLocale, buildLocalizedMetadata } from "../../lib/siteConfig";
 import { tourPath } from "../../lib/slugs";
@@ -32,7 +33,8 @@ export default async function ToursPage({ params }) {
   const { locale } = await params;
   const lang = getRequestLocale(locale);
   const rawTours = await getCachedTours();
-  const tours = serializeForClient(rawTours) || [];
+  // Cards, filters and text search read only these fields (see clientPayload.js).
+  const tours = (serializeForClient(rawTours) || []).map((tour) => tourCardPayload(tour, { descLang: lang }));
   const c = COPY[lang] || COPY.en;
 
   // JSON-LD: the catalog as an ItemList, plus the breadcrumb trail the other
