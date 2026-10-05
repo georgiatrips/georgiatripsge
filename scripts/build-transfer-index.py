@@ -81,7 +81,9 @@ def classify(tags):
         return ("church" if t("historic") in ("church", "monastery") else "sight", 50)
     if t("boundary") in ("national_park", "protected_area"):
         return ("nature", 45)
-    if t("landuse") == "residential" or t("building") or t("office") or t("club"):
+    # Named complexes, including ones still being built ("Orbi City" is
+    # landuse=construction), malls' grounds and business centres.
+    if t("landuse") in ("residential", "construction", "commercial", "retail") or t("building") or t("office") or t("club"):
         return ("address", 20)
     return None
 
