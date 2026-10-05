@@ -20,9 +20,9 @@
 
 export const TRANSFER_VEHICLE_KEYS = ["sedan", "minivan", "jeep", "sprinter"];
 
-// Stored docs without this marker use the old per-km table and are replaced
-// by the defaults below.
-export const TRANSFER_PRICING_MODEL = "band-markup";
+// Stored docs without this marker are replaced by the defaults below: the old
+// per-km table, and "band-markup" tables saved before the 0–15 km band.
+export const TRANSFER_PRICING_MODEL = "band-markup-2";
 
 export const DEFAULT_TRANSFER_PRICING = {
   model: TRANSFER_PRICING_MODEL,
