@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
+import { getCachedCustomTransferPlaces } from "../../../lib/server/cachedData";
+import { inGeorgia, matchCustomPlaces } from "../../../lib/transfers/customPlaces";
+import { nameOsmPoint, searchOsmPlaces } from "../../../lib/transfers/osmSearch";
 
 // Place search for the transfer calculator's "From" and "To" fields, limited to Georgia,
 // and the reverse lookup that names a point picked on the calculator's map.
-// Photon (OpenStreetMap geocoder built for type-ahead) needs no API key.
+// Order: places added in the admin panel, then our own OpenStreetMap index
+// (osmSearch.js, rebuilt from the daily Georgia extract), then — only when
+// those find little — Photon, the public OSM geocoder, which also knows
+// house numbers but is often slow.
 export const dynamic = "force-dynamic";
 
 const PHOTON_BASE = "https://photon.komoot.io/";
@@ -12,6 +18,9 @@ const USER_AGENT = "GeorgiaTrips/1.0 (+https://www.georgiatrips.ge)";
 
 const CACHE_MS = 24 * 60 * 60 * 1000;
 const CACHE_MAX = 500;
+// Photon only tops up a short list, so it gets little time: when it is slow
+// (often 8–10 s lately) the visitor gets our own results instead of waiting.
+const PHOTON_TIMEOUT_MS = 3500;
 const cache = new Map(); // key -> { at, results }
 
 const HOTEL_VALUES = new Set(["hotel", "hostel", "guest_house", "motel", "apartment", "chalet", "alpine_hut", "camp_site"]);
@@ -42,117 +51,115 @@ function describe(p) {
   return unique.slice(0, 2).join(", ");
 }
 
-// Places a dropped pin may be named after; otherwise the street address
-// reads better than the nearest café.
-const PIN_NAMED_TYPES = new Set(["hotel", "airport", "station", "church", "sight"]);
-
-function toResult(f, fallbackId, { forPin = false } = {}) {
+function toResult(f, fallbackId) {
   const p = f.properties || {};
   const [lng, lat] = f.geometry?.coordinates || [];
   if (p.countrycode !== "GE" || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
-  const type = placeType(p);
   // A street address has no name of its own: "Rustaveli St 12".
   const address = [p.street, p.housenumber].filter(Boolean).join(" ");
-  const name = forPin && address && !PIN_NAMED_TYPES.has(type) ? address : p.name || address || p.city;
+  const name = p.name || address;
   if (!name) return null;
   return {
     id: `${p.osm_type || ""}${p.osm_id || fallbackId}`,
     name,
     detail: describe(p),
-    type,
+    type: placeType(p),
     lat: Math.round(lat * 1e5) / 1e5,
     lng: Math.round(lng * 1e5) / 1e5,
   };
 }
 
-async function photon(path, params) {
-  const res = await fetch(`${PHOTON_BASE}${path}?${new URLSearchParams(params)}`, {
+async function photonSearch(q, lang) {
+  const params = new URLSearchParams({ q, limit: "30", lang, bbox: GEORGIA_BBOX });
+  const res = await fetch(`${PHOTON_BASE}api/?${params}`, {
     headers: { "User-Agent": USER_AGENT },
-    signal: AbortSignal.timeout(6000),
+    signal: AbortSignal.timeout(PHOTON_TIMEOUT_MS),
     cache: "no-store",
   });
   if (!res.ok) throw new Error(`Photon ${res.status}`);
   const data = await res.json();
-  return data.features || [];
+  return (data.features || []).map((f, i) => toResult(f, i)).filter(Boolean);
 }
 
-function remember(key, results) {
-  if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value);
-  cache.set(key, { at: Date.now(), results });
+// Street and number at a point, e.g. "Gorgiladze St 97" (Photon reverse).
+async function photonAddress(lat, lng, lang) {
+  const params = new URLSearchParams({ lat, lon: lng, lang, limit: "1" });
+  const res = await fetch(`${PHOTON_BASE}reverse?${params}`, {
+    headers: { "User-Agent": USER_AGENT },
+    signal: AbortSignal.timeout(2500),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`Photon ${res.status}`);
+  const p = (await res.json()).features?.[0]?.properties;
+  if (!p || p.countrycode !== "GE") return null;
+  const street = [p.street, p.housenumber].filter(Boolean).join(" ");
+  const name = street || p.name;
+  return name ? { id: `rev${p.osm_id || ""}`, name, detail: describe(p), type: "address", lat, lng } : null;
 }
 
-// ?lat=&lng= : the place at a point picked on the map.
-async function reverse(lat, lng, lang) {
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return NextResponse.json({ results: [] }, { status: 400 });
-  const key = `rev:${lang}:${lat.toFixed(4)},${lng.toFixed(4)}`;
-  const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < CACHE_MS) return NextResponse.json({ results: hit.results });
-  try {
-    const features = await photon("reverse", { lat, lon: lng, lang, limit: 1 });
-    const results = features.map((f, i) => toResult(f, i, { forPin: true })).filter(Boolean).slice(0, 1);
-    remember(key, results);
-    return NextResponse.json({ results });
-  } catch (err) {
-    console.warn("[api/transfers/places reverse]", err.message);
-    return NextResponse.json({ results: [], error: "search_unavailable" }, { status: 502 });
+// Adds b's entries that a doesn't already have (same name and town).
+function merge(a, b, limit = 12) {
+  const seen = new Set(a.map((r) => `${r.name.toLowerCase()}|${r.detail}`));
+  const names = new Set(a.map((r) => r.name.toLowerCase()));
+  const out = [...a];
+  for (const r of b) {
+    if (out.length >= limit) break;
+    if (seen.has(`${r.name.toLowerCase()}|${r.detail}`) || names.has(r.name.toLowerCase())) continue;
+    seen.add(`${r.name.toLowerCase()}|${r.detail}`);
+    out.push(r);
   }
+  return out;
 }
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  // Photon's public instance serves local names ("default") or en/de/fr.
-  const lang = searchParams.get("lang") === "ka" ? "default" : "en";
+  const rawLang = searchParams.get("lang") || "ka";
+  const lang = ["ka", "en", "ru", "tr", "ar"].includes(rawLang) ? rawLang : "en";
 
+  // ?lat=&lng= : a name for a point picked on the map.
   if (searchParams.has("lat")) {
-    return reverse(Number(searchParams.get("lat")), Number(searchParams.get("lng")), lang);
+    const lat = Number(searchParams.get("lat"));
+    const lng = Number(searchParams.get("lng"));
+    if (!inGeorgia(lat, lng)) return NextResponse.json({ results: [] }, { status: 400 });
+    const { place, area } = nameOsmPoint(lat, lng, lang);
+    if (place) return NextResponse.json({ results: [place] });
+    const address = await photonAddress(lat, lng, lang === "ka" ? "default" : "en").catch(() => null);
+    return NextResponse.json({ results: [address || area].filter(Boolean) });
   }
 
   const q = (searchParams.get("q") || "").trim().slice(0, 100);
   if (q.length < 2) return NextResponse.json({ results: [] });
 
-  const key = `${lang}:${q.toLowerCase()}`;
+  // Own places are matched on every request (cheap, and an added place
+  // shows up at once).
+  const custom = matchCustomPlaces(await getCachedCustomTransferPlaces(), q).map((p) => ({
+    id: `gt-${p.id}`,
+    name: lang === "ka" ? p.name : p.nameEn || p.name,
+    detail: "",
+    type: p.type,
+    lat: p.lat,
+    lng: p.lng,
+  }));
+  // Cafés, shops, streets and bare addresses are rarely the pickup/drop-off,
+  // so they go below hotels, sights and settlements (the first result is
+  // auto-picked when the field is left).
+  const local = searchOsmPlaces(q, lang, 24);
+  local.sort((a, b) => LOW_PRIORITY_TYPES.has(a.type) - LOW_PRIORITY_TYPES.has(b.type));
+  let results = merge(custom, local);
+  if (results.length >= 3) return NextResponse.json({ results });
+
+  // Little found: ask Photon too (house numbers, odd spellings), cached.
+  const photonLang = lang === "ka" ? "default" : "en";
+  const key = `${photonLang}:${q.toLowerCase()}`;
   const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < CACHE_MS) {
-    return NextResponse.json({ results: hit.results });
-  }
-
+  if (hit && Date.now() - hit.at < CACHE_MS) return NextResponse.json({ results: merge(results, hit.results) });
   try {
-    // Local and English names are indexed separately ("ორბი" vs "Orbi
-    // City"), so both are searched and merged, the visitor's language first.
-    // Georgia's bbox also covers bits of its neighbours, hence the high limit.
-    const other = lang === "default" ? "en" : "default";
-    const [primary, secondary] = await Promise.allSettled([
-      photon("api/", { q, limit: 30, lang, bbox: GEORGIA_BBOX }),
-      photon("api/", { q, limit: 30, lang: other, bbox: GEORGIA_BBOX }),
-    ]);
-    if (primary.status === "rejected" && secondary.status === "rejected") throw primary.reason;
-    const features = [
-      ...(primary.status === "fulfilled" ? primary.value : []),
-      ...(secondary.status === "fulfilled" ? secondary.value : []),
-    ];
-
-    const seenIds = new Set();
-    const seen = new Set();
-    const results = [];
-    for (const [i, f] of features.entries()) {
-      const r = toResult(f, i);
-      if (!r || seenIds.has(r.id)) continue;
-      seenIds.add(r.id);
-      const dedupe = `${r.name}|${r.detail}`;
-      if (seen.has(dedupe)) continue;
-      seen.add(dedupe);
-      results.push(r);
-    }
-    // Cafés, shops, streets and bare addresses are rarely the pickup/drop-off,
-    // so they go below hotels, sights and settlements (the first result is
-    // auto-picked when the field is left).
-    results.sort((a, b) => LOW_PRIORITY_TYPES.has(a.type) - LOW_PRIORITY_TYPES.has(b.type));
-    results.length = Math.min(results.length, 12);
-
-    remember(key, results);
-    return NextResponse.json({ results });
+    const photon = await photonSearch(q, photonLang);
+    if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value);
+    cache.set(key, { at: Date.now(), results: photon });
+    results = merge(results, photon);
   } catch (err) {
-    console.warn("[api/transfers/places]", err.message);
-    return NextResponse.json({ results: [], error: "search_unavailable" }, { status: 502 });
+    console.warn("[api/transfers/places] Photon:", err.message);
   }
+  return NextResponse.json({ results });
 }

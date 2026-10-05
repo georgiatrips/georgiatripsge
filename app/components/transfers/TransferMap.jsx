@@ -10,8 +10,12 @@
 import React, { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "./TransferMap.css";
 
 const GEORGIA_CENTER = [42.1, 43.4];
+// The map cannot be panned far from Georgia, and a pin dropped outside the
+// country is ignored, so a stray drag never prices a trip to Canada.
+const GEORGIA_BOUNDS = L.latLngBounds([40.8, 39.8], [43.8, 46.9]);
 const START_COLOR = "#3a9296"; // --gt-teal, like the "From" field dot
 const END_COLOR = "#e0a93b"; // --gt-gold, like the "To" field dot
 const ROUTE_COLOR = "#2a6592";
@@ -24,18 +28,22 @@ const pinIcon = (letter, color) =>
     iconAnchor: [15, 36],
   });
 
-export default function TransferMap({ from, to, path, onPick, hint }) {
+// clickMovesFrom: a click always moves pin A (the admin's single-point picker).
+export default function TransferMap({ from, to, path, onPick, hint, clickMovesFrom = false }) {
   const elRef = useRef(null);
   const mapRef = useRef(null);
   const layersRef = useRef({ from: null, to: null, line: null });
   // Latest props for Leaflet's event handlers, which are bound once.
-  const latest = useRef({ from, to, onPick });
-  latest.current = { from, to, onPick };
+  const latest = useRef({ from, to, onPick, clickMovesFrom });
+  latest.current = { from, to, onPick, clickMovesFrom };
 
   useEffect(() => {
     const map = L.map(elRef.current, {
       center: GEORGIA_CENTER,
       zoom: 6,
+      minZoom: 6,
+      maxBounds: GEORGIA_BOUNDS.pad(0.15),
+      maxBoundsViscosity: 1,
       scrollWheelZoom: false, // the page scrolls over the map
       attributionControl: true,
     });
@@ -45,8 +53,9 @@ export default function TransferMap({ from, to, path, onPick, hint }) {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
     }).addTo(map);
     map.on("click", (e) => {
-      const { from: a, to: b, onPick: pick } = latest.current;
-      if (!a) pick("from", e.latlng.lat, e.latlng.lng);
+      if (!GEORGIA_BOUNDS.contains(e.latlng)) return;
+      const { from: a, to: b, onPick: pick, clickMovesFrom: moveA } = latest.current;
+      if (!a || moveA) pick("from", e.latlng.lat, e.latlng.lng);
       else if (!b) pick("to", e.latlng.lat, e.latlng.lng);
     });
     mapRef.current = map;
@@ -75,6 +84,12 @@ export default function TransferMap({ from, to, path, onPick, hint }) {
         const marker = L.marker([point.lat, point.lng], { icon: pinIcon(letter, color), draggable: true, keyboard: false });
         marker.on("dragend", () => {
           const ll = marker.getLatLng();
+          if (!GEORGIA_BOUNDS.contains(ll)) {
+            // Back to where it was: outside Georgia is not a pickup point.
+            const prev = latest.current[key];
+            if (prev) marker.setLatLng([prev.lat, prev.lng]);
+            return;
+          }
           latest.current.onPick(key, ll.lat, ll.lng);
         });
         layers[key] = marker.addTo(map);

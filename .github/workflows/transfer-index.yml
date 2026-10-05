@@ -1,0 +1,37 @@
+# Rebuilds the transfer calculator's place index (app/lib/transfers/data/
+# osm-places.json) from OpenStreetMap's daily Georgia extract every Monday,
+# so hotels and places added to the map recently become searchable. A changed
+# index is committed to main, which Vercel deploys.
+name: Transfer place index
+
+on:
+  schedule:
+    - cron: "0 3 * * 1" # Mondays 03:00 UTC (07:00 Tbilisi)
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install osmium
+      - run: curl -fsSL -o georgia.osm.pbf https://download.geofabrik.de/europe/georgia-latest.osm.pbf
+      - run: python scripts/build-transfer-index.py georgia.osm.pbf
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- app/lib/transfers/data/osm-places.json; then
+            echo "Index unchanged."
+            exit 0
+          fi
+          git config user.name "georgiatrips"
+          git config user.email "georgiatrips5@gmail.com"
+          git add app/lib/transfers/data/osm-places.json
+          git commit -m "Transfer place index: refresh from OpenStreetMap"
+          git push

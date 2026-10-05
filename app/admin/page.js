@@ -18,6 +18,7 @@ import AnalyticsManager from "./AnalyticsManager";
 import CouponManager from "./CouponManager";
 import BookingManager from "./BookingManager";
 import TransferPricingManager from "./TransferPricingManager";
+import TransferPlacesManager from "./TransferPlacesManager";
 import { subscribeToLiveSessions } from "../lib/analytics";
 import { subscribeToBookings } from "../lib/bookingsFirestore";
 import LocalizedInputGroup, { emptyLangObj, parseLocal } from "./LocalizedInputGroup";
@@ -922,6 +923,7 @@ export default function AdminPage() {
         { key: "bookings", label: "ჯავშნები", Icon: ClipboardIcon, badge: pendingBookingsCount > 0 ? { text: String(pendingBookingsCount), tone: "warn" } : null },
         { key: "coupons", label: "კუპონები", Icon: TicketIcon },
         { key: "transfers", label: "ტრანსფერის ფასები", Icon: CarIcon },
+        { key: "transferPlaces", label: "ტრანსფერის ლოკაციები", Icon: LocationIcon },
       ],
     },
     {
@@ -2265,6 +2267,11 @@ export default function AdminPage() {
           {/* TAB: TRANSFER PRICES (distance bands per vehicle) */}
           {activeTab === "transfers" && (
             <TransferPricingManager />
+          )}
+
+          {/* TAB: TRANSFER PLACES (hand-added hotels/spots for the calculator search) */}
+          {activeTab === "transferPlaces" && (
+            <TransferPlacesManager />
           )}
 
           {/* TAB 7: BOOKINGS MANAGEMENT */}

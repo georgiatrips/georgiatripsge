@@ -1,0 +1,43 @@
+/* Mini map (TransferMap.jsx), used by the transfer calculator and the admin
+   "transfer places" form. isolation keeps Leaflet's own z-indexes below
+   the search dropdowns. */
+.tf-map {
+  position: relative;
+  isolation: isolate;
+  z-index: 0;
+  margin-top: 0.9rem;
+  border: 1px solid var(--gt-line);
+  border-radius: 16px;
+  overflow: hidden;
+  background: #eef2f5;
+}
+.tf-map-canvas { height: 240px; width: 100%; }
+.tf-map-hint {
+  margin: 0;
+  padding: 0.5rem 0.85rem;
+  border-top: 1px solid var(--gt-line);
+  background: var(--gt-white);
+  font-size: 0.8rem;
+  color: var(--gt-muted);
+}
+.tf-map .leaflet-container { font: inherit; }
+.tf-map-pin { background: none; border: 0; }
+.tf-map-pin span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 2px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.35);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: grab;
+}
+.tf-map-pin b { transform: rotate(45deg); line-height: 1; }
+.tf-map-skeleton { height: 240px; }
+@media (max-width: 640px) {
+  .tf-map-canvas, .tf-map-skeleton { height: 200px; }
+}

@@ -9,6 +9,7 @@ import { listHotels } from "../hotelsFirestore";
 import { findBySlugOrId, getContentSlug } from "../slugs";
 import { listReviews } from "../reviewsFirestore";
 import { getTransferPricing } from "../transfers/pricingFirestore";
+import { getCustomTransferPlaces } from "../transfers/customPlacesFirestore";
 import { DEFAULT_TRANSFER_PRICING, toPublicPricing } from "../transfers/pricing";
 
 /**
@@ -220,6 +221,23 @@ export const getCachedTransferPricing = unstable_cache(
     revalidate: 60,
     tags: ["transfers"],
   }
+);
+
+/**
+ * Places added by hand in the admin panel, searched before OpenStreetMap.
+ * Same tag as the prices, so saving either refreshes both.
+ */
+export const getCachedCustomTransferPlaces = unstable_cache(
+  async () => {
+    try {
+      return await getCustomTransferPlaces();
+    } catch (err) {
+      console.error("[getCachedCustomTransferPlaces] Error:", err);
+      return [];
+    }
+  },
+  ["transfer-custom-places-cache"],
+  { revalidate: 60, tags: ["transfers"] }
 );
 
 /**
