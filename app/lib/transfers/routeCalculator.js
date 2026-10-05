@@ -1,7 +1,7 @@
 /**
  * GeorgiaTrips Smart Transfer & Route Calculator
  *
- * Locations, known road distances and quote assembly. Per-km prices live in
+ * Locations, known road distances and quote assembly. Prices live in
  * ./pricing.js and are edited from the admin panel (distance bands per vehicle).
  */
 

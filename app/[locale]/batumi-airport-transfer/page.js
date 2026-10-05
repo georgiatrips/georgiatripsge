@@ -3,7 +3,7 @@ import Link from "next/link";
 import { SITE_URL, getRequestLocale, buildLocalizedMetadata, getLocalizedHref } from "../../lib/siteConfig";
 import { WA_LINK, SOCIAL_PROFILES } from "../../lib/shared";
 import { getCachedTransferPricing } from "../../lib/server/cachedData";
-import { getTransferFare, normalizeTransferPricing } from "../../lib/transfers/pricing";
+import { getTransferFare } from "../../lib/transfers/pricing";
 import "../../landing.css";
 
 export async function generateMetadata({ params }) {
@@ -127,8 +127,8 @@ export default async function BatumiAirportTransferPage({ params }) {
   const lang = getRequestLocale(locale);
   const c = CONTENT[lang] || CONTENT.en;
 
-  // Prices follow the per-km tariffs managed in the admin panel.
-  const pricing = normalizeTransferPricing(await getCachedTransferPricing());
+  // Prices follow the tariffs managed in the admin panel.
+  const pricing = await getCachedTransferPricing();
   const rateRows = c.rates.map((row) => {
     const fares = Object.fromEntries(
       ["sedan", "minivan", "sprinter"].map((key) => [key, getTransferFare(pricing, key, row.km)])

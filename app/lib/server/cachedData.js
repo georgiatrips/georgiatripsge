@@ -9,7 +9,7 @@ import { listHotels } from "../hotelsFirestore";
 import { findBySlugOrId, getContentSlug } from "../slugs";
 import { listReviews } from "../reviewsFirestore";
 import { getTransferPricing } from "../transfers/pricingFirestore";
-import { DEFAULT_TRANSFER_PRICING, normalizeTransferPricing } from "../transfers/pricing";
+import { DEFAULT_TRANSFER_PRICING, toPublicPricing } from "../transfers/pricing";
 
 /**
  * Recursively converts Firestore Timestamp instances, Dates, and non-plain objects
@@ -200,19 +200,20 @@ export const getCachedReviews = unstable_cache(
 );
 
 /**
- * Cached getter for the transfer calculator's distance-band prices.
+ * Cached getter for the transfer calculator's distance-band prices, as
+ * finished ₾/km rates (the markup formula stays in the admin panel).
  * Cached for 1 minute, tagged with 'transfers' (the admin pricing tab revalidates it).
  */
 export const getCachedTransferPricing = unstable_cache(
   async () => {
     try {
-      return serializeForClient(await getTransferPricing());
+      return toPublicPricing(await getTransferPricing());
     } catch (err) {
       console.error("[getCachedTransferPricing] Error:", err);
-      return normalizeTransferPricing(DEFAULT_TRANSFER_PRICING);
+      return toPublicPricing(DEFAULT_TRANSFER_PRICING);
     }
   },
-  ["transfer-pricing-cache"],
+  ["transfer-pricing-cache-v3"],
   {
     // Short, so saved prices show up within a minute even if the admin's
     // revalidate call does not get through.

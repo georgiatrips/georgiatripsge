@@ -5,11 +5,14 @@ import { adminFetch } from "../lib/apiClient";
 import { getTransferPricing, saveTransferPricing } from "../lib/transfers/pricingFirestore";
 import {
   DEFAULT_TRANSFER_PRICING,
+  TRANSFER_PRICING_MODEL,
   TRANSFER_VEHICLE_KEYS,
   findFareDrops,
+  getMarkupPct,
   getRatePerKm,
   getTransferFare,
   normalizeTransferPricing,
+  rateFromMarkup,
 } from "../lib/transfers/pricing";
 
 const VEHICLE_LABELS = {
@@ -26,20 +29,25 @@ function toForm(pricing) {
   const p = normalizeTransferPricing(pricing);
   const vehicles = {};
   for (const key of TRANSFER_VEHICLE_KEYS) {
-    vehicles[key] = { rates: p.vehicles[key].rates.map(str), minFare: str(p.vehicles[key].minFare) };
+    vehicles[key] = { markups: p.vehicles[key].markups.map(str), minFare: str(p.vehicles[key].minFare) };
   }
-  return { bands: p.bands.map(str), vehicles, svanetiSurchargePct: str(p.svanetiSurchargePct) };
+  return {
+    baseRatePerKm: str(p.baseRatePerKm),
+    bands: p.bands.map(str),
+    vehicles,
+    svanetiSurchargePct: str(p.svanetiSurchargePct),
+  };
 }
 
 function fromForm(form) {
-  return normalizeTransferPricing(form);
+  return normalizeTransferPricing({ ...form, model: TRANSFER_PRICING_MODEL });
 }
 
 function bandsProblem(bands) {
   const nums = bands.map(Number);
   if (nums.some((n) => !Number.isFinite(n) || n <= 0)) return "კილომეტრის ყველა ზღვარი უნდა იყოს დადებითი რიცხვი.";
   for (let i = 1; i < nums.length; i++) {
-    if (nums[i] <= nums[i - 1]) return "კილომეტრის ზღვრები უნდა იზრდებოდეს ზემოდან ქვემოთ (მაგ: 50, 100, 150…).";
+    if (nums[i] <= nums[i - 1]) return "კილომეტრის ზღვრები უნდა იზრდებოდეს ზემოდან ქვემოთ (მაგ: 30, 50, 100…).";
   }
   return null;
 }
@@ -71,11 +79,11 @@ export default function TransferPricingManager() {
   const problem = form ? bandsProblem(form.bands) : null;
   const pricing = useMemo(() => (form && !problem ? fromForm(form) : null), [form, problem]);
 
-  const setRate = (key, idx, value) => {
+  const setMarkup = (key, idx, value) => {
     setForm((f) => {
-      const rates = [...f.vehicles[key].rates];
-      rates[idx] = value;
-      return { ...f, vehicles: { ...f.vehicles, [key]: { ...f.vehicles[key], rates } } };
+      const markups = [...f.vehicles[key].markups];
+      markups[idx] = value;
+      return { ...f, vehicles: { ...f.vehicles, [key]: { ...f.vehicles[key], markups } } };
     });
   };
 
@@ -83,37 +91,39 @@ export default function TransferPricingManager() {
     setForm((f) => ({ ...f, vehicles: { ...f.vehicles, [key]: { ...f.vehicles[key], minFare: value } } }));
   };
 
-  const setBand = (idx, value) => {
+  // Row idx starts at bands[idx - 1] km (row 0 starts at 0).
+  const setRowStart = (idx, value) => {
     setForm((f) => {
       const bands = [...f.bands];
-      bands[idx] = value;
+      bands[idx - 1] = value;
       return { ...f, bands };
     });
   };
 
-  // New band goes right before the open-ended "X+ km" row, with empty rates.
+  // New band goes right before the open-ended "X+ km" row, with empty
+  // markups; the open-ended row keeps its markups and starts 100 km later.
   const addBand = () => {
     setForm((f) => {
       const last = Number(f.bands[f.bands.length - 1]) || 0;
       const vehicles = {};
       for (const key of TRANSFER_VEHICLE_KEYS) {
-        const rates = [...f.vehicles[key].rates];
-        rates.splice(f.bands.length, 0, "");
-        vehicles[key] = { ...f.vehicles[key], rates };
+        const markups = [...f.vehicles[key].markups];
+        markups.splice(f.bands.length, 0, "");
+        vehicles[key] = { ...f.vehicles[key], markups };
       }
       return { ...f, bands: [...f.bands, String(last + 100)], vehicles };
     });
   };
 
-  // Removing a bound merges its distances into the next band.
-  const removeBand = (idx) => {
+  // Removing row idx (never the first) hands its distances to the row above.
+  const removeRow = (idx) => {
     setForm((f) => {
       const vehicles = {};
       for (const key of TRANSFER_VEHICLE_KEYS) {
-        const rates = f.vehicles[key].rates.filter((_, i) => i !== idx);
-        vehicles[key] = { ...f.vehicles[key], rates };
+        const markups = f.vehicles[key].markups.filter((_, i) => i !== idx);
+        vehicles[key] = { ...f.vehicles[key], markups };
       }
-      return { ...f, bands: f.bands.filter((_, i) => i !== idx), vehicles };
+      return { ...f, bands: f.bands.filter((_, i) => i !== idx - 1), vehicles };
     });
   };
 
@@ -161,12 +171,13 @@ export default function TransferPricingManager() {
     return <div className="tp-wrap"><p className="admin-hint">ფასები იტვირთება...</p></div>;
   }
 
-  // Bounds where a longer trip is priced below a shorter one (a typo in the table).
+  // Bounds where the next band's lower markup makes a longer trip cheaper.
   const drops = pricing
     ? TRANSFER_VEHICLE_KEYS.flatMap((key) => findFareDrops(pricing, key).map((d) => ({ key, ...d })))
     : [];
   const rowCount = form.bands.length + 1;
   const km = Number(previewKm) || 0;
+  const base = pricing?.baseRatePerKm ?? null;
 
   return (
     <div className="tp-wrap">
@@ -181,10 +192,10 @@ export default function TransferPricingManager() {
           <div>
             <h2 className="tp-title">ტრანსფერის ფასები კილომეტრის მიხედვით</h2>
             <p className="admin-hint" style={{ margin: 0 }}>
-              თითო უჯრაში — ფასი 1 კმ-ზე (₾) დიაპაზონის ბოლოს. „100–150 კმ“ და 2 ₾ ნიშნავს, რომ 150 კმ-ის ფასია 300 ₾;
-              ორ ზღვარს შორის ფასი თანაბრად იზრდება (125 კმ = 260 ₾), 300 კმ-ს ზემოთ კი ყოველი დამატებითი კმ ბოლო ტარიფით
-              ემატება. ასე გრძელი მარშრუტი არასდროს ჯდება იაფად, ვიდრე მოკლე. „მინიმალური ფასი“ არის უმოკლესი
-              მგზავრობის ფასი. ცარიელი უჯრა იღებს უახლოეს შევსებულ ტარიფს.
+              ფორმულა: ფასი = კმ × საბაზო ფასი × (1 + დანამატი %). მაგ: სედანი, 20 კმ, +320% → 20 × 1 ₾ × 4.2 = 84 ₾.
+              დანამატი აიღება იმ დიაპაზონიდან, რომელშიც მთელი მანძილი ხვდება. ფორმულა მხოლოდ აქ ჩანს — საიტზე
+              კლიენტი მხოლოდ საბოლოო ფასს ხედავს. „მინიმალური ფასი“ არასავალდებულოა: ამაზე იაფი მგზავრობა არ
+              იქნება. ცარიელი უჯრა იღებს უახლოეს შევსებულ დანამატს.
             </p>
           </div>
         </div>
@@ -197,7 +208,7 @@ export default function TransferPricingManager() {
                 {TRANSFER_VEHICLE_KEYS.map((key) => (
                   <th key={key}>
                     {VEHICLE_LABELS[key].name}
-                    <small>₾ / კმ</small>
+                    <small>დანამატი %</small>
                   </th>
                 ))}
                 <th aria-label="წაშლა" />
@@ -206,49 +217,59 @@ export default function TransferPricingManager() {
             <tbody>
               {Array.from({ length: rowCount }, (_, idx) => {
                 const isLast = idx === rowCount - 1;
-                const from = idx === 0 ? "0" : form.bands[idx - 1] || "?";
+                const end = Number(form.bands[idx]);
+                const to = isLast ? "+" : end ? `–${end - 1}` : "–?";
+                const label = `${idx === 0 ? 0 : form.bands[idx - 1] || "?"}${to} კმ`;
                 return (
                   <tr key={idx}>
                     <td className="tp-band-col">
-                      {isLast ? (
-                        <span className="tp-band-static">{from}+ კმ</span>
+                      {idx === 0 ? (
+                        <span className="tp-band-static">{label}</span>
                       ) : (
                         <span className="tp-band-edit">
-                          <span>{from} –</span>
                           <input
                             type="number"
                             min="1"
                             inputMode="numeric"
-                            value={form.bands[idx]}
-                            onChange={(e) => setBand(idx, e.target.value)}
+                            value={form.bands[idx - 1]}
+                            onChange={(e) => setRowStart(idx, e.target.value)}
                             className="tp-input tp-input--band"
-                            aria-label={`დიაპაზონის ზედა ზღვარი ${idx + 1}`}
+                            aria-label={`დიაპაზონის დასაწყისი, სტრიქონი ${idx + 1}`}
                           />
-                          <span>კმ</span>
+                          <span>{to} კმ</span>
                         </span>
                       )}
                     </td>
-                    {TRANSFER_VEHICLE_KEYS.map((key) => (
-                      <td key={key}>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.05"
-                          inputMode="decimal"
-                          placeholder="—"
-                          value={form.vehicles[key].rates[idx] ?? ""}
-                          onChange={(e) => setRate(key, idx, e.target.value)}
-                          className={`tp-input${form.vehicles[key].rates[idx] === "" ? " is-empty" : ""}`}
-                          aria-label={`${VEHICLE_LABELS[key].name}, ${from}${isLast ? "+" : `–${form.bands[idx]}`} კმ`}
-                        />
-                      </td>
-                    ))}
+                    {TRANSFER_VEHICLE_KEYS.map((key) => {
+                      const value = form.vehicles[key].markups[idx] ?? "";
+                      const rate = value === "" || base == null ? null : rateFromMarkup(base, Number(value));
+                      return (
+                        <td key={key}>
+                          <span className="tp-cell">
+                            +
+                            <input
+                              type="number"
+                              min="0"
+                              step="1"
+                              inputMode="decimal"
+                              placeholder="—"
+                              value={value}
+                              onChange={(e) => setMarkup(key, idx, e.target.value)}
+                              className={`tp-input tp-input--pct${value === "" ? " is-empty" : ""}`}
+                              aria-label={`${VEHICLE_LABELS[key].name}, ${label}, დანამატი %`}
+                            />
+                            %
+                          </span>
+                          <span className="tp-cell-rate">{rate != null ? `= ${rate} ₾/კმ` : " "}</span>
+                        </td>
+                      );
+                    })}
                     <td>
-                      {!isLast && form.bands.length > 1 && (
+                      {idx > 0 && (
                         <button
                           type="button"
                           className="tp-remove"
-                          onClick={() => removeBand(idx)}
+                          onClick={() => removeRow(idx)}
                           title="დიაპაზონის წაშლა"
                           aria-label="დიაპაზონის წაშლა"
                         >
@@ -273,7 +294,7 @@ export default function TransferPricingManager() {
                       placeholder="—"
                       value={form.vehicles[key].minFare ?? ""}
                       onChange={(e) => setMinFare(key, e.target.value)}
-                      className={`tp-input${form.vehicles[key].minFare === "" ? " is-empty" : ""}`}
+                      className="tp-input"
                       aria-label={`${VEHICLE_LABELS[key].name}, მინიმალური ფასი`}
                     />
                   </td>
@@ -287,23 +308,39 @@ export default function TransferPricingManager() {
         {problem && <p className="tp-problem">{problem}</p>}
 
         {drops.length > 0 && (
-          <div className="tp-warning" role="alert">
-            <strong>⚠ ცხრილში ტარიფი ისეთია, რომ გრძელი მანძილი მოკლეზე იაფი გამოდის:</strong>
+          <details className="tp-info">
+            <summary>ℹ დიაპაზონის საზღვარზე გრძელი მგზავრობა მოკლეზე იაფი გამოდის (ასე მუშაობს ფორმულა)</summary>
             <ul>
-              {drops.map((d) => (
-                <li key={`${d.key}-${d.bound}`}>
-                  {VEHICLE_LABELS[d.key].name}: {d.bound} კმ = {d.fare} ₾, ხოლო {d.prevBound} კმ = {d.prevFare} ₾.
-                  საიტზე ამ მონაკვეთში ფასი {d.prevFare} ₾-ზე რჩება. შეასწორეთ ამ ორი სტრიქონის ტარიფი.
+              {[...new Set(drops.map((d) => d.bound))].map((bound) => (
+                <li key={bound}>
+                  {bound - 1} → {bound} კმ:{" "}
+                  {drops
+                    .filter((d) => d.bound === bound)
+                    .map((d) => `${VEHICLE_LABELS[d.key].name} ${d.prevFare} → ${d.fare} ₾`)
+                    .join(", ")}
                 </li>
               ))}
             </ul>
-          </div>
+          </details>
         )}
 
         <div className="tp-controls">
           <button type="button" className="tp-btn-outline" onClick={addBand}>
             დიაპაზონის დამატება
           </button>
+          <label className="tp-surcharge">
+            <span>საბაზო ფასი 1 კმ-ზე</span>
+            <input
+              type="number"
+              min="0"
+              step="0.05"
+              inputMode="decimal"
+              value={form.baseRatePerKm}
+              onChange={(e) => setForm((f) => ({ ...f, baseRatePerKm: e.target.value }))}
+              className="tp-input tp-input--base"
+            />
+            <span>₾</span>
+          </label>
           <label className="tp-surcharge">
             <span>სვანეთის დანამატი</span>
             <input
@@ -352,11 +389,14 @@ export default function TransferPricingManager() {
           {TRANSFER_VEHICLE_KEYS.map((key) => {
             const fare = pricing ? getTransferFare(pricing, key, km, { isSvaneti: previewSvaneti }) : null;
             const rate = pricing ? getRatePerKm(pricing, key, km) : null;
+            const markup = pricing ? getMarkupPct(pricing, key, km) : null;
             return (
               <div key={key} className="tp-preview-item">
                 <span className="tp-preview-name">{VEHICLE_LABELS[key].name}</span>
                 <strong className="tp-preview-price">{fare != null ? `${fare} ₾` : "—"}</strong>
-                <span className="tp-preview-rate">{rate != null ? `${rate} ₾/კმ` : "ტარიფი არ არის"}</span>
+                <span className="tp-preview-rate">
+                  {rate != null ? `${km} კმ × ${rate} ₾ (+${markup}%)` : "ტარიფი არ არის"}
+                </span>
               </div>
             );
           })}

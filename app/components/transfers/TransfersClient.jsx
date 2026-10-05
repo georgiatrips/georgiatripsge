@@ -19,7 +19,7 @@ import {
   isSvanetiRoute,
   quoteFromRoute,
 } from "../../lib/transfers/routeCalculator";
-import { TRANSFER_VEHICLE_KEYS, normalizeTransferPricing } from "../../lib/transfers/pricing";
+import { TRANSFER_VEHICLE_KEYS, toPublicPricing } from "../../lib/transfers/pricing";
 
 const MAX_PASSENGERS = Math.max(...TRANSFER_VEHICLE_KEYS.map((key) => TRANSFER_VEHICLES[key]?.capacityPax || 0));
 // Smallest vehicle first, so a growing group moves to the next one that seats it.
@@ -44,7 +44,7 @@ function formatTripDate(iso, lang) {
 export default function TransfersClient({ pricing: pricingProp }) {
   const { t, lang, isEnglish } = useLanguage();
   const { currency, format: formatCurrency } = useCurrency();
-  const pricing = useMemo(() => normalizeTransferPricing(pricingProp), [pricingProp]);
+  const pricing = useMemo(() => pricingProp || toPublicPricing(null), [pricingProp]);
 
   const [openField, setOpenField] = useState(null); // "pickup" | "dropoff" | null
   const [mapRoutes, setMapRoutes] = useState({}); // routeKey -> route | "error"

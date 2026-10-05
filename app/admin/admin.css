@@ -628,6 +628,20 @@
   font-size: 0.88rem;
 }
 .tp-warning ul { margin: 0.4rem 0 0; padding-inline-start: 1.1rem; }
+.tp-cell { display: inline-flex; align-items: center; gap: 0.3rem; font-weight: 700; color: #64748b; }
+.tp-cell-rate { display: block; margin-top: 0.2rem; font-size: 0.72rem; font-weight: 600; color: #64748b; }
+.tp-input--base { width: 78px; }
+.tp-info {
+  margin: 0.9rem 0 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 0.85rem;
+}
+.tp-info summary { cursor: pointer; font-weight: 700; }
+.tp-info ul { margin: 0.4rem 0 0; padding-inline-start: 1.1rem; }
 .tp-min-row td { border-top: 2px solid #e2e8f0; font-weight: 700; }
 .tp-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin: 1.1rem 0 0.5rem; }
 .tp-btn-outline {
