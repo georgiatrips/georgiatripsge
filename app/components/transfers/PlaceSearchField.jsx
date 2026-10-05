@@ -23,6 +23,16 @@ const PLACE_TYPE_ICONS = {
   street: "🛣️",
   address: "🏠",
   place: "📍",
+  pin: "📌",
+};
+
+// Name for a point dropped on the map until (or unless) the map names it.
+const PIN_LABELS = {
+  ka: "მონიშნული წერტილი რუკაზე",
+  en: "Point on the map",
+  ru: "Точка на карте",
+  tr: "Haritadaki nokta",
+  ar: "نقطة على الخريطة",
 };
 
 // Only the types worth naming get a small tag next to the result.
@@ -55,7 +65,8 @@ function exactKnownLocation(query) {
 /**
  * State for one route field: a known location, any place in Georgia from the
  * map, or null while the visitor is typing.
- * value: { kind: "known", id } | { kind: "place", name, detail, type, lat, lng } | null
+ * value: { kind: "known", id } | { kind: "place", name, detail, type, lat, lng, pinned? } | null
+ * (pinned = dropped or dragged on the mini map; lat/lng are the exact spot)
  */
 export function usePlaceField({ initial, mapPointId, lang, getLocationLabel, isOpen, setOpen, inputRef }) {
   const [value, setValue] = useState(initial);
@@ -108,6 +119,41 @@ export function usePlaceField({ initial, mapPointId, lang, getLocationLabel, isO
     setError(false);
     setOpen(false);
   };
+
+  // A point picked on the map: shown at once, named by the reverse lookup.
+  const setPin = (lat, lng) => {
+    const pin = {
+      kind: "place",
+      name: PIN_LABELS[lang] || PIN_LABELS.en,
+      detail: "",
+      type: "pin",
+      lat: Math.round(lat * 1e5) / 1e5,
+      lng: Math.round(lng * 1e5) / 1e5,
+      pinned: true,
+      named: false,
+    };
+    setValue(pin);
+    setText(pin.name);
+    setError(false);
+    setOpen(false);
+  };
+
+  useEffect(() => {
+    if (!value?.pinned || value.named) return;
+    const { lat, lng } = value;
+    const ctrl = new AbortController();
+    fetch(`/api/transfers/places?lat=${lat}&lng=${lng}&lang=${lang}`, { signal: ctrl.signal })
+      .then((r) => r.json())
+      .then((data) => {
+        const hit = data.results?.[0];
+        // The exact spot stays; only the name comes from the map.
+        const named = hit ? { name: hit.name, detail: hit.detail, type: hit.type === "shop" || hit.type === "food" ? "address" : hit.type } : {};
+        setValue((cur) => (cur?.pinned && cur.lat === lat && cur.lng === lng ? { ...cur, ...named, named: true } : cur));
+        if (hit) setText((cur) => (cur === (PIN_LABELS[lang] || PIN_LABELS.en) ? placeLabel(hit) : cur));
+      })
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [value, lang]);
 
   // Used by the swap button: takes the other field's value as-is.
   const assign = (next) => {
@@ -168,7 +214,7 @@ export function usePlaceField({ initial, mapPointId, lang, getLocationLabel, isO
 
   return {
     value, text, error, setError, typedQuery, knownMatches, mapItems, searching,
-    selectKnown, selectPlace, assign, onChange, onKeyDown, clear,
+    selectKnown, selectPlace, setPin, assign, onChange, onKeyDown, clear,
     point, label, name, detail,
   };
 }

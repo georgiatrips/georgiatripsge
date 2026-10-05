@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
-// Road distance and driving time between two points in Georgia, from the
-// public OSRM router (OpenStreetMap data, no API key).
+// Road distance, driving time and the road path (for the calculator's mini
+// map) between two points in Georgia, from the public OSRM router
+// (OpenStreetMap data, no API key).
 export const dynamic = "force-dynamic";
 
 const OSRM_URL = "https://router.project-osrm.org/route/v1/driving/";
@@ -32,7 +33,7 @@ export async function GET(request) {
   if (hit && Date.now() - hit.at < CACHE_MS) return NextResponse.json(hit.body);
 
   try {
-    const url = `${OSRM_URL}${from.lng},${from.lat};${to.lng},${to.lat}?overview=false`;
+    const url = `${OSRM_URL}${from.lng},${from.lat};${to.lng},${to.lat}?overview=simplified&geometries=geojson`;
     const res = await fetch(url, {
       headers: { "User-Agent": USER_AGENT },
       signal: AbortSignal.timeout(8000),
@@ -46,6 +47,11 @@ export async function GET(request) {
     const body = {
       distanceKm: Math.max(1, Math.round(route.distance / 1000)),
       durationMinutes: Math.max(5, Math.round(route.duration / 60)),
+      // [lat, lng] pairs, ~1 m precision is plenty for drawing.
+      path: (route.geometry?.coordinates || []).map(([lng, lat]) => [
+        Math.round(lat * 1e5) / 1e5,
+        Math.round(lng * 1e5) / 1e5,
+      ]),
     };
     if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value);
     cache.set(key, { at: Date.now(), body });

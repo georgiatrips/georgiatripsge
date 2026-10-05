@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import Navbar from "../Navbar";
 import Footer from "../Footer";
 import PageHero from "../PageHero";
@@ -20,6 +21,16 @@ import {
   quoteFromRoute,
 } from "../../lib/transfers/routeCalculator";
 import { TRANSFER_VEHICLE_KEYS, toPublicPricing } from "../../lib/transfers/pricing";
+
+// Leaflet needs window and is only wanted on this page, so it loads on its own.
+const TransferMap = dynamic(() => import("./TransferMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="tf-map" aria-hidden="true">
+      <div className="tf-map-skeleton" />
+    </div>
+  ),
+});
 
 const MAX_PASSENGERS = Math.max(...TRANSFER_VEHICLE_KEYS.map((key) => TRANSFER_VEHICLES[key]?.capacityPax || 0));
 // Smallest vehicle first, so a growing group moves to the next one that seats it.
@@ -93,11 +104,18 @@ export default function TransfersClient({ pricing: pricingProp }) {
   const dropoffPoint = to.point;
   const pickupLabel = from.label;
   const dropoffLabel = to.label;
+  // Map places (searched or pinned) also carry a map link, so the driver gets
+  // the exact spot, not just a name.
+  const withMapLink = (field) =>
+    field.value?.kind === "place" ? `${field.label} — https://maps.google.com/?q=${field.value.lat},${field.value.lng}` : field.label;
+  const pickupForDriver = withMapLink(from);
+  const dropoffForDriver = withMapLink(to);
 
   // ── Route: exact table first, otherwise real road distance from the map ──
+  // The road itself is always fetched: the mini map draws it.
   const staticRoute = pickupPoint && dropoffPoint ? estimateRouteDistance(pickupPoint, dropoffPoint) : null;
   const needsMapRoute = !!staticRoute && staticRoute.source === "coordinates_heuristic";
-  const routeKey = needsMapRoute ? `${pickupPoint.lat},${pickupPoint.lng}|${dropoffPoint.lat},${dropoffPoint.lng}` : null;
+  const routeKey = staticRoute ? `${pickupPoint.lat},${pickupPoint.lng}|${dropoffPoint.lat},${dropoffPoint.lng}` : null;
   const mapRoute = routeKey ? mapRoutes[routeKey] : undefined;
   const routeLoading = needsMapRoute && mapRoute === undefined;
 
@@ -210,6 +228,7 @@ export default function TransfersClient({ pricing: pricingProp }) {
       noResults: "ვერაფერი მოიძებნა — სცადეთ სხვანაირად დაწერა",
       calculating: "მარშრუტი ითვლება რუკიდან...",
       pickDropoff: "აირჩიეთ აყვანისა და დანიშნულების ადგილი სიიდან, რომ ნახოთ ფასი",
+      mapHint: "📌 ვერ იპოვეთ? გადაათრიეთ A ან B ნიშნული ზუსტ ადგილზე რუკაზე.",
       viaMap: "მანძილი დათვლილია რუკის მიხედვით",
       clear: "გასუფთავება",
       km: "კმ",
@@ -251,6 +270,7 @@ export default function TransfersClient({ pricing: pricingProp }) {
       noResults: "Nothing found — try a different spelling",
       calculating: "Calculating route from the map...",
       pickDropoff: "Choose pickup and destination from the list to see the price",
+      mapHint: "📌 Can't find it? Drag pin A or B to the exact spot on the map.",
       viaMap: "Road distance calculated from the map",
       clear: "Clear",
       km: "km",
@@ -292,6 +312,7 @@ export default function TransfersClient({ pricing: pricingProp }) {
       noResults: "Ничего не найдено — попробуйте написать иначе",
       calculating: "Считаем маршрут по карте...",
       pickDropoff: "Выберите место подачи и пункт назначения из списка, чтобы увидеть цену",
+      mapHint: "📌 Не нашли? Перетащите метку A или B в нужное место на карте.",
       viaMap: "Расстояние рассчитано по карте",
       clear: "Очистить",
       km: "км",
@@ -333,6 +354,7 @@ export default function TransfersClient({ pricing: pricingProp }) {
       noResults: "Sonuç bulunamadı — farklı yazmayı deneyin",
       calculating: "Rota haritadan hesaplanıyor...",
       pickDropoff: "Fiyatı görmek için listeden alış ve varış noktası seçin",
+      mapHint: "📌 Bulamadınız mı? A veya B işaretini haritada tam yere sürükleyin.",
       viaMap: "Mesafe haritaya göre hesaplandı",
       clear: "Temizle",
       km: "km",
@@ -374,6 +396,7 @@ export default function TransfersClient({ pricing: pricingProp }) {
       noResults: "لم يتم العثور على نتائج — جرّب كتابة مختلفة",
       calculating: "جارٍ حساب المسار من الخريطة...",
       pickDropoff: "اختر نقطة الانطلاق والوجهة من القائمة لرؤية السعر",
+      mapHint: "📌 لم تجده؟ اسحب العلامة A أو B إلى المكان الدقيق على الخريطة.",
       viaMap: "تم حساب المسافة من الخريطة",
       clear: "مسح",
       km: "كم",
@@ -427,8 +450,8 @@ export default function TransfersClient({ pricing: pricingProp }) {
         name: contactName.trim() || `Passenger (${cleanPhone})`,
         vehicle: selectedVehicleKey,
         vehicleName: selectedVehicleName,
-        pickup: pickupLabel,
-        dropoff: dropoffLabel,
+        pickup: pickupForDriver,
+        dropoff: dropoffForDriver,
         distanceKm: quote?.distanceKm || null,
         duration: quote?.durationMinutes || null,
         priceGEL: calculatedFare,
@@ -478,8 +501,8 @@ export default function TransfersClient({ pricing: pricingProp }) {
       ? [
           `🚗 *GeorgiaTrips — Transfer Booking Request*`,
           `━━━━━━━━━━━━━━━━━━━━━━━━`,
-          `📍 *Pickup:* ${pickupLabel.trim() || "Not specified"}`,
-          `🏁 *Dropoff:* ${dropoffLabel.trim() || "Not specified"}`,
+          `📍 *Pickup:* ${pickupForDriver.trim() || "Not specified"}`,
+          `🏁 *Dropoff:* ${dropoffForDriver.trim() || "Not specified"}`,
           `📏 *Estimated Distance:* ${distanceText}`,
           `⏱️ *Estimated Duration:* ${durationText}`,
           `🚘 *Vehicle:* ${selectedVehicleName}`,
@@ -495,8 +518,8 @@ export default function TransfersClient({ pricing: pricingProp }) {
       ? [
           `🚗 *GeorgiaTrips — Запрос на трансфер*`,
           `━━━━━━━━━━━━━━━━━━━━━━━━`,
-          `📍 *Откуда:* ${pickupLabel.trim() || "Не указано"}`,
-          `🏁 *Куда:* ${dropoffLabel.trim() || "Не указано"}`,
+          `📍 *Откуда:* ${pickupForDriver.trim() || "Не указано"}`,
+          `🏁 *Куда:* ${dropoffForDriver.trim() || "Не указано"}`,
           `📏 *Расстояние:* ${distanceText}`,
           `⏱️ *Время в пути:* ${durationText}`,
           `🚘 *Автомобиль:* ${selectedVehicleName}`,
@@ -512,8 +535,8 @@ export default function TransfersClient({ pricing: pricingProp }) {
       ? [
           `🚗 *GeorgiaTrips — Transfer Talebi*`,
           `━━━━━━━━━━━━━━━━━━━━━━━━`,
-          `📍 *Nereden:* ${pickupLabel.trim() || "Belirtilmedi"}`,
-          `🏁 *Nereye:* ${dropoffLabel.trim() || "Belirtilmedi"}`,
+          `📍 *Nereden:* ${pickupForDriver.trim() || "Belirtilmedi"}`,
+          `🏁 *Nereye:* ${dropoffForDriver.trim() || "Belirtilmedi"}`,
           `📏 *Mesafe:* ${distanceText}`,
           `⏱️ *Süre:* ${durationText}`,
           `🚘 *Araç:* ${selectedVehicleName}`,
@@ -529,8 +552,8 @@ export default function TransfersClient({ pricing: pricingProp }) {
       ? [
           `🚗 *GeorgiaTrips — طلب توصيل خاص*`,
           `━━━━━━━━━━━━━━━━━━━━━━━━`,
-          `📍 *مكان الانطلاق:* ${pickupLabel.trim() || "غير محدد"}`,
-          `🏁 *الوجهة:* ${dropoffLabel.trim() || "غير محدد"}`,
+          `📍 *مكان الانطلاق:* ${pickupForDriver.trim() || "غير محدد"}`,
+          `🏁 *الوجهة:* ${dropoffForDriver.trim() || "غير محدد"}`,
           `📏 *المسافة:* ${distanceText}`,
           `⏱️ *الوقت المقدر:* ${durationText}`,
           `🚘 *نوع السيارة:* ${selectedVehicleName}`,
@@ -545,8 +568,8 @@ export default function TransfersClient({ pricing: pricingProp }) {
       : [
           `🚗 *GeorgiaTrips — ტრანსფერის მოთხოვნა*`,
           `━━━━━━━━━━━━━━━━━━━━━━━━`,
-          `📍 *საიდან:* ${pickupLabel.trim() || "არ არის მითითებული"}`,
-          `🏁 *სად:* ${dropoffLabel.trim() || "არ არის მითითებული"}`,
+          `📍 *საიდან:* ${pickupForDriver.trim() || "არ არის მითითებული"}`,
+          `🏁 *სად:* ${dropoffForDriver.trim() || "არ არის მითითებული"}`,
           `📏 *მანძილი:* ${distanceText}`,
           `⏱️ *მგზავრობის დრო:* ${durationText}`,
           `🚘 *ავტომობილი:* ${selectedVehicleName}`,
@@ -649,6 +672,14 @@ export default function TransfersClient({ pricing: pricingProp }) {
                 </div>
 
                 {(from.error || to.error) && <p className="tf-route-error" role="alert">{ui.pickDropoff}</p>}
+
+                <TransferMap
+                  from={pickupPoint}
+                  to={dropoffPoint}
+                  path={mapRoute && mapRoute !== "error" ? mapRoute.path : null}
+                  onPick={(which, lat, lng) => (which === "from" ? from : to).setPin(lat, lng)}
+                  hint={ui.mapHint}
+                />
               </section>
 
               <section className="tf-step">
