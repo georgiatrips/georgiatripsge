@@ -15,6 +15,7 @@ import { useCurrency } from "../../lib/currency/CurrencyContext";
 import { isValidPhone } from "../../lib/bookingModel";
 import { trackEvent } from "../../lib/analytics";
 import {
+  LOCATION_BY_ID,
   TRANSFER_VEHICLES,
   estimateRouteDistance,
   isSvanetiRoute,
@@ -52,7 +53,7 @@ function formatTripDate(iso, lang) {
   }
 }
 
-export default function TransfersClient({ pricing: pricingProp }) {
+export default function TransfersClient({ pricing: pricingProp, children }) {
   const { t, lang, isEnglish } = useLanguage();
   const { currency, format: formatCurrency } = useCurrency();
   const pricing = useMemo(() => pricingProp || toPublicPricing(null), [pricingProp]);
@@ -163,6 +164,18 @@ export default function TransfersClient({ pricing: pricingProp }) {
     document.addEventListener("pointerdown", onDown);
     return () => document.removeEventListener("pointerdown", onDown);
   }, [openField]);
+
+  // Route pages (/transfers/<route>) link here as ?from=<id>&to=<id>. Read
+  // after mount: the page itself is static, so the server render keeps the
+  // default route and the link's route replaces it on the client.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const fromId = params.get("from");
+    const toId = params.get("to");
+    if (fromId && LOCATION_BY_ID[fromId]) from.assign({ kind: "known", id: fromId });
+    if (toId && LOCATION_BY_ID[toId] && toId !== fromId) to.assign({ kind: "known", id: toId });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const canSwap = !!from.value && !!to.value;
   const handleSwapLocations = () => {
@@ -1061,6 +1074,9 @@ export default function TransfersClient({ pricing: pricingProp }) {
           </div>
         </div>
       </section>
+
+      {/* Server-rendered extras from the page, e.g. the popular routes list. */}
+      {children}
 
       <Footer />
     </div>

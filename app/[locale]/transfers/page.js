@@ -1,9 +1,12 @@
 import React from "react";
 import { SOCIAL_PROFILES } from "../../lib/shared";
 import TransfersClient from "../../components/transfers/TransfersClient";
+import RouteLinks from "../../components/transfers/RouteLinks";
+import { ROUTE_PAGES, quoteRoutePage, routeCopy } from "../../lib/transfers/routePages";
 import { SITE_URL, getRequestLocale, buildLocalizedMetadata } from "../../lib/siteConfig";
 import { getCachedTransferPricing } from "../../lib/server/cachedData";
 import "./transfers.css";
+import "../../landing.css";
 
 const COPY = {
   ka: { title: "აეროპორტის ტრანსფერები და პირადი მძღოლი საქართველოში | GeorgiaTrips", description: "კომფორტული და უსაფრთხო ტრანსფერები თბილისის, ქუთაისისა და ბათუმის აეროპორტებიდან გუდაურში, ყაზბეგში, მესტიაში და მთელ საქართველოში. სედანი, მინივენი, ჯიპი, სპრინტერი.", home: "მთავარი", crumb: "ტრანსფერები" },
@@ -25,6 +28,10 @@ export default async function TransfersPage({ params }) {
   const lang = getRequestLocale(locale);
   const c = COPY[lang] || COPY.en;
   const pricing = await getCachedTransferPricing();
+  const routes = routeCopy(lang);
+  const routeFares = ROUTE_PAGES.map((route) => quoteRoutePage(route, pricing, lang))
+    .flatMap((q) => (q ? Object.values(q.fares) : []))
+    .filter((fare) => fare != null);
 
   const transferJsonLd = {
     "@context": "https://schema.org",
@@ -51,8 +58,9 @@ export default async function TransfersPage({ params }) {
         ],
         "offers": {
           "@type": "AggregateOffer",
-          "lowPrice": 35,
-          "highPrice": 350,
+          // The cheapest and dearest fares across the route pages, from the live tariffs.
+          "lowPrice": routeFares.length ? Math.min(...routeFares) : undefined,
+          "highPrice": routeFares.length ? Math.max(...routeFares) : undefined,
           "priceCurrency": "GEL",
         },
       },
@@ -73,7 +81,15 @@ export default async function TransfersPage({ params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(transferJsonLd) }}
       />
-      <TransfersClient pricing={pricing} />
+      <TransfersClient pricing={pricing}>
+        <section id="popular-routes" className="landing-section" aria-labelledby="popular-routes-title">
+          <div className="landing-section-header">
+            <h2 id="popular-routes-title" className="landing-section-title">{routes.popularTitle}</h2>
+            <p className="landing-section-desc">{routes.popularDesc}</p>
+          </div>
+          <RouteLinks routes={ROUTE_PAGES} lang={lang} pricing={pricing} />
+        </section>
+      </TransfersClient>
     </>
   );
 }

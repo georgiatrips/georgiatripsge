@@ -910,7 +910,10 @@ export const ru = {
     "lpPrivateBatumi": "Индивидуальные туры в Батуми",
     "lpThingsToDo": "Чем заняться в Батуми",
     "lpWaterfalls": "Водопады рядом с Батуми",
-    "lpAirport": "Трансфер из аэропорта Батуми"
+    "lpAirport": "Трансфер из аэропорта Батуми",
+    "about": "О нас",
+    "contact": "Контакты",
+    "transferRoutes": "Маршруты трансферов"
   },
   "tourCard": {
     "bookAria": "Забронировать «{title}»",

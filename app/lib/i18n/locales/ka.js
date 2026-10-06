@@ -910,7 +910,10 @@ export const ka = {
     "lpPrivateBatumi": "ინდივიდუალური ტურები ბათუმში",
     "lpThingsToDo": "რა ვაკეთოთ ბათუმში",
     "lpWaterfalls": "ჩანჩქერები ბათუმის ახლოს",
-    "lpAirport": "ბათუმის აეროპორტის ტრანსფერი"
+    "lpAirport": "ბათუმის აეროპორტის ტრანსფერი",
+    "about": "ჩვენ შესახებ",
+    "contact": "კონტაქტი",
+    "transferRoutes": "ტრანსფერის მარშრუტები"
   },
   "tourCard": {
     "bookAria": "ტურის „{title}“ დაჯავშნა",

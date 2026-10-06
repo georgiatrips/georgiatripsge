@@ -50,9 +50,12 @@ export default function Footer({ mobileNav = true }) {
     { label: t("site.lpThingsToDo"), path: "/things-to-do-in-batumi" },
     { label: t("site.lpWaterfalls"), path: "/waterfalls-near-batumi" },
     { label: t("site.lpAirport"), path: "/batumi-airport-transfer" },
+    { label: t("site.transferRoutes"), path: "/transfers#popular-routes" },
   ];
 
   const help = [
+    { label: t("site.about"), path: "/about" },
+    { label: t("site.contact"), path: "/contact" },
     { label: t("site.planTrip"), path: "/#plan" },
     { label: t("site.faq"), path: "/#faq" },
     { label: t("site.bookingStatus"), path: "/booking/status", raw: true },

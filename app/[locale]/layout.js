@@ -12,6 +12,7 @@ export { viewport } from "../lib/baseMetadata";
 // cached data is refreshed hourly or on demand via /api/admin/revalidate.
 export const revalidate = 3600;
 import { SOCIAL_PROFILES, EMAIL } from "../lib/shared";
+import { COMPANY_PROFILE } from "../lib/companyProfile";
 
 // Plain-string titles (not { default, template }): title is a top-level
 // metadata key, so a { default, template } object here would fully replace
@@ -77,19 +78,22 @@ function buildStructuredData(lang = "ka") {
         "@type": ["TravelAgency", "Organization"],
         "@id": `${SITE_URL}/#organization`,
         name: "GeorgiaTrips",
-        legalName: "GeorgiaTrips",
+        legalName: COMPANY_PROFILE.legalName || "GeorgiaTrips",
+        ...(COMPANY_PROFILE.foundedYear ? { foundingDate: String(COMPANY_PROFILE.foundedYear) } : {}),
+        ...(COMPANY_PROFILE.registrationId ? { taxID: COMPANY_PROFILE.registrationId } : {}),
         // Both spellings are used in the wild (the site's own hero reads
         // "Georgia Trips"), so Google can resolve either to this entity.
         alternateName: ["Georgia Trips", "georgiatrips.ge"],
         url: SITE_URL,
         logo: `${SITE_URL}/logo.png`,
         image: `${SITE_URL}/hero.webp`,
-        description: "Premium tours, private excursions, and VIP transfers in Georgia (Tbilisi, Batumi, Kazbegi, Kakheti, Svaneti).",
+        description: "Batumi-based tour and transfer company: group and private day tours across Adjara and West Georgia, multi-day trips around Georgia, and private transfers from Batumi, Kutaisi and Tbilisi airports. Free booking request, payment on the day.",
         telephone: "+995504220020",
         email: EMAIL,
         priceRange: "$$",
         currenciesAccepted: "GEL, USD, EUR",
-        paymentAccepted: "Cash, Credit Card, Bank Transfer, Online Payment",
+        // Bookings are requests paid on the day; there is no online payment.
+        paymentAccepted: "Cash",
         // NOTE: a fabricated aggregateRating (4.9 / 128 reviews) previously lived
         // here with no real Review data behind it — a structured-data spam risk
         // per Google's guidelines. Removed. Re-add only once wired to genuine,
@@ -111,7 +115,7 @@ function buildStructuredData(lang = "ka") {
           postalCode: "6010",
           addressCountry: "GE",
         },
-        hasMap: "https://www.google.com/maps/place/?q=place_id:ChIJBXgJNomHZ0ARMFv54m7MSmk",
+        hasMap: COMPANY_PROFILE.googleMapsUrl,
         sameAs: SOCIAL_PROFILES,
         // The languages the site and the team actually operate in.
         knowsLanguage: ["en", "ka", "ru", "tr", "ar"],

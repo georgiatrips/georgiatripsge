@@ -910,7 +910,10 @@ export const tr = {
     "lpPrivateBatumi": "Batum'da özel turlar",
     "lpThingsToDo": "Batum'da yapılacaklar",
     "lpWaterfalls": "Batum yakınındaki şelaleler",
-    "lpAirport": "Batum havalimanı transferi"
+    "lpAirport": "Batum havalimanı transferi",
+    "about": "Hakkımızda",
+    "contact": "İletişim",
+    "transferRoutes": "Transfer rotaları"
   },
   "tourCard": {
     "bookAria": "“{title}” turunu ayırtın",

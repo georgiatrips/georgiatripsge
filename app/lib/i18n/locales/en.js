@@ -910,7 +910,10 @@ export const en = {
     "lpPrivateBatumi": "Private tours in Batumi",
     "lpThingsToDo": "Things to do in Batumi",
     "lpWaterfalls": "Waterfalls near Batumi",
-    "lpAirport": "Batumi airport transfer"
+    "lpAirport": "Batumi airport transfer",
+    "about": "About us",
+    "contact": "Contact",
+    "transferRoutes": "Transfer routes"
   },
   "tourCard": {
     "bookAria": "Book “{title}”",

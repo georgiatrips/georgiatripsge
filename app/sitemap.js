@@ -1,6 +1,7 @@
 import { getCachedTours, getCachedPlaces } from "./lib/server/cachedData";
 import { SITE_URL, SUPPORTED_LANGUAGES, getAlternateLanguages } from "./lib/siteConfig";
 import { tourPath, placePath } from "./lib/slugs";
+import { ROUTE_PAGES, routePagePath } from "./lib/transfers/routePages";
 
 // sitemap.js is a metadata route: Next caches it at build time unless it opts
 // into dynamic rendering, and revalidatePath("/sitemap.xml") does not reach it.
@@ -25,6 +26,8 @@ const STATIC_ROUTES = [
   "/things-to-do-in-batumi",
   "/waterfalls-near-batumi",
   "/batumi-airport-transfer",
+  "/about",
+  "/contact",
   "/privacy-policy",
   "/terms",
 ];
@@ -61,6 +64,11 @@ export default async function sitemap() {
 
   for (const path of STATIC_ROUTES) {
     entries.push(...entriesForPath(path));
+  }
+
+  // Transfer route pages (fixed list, prices from the live tariffs).
+  for (const route of ROUTE_PAGES) {
+    entries.push(...entriesForPath(routePagePath(route)));
   }
 
   // Same cached data the tour and place pages render from, so every URL

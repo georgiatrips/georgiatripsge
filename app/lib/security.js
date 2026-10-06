@@ -118,6 +118,18 @@ const ALLOWED_BOTS = [
   "pagespeed",
   "insights",
   "google-inspectiontool",
+  // AI search and assistant crawlers. They fetch in bursts from shared IPs,
+  // so the per-IP rate limit would answer them with 429s — and a page they
+  // cannot read is a page ChatGPT, Claude or Perplexity cannot recommend.
+  "oai-searchbot",
+  "chatgpt-user",
+  "gptbot",
+  "claudebot",
+  "claude-searchbot",
+  "claude-user",
+  "perplexitybot",
+  "perplexity-user",
+  "duckassistbot",
 ];
 
 export function detectBot(request) {

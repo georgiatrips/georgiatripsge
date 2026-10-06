@@ -910,7 +910,10 @@ export const ar = {
     "lpPrivateBatumi": "جولات خاصة في باتومي",
     "lpThingsToDo": "أنشطة في باتومي",
     "lpWaterfalls": "شلالات قرب باتومي",
-    "lpAirport": "التوصيل من مطار باتومي"
+    "lpAirport": "التوصيل من مطار باتومي",
+    "about": "من نحن",
+    "contact": "اتصل بنا",
+    "transferRoutes": "مسارات التوصيل"
   },
   "tourCard": {
     "bookAria": "احجز «{title}»",
