@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { BarChartIcon, BedIcon, CarIcon, ClipboardIcon, LocationIcon, MessageIcon, MountainIcon, TicketIcon } from "../components/Icons";
+import { BarChartIcon, BedIcon, CarIcon, ClipboardIcon, LocationIcon, MessageIcon, MountainIcon, TicketIcon, WhatsAppIcon } from "../components/Icons";
 import DatePicker from "../components/DatePicker";
 import { GEORGIA_REGIONS } from "../lib/placesMeta";
 import { listPlaces } from "../lib/placesFirestore";
@@ -19,6 +19,10 @@ import CouponManager from "./CouponManager";
 import BookingManager from "./BookingManager";
 import TransferPricingManager from "./TransferPricingManager";
 import TransferPlacesManager from "./TransferPlacesManager";
+import WhatsAppManager from "./WhatsAppManager";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { db } from "../lib/firebase";
+import { WHATSAPP_CONVERSATIONS } from "../lib/whatsappConfig";
 import { subscribeToLiveSessions } from "../lib/analytics";
 import { subscribeToBookings } from "../lib/bookingsFirestore";
 import LocalizedInputGroup, { emptyLangObj, parseLocal } from "./LocalizedInputGroup";
@@ -148,6 +152,7 @@ export default function AdminPage() {
   const [reviewsCount, setReviewsCount] = useState(0);
   const [liveVisitorsCount, setLiveVisitorsCount] = useState(0);
   const [pendingBookingsCount, setPendingBookingsCount] = useState(0);
+  const [unreadChatsCount, setUnreadChatsCount] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -197,10 +202,17 @@ export default function AdminPage() {
       setPendingBookingsCount(pendingCount);
     });
 
+    const unsubChats = onSnapshot(
+      query(collection(db, WHATSAPP_CONVERSATIONS), where("unread", ">", 0)),
+      (snap) => active && setUnreadChatsCount(snap.size),
+      () => {}
+    );
+
     return () => {
       active = false;
       unsubSessions();
       unsubBookings();
+      unsubChats();
     };
   }, [isAdminUser]);
 
@@ -921,6 +933,7 @@ export default function AdminPage() {
       label: "გაყიდვები",
       items: [
         { key: "bookings", label: "ჯავშნები", Icon: ClipboardIcon, badge: pendingBookingsCount > 0 ? { text: String(pendingBookingsCount), tone: "warn" } : null },
+        { key: "whatsapp", label: "WhatsApp", Icon: WhatsAppIcon, badge: unreadChatsCount > 0 ? { text: String(unreadChatsCount), tone: "warn" } : null },
         { key: "coupons", label: "კუპონები", Icon: TicketIcon },
         { key: "transfers", label: "ტრანსფერის ფასები", Icon: CarIcon },
         { key: "transferPlaces", label: "ტრანსფერის ლოკაციები", Icon: LocationIcon },
@@ -940,6 +953,7 @@ export default function AdminPage() {
   const SECTION_INFO = {
     analytics: ["ანალიტიკა", "ვინ არის საიტზე, საიდან მოვიდა და რას აკეთებს."],
     bookings: ["ჯავშნები", "ახალი მოთხოვნები, დადასტურება და სტატუსები."],
+    whatsapp: ["WhatsApp", "კლიენტების მიმოწერა — იგივე, რაც ტელეფონის WhatsApp Business-ში."],
     coupons: ["კუპონები", "ფასდაკლების კოდები და IP შეზღუდვები."],
     transfers: ["ტრანსფერის ფასები", "ფასები მანძილისა და ავტომობილის მიხედვით."],
     tours: ["ტურები", "ტურის დამატება, რედაქტირება და კატალოგი."],
@@ -2277,6 +2291,11 @@ export default function AdminPage() {
           {/* TAB 7: BOOKINGS MANAGEMENT */}
           {activeTab === "bookings" && (
             <BookingManager />
+          )}
+
+          {/* TAB: WHATSAPP INBOX (mirrored from the business phone) */}
+          {activeTab === "whatsapp" && (
+            <WhatsAppManager />
           )}
         </main>
       </div>

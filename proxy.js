@@ -136,6 +136,9 @@ const API_LIMITS = {
   // Transfer calculator: place search runs as the visitor types.
   "/api/transfers/places": { max: 120, methods: ["GET"] },
   "/api/transfers/route": { max: 60, methods: ["GET"] },
+  // Meta delivers WhatsApp webhooks from a few shared IPs, and the chat-history
+  // import after connecting arrives in bursts. Every POST is signature-checked.
+  "/api/whatsapp/webhook": { max: 1200, methods: ["GET", "POST"] },
   // Admin AI tour planner: each plan is a paid Claude request that runs for minutes.
   "/api/admin/tour-planner": { max: 15, windowMs: 60 * 60 * 1000, methods: ["POST"] },
 };

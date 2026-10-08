@@ -44,6 +44,14 @@ function getAdminApp() {
   }
 }
 
+// Firestore with server privileges (bypasses security rules), for routes that
+// write data no browser may write, like incoming WhatsApp messages. Null when
+// FIREBASE_ADMIN_CLIENT_EMAIL / FIREBASE_ADMIN_PRIVATE_KEY are not set.
+export function getAdminDb() {
+  const app = getAdminApp();
+  return app ? getFirestore(app) : null;
+}
+
 /**
  * Verifies a Firebase ID token via Google Identity Toolkit REST API
  * when Service Account credentials are not provided in environment variables.

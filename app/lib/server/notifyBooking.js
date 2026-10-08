@@ -42,7 +42,8 @@ function formatMessage(booking) {
   );
 }
 
-export async function notifyNewBooking(booking) {
+// Sends one plain-text message to the team chat. Also used for WhatsApp alerts.
+export async function sendTelegram(text, label = "telegram") {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return false;
@@ -51,13 +52,17 @@ export async function notifyNewBooking(booking) {
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text: formatMessage(booking), disable_web_page_preview: true }),
+      body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
-    if (!res.ok) console.error("[notifyNewBooking] Telegram responded", res.status);
+    if (!res.ok) console.error(`[${label}] Telegram responded`, res.status);
     return res.ok;
   } catch (err) {
-    console.error("[notifyNewBooking] failed:", err?.message || err);
+    console.error(`[${label}] failed:`, err?.message || err);
     return false;
   }
+}
+
+export async function notifyNewBooking(booking) {
+  return sendTelegram(formatMessage(booking), "notifyNewBooking");
 }

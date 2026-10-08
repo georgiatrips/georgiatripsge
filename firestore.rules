@@ -60,6 +60,23 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // WhatsApp chats mirrored by /api/whatsapp/webhook (server writes only).
+    // Admins read them and may reset the unread counter.
+    match /whatsapp_conversations/{phone} {
+      allow read: if isAdmin();
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['unread']);
+
+      match /messages/{messageId} {
+        allow read: if isAdmin();
+      }
+    }
+
+    // Names saved in the business phone's address book.
+    match /whatsapp_contacts/{phone} {
+      allow read: if isAdmin();
+    }
+    // whatsapp_config holds the access token: no client access at all.
+
     // Global Site / Coupon Settings
     match /settings/{settingId} {
       allow read: if true;
