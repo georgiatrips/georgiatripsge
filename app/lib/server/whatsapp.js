@@ -413,3 +413,32 @@ export async function sendText({ to, text }) {
   if (record.id) await saveMessages(db, [{ phone, record }]);
   return record;
 }
+
+// ── Meta App Review demo ─────────────────────────────────────────────
+// Tech Provider review needs a video of this app sending a message, made
+// with the test number from Meta's "Try it out" page and its temporary
+// token. The token is pasted into the admin form for the recording and is
+// used for this one call only, never stored.
+export async function sendDemoMessage({ token, phoneNumberId, to, text }) {
+  const phone = digits(to);
+  const body = String(text || "").trim();
+  if (!token || !phoneNumberId || !phone || !body) {
+    throw new WhatsAppError("შეავსეთ ყველა ველი (token, Phone number ID, ნომერი, ტექსტი).", 400);
+  }
+  const data = await graph(`/${digits(phoneNumberId)}/messages`, {
+    token: String(token).trim(),
+    method: "POST",
+    body: { messaging_product: "whatsapp", recipient_type: "individual", to: phone, type: "text", text: { preview_url: false, body } },
+  });
+  return { id: data.messages?.[0]?.id || "" };
+}
+
+// Lists the message templates of a WhatsApp account (an API test call for
+// the whatsapp_business_management review).
+export async function listDemoTemplates({ token, wabaId }) {
+  if (!token || !wabaId) throw new WhatsAppError("საჭიროა token და WhatsApp Business Account ID.", 400);
+  const data = await graph(`/${digits(wabaId)}/message_templates?fields=name,status,category,language&limit=50`, {
+    token: String(token).trim(),
+  });
+  return { templates: (data.data || []).map(({ name, status, category, language }) => ({ name, status, category, language })) };
+}

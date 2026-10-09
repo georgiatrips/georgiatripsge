@@ -1419,3 +1419,5 @@
   .wa-list { border-inline-end: 0; }
   .wa-back { display: inline-flex; }
 }
+.wa-demo summary { cursor: pointer; }
+.wa-demo[open] summary { margin-bottom: 0.5rem; }
