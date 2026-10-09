@@ -28,6 +28,10 @@ const nextConfig = {
   // are already compressed on upload; Next additionally prevents phones from
   // downloading desktop-sized files for cards and galleries.
   images: {
+    // Our own loader: Vercel's optimizer answers 402 once the plan's monthly
+    // quota is spent, which blanked uncached photos site-wide (2026-10).
+    loader: "custom",
+    loaderFile: "./app/lib/imageLoader.js",
     formats: ["image/avif", "image/webp"],
     // Capped at 2560px: full-bleed heroes sit under a dark scrim, so 3840px
     // variants (8MB+ of source detail) only cost LCP on high-DPR screens.
