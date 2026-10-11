@@ -2,6 +2,7 @@ import { getCachedTours, getCachedPlaces } from "./lib/server/cachedData";
 import { SITE_URL, SUPPORTED_LANGUAGES, getAlternateLanguages } from "./lib/siteConfig";
 import { tourPath, placePath } from "./lib/slugs";
 import { ROUTE_PAGES, routePagePath } from "./lib/transfers/routePages";
+import { BLOG_SLUGS, articlePath, getArticle, localizeArticle } from "./lib/blog";
 
 // sitemap.js is a metadata route: Next caches it at build time unless it opts
 // into dynamic rendering, and revalidatePath("/sitemap.xml") does not reach it.
@@ -94,8 +95,18 @@ export default async function sitemap() {
     );
   }
 
-  // Blog posts are not listed: there is no per-post route (app/[locale]/posts/[id]);
-  // posts render inline on /posts.
+  // Blog articles (code, not Firestore). Traveler posts have no page of their
+  // own; they render inline on /posts.
+  for (const slug of BLOG_SLUGS) {
+    const article = localizeArticle(getArticle(slug), "en");
+    entries.push(
+      ...entriesForPath(
+        articlePath(slug),
+        toDate(article.updated),
+        article.photos.map((photo) => `${SITE_URL}${photo.src}`)
+      )
+    );
+  }
 
   return entries;
 }

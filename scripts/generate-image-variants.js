@@ -18,16 +18,37 @@ const MANIFEST = path.join(__dirname, "../app/lib/localImageVariants.json");
 // Must match LOCAL_WIDTHS in app/lib/imageLoader.js.
 const WIDTHS = [256, 640, 1080, 1920];
 const SKIP = /^(favicon|apple-touch-icon|icon-|logo\.png)/;
+// Subfolders of /public whose photos also get variants (blog article photos).
+const NESTED = ["blog"];
+const IMAGE = /\.(jpe?g|png|webp|avif)$/i;
+
+// Paths relative to /public, e.g. "hero.webp" or "blog/batumi-guide/1.webp".
+function listImages() {
+  const top = fs.readdirSync(PUBLIC).filter((f) => IMAGE.test(f) && !SKIP.test(f));
+  const nested = [];
+  const walk = (rel) => {
+    const abs = path.join(PUBLIC, rel);
+    if (!fs.existsSync(abs)) return;
+    for (const entry of fs.readdirSync(abs, { withFileTypes: true })) {
+      const child = `${rel}/${entry.name}`;
+      if (entry.isDirectory()) walk(child);
+      else if (IMAGE.test(entry.name)) nested.push(child);
+    }
+  };
+  NESTED.forEach(walk);
+  return [...top, ...nested];
+}
 
 async function generate() {
   fs.mkdirSync(OUT, { recursive: true });
   const manifest = {};
-  const files = fs.readdirSync(PUBLIC).filter((f) => /\.(jpe?g|png|webp|avif)$/i.test(f) && !SKIP.test(f));
+  const files = listImages();
 
   for (const file of files) {
     const src = path.join(PUBLIC, file);
     const { width } = await sharp(src).metadata();
     const base = file.replace(/\.[^.]+$/, "");
+    fs.mkdirSync(path.dirname(path.join(OUT, base)), { recursive: true });
     const made = [];
     // Only widths smaller than the original; anything larger is served as-is.
     for (const w of WIDTHS.filter((w) => w < width)) {

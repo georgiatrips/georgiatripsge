@@ -2,17 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import Navbar from "../Navbar";
-import Footer from "../Footer";
-import PageHero from "../PageHero";
-import { BrandLogo, WA_LINK, WhatsAppIcon } from "../../lib/shared";
-import { getLocalizedHref } from "../../lib/siteConfig";
-import { useAllTours } from "../../lib/useAllTours";
+import { BrandLogo } from "../../lib/shared";
 import { useAuth } from "../../lib/AuthContext";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { addPostComment, createPost, deletePost, listPosts, togglePostLike, updatePost, voteOnPoll } from "../../lib/postsFirestore";
-import { formatLocationTag, asLocalizedText, translateDuration, translateLocation } from "../../lib/toursShared";
+import { formatLocationTag } from "../../lib/toursShared";
 import { uploadImage } from "../../lib/imageUpload";
 
 const asText = (value, fallback = "") => {
@@ -21,7 +15,10 @@ const asText = (value, fallback = "") => {
   return fallback;
 };
 
-export default function PostsCatalogClient({ initialPosts = [] }) {
+// Traveler posts (Firestore) under the blog articles on /posts: the composer,
+// likes, comments and polls. The page around it (menu, hero, articles,
+// footer) is rendered by app/[locale]/posts/page.js.
+export default function PostsCatalogClient({ initialPosts = [], title, text }) {
   const { t, lang } = useLanguage();
   const [activeFilter, setActiveFilter] = useState("all");
   const [openCommentIndex, setOpenCommentIndex] = useState(null);
@@ -78,13 +75,6 @@ export default function PostsCatalogClient({ initialPosts = [] }) {
     }
     return feelingStr;
   };
-
-  const { allTours } = useAllTours();
-  const [sidebarTours, setSidebarTours] = useState([]);
-
-  useEffect(() => {
-    setSidebarTours([...allTours].sort(() => Math.random() - 0.5).slice(0, 3));
-  }, [allTours]);
 
   useEffect(() => {
     if (user?.uid) {
@@ -222,7 +212,7 @@ export default function PostsCatalogClient({ initialPosts = [] }) {
   const startEditPost = (post) => {
     setEditingPostId(post.id);
     setComposerText(post.content || "");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    document.getElementById("community")?.scrollIntoView({ block: "start" });
   };
 
   const removePost = async () => {
@@ -256,25 +246,18 @@ export default function PostsCatalogClient({ initialPosts = [] }) {
   };
 
   return (
-    <div className="posts-page-wrapper">
-      <Navbar active="posts" />
+    <section className="blog-community" id="community" aria-labelledby="community-title">
+      <div className="blog-wrap">
+        <header className="blog-section-head">
+          <h2 id="community-title">{title}</h2>
+          {text && <p>{text}</p>}
+        </header>
 
-      {/* HERO SECTION */}
-      <PageHero
-        kicker={t("postsPage.heroKicker")}
-        title={t("postsPage.heroTitle")}
-        subtitle={t("postsPage.heroSubtitle")}
-        image="/mestia.webp"
-        alt={t("postsPage.heroTitle")}
-      />
-
-      {/* MAIN SOCIAL FEED CONTAINER */}
-      {user && (
-        <section className="posts-my-section">
-          <div className="container">
+        {user && (
+          <div className="posts-my-section">
             <div className="posts-my-articles posts-my-articles-top">
               <div className="posts-my-articles-heading">
-                <h2>{t("postsPage.myArticles")}</h2>
+                <h3>{t("postsPage.myArticles")}</h3>
                 <span>{remotePosts.filter((post) => post.authorId === user.uid).length}</span>
               </div>
               {remotePosts.filter((post) => post.authorId === user.uid).length === 0 ? (
@@ -294,32 +277,7 @@ export default function PostsCatalogClient({ initialPosts = [] }) {
               )}
             </div>
           </div>
-        </section>
-      )}
-
-      <section className="section posts-feed-section">
-        <div className="container posts-feed-container posts-layout">
-          <aside className="posts-tours-sidebar">
-            <div className="posts-sidebar-tour-list">
-              {sidebarTours.map((tour) => (
-                <Link key={tour.id} href={getLocalizedHref(`/tours/${encodeURIComponent(tour.slug || tour.id)}`, lang)} className="posts-sidebar-tour">
-                  <span className="posts-sidebar-tour-image">
-                    <Image
-                      src={tour.img || "/hero.webp"}
-                      alt={asLocalizedText(tour.title, lang)}
-                      fill
-                      sizes="96px"
-                      style={{ objectFit: "cover" }}
-                    />
-                  </span>
-                  <span className="posts-sidebar-tour-info">
-                    <strong>{asLocalizedText(tour.title, lang)}</strong>
-                    <small>{translateDuration(tour.duration, lang)} · {translateLocation(tour.destinationLabel || tour.destination || tour.location, lang)}</small>
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </aside>
+        )}
 
           <div className="posts-main-feed">
             <form className="posts-composer" onSubmit={submitPost}>
@@ -436,7 +394,7 @@ export default function PostsCatalogClient({ initialPosts = [] }) {
               </div>
             ) : postsData.length === 0 ? (
               <div className="posts-empty-state">
-                <h2>{t("postsPage.noPostsYet")}</h2>
+                <h3>{t("postsPage.noPostsYet")}</h3>
                 <p>{t("postsPage.noPostsDesc")}</p>
               </div>
             ) : (
@@ -657,8 +615,7 @@ export default function PostsCatalogClient({ initialPosts = [] }) {
               })
             )}
           </div>
-        </div>
-      </section>
+      </div>
 
       {deletePostTarget && (
         <div className="posts-delete-overlay" role="dialog" aria-modal="true">
@@ -691,8 +648,6 @@ export default function PostsCatalogClient({ initialPosts = [] }) {
           </div>
         </div>
       )}
-
-      <Footer />
-    </div>
+    </section>
   );
 }

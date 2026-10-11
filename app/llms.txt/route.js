@@ -6,6 +6,7 @@ import { EMAIL, PHONE_DISPLAY, SOCIAL_PROFILES, WA_LINK } from "../lib/shared";
 import { COMPANY_PROFILE } from "../lib/companyProfile";
 import { getPrivateVehiclePrices, VEHICLE_KEYS, VEHICLES } from "../lib/vehicles";
 import { ROUTE_PAGES, locationName, quoteRoutePage, routePagePath } from "../lib/transfers/routePages";
+import { articleCards, articlePath } from "../lib/blog";
 
 // /llms.txt — a plain-text brief for AI assistants (ChatGPT, Claude,
 // Perplexity…), following the llmstxt.org format. It is generated from the
@@ -88,6 +89,9 @@ export async function GET() {
     `- [Waterfalls near Batumi](${en("/waterfalls-near-batumi")}): Makhuntseti and the waterfalls of mountain Adjara`,
     `- [Batumi Airport transfer](${en("/batumi-airport-transfer")}): prices from Batumi Airport (BUS)`,
     `- [Places](${en("/places")}): ${(places || []).length} places on our routes, with photos`,
+    "",
+    "## Travel blog",
+    ...articleCards("en").map((card) => `- [${card.title}](${en(articlePath(card.slug))}): ${card.excerpt}`),
     "",
     "## About and contact",
     `- [About GeorgiaTrips](${en("/about")})`,

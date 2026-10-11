@@ -1,55 +1,60 @@
-import React, { Suspense } from "react";
-import { getCachedPosts } from "../../lib/server/cachedData";
+import React from "react";
+import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
+import BlogCard from "../../components/blog/BlogCard";
+import BlogFilter from "../../components/blog/BlogFilter";
 import PostsCatalogClient from "../../components/posts/PostsCatalogClient";
+import { getCachedPosts } from "../../lib/server/cachedData";
+import { BLOG_CATEGORIES, articleCards, blogCardLabels } from "../../lib/blog";
+import { blogUi } from "../../lib/blog/ui";
 import { SITE_URL, getRequestLocale, buildLocalizedMetadata } from "../../lib/siteConfig";
 import "./posts.css";
-
-const COPY = {
-  ka: { title: "ბლოგი და მოგზაურთა შთაბეჭდილებები | GeorgiaTrips", description: "საქართველოში მოგზაურობის გამოცდილება, რჩევები, ისტორიები და ფოტოები რეალური მოგზაურებისა და გიდებისგან.", home: "მთავარი", crumb: "ბლოგი & პოსტები" },
-  en: { title: "Travel Blog & Stories | GeorgiaTrips", description: "Travel experiences, tips, stories and photos from real travelers and guides in Georgia.", home: "Home", crumb: "Blog & Posts" },
-  ru: { title: "Блог и рассказы путешественников | GeorgiaTrips", description: "Опыт путешествий, советы, истории и фото от реальных путешественников и гидов по Грузии.", home: "Главная", crumb: "Блог и посты" },
-  tr: { title: "Seyahat Blogu ve Hikayeler | GeorgiaTrips", description: "Gürcistan'daki gerçek gezginler ve rehberlerden seyahat deneyimleri, ipuçları, hikayeler ve fotoğraflar.", home: "Ana Sayfa", crumb: "Blog ve Gönderiler" },
-  ar: { title: "مدونة السفر والقصص | GeorgiaTrips", description: "تجارب السفر والنصائح والقصص والصور من مسافرين ومرشدين حقيقيين في جورجيا.", home: "الرئيسية", crumb: "المدونة والمنشورات" },
-};
+import "./blog.css";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const lang = getRequestLocale(locale);
-  const c = COPY[lang] || COPY.en;
-  return buildLocalizedMetadata({ path: "/posts", lang, title: c.title, description: c.description, image: "/mestia.webp" });
+  const ui = blogUi(lang);
+  const cover = articleCards(lang)[0]?.cover?.src;
+  return buildLocalizedMetadata({ path: "/posts", lang, title: ui.metaTitle, description: ui.metaDescription, image: cover || "/mestia.webp" });
 }
 
 export default async function PostsPage({ params }) {
   const { locale } = await params;
   const lang = getRequestLocale(locale);
-  const c = COPY[lang] || COPY.en;
+  const ui = blogUi(lang);
+  const labels = blogCardLabels(lang);
+  const cards = articleCards(lang);
+  const [featured, ...rest] = cards;
   const posts = await getCachedPosts();
 
-  const blogJsonLd = {
+  const pageUrl = `${SITE_URL}/${lang}/posts`;
+  const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "BreadcrumbList",
-        "@id": `${SITE_URL}/${lang}/posts#breadcrumbs`,
-        "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": c.home, "item": `${SITE_URL}/${lang}` },
-          { "@type": "ListItem", "position": 2, "name": c.crumb, "item": `${SITE_URL}/${lang}/posts` },
+        "@id": `${pageUrl}#breadcrumbs`,
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: ui.home, item: `${SITE_URL}/${lang}` },
+          { "@type": "ListItem", position: 2, name: ui.crumb, item: pageUrl },
         ],
       },
       {
         "@type": "Blog",
-        "@id": `${SITE_URL}/${lang}/posts#blog`,
-        "name": "GeorgiaTrips Travel Community Blog",
-        "description": c.description,
-        "blogPost": (posts || []).slice(0, 20).map((post) => ({
+        "@id": `${pageUrl}#blog`,
+        name: ui.hubTitle,
+        description: ui.metaDescription,
+        url: pageUrl,
+        inLanguage: lang,
+        publisher: { "@id": `${SITE_URL}/#organization` },
+        blogPost: cards.map((card) => ({
           "@type": "BlogPosting",
-          "headline": post.title || post.content?.slice(0, 70) || "Traveler post",
-          "articleBody": post.content || "",
-          "image": post.img || `${SITE_URL}/mestia.webp`,
-          "author": {
-            "@type": "Person",
-            "name": post.author || "GeorgiaTrips Traveler",
-          },
+          headline: card.title,
+          description: card.excerpt,
+          url: `${SITE_URL}${card.href}`,
+          datePublished: card.published,
+          image: card.cover ? `${SITE_URL}${card.cover.src}` : undefined,
         })),
       },
     ],
@@ -57,13 +62,35 @@ export default async function PostsPage({ params }) {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogJsonLd) }}
-      />
-      <Suspense fallback={<div className="posts-loading-state"><p>...</p></div>}>
-        <PostsCatalogClient initialPosts={posts} />
-      </Suspense>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <Navbar active="posts" overlay={false} />
+      <main className="blog-page">
+        <header className="blog-hub-head">
+          <div className="blog-wrap">
+            <p className="blog-kicker">{ui.kicker}</p>
+            <h1>{ui.hubTitle}</h1>
+            <p className="blog-lede">{ui.hubSubtitle}</p>
+          </div>
+        </header>
+
+        {featured && (
+          <section className="blog-wrap blog-featured" aria-label={ui.featured}>
+            <BlogCard card={featured} labels={labels} featured eager headingLevel={2} />
+          </section>
+        )}
+
+        {rest.length > 0 && (
+          <section className="blog-wrap blog-list" aria-labelledby="blog-list-title">
+            <header className="blog-section-head">
+              <h2 id="blog-list-title">{ui.latest}</h2>
+            </header>
+            <BlogFilter cards={rest} categories={BLOG_CATEGORIES} labels={labels} />
+          </section>
+        )}
+
+        <PostsCatalogClient initialPosts={posts} title={ui.communityTitle} text={ui.communityText} />
+      </main>
+      <Footer />
     </>
   );
 }
