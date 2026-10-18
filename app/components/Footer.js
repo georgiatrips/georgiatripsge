@@ -159,8 +159,7 @@ export default function Footer({ mobileNav = true }) {
             </ul>
             <p className="gt-footer-legal">© {year} GeorgiaTrips. {t("footer.rights")}</p>
             <p className="gt-footer-dev">
-              {t("site.developedBy")}{" "}
-              <a href="https://www.instagram.com/lominadzee10/" target="_blank" rel="noopener noreferrer author">@lominadzee10</a>
+              {t("site.developedBy")} GeorgiaTrips
             </p>
           </div>
         </div>
