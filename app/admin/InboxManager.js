@@ -434,6 +434,7 @@ function AiBar({ ai, onChange }) {
       {ai.mode === "suggest" && <small>AI წერს მონახაზს, თქვენ აგზავნით.</small>}
       {ai.mode === "auto" && <small>AI თვითონ პასუხობს ყველა ახალ შეტყობინებას.</small>}
       {ai.ready && ai.usage && <AiUsage usage={ai.usage} />}
+      {ai.ready && <AiInstructions saved={ai.instructions || ""} />}
     </div>
   );
 }
@@ -445,11 +446,12 @@ const formatClock = (ms) => new Date(ms).toLocaleString("ka-GE", { hour: "2-digi
 // named it (it is also on aistudio.google.com/rate-limit).
 function AiUsage({ usage }) {
   const [test, setTest] = useState(null);
+  const [question, setQuestion] = useState("");
 
   const runTest = async () => {
     setTest({ busy: true });
     try {
-      const { reply, ms, model, briefMs } = await inboxAction({ action: "ai-test" });
+      const { reply, ms, model, briefMs } = await inboxAction({ action: "ai-test", question });
       setTest({ ok: `✓ მუშაობს (${(ms / 1000).toFixed(1)} წმ, ${model.replace("gemini-", "")}, ინფორმაცია ${(briefMs / 1000).toFixed(1)} წმ): „${reply}“` });
     } catch (err) {
       setTest({ error: err.message });
@@ -480,13 +482,59 @@ function AiUsage({ usage }) {
           ბოლო შეცდომა ({formatClock(usage.lastError.at)}, {usage.lastError.model}, {usage.lastError.status}): {usage.lastError.message}
         </span>
       )}
-      <span>
+      <span className="inbox-ai-test">
+        <input
+          type="text"
+          className="tpl-input"
+          placeholder="სატესტო კითხვა (ცარიელი — „ტურები გაქვთ საქართველოში?“)"
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+        />
         <button type="button" className="admin-btn-ghost wa-reconnect" onClick={runTest} disabled={test?.busy}>
           {test?.busy ? "..." : "შემოწმება"}
-        </button>{" "}
-        {test?.ok && <span className="wa-connected">{test.ok}</span>}
-        {test?.error && <span className="wa-warn">{test.error}</span>}
+        </button>
       </span>
+      {test?.ok && <span className="wa-connected">{test.ok}</span>}
+      {test?.error && <span className="wa-warn">{test.error}</span>}
     </div>
+  );
+}
+
+// The owner's rules for the assistant, added to every request (they win over
+// the built-in ones). Text from Word or anywhere else can be pasted in.
+function AiInstructions({ saved }) {
+  const [text, setText] = useState(saved);
+  const [status, setStatus] = useState(null);
+  const changed = text !== saved;
+  // A save (here or in another tab) brings the stored text back in.
+  useEffect(() => setText(saved), [saved]);
+
+  const save = async () => {
+    setStatus({ busy: true });
+    try {
+      await inboxAction({ action: "ai-instructions", text });
+      setStatus({ ok: "✓ შენახულია — AI ამას მომდევნო პასუხიდან გაითვალისწინებს." });
+    } catch (err) {
+      setStatus({ error: err.message });
+    }
+  };
+
+  return (
+    <details className="inbox-ai-rules">
+      <summary>📝 AI-ის წესები {saved.trim() ? `(${saved.trim().split("\n").filter(Boolean).length} ხაზი)` : "(ცარიელი)"}</summary>
+      <p className="admin-hint">
+        დაწერეთ ან Word-იდან ჩააკოპირეთ, რა უნდა გაითვალისწინოს AI-მ, თითო წესი ცალკე ხაზზე. მაგ.: „კომპანიის სახელი ყოველთვის
+        ლათინურად დაწერე: GeorgiaTrips (არა „ჯორჯიატრიპსი“)“. ეს წესები AI-ის სხვა წესებზე მაღლა დგას.
+      </p>
+      <textarea className="tpl-input" rows={8} value={text} onChange={(e) => setText(e.target.value)} maxLength={8000} />
+      <div className="admin-form-actions">
+        <button type="button" className="admin-btn-primary" onClick={save} disabled={status?.busy || !changed}>
+          {status?.busy ? "..." : "შენახვა"}
+        </button>
+        <small>{text.length} / 8000</small>
+        {status?.ok && !changed && <span className="wa-connected">{status.ok}</span>}
+        {status?.error && <span className="wa-warn">{status.error}</span>}
+      </div>
+    </details>
   );
 }

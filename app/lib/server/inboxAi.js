@@ -34,6 +34,8 @@ const HISTORY = 30;
 const CHANNEL_LABELS = { whatsapp: "WhatsApp", messenger: "Facebook Messenger", instagram: "Instagram" };
 
 export const AI_MODES = ["off", "suggest", "auto"];
+// The owner's own rules for the assistant (spelling, tone, what to say).
+export const MAX_INSTRUCTIONS = 8000;
 
 export async function getAiSettings() {
   const [saved, usage] = await Promise.all([getConfig("ai"), getConfig(USAGE_KEY)]);
@@ -41,6 +43,7 @@ export async function getAiSettings() {
     mode: AI_MODES.includes(saved?.mode) ? saved.mode : "off",
     channels: { whatsapp: true, messenger: true, instagram: true, ...saved?.channels },
     ready: Boolean(process.env.GEMINI_API_KEY),
+    instructions: String(saved?.instructions || ""),
     usage: usageView(usage),
   };
 }
@@ -124,9 +127,16 @@ Today is {TODAY} (Batumi time).
 Company brief:
 {BRIEF}`;
 
-function systemPrompt(channel, brief) {
+// The owner's rules come last, so they win over the general ones above.
+const OWNER_RULES = `
+
+Rules from the GeorgiaTrips owner. Always follow them; where they differ from anything above, they win:
+{RULES}`;
+
+function systemPrompt(channel, brief, instructions = "") {
   const today = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Tbilisi", weekday: "long", day: "numeric", month: "long", year: "numeric" });
-  return RULES.replace("{CHANNEL}", CHANNEL_LABELS[channel]).replace("{TODAY}", today).replace("{BRIEF}", brief);
+  const prompt = RULES.replace("{CHANNEL}", CHANNEL_LABELS[channel]).replace("{TODAY}", today).replace("{BRIEF}", brief);
+  return instructions.trim() ? prompt + OWNER_RULES.replace("{RULES}", instructions.trim()) : prompt;
 }
 
 // Chat history as Gemini turns: the customer is "user", the company "model".
@@ -192,14 +202,15 @@ async function generate(system, contents) {
 // The admin's "test" button: the same request a real customer question
 // makes (full company brief), so the panel shows at once whether replies
 // work, how long they take, and the error if not.
-export async function testAi() {
+export async function testAi(question) {
   if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY არ არის Vercel-ში.");
   const started = Date.now();
   try {
-    const brief = await buildSiteBrief();
+    const [brief, settings] = await Promise.all([buildSiteBrief(), getAiSettings()]);
     const briefMs = Date.now() - started;
-    const { reply, model } = await generate(systemPrompt("whatsapp", brief), [
-      { role: "user", parts: [{ text: "გამარჯობათ, ტურები გაქვთ საქართველოში?" }] },
+    const text = String(question || "").trim().slice(0, 1000) || "გამარჯობათ, ტურები გაქვთ საქართველოში?";
+    const { reply, model } = await generate(systemPrompt("whatsapp", brief, settings.instructions), [
+      { role: "user", parts: [{ text }] },
     ]);
     return { reply, model, briefMs, ms: Date.now() - started };
   } catch (err) {
@@ -231,7 +242,10 @@ async function answerChat(channel, id) {
   if (!last || last.direction !== "in") return;
   if (!(await claimAiTurn(channel, id, last.timestamp))) return;
 
-  const { reply, handoff, reason } = await generate(systemPrompt(channel, await buildSiteBrief()), toContents(messages));
+  const { reply, handoff, reason } = await generate(
+    systemPrompt(channel, await buildSiteBrief(), settings.instructions),
+    toContents(messages)
+  );
   if (!reply) return;
 
   const name = conversation.profileName || (channel === "whatsapp" ? `+${id}` : "მომხმარებელი");
