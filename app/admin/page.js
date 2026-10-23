@@ -23,7 +23,8 @@ import WhatsAppManager from "./WhatsAppManager";
 import MessengerManager from "./MessengerManager";
 import { collection, getCountFromServer, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { MESSENGER_CONVERSATIONS, WA_CONNECT_STATE, WHATSAPP_CONVERSATIONS } from "../lib/whatsappConfig";
+import { WA_CONNECT_STATE } from "../lib/whatsappConfig";
+import { useUnreadCounts } from "./useInbox";
 import LocalizedInputGroup, { emptyLangObj, parseLocal } from "./LocalizedInputGroup";
 import { useAuth } from "../lib/AuthContext";
 import { useCurrency } from "../lib/currency/CurrencyContext";
@@ -153,8 +154,6 @@ export default function AdminPage() {
   const [reviewsCount, setReviewsCount] = useState(0);
   const [liveVisitorsCount, setLiveVisitorsCount] = useState(0);
   const [pendingBookingsCount, setPendingBookingsCount] = useState(0);
-  const [unreadChatsCount, setUnreadChatsCount] = useState(0);
-  const [unreadMessengerCount, setUnreadMessengerCount] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -208,25 +207,15 @@ export default function AdminPage() {
       () => {}
     );
 
-    const unsubChats = onSnapshot(
-      query(collection(db, WHATSAPP_CONVERSATIONS), where("unread", ">", 0)),
-      (snap) => active && setUnreadChatsCount(snap.size),
-      () => {}
-    );
-    const unsubMessenger = onSnapshot(
-      query(collection(db, MESSENGER_CONVERSATIONS), where("unread", ">", 0)),
-      (snap) => active && setUnreadMessengerCount(snap.size),
-      () => {}
-    );
-
     return () => {
       active = false;
       unsubSessions();
       unsubBookings();
-      unsubChats();
-      unsubMessenger();
     };
   }, [isAdminUser]);
+
+  // Chats live in Neon, not Firestore: polled, no read quota.
+  const { whatsapp: unreadChatsCount, messenger: unreadMessengerCount } = useUnreadCounts(isAdminUser);
 
 
   const schedulePreview = groupDepartureDates(departureDates);

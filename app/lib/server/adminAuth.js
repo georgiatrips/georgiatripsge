@@ -135,6 +135,19 @@ async function checkIsAdminViaRest(user, token, projectId) {
   return false;
 }
 
+const knownAdmins = new Map();
+const KNOWN_ADMIN_TTL_MS = 10 * 60 * 1000;
+
+async function grantAdminClaim(app, uid) {
+  try {
+    const auth = getAuth(app);
+    const { customClaims } = await auth.getUser(uid);
+    if (customClaims?.admin !== true) await auth.setCustomUserClaims(uid, { ...customClaims, admin: true });
+  } catch (err) {
+    console.error("[adminAuth] could not set admin claim:", err.message);
+  }
+}
+
 export async function requireAdmin(request) {
   const authorization = request.headers.get("authorization") || "";
   const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
@@ -147,11 +160,18 @@ export async function requireAdmin(request) {
     try {
       const decoded = await getAuth(app).verifyIdToken(token, true);
 
-      // Check custom claims first, then Firestore users collection
-      let isAdmin = decoded.admin === true;
+      // Check custom claims first, then Firestore users collection. The admin
+      // panel polls its inbox every few seconds, so a Firestore hit is
+      // remembered here and turned into an `admin` claim: the next ID token
+      // (refreshed hourly) proves admin without any Firestore read.
+      let isAdmin = decoded.admin === true || (knownAdmins.get(decoded.uid) || 0) > Date.now();
       if (!isAdmin) {
         const userDoc = await getFirestore(app).collection("users").doc(decoded.uid).get();
         isAdmin = userDoc.exists && userDoc.data()?.isAdmin === true;
+        if (isAdmin) {
+          knownAdmins.set(decoded.uid, Date.now() + KNOWN_ADMIN_TTL_MS);
+          grantAdminClaim(app, decoded.uid);
+        }
       }
 
       if (!isAdmin) return { error: "Admin access required", status: 403 };

@@ -6,66 +6,39 @@
 //   smb_message_echoes   the team replied from the phone app
 //   history              up to 180 days of old chats, once, after connecting
 //   smb_app_state_sync   the phone's saved contacts (names)
-// Everything lands in Firestore (whatsapp_conversations/{phone}/messages),
-// which only admins can read and only this server can write.
+// Everything lands in the Neon inbox tables (inboxStore.js), which only the
+// admin API reads.
 //
 // Vercel → Settings → Environment Variables:
 //   WHATSAPP_APP_SECRET    Meta app → App settings → Basic → App secret
 //   WHATSAPP_VERIFY_TOKEN  any random string, also typed into Meta's webhook form
-//   FIREBASE_ADMIN_CLIENT_EMAIL / FIREBASE_ADMIN_PRIVATE_KEY  (server Firestore)
+//   DATABASE_URL           Neon (Vercel → Storage)
 // The access token is not an env variable: connecting from the admin panel
-// stores it in whatsapp_config/main, which no browser can read.
+// stores it in the inbox config, which no browser can read.
 
 import crypto from "node:crypto";
-import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "./adminAuth";
 import { sendTelegram } from "./notifyBooking";
 import { SITE_URL } from "../siteConfig";
-import { GRAPH_API_VERSION, WHATSAPP_APP_ID, WHATSAPP_CONVERSATIONS } from "../whatsappConfig";
+import { GRAPH_API_VERSION, WHATSAPP_APP_ID } from "../whatsappConfig";
+import {
+  getConfig,
+  saveContacts as storeContacts,
+  saveMessages as storeMessages,
+  setConfig,
+  updateMessageStatus,
+} from "./inboxStore";
 
 const GRAPH = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
-const CONTACTS = "whatsapp_contacts";
-const CONFIG_PATH = "whatsapp_config/main";
-// Firestore allows 500 writes per batch and caps getAll; stay well below.
-const CHUNK = 300;
+const CHANNEL = "whatsapp";
+const CONFIG_KEY = "whatsapp";
+// Where the config lived before the inbox moved to Neon.
+const FIRESTORE_CONFIG_PATH = "whatsapp_config/main";
 const MEDIA_TYPES = new Set(["image", "video", "audio", "document", "sticker"]);
 
 export const digits = (value) => String(value || "").replace(/\D/g, "");
 
-const chunks = (list) => {
-  const out = [];
-  for (let i = 0; i < list.length; i += CHUNK) out.push(list.slice(i, i + CHUNK));
-  return out;
-};
-
-// Firestore rejects undefined fields.
 const clean = (obj) => Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined));
-
-// Writes a document only if it does not exist yet; true when it was written.
-// A write, not a read, so it keeps working when the daily read quota is spent.
-export async function createOnce(ref, data) {
-  try {
-    await ref.create(data);
-    return true;
-  } catch (err) {
-    if (err?.code === 6) return false; // ALREADY_EXISTS
-    throw err;
-  }
-}
-
-// Updates a conversation summary in a transaction, or, when reads fail
-// (e.g. RESOURCE_EXHAUSTED on the free plan), with a blind merge so the
-// message still shows up.
-export async function updateSummary(db, ref, build) {
-  try {
-    await db.runTransaction(async (tx) => {
-      tx.set(ref, build((await tx.get(ref)).data() || {}), { merge: true });
-    });
-  } catch (err) {
-    console.warn("[whatsapp] summary transaction failed, writing blind:", err?.message);
-    await ref.set(build(null), { merge: true });
-  }
-}
 
 export class WhatsAppError extends Error {
   constructor(message, status = 500, code) {
@@ -75,15 +48,22 @@ export class WhatsAppError extends Error {
   }
 }
 
-export function requireDb() {
-  const db = getAdminDb();
-  if (!db) {
-    throw new WhatsAppError(
-      "სერვერის Firestore არ არის მორგებული (FIREBASE_ADMIN_CLIENT_EMAIL / FIREBASE_ADMIN_PRIVATE_KEY).",
-      503
-    );
+// The stored config, copied over from Firestore the first time it is needed.
+export async function loadConfig(key = CONFIG_KEY, firestorePath = FIRESTORE_CONFIG_PATH) {
+  const cfg = await getConfig(key);
+  if (cfg) return cfg;
+  const firestore = getAdminDb();
+  if (!firestore) return {};
+  try {
+    const old = (await firestore.doc(firestorePath).get()).data();
+    if (old) {
+      await setConfig(key, old, { replace: true });
+      return old;
+    }
+  } catch (err) {
+    console.warn(`[inbox] could not copy ${firestorePath} from Firestore:`, err?.message);
   }
-  return db;
+  return {};
 }
 
 // ── Webhook authenticity ─────────────────────────────────────────────
@@ -145,82 +125,27 @@ function toRecord(msg, direction, source) {
   });
 }
 
-// ── Firestore writes ─────────────────────────────────────────────────
+// ── Storage ──────────────────────────────────────────────────────────
 
-// Stores messages once each (Meta retries deliveries, so the same message can
-// arrive twice) and keeps each conversation's summary up to date. Returns the
-// messages that were new. `live` marks real-time customer messages, the only
-// ones that count as unread.
-async function saveMessages(db, items, { live = false } = {}) {
-  const valid = items.filter((item) => item.phone && item.record?.id);
-  if (!valid.length) return [];
-  const convs = db.collection(WHATSAPP_CONVERSATIONS);
-  const ref = ({ phone, record }) => convs.doc(phone).collection("messages").doc(record.id);
-
-  const fresh = [];
-  for (const part of chunks(valid)) {
-    const written = await Promise.all(
-      part.map((item) => createOnce(ref(item), { ...item.record, createdAt: FieldValue.serverTimestamp() }))
-    );
-    part.forEach((item, i) => written[i] && fresh.push(item));
-  }
-
-  const byPhone = new Map();
-  for (const item of fresh) {
-    const entry = byPhone.get(item.phone) || { latest: null, lastIncomingAt: 0, incoming: 0, profileName: undefined };
-    if (!entry.latest || item.record.timestamp >= entry.latest.timestamp) entry.latest = item.record;
-    if (item.record.direction === "in") {
-      entry.lastIncomingAt = Math.max(entry.lastIncomingAt, item.record.timestamp);
-      if (live) entry.incoming += 1;
-    }
-    entry.profileName = item.profileName || entry.profileName;
-    byPhone.set(item.phone, entry);
-  }
-
-  await Promise.all(
-    [...byPhone].map(([phone, entry]) =>
-      // current is null when it could not be read: assume this message is the latest.
-      updateSummary(db, convs.doc(phone), (current) => {
-        const update = { phone, updatedAt: FieldValue.serverTimestamp() };
-        if (entry.profileName) update.profileName = entry.profileName;
-        if (!current?.lastMessageAt || entry.latest.timestamp >= current.lastMessageAt) {
-          update.lastMessageAt = entry.latest.timestamp;
-          update.lastText = entry.latest.text;
-          update.lastDirection = entry.latest.direction;
-        }
-        if (entry.lastIncomingAt > (current?.lastIncomingAt || 0)) update.lastIncomingAt = entry.lastIncomingAt;
-        if (entry.incoming) {
-          update.unread = current ? (current.unread || 0) + entry.incoming : FieldValue.increment(entry.incoming);
-        }
-        return update;
-      })
-    )
+// Items are { phone, profileName?, record }; stored once each, returns the new
+// ones. `live` marks real-time customer messages, the only ones counted unread.
+const saveMessages = (items, options) =>
+  storeMessages(
+    CHANNEL,
+    items.filter((item) => item.phone).map((item) => ({ ...item, conversationId: item.phone })),
+    options
   );
-  return fresh;
-}
 
 // Delivery/read receipts for messages sent from the site.
-async function applyStatuses(db, statuses = []) {
-  await Promise.all(
-    statuses.map((s) =>
-      db
-        .collection(WHATSAPP_CONVERSATIONS)
-        .doc(digits(s.recipient_id))
-        .collection("messages")
-        .doc(s.id)
-        .update(clean({ status: s.status, error: s.errors?.[0]?.title }))
-        // A receipt for a message this site never stored (sent from the phone).
-        .catch(() => {})
-    )
-  );
+async function applyStatuses(statuses = []) {
+  await Promise.all(statuses.map((s) => updateMessageStatus(CHANNEL, s.id, s.status, s.errors?.[0]?.title)));
 }
 
-async function saveHistory(db, history = []) {
-  const config = db.doc(CONFIG_PATH);
+async function saveHistory(history = []) {
   for (const part of history) {
     if (part.errors?.length) {
       console.warn("[whatsapp] history sync refused:", part.errors[0]?.message);
-      await config.set({ historyError: part.errors[0]?.message || "declined" }, { merge: true });
+      await setConfig(CONFIG_KEY, { historyError: part.errors[0]?.message || "declined" });
       continue;
     }
     const items = [];
@@ -231,33 +156,30 @@ async function saveHistory(db, history = []) {
         items.push({ phone, record: clean({ ...toRecord(msg, direction, "history"), status: msg.history_context?.status }) });
       }
     }
-    await saveMessages(db, items);
+    await saveMessages(items);
     if (part.metadata) {
-      await config.set(
-        { historyProgress: clean({ phase: part.metadata.phase, progress: part.metadata.progress, at: Date.now() }) },
-        { merge: true }
-      );
+      await setConfig(CONFIG_KEY, {
+        historyProgress: clean({ phase: part.metadata.phase, progress: part.metadata.progress, at: Date.now() }),
+      });
     }
   }
 }
 
 // The phone's address book, so chats show the names saved on the phone.
-async function saveContacts(db, stateSync = []) {
-  const contacts = stateSync.filter((s) => s.type === "contact" && digits(s.contact?.phone_number));
-  for (const part of chunks(contacts)) {
-    const batch = db.batch();
-    for (const s of part) {
-      const ref = db.collection(CONTACTS).doc(digits(s.contact.phone_number));
-      if (s.action === "remove") batch.delete(ref);
-      else batch.set(ref, { name: s.contact.full_name || s.contact.first_name || "", updatedAt: FieldValue.serverTimestamp() });
-    }
-    await batch.commit();
-  }
+async function saveContacts(stateSync = []) {
+  await storeContacts(
+    stateSync
+      .filter((s) => s.type === "contact" && digits(s.contact?.phone_number))
+      .map((s) => ({
+        phone: digits(s.contact.phone_number),
+        name: s.contact.full_name || s.contact.first_name || "",
+        remove: s.action === "remove",
+      }))
+  );
 }
 
 // Handles one webhook delivery; returns new customer messages to alert about.
 export async function processWebhook(body) {
-  const db = requireDb();
   const alerts = [];
   for (const entry of body?.entry || []) {
     for (const change of entry.changes || []) {
@@ -270,21 +192,20 @@ export async function processWebhook(body) {
             profileName: names.get(digits(msg.from)),
             record: toRecord(msg, "in", "customer"),
           }));
-          alerts.push(...(await saveMessages(db, items, { live: true })));
-          await applyStatuses(db, value.statuses);
+          alerts.push(...(await saveMessages(items, { live: true })));
+          await applyStatuses(value.statuses);
           break;
         }
         case "smb_message_echoes":
           await saveMessages(
-            db,
             (value.message_echoes || []).map((msg) => ({ phone: digits(msg.to), record: toRecord(msg, "out", "phone") }))
           );
           break;
         case "history":
-          await saveHistory(db, value.history);
+          await saveHistory(value.history);
           break;
         case "smb_app_state_sync":
-          await saveContacts(db, value.state_sync);
+          await saveContacts(value.state_sync);
           break;
         default:
           console.log("[whatsapp] unhandled webhook field:", change.field);
@@ -353,12 +274,11 @@ async function grantedWabaId(token, previousWabaId) {
 // 24 hours of connecting, so this runs right away.
 export async function connectWhatsApp({ code, wabaId, phoneNumberId, redirectUri }) {
   if (!code) throw new WhatsAppError("Meta-მ მიერთების მონაცემები არ დააბრუნა.", 400);
-  const db = requireDb();
   const { token, expiresIn } = await exchangeCode(code, redirectUri);
   // The full-page signup has no session message: read the account the
   // token was granted for.
-  if (!wabaId) wabaId = await grantedWabaId(token, (await db.doc(CONFIG_PATH).get()).data()?.wabaId);
-  return finishConnect(db, { token, expiresIn, wabaId, phoneNumberId });
+  if (!wabaId) wabaId = await grantedWabaId(token, (await loadConfig()).wabaId);
+  return finishConnect({ token, expiresIn, wabaId, phoneNumberId });
 }
 
 // Our own number lives in the same business portfolio as this app, and
@@ -368,20 +288,17 @@ export async function connectWhatsApp({ code, wabaId, phoneNumberId, redirectUri
 export async function connectWithToken({ token, wabaId, phoneNumberId }) {
   token = String(token || "").trim();
   if (!token || !digits(wabaId)) throw new WhatsAppError("ტოკენი ან WABA ID ცარიელია.", 400);
-  const db = requireDb();
-  return finishConnect(db, { token, expiresIn: 0, wabaId: digits(wabaId), phoneNumberId: digits(phoneNumberId) });
+  return finishConnect({ token, expiresIn: 0, wabaId: digits(wabaId), phoneNumberId: digits(phoneNumberId) });
 }
 
-async function finishConnect(db, { token, expiresIn, wabaId, phoneNumberId }) {
+async function finishConnect({ token, expiresIn, wabaId, phoneNumberId }) {
   const numbers = await graph(`/${wabaId}/phone_numbers?fields=id,display_phone_number,verified_name`, { token });
   const number = (numbers.data || []).find((n) => !phoneNumberId || n.id === phoneNumberId) || numbers.data?.[0];
   if (!number) throw new WhatsAppError("ამ ანგარიშზე ტელეფონის ნომერი ვერ მოიძებნა.", 404);
 
   await graph(`/${wabaId}/subscribed_apps`, { token, method: "POST" });
 
-  const config = db.doc(CONFIG_PATH);
-  await config.set(
-    {
+  await setConfig(CONFIG_KEY, {
       token,
       wabaId,
       phoneNumberId: number.id,
@@ -393,17 +310,15 @@ async function finishConnect(db, { token, expiresIn, wabaId, phoneNumberId }) {
       // A reconnect (e.g. another number) starts a fresh history sync.
       historyProgress: null,
       historyError: "",
-    },
-    { merge: true }
-  );
+  });
 
-  const sync = await requestSync(config, token, number.id);
+  const sync = await requestSync(token, number.id);
   return { displayPhone: number.display_phone_number, verifiedName: number.verified_name, sync };
 }
 
 // Asks Meta for the phone's contacts and chat history (contacts first, the
 // order Meta documents). Allowed only within 24 hours of onboarding.
-async function requestSync(config, token, phoneNumberId) {
+async function requestSync(token, phoneNumberId) {
   const sync = {};
   for (const syncType of ["smb_app_state_sync", "history"]) {
     try {
@@ -417,30 +332,27 @@ async function requestSync(config, token, phoneNumberId) {
       sync[syncType] = err.message;
     }
   }
-  await config.set({ sync, syncRequestedAt: Date.now() }, { merge: true });
+  await setConfig(CONFIG_KEY, { sync, syncRequestedAt: Date.now() });
   return sync;
 }
 
 // Retry from the admin panel, e.g. when the first request came before Meta
 // had finished onboarding the number.
 export async function retrySync() {
-  const db = requireDb();
-  const config = db.doc(CONFIG_PATH);
-  const cfg = (await config.get()).data() || {};
+  const cfg = await loadConfig();
   if (!cfg.token || !cfg.phoneNumberId) throw new WhatsAppError("WhatsApp ჯერ არ არის მიერთებული.", 409);
-  return { sync: await requestSync(config, cfg.token, cfg.phoneNumberId) };
+  return { sync: await requestSync(cfg.token, cfg.phoneNumberId) };
 }
 
 // What the admin panel may know about the connection (never the token).
 export async function getConnectionStatus() {
-  const db = getAdminDb();
   const env = {
     appSecret: Boolean(process.env.WHATSAPP_APP_SECRET),
     verifyToken: Boolean(process.env.WHATSAPP_VERIFY_TOKEN),
-    serverFirestore: Boolean(db),
+    database: Boolean(process.env.DATABASE_URL),
   };
-  if (!db) return { connected: false, env };
-  const cfg = (await db.doc(CONFIG_PATH).get()).data() || {};
+  if (!env.database) return { connected: false, env };
+  const cfg = await loadConfig();
   return {
     connected: Boolean(cfg.token && cfg.phoneNumberId),
     env,
@@ -462,8 +374,7 @@ export async function sendText({ to, text }) {
   if (!phone || !body) throw new WhatsAppError("ნომერი ან ტექსტი ცარიელია.", 400);
   if (body.length > 4096) throw new WhatsAppError("ტექსტი ძალიან გრძელია (მაქს. 4096 სიმბოლო).", 400);
 
-  const db = requireDb();
-  const cfg = (await db.doc(CONFIG_PATH).get()).data() || {};
+  const cfg = await loadConfig();
   if (!cfg.token || !cfg.phoneNumberId) throw new WhatsAppError("WhatsApp ჯერ არ არის მიერთებული.", 409);
 
   let data;
@@ -481,6 +392,6 @@ export async function sendText({ to, text }) {
   }
 
   const record = { id: data.messages?.[0]?.id, direction: "out", source: "site", type: "text", text: body, timestamp: Date.now(), status: "sent" };
-  if (record.id) await saveMessages(db, [{ phone, record }]);
+  if (record.id) await saveMessages([{ phone, record }]);
   return record;
 }

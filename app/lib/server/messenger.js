@@ -6,19 +6,21 @@
 // Meta sends Page webhooks to /api/messenger/webhook:
 //   messages        a person wrote to the Page
 //   message_echoes  the Page replied (from here, Business Suite or the app)
-// Everything lands in Firestore (messenger_conversations/{psid}/messages),
-// which only admins can read and only this server can write. The Page
-// token lives in messenger_config/main, which no browser can read.
+// Everything lands in the Neon inbox tables (inboxStore.js), channel
+// "messenger". The Page token lives in the inbox config, which no browser
+// can read.
 
-import { FieldValue } from "firebase-admin/firestore";
 import { sendTelegram } from "./notifyBooking";
 import { SITE_URL } from "../siteConfig";
-import { MESSENGER_CONVERSATIONS, WHATSAPP_APP_ID } from "../whatsappConfig";
-import { WhatsAppError, createOnce, graph, requireDb, updateSummary } from "./whatsapp";
+import { WHATSAPP_APP_ID } from "../whatsappConfig";
+import { WhatsAppError, graph, loadConfig } from "./whatsapp";
+import { getConversation, saveMessages, setConfig } from "./inboxStore";
 
-const CONFIG_PATH = "messenger_config/main";
+const CHANNEL = "messenger";
+const CONFIG_KEY = "messenger";
+// Where the config lived before the inbox moved to Neon.
+const FIRESTORE_CONFIG_PATH = "messenger_config/main";
 
-// Firestore rejects undefined fields.
 const clean = (obj) => Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined));
 
 const ATTACHMENT_LABELS = {
@@ -39,9 +41,7 @@ function messageText(message = {}) {
   return parts.join(" · ") || "[შეტყობინება]";
 }
 
-async function pageConfig(db) {
-  return (await db.doc(CONFIG_PATH).get()).data() || {};
-}
+const pageConfig = () => loadConfig(CONFIG_KEY, FIRESTORE_CONFIG_PATH);
 
 // Name of the person behind a page-scoped ID; Meta may refuse it, which is fine.
 async function profileName(psid, pageToken) {
@@ -58,8 +58,6 @@ async function profileName(psid, pageToken) {
 // Handles one webhook delivery; returns new customer messages to alert about.
 export async function processWebhook(body) {
   if (body?.object !== "page") return [];
-  const db = requireDb();
-  const convs = db.collection(MESSENGER_CONVERSATIONS);
   let cfg = null;
   const alerts = [];
 
@@ -71,8 +69,6 @@ export async function processWebhook(body) {
       const psid = String(echo ? event.recipient?.id : event.sender?.id || "");
       if (!psid) continue;
 
-      // Meta retries deliveries; store each message once.
-      const msgRef = convs.doc(psid).collection("messages").doc(message.mid);
       const record = clean({
         id: message.mid,
         direction: echo ? "out" : "in",
@@ -82,39 +78,17 @@ export async function processWebhook(body) {
         timestamp: Number(event.timestamp) || Date.now(),
         status: echo ? "sent" : undefined,
       });
-      if (!(await createOnce(msgRef, { ...record, createdAt: FieldValue.serverTimestamp() }))) continue;
 
-      const convRef = convs.doc(psid);
-      // Reads here are optional: when the read quota is spent the message is
-      // still saved, just without the sender's name.
+      // The sender's name is looked up once per person.
       let name;
-      if (!echo) {
-        try {
-          name = (await convRef.get()).data()?.profileName;
-          if (!name) {
-            cfg ||= await pageConfig(db);
-            if (cfg.pageToken) name = await profileName(psid, cfg.pageToken);
-          }
-        } catch (err) {
-          console.warn("[messenger] profile lookup skipped:", err?.message);
-        }
+      if (!echo && !(await getConversation(CHANNEL, psid))?.profileName) {
+        cfg ||= await pageConfig();
+        if (cfg.pageToken) name = await profileName(psid, cfg.pageToken);
       }
-      // now is null when it could not be read: assume this message is the latest.
-      await updateSummary(db, convRef, (now) => {
-        const update = { psid, updatedAt: FieldValue.serverTimestamp() };
-        if (name) update.profileName = name;
-        if (!now?.lastMessageAt || record.timestamp >= now.lastMessageAt) {
-          update.lastMessageAt = record.timestamp;
-          update.lastText = record.text;
-          update.lastDirection = record.direction;
-        }
-        if (!echo) {
-          update.lastIncomingAt = Math.max(now?.lastIncomingAt || 0, record.timestamp);
-          update.unread = now ? (now.unread || 0) + 1 : FieldValue.increment(1);
-        }
-        return update;
-      });
-      if (!echo) alerts.push({ psid, name, record });
+
+      // Meta retries deliveries; saveMessages stores each message once.
+      const fresh = await saveMessages(CHANNEL, [{ conversationId: psid, profileName: name, record }], { live: true });
+      if (fresh.length && !echo) alerts.push({ psid, name, record });
     }
   }
   return alerts;
@@ -134,7 +108,6 @@ export async function alertNewMessages(alerts) {
 export async function connectPage({ token, pageId }) {
   token = String(token || "").trim();
   if (!token) throw new WhatsAppError("ტოკენი ცარიელია.", 400);
-  const db = requireDb();
   const pages = (await graph(`/me/accounts?fields=id,name,access_token&limit=50`, { token })).data || [];
   const page = pages.find((p) => !pageId || p.id === String(pageId).trim()) || null;
   if (!page?.access_token) {
@@ -144,14 +117,17 @@ export async function connectPage({ token, pageId }) {
     token: page.access_token,
     method: "POST",
   });
-  await db.doc(CONFIG_PATH).set({ pageId: page.id, pageName: page.name, pageToken: page.access_token, connectedAt: Date.now() });
+  await setConfig(
+    CONFIG_KEY,
+    { pageId: page.id, pageName: page.name, pageToken: page.access_token, connectedAt: Date.now() },
+    { replace: true }
+  );
   return { pageId: page.id, pageName: page.name };
 }
 
 // What the admin panel may know about the connection (never the token).
 export async function getConnectionStatus() {
-  const db = requireDb();
-  const cfg = await pageConfig(db);
+  const cfg = await pageConfig();
   return { connected: Boolean(cfg.pageToken && cfg.pageId), pageId: cfg.pageId || "", pageName: cfg.pageName || "", connectedAt: cfg.connectedAt || null };
 }
 
@@ -161,8 +137,7 @@ export async function sendText({ to, text }) {
   if (!psid || !body) throw new WhatsAppError("მიმღები ან ტექსტი ცარიელია.", 400);
   if (body.length > 2000) throw new WhatsAppError("ტექსტი ძალიან გრძელია (მაქს. 2000 სიმბოლო).", 400);
 
-  const db = requireDb();
-  const cfg = await pageConfig(db);
+  const cfg = await pageConfig();
   if (!cfg.pageToken) throw new WhatsAppError("Facebook Page ჯერ არ არის მიერთებული.", 409);
 
   let data;
@@ -181,10 +156,6 @@ export async function sendText({ to, text }) {
   }
 
   const record = { id: data.message_id, direction: "out", source: "site", text: body, timestamp: Date.now(), status: "sent" };
-  if (record.id) {
-    const convRef = db.collection(MESSENGER_CONVERSATIONS).doc(psid);
-    await convRef.collection("messages").doc(record.id).set({ ...record, createdAt: FieldValue.serverTimestamp() });
-    await convRef.set({ lastMessageAt: record.timestamp, lastText: body, lastDirection: "out", updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-  }
+  if (record.id) await saveMessages(CHANNEL, [{ conversationId: psid, record }]);
   return record;
 }

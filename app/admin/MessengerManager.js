@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { collection, doc, limit, limitToLast, onSnapshot, orderBy, query, updateDoc } from "firebase/firestore";
-import { db } from "../lib/firebase";
 import { adminFetch } from "../lib/apiClient";
-import { MESSENGER_CONVERSATIONS, REPLY_WINDOW_MS } from "../lib/whatsappConfig";
+import { REPLY_WINDOW_MS } from "../lib/whatsappConfig";
+import { importOldChats, useInbox } from "./useInbox";
 
 // Facebook Page inbox: messages people send to the Page, and the Page's
 // replies (from here, Business Suite or the Facebook app). Same layout as the
@@ -19,9 +18,7 @@ const formatTime = (ms) =>
 
 export default function MessengerManager() {
   const [status, setStatus] = useState(null);
-  const [conversations, setConversations] = useState([]);
   const [selected, setSelected] = useState(null);
-  const [messages, setMessages] = useState([]);
   const [filter, setFilter] = useState("");
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -44,25 +41,25 @@ export default function MessengerManager() {
     }
   };
 
-  useEffect(() => {
-    loadStatus();
-    const q = query(collection(db, MESSENGER_CONVERSATIONS), orderBy("lastMessageAt", "desc"), limit(300));
-    return onSnapshot(
-      q,
-      (snap) => setConversations(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
-      (err) => console.warn("Messenger conversations listener stopped:", err?.code || err)
-    );
-  }, []);
+  const { conversations, imported, messages, error: inboxError, markRead, refresh } = useInbox("messenger", selected);
+
+  const [importing, setImporting] = useState(false);
+  const runImport = async () => {
+    setImporting(true);
+    try {
+      await importOldChats();
+      showMsg("success", "✓ ძველი მიმოწერა გადმოვიდა.");
+      await refresh();
+    } catch (err) {
+      showMsg("error", err.message);
+    } finally {
+      setImporting(false);
+    }
+  };
 
   useEffect(() => {
-    if (!selected) return undefined;
-    const q = query(collection(db, MESSENGER_CONVERSATIONS, selected, "messages"), orderBy("timestamp"), limitToLast(300));
-    return onSnapshot(
-      q,
-      (snap) => setMessages(snap.docs.map((d) => ({ docId: d.id, ...d.data() }))),
-      (err) => console.warn("Messenger thread listener stopped:", err?.code || err)
-    );
-  }, [selected]);
+    loadStatus();
+  }, []);
 
   useEffect(() => {
     threadEnd.current?.scrollIntoView({ block: "end" });
@@ -72,10 +69,8 @@ export default function MessengerManager() {
 
   // Opening a chat marks it read.
   useEffect(() => {
-    if (current?.unread > 0) {
-      updateDoc(doc(db, MESSENGER_CONVERSATIONS, current.id), { unread: 0 }).catch(() => {});
-    }
-  }, [current?.id, current?.unread]);
+    if (current?.unread > 0) markRead(current.id);
+  }, [current?.id, current?.unread, markRead]);
 
   const displayName = (c) => c.profileName || "Facebook მომხმარებელი";
 
@@ -101,6 +96,7 @@ export default function MessengerManager() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setDraft("");
+      await refresh();
     } catch (err) {
       showMsg("error", err.message);
     } finally {
@@ -120,6 +116,17 @@ export default function MessengerManager() {
       {status?.connected && (
         <p className="admin-hint wa-connected">
           ✅ მიერთებულია: <strong>{status.pageName}</strong>
+        </p>
+      )}
+
+      {inboxError && <p className="admin-hint wa-warn">მიმოწერა ვერ ჩაიტვირთა: {inboxError}</p>}
+
+      {!imported && (
+        <p className="admin-hint">
+          ძველი მიმოწერა ჯერ ისევ Firebase-შია.{" "}
+          <button type="button" className="admin-btn-ghost wa-reconnect" onClick={runImport} disabled={importing}>
+            {importing ? "..." : "ძველი მიმოწერის გადმოტანა"}
+          </button>
         </p>
       )}
 
@@ -179,7 +186,7 @@ export default function MessengerManager() {
 
                 <ol className="wa-messages">
                   {messages.map((m) => (
-                    <li key={m.docId} className={`wa-msg is-${m.direction}`}>
+                    <li key={m.id} className={`wa-msg is-${m.direction}`}>
                       <span className="wa-msg-text">{m.text}</span>
                       <small>
                         {SOURCE_LABELS[m.source] && `${SOURCE_LABELS[m.source]} · `}

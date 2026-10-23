@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { collection, doc, getDocs, limit, limitToLast, onSnapshot, orderBy, query, updateDoc } from "firebase/firestore";
-import { db } from "../lib/firebase";
 import { adminFetch } from "../lib/apiClient";
+import { importOldChats, useInbox } from "./useInbox";
 import { listAllBookingsAdmin } from "../lib/bookingsFirestore";
 import { STATUS_CONFIG } from "../lib/bookingModel";
 import {
@@ -11,7 +10,6 @@ import {
   REPLY_WINDOW_MS,
   WA_CONNECT_STATE,
   WHATSAPP_APP_ID,
-  WHATSAPP_CONVERSATIONS,
   WHATSAPP_SIGNUP_CONFIG_ID,
 } from "../lib/whatsappConfig";
 
@@ -56,11 +54,8 @@ export default function WhatsAppManager() {
   const [status, setStatus] = useState(null);
   const [connecting, setConnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
-  const [conversations, setConversations] = useState([]);
-  const [contacts, setContacts] = useState({});
   const [bookingsByPhone, setBookingsByPhone] = useState({});
   const [selected, setSelected] = useState(null);
-  const [messages, setMessages] = useState([]);
   const [filter, setFilter] = useState("");
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -83,11 +78,24 @@ export default function WhatsAppManager() {
     }
   };
 
+  const { conversations, contacts, imported, messages, error: inboxError, markRead, refresh } = useInbox("whatsapp", selected);
+
+  const [importing, setImporting] = useState(false);
+  const runImport = async () => {
+    setImporting(true);
+    try {
+      await importOldChats();
+      showMsg("success", "✓ ძველი მიმოწერა გადმოვიდა.");
+      await refresh();
+    } catch (err) {
+      showMsg("error", err.message);
+    } finally {
+      setImporting(false);
+    }
+  };
+
   useEffect(() => {
     loadStatus();
-    getDocs(collection(db, "whatsapp_contacts"))
-      .then((snap) => setContacts(Object.fromEntries(snap.docs.map((d) => [d.id, d.data().name]))))
-      .catch(() => {});
     listAllBookingsAdmin().then((list) => {
       const map = {};
       for (const b of list) {
@@ -96,12 +104,6 @@ export default function WhatsAppManager() {
       }
       setBookingsByPhone(map);
     });
-    const q = query(collection(db, WHATSAPP_CONVERSATIONS), orderBy("lastMessageAt", "desc"), limit(300));
-    return onSnapshot(
-      q,
-      (snap) => setConversations(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
-      (err) => console.warn("WhatsApp conversations listener stopped:", err?.code || err)
-    );
   }, []);
 
   // Back from Meta's signup page: finish the connection once.
@@ -135,16 +137,6 @@ export default function WhatsAppManager() {
   }, []);
 
   useEffect(() => {
-    if (!selected) return undefined;
-    const q = query(collection(db, WHATSAPP_CONVERSATIONS, selected, "messages"), orderBy("timestamp"), limitToLast(300));
-    return onSnapshot(
-      q,
-      (snap) => setMessages(snap.docs.map((d) => ({ docId: d.id, ...d.data() }))),
-      (err) => console.warn("WhatsApp thread listener stopped:", err?.code || err)
-    );
-  }, [selected]);
-
-  useEffect(() => {
     threadEnd.current?.scrollIntoView({ block: "end" });
   }, [messages]);
 
@@ -152,10 +144,8 @@ export default function WhatsAppManager() {
 
   // Opening a chat marks it read.
   useEffect(() => {
-    if (current?.unread > 0) {
-      updateDoc(doc(db, WHATSAPP_CONVERSATIONS, current.id), { unread: 0 }).catch(() => {});
-    }
-  }, [current?.id, current?.unread]);
+    if (current?.unread > 0) markRead(current.id);
+  }, [current?.id, current?.unread, markRead]);
 
   const displayName = (c) => contacts[c.id] || c.profileName || `+${c.id}`;
 
@@ -207,6 +197,7 @@ export default function WhatsAppManager() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setDraft("");
+      await refresh();
     } catch (err) {
       showMsg("error", err.message);
     } finally {
@@ -219,7 +210,7 @@ export default function WhatsAppManager() {
     !WHATSAPP_SIGNUP_CONFIG_ID && "Embedded Signup-ის Configuration ID (კოდში)",
     env && !env.appSecret && "WHATSAPP_APP_SECRET (Vercel)",
     env && !env.verifyToken && "WHATSAPP_VERIFY_TOKEN (Vercel)",
-    env && !env.serverFirestore && "FIREBASE_ADMIN_CLIENT_EMAIL / FIREBASE_ADMIN_PRIVATE_KEY (Vercel)",
+    env && !env.database && "DATABASE_URL (Vercel → Storage → Neon)",
   ].filter(Boolean);
   const tokenDaysLeft = status?.tokenExpiresAt
     ? Math.max(0, Math.floor((status.tokenExpiresAt - Date.now()) / (24 * 60 * 60 * 1000)))
@@ -280,6 +271,17 @@ export default function WhatsAppManager() {
           )}{" "}
           <button type="button" className="admin-btn-ghost wa-reconnect" onClick={startConnect} disabled={connecting}>
             {connecting ? "მიმდინარეობს..." : "ნომრის შეცვლა / თავიდან მიერთება"}
+          </button>
+        </p>
+      )}
+
+      {inboxError && <p className="admin-hint wa-warn">მიმოწერა ვერ ჩაიტვირთა: {inboxError}</p>}
+
+      {!imported && (
+        <p className="admin-hint">
+          ძველი მიმოწერა ჯერ ისევ Firebase-შია.{" "}
+          <button type="button" className="admin-btn-ghost wa-reconnect" onClick={runImport} disabled={importing}>
+            {importing ? "..." : "ძველი მიმოწერის გადმოტანა"}
           </button>
         </p>
       )}
@@ -353,7 +355,7 @@ export default function WhatsAppManager() {
 
                 <ol className="wa-messages">
                   {messages.map((m) => (
-                    <li key={m.docId} className={`wa-msg is-${m.direction}`}>
+                    <li key={m.id} className={`wa-msg is-${m.direction}`}>
                       <span className="wa-msg-text">{m.text}</span>
                       <small>
                         {SOURCE_LABELS[m.source] && `${SOURCE_LABELS[m.source]} · `}

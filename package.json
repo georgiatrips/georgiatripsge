@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
+    "@neondatabase/serverless": "^1.2.0",
     "firebase": "^12.17.0",
     "firebase-admin": "^13.10.0",
     "leaflet": "^1.9.4",

@@ -18,8 +18,3 @@ export const WA_CONNECT_STATE = "wa-connect";
 // Meta only lets a business start a free-form chat within 24 hours of the
 // customer's last message; after that, reply from the phone app instead.
 export const REPLY_WINDOW_MS = 24 * 60 * 60 * 1000;
-
-export const WHATSAPP_CONVERSATIONS = "whatsapp_conversations";
-
-// Facebook Page (Messenger) chats, same Meta app.
-export const MESSENGER_CONVERSATIONS = "messenger_conversations";
