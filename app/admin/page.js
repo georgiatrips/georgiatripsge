@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { BarChartIcon, BedIcon, CarIcon, ClipboardIcon, LocationIcon, MessageIcon, MountainIcon, TicketIcon, WhatsAppIcon } from "../components/Icons";
+import { BarChartIcon, BedIcon, CarIcon, ClipboardIcon, LocationIcon, MessageIcon, MessengerIcon, MountainIcon, TicketIcon, WhatsAppIcon } from "../components/Icons";
 import DatePicker from "../components/DatePicker";
 import { GEORGIA_REGIONS } from "../lib/placesMeta";
 import { listPlaces } from "../lib/placesFirestore";
@@ -20,9 +20,10 @@ import BookingManager from "./BookingManager";
 import TransferPricingManager from "./TransferPricingManager";
 import TransferPlacesManager from "./TransferPlacesManager";
 import WhatsAppManager from "./WhatsAppManager";
+import MessengerManager from "./MessengerManager";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { WA_CONNECT_STATE, WHATSAPP_CONVERSATIONS } from "../lib/whatsappConfig";
+import { MESSENGER_CONVERSATIONS, WA_CONNECT_STATE, WHATSAPP_CONVERSATIONS } from "../lib/whatsappConfig";
 import { subscribeToLiveSessions } from "../lib/analytics";
 import { subscribeToBookings } from "../lib/bookingsFirestore";
 import LocalizedInputGroup, { emptyLangObj, parseLocal } from "./LocalizedInputGroup";
@@ -157,6 +158,7 @@ export default function AdminPage() {
   const [liveVisitorsCount, setLiveVisitorsCount] = useState(0);
   const [pendingBookingsCount, setPendingBookingsCount] = useState(0);
   const [unreadChatsCount, setUnreadChatsCount] = useState(0);
+  const [unreadMessengerCount, setUnreadMessengerCount] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -211,12 +213,18 @@ export default function AdminPage() {
       (snap) => active && setUnreadChatsCount(snap.size),
       () => {}
     );
+    const unsubMessenger = onSnapshot(
+      query(collection(db, MESSENGER_CONVERSATIONS), where("unread", ">", 0)),
+      (snap) => active && setUnreadMessengerCount(snap.size),
+      () => {}
+    );
 
     return () => {
       active = false;
       unsubSessions();
       unsubBookings();
       unsubChats();
+      unsubMessenger();
     };
   }, [isAdminUser]);
 
@@ -938,6 +946,7 @@ export default function AdminPage() {
       items: [
         { key: "bookings", label: "ჯავშნები", Icon: ClipboardIcon, badge: pendingBookingsCount > 0 ? { text: String(pendingBookingsCount), tone: "warn" } : null },
         { key: "whatsapp", label: "WhatsApp", Icon: WhatsAppIcon, badge: unreadChatsCount > 0 ? { text: String(unreadChatsCount), tone: "warn" } : null },
+        { key: "messenger", label: "Messenger", Icon: MessengerIcon, badge: unreadMessengerCount > 0 ? { text: String(unreadMessengerCount), tone: "warn" } : null },
         { key: "coupons", label: "კუპონები", Icon: TicketIcon },
         { key: "transfers", label: "ტრანსფერის ფასები", Icon: CarIcon },
         { key: "transferPlaces", label: "ტრანსფერის ლოკაციები", Icon: LocationIcon },
@@ -958,6 +967,7 @@ export default function AdminPage() {
     analytics: ["ანალიტიკა", "ვინ არის საიტზე, საიდან მოვიდა და რას აკეთებს."],
     bookings: ["ჯავშნები", "ახალი მოთხოვნები, დადასტურება და სტატუსები."],
     whatsapp: ["WhatsApp", "კლიენტების მიმოწერა — იგივე, რაც ტელეფონის WhatsApp Business-ში."],
+    messenger: ["Messenger", "Facebook Page-ზე მოწერილი შეტყობინებები და პასუხები."],
     coupons: ["კუპონები", "ფასდაკლების კოდები და IP შეზღუდვები."],
     transfers: ["ტრანსფერის ფასები", "ფასები მანძილისა და ავტომობილის მიხედვით."],
     tours: ["ტურები", "ტურის დამატება, რედაქტირება და კატალოგი."],
@@ -2300,6 +2310,9 @@ export default function AdminPage() {
           {/* TAB: WHATSAPP INBOX (mirrored from the business phone) */}
           {activeTab === "whatsapp" && (
             <WhatsAppManager />
+          )}
+          {activeTab === "messenger" && (
+            <MessengerManager />
           )}
         </main>
       </div>

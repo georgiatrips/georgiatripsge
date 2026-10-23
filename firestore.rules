@@ -77,6 +77,17 @@ service cloud.firestore {
     }
     // whatsapp_config holds the access token: no client access at all.
 
+    // Facebook Page (Messenger) chats mirrored by /api/messenger/webhook.
+    match /messenger_conversations/{psid} {
+      allow read: if isAdmin();
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['unread']);
+
+      match /messages/{messageId} {
+        allow read: if isAdmin();
+      }
+    }
+    // messenger_config holds the Page token: no client access at all.
+
     // Global Site / Coupon Settings
     match /settings/{settingId} {
       allow read: if true;
