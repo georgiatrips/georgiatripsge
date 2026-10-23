@@ -180,7 +180,10 @@ export async function requireAdmin(request) {
 
   if (app) {
     try {
-      const decoded = await getAuth(app).verifyIdToken(token, true);
+      // No revocation check: it costs a Firebase Auth round trip on every
+      // call, and the admin inbox polls every few seconds. Tokens still
+      // expire within the hour.
+      const decoded = await getAuth(app).verifyIdToken(token);
 
       // Check custom claims first, then Firestore users collection. The admin
       // panel polls its inbox every few seconds, so a Firestore hit is

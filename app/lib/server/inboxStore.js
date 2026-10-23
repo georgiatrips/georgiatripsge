@@ -74,9 +74,9 @@ async function db() {
     }
     client = neon(process.env.DATABASE_URL);
   }
-  schemaReady ||= (async () => {
-    for (const statement of SCHEMA) await client.query(statement);
-  })().catch((err) => {
+  // One round trip for the whole schema: each cold function instance pays
+  // for it before its first query, and the admin inbox waits on that.
+  schemaReady ||= client.transaction(SCHEMA.map((statement) => client.query(statement))).catch((err) => {
     schemaReady = null;
     throw err;
   });
@@ -179,6 +179,7 @@ export async function updateMessageStatus(channel, id, status, error) {
 }
 
 const toConversation = (row) => ({
+  channel: row.channel,
   id: row.id,
   profileName: row.profile_name || "",
   lastMessageAt: Number(row.last_message_at) || 0,
@@ -188,11 +189,14 @@ const toConversation = (row) => ({
   unread: row.unread || 0,
 });
 
+// Latest chats of one channel, or of all channels when `channel` is empty.
 export async function listConversations(channel, limit = 300) {
-  const rows = await query(
-    `select * from inbox_conversations where channel = $1 order by last_message_at desc nulls last limit $2`,
-    [channel, limit]
-  );
+  const rows = channel
+    ? await query(
+        `select * from inbox_conversations where channel = $1 order by last_message_at desc nulls last limit $2`,
+        [channel, limit]
+      )
+    : await query(`select * from inbox_conversations order by last_message_at desc nulls last limit $1`, [limit]);
   return rows.map(toConversation);
 }
 

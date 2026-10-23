@@ -14,7 +14,7 @@ import { importFromFirestore } from "../../../lib/server/inboxImport";
 
 // Admin panel → WhatsApp / Messenger chats (Neon). The tabs poll this.
 //   GET ?counts=1                          chats with unread messages, per channel
-//   GET ?channel=whatsapp                  conversation list (+ phone contact names)
+//   GET [?channel=whatsapp]                conversation list, all channels by default (+ phone contact names)
 //   GET ?channel=whatsapp&conversation=ID  one chat's latest messages
 //   POST { action: "read", channel, id }   mark a chat read
 //   POST { action: "import" }              copy the old chats over from Firestore
@@ -37,12 +37,15 @@ export async function GET(request) {
   const params = request.nextUrl.searchParams;
   try {
     if (params.get("counts")) return NextResponse.json(await unreadCounts());
-    const channel = channelOf(params.get("channel"));
     const conversation = params.get("conversation");
-    if (conversation) return NextResponse.json({ messages: await listMessages(channel, conversation) });
+    if (conversation) {
+      return NextResponse.json({ messages: await listMessages(channelOf(params.get("channel")), conversation) });
+    }
+    // Without a channel: every channel's chats, newest first (the shared inbox).
+    const channel = params.get("channel") ? channelOf(params.get("channel")) : "";
     const [conversations, contacts, imported] = await Promise.all([
       listConversations(channel),
-      channel === "whatsapp" ? listContacts() : {},
+      !channel || channel === "whatsapp" ? listContacts() : {},
       getConfig("import"),
     ]);
     return NextResponse.json({ conversations, contacts, imported: Boolean(imported) });

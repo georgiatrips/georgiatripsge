@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { adminFetch } from "../lib/apiClient";
 
-// Chats for the WhatsApp / Messenger tabs, polled from /api/admin/inbox
-// (Neon, no read quota) while the tab is visible.
+// Chats for the admin inbox (WhatsApp, Messenger and Instagram together),
+// polled from /api/admin/inbox (Neon, no read quota) while the tab is visible.
 const LIST_EVERY_MS = 5000;
 const THREAD_EVERY_MS = 3000;
 
@@ -38,51 +38,97 @@ function usePolling(task, ms, enabled = true) {
   }, [ms, enabled]);
 }
 
-export function useInbox(channel, selected) {
-  const [conversations, setConversations] = useState([]);
-  const [contacts, setContacts] = useState({});
-  const [imported, setImported] = useState(true);
+// The last chat list, kept for the admin's next visit: the inbox shows it
+// at once and the first poll only freshens it. The menu badges poll the same
+// list, so by the time the inbox tab is opened it is usually current already.
+const LIST_CACHE_KEY = "gt-admin-inbox";
+let listCache = null;
+const listeners = new Set();
+
+function readCache() {
+  if (listCache) return listCache;
+  try {
+    listCache = JSON.parse(localStorage.getItem(LIST_CACHE_KEY)) || null;
+  } catch {
+    listCache = null;
+  }
+  return listCache;
+}
+
+function writeCache(data) {
+  listCache = { conversations: data.conversations || [], contacts: data.contacts || {}, imported: Boolean(data.imported) };
+  try {
+    localStorage.setItem(LIST_CACHE_KEY, JSON.stringify(listCache));
+  } catch {}
+  listeners.forEach((fn) => fn(listCache));
+}
+
+async function fetchList() {
+  writeCache(await getJson("/api/admin/inbox"));
+}
+
+// A chat is identified by its channel and id together.
+export const chatKey = (c) => (c ? `${c.channel}:${c.id}` : "");
+
+// Every channel's chats in one list; `selected` is { channel, id } or null.
+export function useInbox(selected) {
+  const [list, setList] = useState(() => (typeof window === "undefined" ? null : readCache()));
   const [messages, setMessages] = useState([]);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    listeners.add(setList);
+    return () => listeners.delete(setList);
+  }, []);
+
   const loadList = useCallback(async () => {
     try {
-      const data = await getJson(`/api/admin/inbox?channel=${channel}`);
-      setConversations(data.conversations || []);
-      setContacts(data.contacts || {});
-      setImported(Boolean(data.imported));
+      await fetchList();
       setError("");
     } catch (err) {
       setError(err.message);
     }
-  }, [channel]);
+  }, []);
 
+  const channel = selected?.channel;
+  const id = selected?.id;
   const loadThread = useCallback(async () => {
-    if (!selected) return;
-    const data = await getJson(`/api/admin/inbox?channel=${channel}&conversation=${encodeURIComponent(selected)}`);
+    if (!id) return;
+    const data = await getJson(`/api/admin/inbox?channel=${channel}&conversation=${encodeURIComponent(id)}`);
     setMessages(data.messages || []);
-  }, [channel, selected]);
+  }, [channel, id]);
 
-  useEffect(() => setMessages([]), [selected]);
+  useEffect(() => setMessages([]), [channel, id]);
   usePolling(loadList, LIST_EVERY_MS);
-  usePolling(loadThread, THREAD_EVERY_MS, Boolean(selected));
+  usePolling(loadThread, THREAD_EVERY_MS, Boolean(id));
 
-  const markRead = useCallback(
-    async (id) => {
-      setConversations((list) => list.map((c) => (c.id === id ? { ...c, unread: 0 } : c)));
-      await adminFetch("/api/admin/inbox", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "read", channel, id }),
-      }).catch(() => {});
-    },
-    [channel]
-  );
+  const markRead = useCallback(async (chat) => {
+    if (listCache) {
+      writeCache({
+        ...listCache,
+        conversations: listCache.conversations.map((c) => (chatKey(c) === chatKey(chat) ? { ...c, unread: 0 } : c)),
+      });
+    }
+    await adminFetch("/api/admin/inbox", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "read", channel: chat.channel, id: chat.id }),
+    }).catch(() => {});
+  }, []);
 
   // Right after sending, show the reply without waiting for the next poll.
   const refresh = useCallback(() => Promise.all([loadList(), loadThread().catch(() => {})]), [loadList, loadThread]);
 
-  return { conversations, contacts, imported, messages, error, markRead, refresh };
+  return {
+    loaded: Boolean(list),
+    conversations: list?.conversations || [],
+    contacts: list?.contacts || {},
+    imported: list ? list.imported : true,
+    messages,
+    error,
+    markRead,
+    refresh,
+  };
 }
 
 const MEDIA_LABEL = /^(📷 ფოტო|🙂 სტიკერი)( · )?/;
@@ -139,13 +185,15 @@ export async function importOldChats() {
   return data;
 }
 
-// Unread chat counts for the admin menu badges.
-export function useUnreadCounts(enabled) {
-  const [counts, setCounts] = useState({ whatsapp: 0, messenger: 0, instagram: 0 });
-  usePolling(
-    async () => setCounts(await getJson("/api/admin/inbox?counts=1")),
-    30000,
-    enabled
-  );
-  return counts;
+// Chats with unread messages, for the admin menu badge. It polls the whole
+// list (one small Neon query), which also keeps the inbox tab's cache warm.
+export function useUnreadCount(enabled) {
+  const [list, setList] = useState(null);
+  useEffect(() => {
+    setList(readCache());
+    listeners.add(setList);
+    return () => listeners.delete(setList);
+  }, []);
+  usePolling(fetchList, 30000, enabled);
+  return (list?.conversations || []).filter((c) => c.unread > 0).length;
 }

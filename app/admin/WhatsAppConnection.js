@@ -1,35 +1,17 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { adminFetch } from "../lib/apiClient";
-import { MessageMedia, importOldChats, messageCaption, useInbox } from "./useInbox";
-import { listAllBookingsAdmin } from "../lib/bookingsFirestore";
-import { STATUS_CONFIG } from "../lib/bookingModel";
 import {
   GRAPH_API_VERSION,
-  REPLY_WINDOW_MS,
   WA_CONNECT_STATE,
   WHATSAPP_APP_ID,
   WHATSAPP_SIGNUP_CONFIG_ID,
 } from "../lib/whatsappConfig";
 
-// WhatsApp chats mirrored from the business phone (coexistence): customer
-// messages, replies sent from the phone, and the imported history. Replies
-// written here go out through the Cloud API and show up on the phone too.
-
-const STATUS_TICKS = { sent: "✓", delivered: "✓✓", read: "✓✓", failed: "⚠" };
-const SOURCE_LABELS = { site: "საიტიდან", phone: "ტელეფონიდან" };
-
-// Bookings store phones as typed ("+995 555…", "555…"); the last 9 digits
-// identify a Georgian or most foreign mobile numbers well enough to match.
-const phoneKey = (value) => String(value || "").replace(/\D/g, "").slice(-9);
-
-const formatTime = (ms) =>
-  ms
-    ? new Date(ms).toLocaleString("ka-GE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
-    : "";
-
-const tourName = (title) => (title && typeof title === "object" ? title.ka || title.en || "" : title || "");
+// WhatsApp connection settings for the admin inbox (InboxManager.js): the
+// business phone is mirrored through coexistence, so its chats, the replies
+// sent from the phone and the imported history all show up there.
 
 // Embedded Signup runs as a full page rather than the SDK popup: popups get
 // lost behind the window, and Meta sends the browser back here with ?code=.
@@ -50,17 +32,11 @@ function signupUrl() {
   return `https://www.facebook.com/${GRAPH_API_VERSION}/dialog/oauth?${params}`;
 }
 
-export default function WhatsAppManager() {
+export default function WhatsAppConnection() {
   const [status, setStatus] = useState(null);
   const [connecting, setConnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
-  const [bookingsByPhone, setBookingsByPhone] = useState({});
-  const [selected, setSelected] = useState(null);
-  const [filter, setFilter] = useState("");
-  const [draft, setDraft] = useState("");
-  const [sending, setSending] = useState(false);
   const [message, setMessage] = useState(null);
-  const threadEnd = useRef(null);
 
   const showMsg = (type, text) => {
     setMessage({ type, text });
@@ -78,32 +54,8 @@ export default function WhatsAppManager() {
     }
   };
 
-  const { conversations, contacts, imported, messages, error: inboxError, markRead, refresh } = useInbox("whatsapp", selected);
-
-  const [importing, setImporting] = useState(false);
-  const runImport = async () => {
-    setImporting(true);
-    try {
-      await importOldChats();
-      showMsg("success", "✓ ძველი მიმოწერა გადმოვიდა.");
-      await refresh();
-    } catch (err) {
-      showMsg("error", err.message);
-    } finally {
-      setImporting(false);
-    }
-  };
-
   useEffect(() => {
     loadStatus();
-    listAllBookingsAdmin().then((list) => {
-      const map = {};
-      for (const b of list) {
-        const key = phoneKey(b.customer?.phone || b.customer?.whatsapp);
-        if (key) (map[key] ||= []).push(b);
-      }
-      setBookingsByPhone(map);
-    });
   }, []);
 
   // Back from Meta's signup page: finish the connection once.
@@ -136,25 +88,6 @@ export default function WhatsAppManager() {
     })();
   }, []);
 
-  useEffect(() => {
-    threadEnd.current?.scrollIntoView({ block: "end" });
-  }, [messages]);
-
-  const current = conversations.find((c) => c.id === selected) || null;
-
-  // Opening a chat marks it read.
-  useEffect(() => {
-    if (current?.unread > 0) markRead(current.id);
-  }, [current?.id, current?.unread, markRead]);
-
-  const displayName = (c) => contacts[c.id] || c.profileName || `+${c.id}`;
-
-  const shown = useMemo(() => {
-    const term = filter.trim().toLowerCase();
-    if (!term) return conversations;
-    return conversations.filter((c) => `${contacts[c.id] || ""} ${c.profileName || ""} ${c.id}`.toLowerCase().includes(term));
-  }, [conversations, contacts, filter]);
-
   const retrySync = async () => {
     setSyncing(true);
     try {
@@ -181,30 +114,6 @@ export default function WhatsAppManager() {
     window.location.assign(signupUrl());
   };
 
-  const canReply = current?.lastIncomingAt && Date.now() - current.lastIncomingAt < REPLY_WINDOW_MS;
-
-  const handleSend = async (e) => {
-    e.preventDefault();
-    const text = draft.trim();
-    if (!text || !current) return;
-    setSending(true);
-    try {
-      const res = await adminFetch("/api/admin/whatsapp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "send", to: current.id, text }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setDraft("");
-      await refresh();
-    } catch (err) {
-      showMsg("error", err.message);
-    } finally {
-      setSending(false);
-    }
-  };
-
   const env = status?.env;
   const missing = [
     !WHATSAPP_SIGNUP_CONFIG_ID && "Embedded Signup-ის Configuration ID (კოდში)",
@@ -215,10 +124,9 @@ export default function WhatsAppManager() {
   const tokenDaysLeft = status?.tokenExpiresAt
     ? Math.max(0, Math.floor((status.tokenExpiresAt - Date.now()) / (24 * 60 * 60 * 1000)))
     : null;
-  const matchedBookings = current ? bookingsByPhone[phoneKey(current.id)] || [] : [];
 
   return (
-    <div className="tp-wrap">
+    <>
       {message && (
         <div className={`admin-alert ${message.type}`} role="status">
           {message.text}
@@ -252,9 +160,10 @@ export default function WhatsAppManager() {
         </div>
       )}
 
+      {!status && <p className="admin-hint">WhatsApp: იტვირთება...</p>}
       {status?.connected && (
         <p className="admin-hint wa-connected">
-          ✅ მიერთებულია: <strong>{status.displayPhone}</strong>
+          ✅ WhatsApp: <strong>{status.displayPhone}</strong>
           {status.verifiedName && ` · ${status.verifiedName}`}
           {status.historyProgress && status.historyProgress.progress < 100 && ` · ძველი მიმოწერა იტვირთება: ${status.historyProgress.progress}%`}
           {status.historyError && ` · ისტორია არ გადმოვიდა: ${status.historyError}`}
@@ -275,138 +184,13 @@ export default function WhatsAppManager() {
         </p>
       )}
 
-      {inboxError && <p className="admin-hint wa-warn">მიმოწერა ვერ ჩაიტვირთა: {inboxError}</p>}
-
-      {!imported && (
-        <p className="admin-hint">
-          ძველი მიმოწერა ჯერ ისევ Firebase-შია.{" "}
-          <button type="button" className="admin-btn-ghost wa-reconnect" onClick={runImport} disabled={importing}>
-            {importing ? "..." : "ძველი მიმოწერის გადმოტანა"}
-          </button>
-        </p>
-      )}
-
-      {(status?.connected || conversations.length > 0) && (
-        <div className={`wa-inbox${current ? " has-thread" : ""}`}>
-          <aside className="wa-list">
-            <input
-              type="search"
-              className="tpl-input"
-              placeholder="ძებნა სახელით ან ნომრით..."
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-            />
-            {shown.length === 0 ? (
-              <p className="admin-hint">{conversations.length ? "ვერაფერი მოიძებნა." : "შეტყობინებები ჯერ არ არის."}</p>
-            ) : (
-              <ul>
-                {shown.map((c) => (
-                  <li key={c.id}>
-                    <button
-                      type="button"
-                      className={`wa-conv${c.id === selected ? " is-active" : ""}`}
-                      onClick={() => setSelected(c.id)}
-                    >
-                      <span className="wa-conv-top">
-                        <strong>{displayName(c)}</strong>
-                        <small>{formatTime(c.lastMessageAt)}</small>
-                      </span>
-                      <span className="wa-conv-bottom">
-                        <span className="wa-conv-text">
-                          {c.lastDirection === "out" && "↩ "}
-                          {c.lastText}
-                        </span>
-                        {c.unread > 0 && <span className="adm-badge is-warn">{c.unread}</span>}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </aside>
-
-          <section className="wa-thread">
-            {!current ? (
-              <p className="admin-hint wa-empty">აირჩიეთ საუბარი მარცხნივ.</p>
-            ) : (
-              <>
-                <header className="wa-thread-head">
-                  <button type="button" className="admin-btn-ghost wa-back" onClick={() => setSelected(null)}>
-                    ←
-                  </button>
-                  <div>
-                    <strong>{displayName(current)}</strong>
-                    <small>
-                      <a href={`https://wa.me/${current.id}`} target="_blank" rel="noopener noreferrer">+{current.id}</a>
-                    </small>
-                  </div>
-                </header>
-
-                {matchedBookings.length > 0 && (
-                  <div className="wa-bookings">
-                    {matchedBookings.slice(0, 3).map((b) => (
-                      <span key={b.id || b.bookingId} className="wa-booking">
-                        {STATUS_CONFIG[b.status]?.icon} {b.bookingId} · {tourName(b.tourTitle)}
-                        {b.trip?.date && ` · ${b.trip.date}`}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                <ol className="wa-messages">
-                  {messages.map((m) => (
-                    <li key={m.id} className={`wa-msg is-${m.direction}`}>
-                      <MessageMedia message={m} />
-                      {messageCaption(m, Boolean(m.mediaUrl || m.mediaId)) && (
-                        <span className="wa-msg-text">{messageCaption(m, Boolean(m.mediaUrl || m.mediaId))}</span>
-                      )}
-                      <small>
-                        {SOURCE_LABELS[m.source] && `${SOURCE_LABELS[m.source]} · `}
-                        {formatTime(m.timestamp)}
-                        {m.direction === "out" && STATUS_TICKS[m.status] && (
-                          <span className={m.status === "read" ? "wa-read" : ""}> {STATUS_TICKS[m.status]}</span>
-                        )}
-                      </small>
-                    </li>
-                  ))}
-                  <li ref={threadEnd} aria-hidden="true" />
-                </ol>
-
-                {canReply ? (
-                  <form className="wa-reply" onSubmit={handleSend}>
-                    <textarea
-                      className="tpl-input"
-                      rows={2}
-                      placeholder="პასუხი..."
-                      value={draft}
-                      onChange={(e) => setDraft(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleSend(e);
-                      }}
-                    />
-                    <button type="submit" className="admin-btn-primary" disabled={sending || !draft.trim() || !status?.connected}>
-                      {sending ? "..." : "გაგზავნა"}
-                    </button>
-                  </form>
-                ) : (
-                  <p className="admin-hint wa-warn">
-                    კლიენტის ბოლო შეტყობინებიდან 24 საათზე მეტი გავიდა — Meta საიტიდან წერის უფლებას აღარ იძლევა.
-                    უპასუხეთ ტელეფონის WhatsApp-იდან (პასუხი აქაც გამოჩნდება).
-                  </p>
-                )}
-              </>
-            )}
-          </section>
-        </div>
-      )}
-
       <TokenConnect
         onConnected={(data) => {
           showMsg("success", `✓ მიერთდა ${data.displayPhone}. ძველი მიმოწერა რამდენიმე წუთში გამოჩნდება.`);
           loadStatus();
         }}
       />
-    </div>
+    </>
   );
 }
 

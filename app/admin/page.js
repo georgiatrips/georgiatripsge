@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { BarChartIcon, BedIcon, CarIcon, ClipboardIcon, LocationIcon, MessageIcon, InstagramIcon, MessengerIcon, MountainIcon, TicketIcon, WhatsAppIcon } from "../components/Icons";
+import { BarChartIcon, BedIcon, CarIcon, ClipboardIcon, LocationIcon, MessageIcon, MessengerIcon, MountainIcon, TicketIcon } from "../components/Icons";
 import DatePicker from "../components/DatePicker";
 import { GEORGIA_REGIONS } from "../lib/placesMeta";
 import { listPlaces } from "../lib/placesFirestore";
@@ -19,12 +19,11 @@ import CouponManager from "./CouponManager";
 import BookingManager from "./BookingManager";
 import TransferPricingManager from "./TransferPricingManager";
 import TransferPlacesManager from "./TransferPlacesManager";
-import WhatsAppManager from "./WhatsAppManager";
-import MessengerManager from "./MessengerManager";
+import InboxManager from "./InboxManager";
 import { collection, getCountFromServer, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { WA_CONNECT_STATE } from "../lib/whatsappConfig";
-import { useUnreadCounts } from "./useInbox";
+import { useUnreadCount } from "./useInbox";
 import LocalizedInputGroup, { emptyLangObj, parseLocal } from "./LocalizedInputGroup";
 import { useAuth } from "../lib/AuthContext";
 import { useCurrency } from "../lib/currency/CurrencyContext";
@@ -143,7 +142,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("tours");
   // Back from Meta's WhatsApp signup page (?state=wa-connect&code=…).
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("state") === WA_CONNECT_STATE) setActiveTab("whatsapp");
+    if (new URLSearchParams(window.location.search).get("state") === WA_CONNECT_STATE) setActiveTab("inbox");
   }, []);
   const [tourSearchQuery, setTourSearchQuery] = useState("");
   const [tourRegionFilter, setTourRegionFilter] = useState("all");
@@ -215,11 +214,7 @@ export default function AdminPage() {
   }, [isAdminUser]);
 
   // Chats live in Neon, not Firestore: polled, no read quota.
-  const {
-    whatsapp: unreadChatsCount,
-    messenger: unreadMessengerCount,
-    instagram: unreadInstagramCount,
-  } = useUnreadCounts(isAdminUser);
+  const unreadChatsCount = useUnreadCount(isAdminUser);
 
 
   const schedulePreview = groupDepartureDates(departureDates);
@@ -938,9 +933,7 @@ export default function AdminPage() {
       label: "გაყიდვები",
       items: [
         { key: "bookings", label: "ჯავშნები", Icon: ClipboardIcon, badge: pendingBookingsCount > 0 ? { text: String(pendingBookingsCount), tone: "warn" } : null },
-        { key: "whatsapp", label: "WhatsApp", Icon: WhatsAppIcon, badge: unreadChatsCount > 0 ? { text: String(unreadChatsCount), tone: "warn" } : null },
-        { key: "messenger", label: "Messenger", Icon: MessengerIcon, badge: unreadMessengerCount > 0 ? { text: String(unreadMessengerCount), tone: "warn" } : null },
-        { key: "instagram", label: "Instagram", Icon: InstagramIcon, badge: unreadInstagramCount > 0 ? { text: String(unreadInstagramCount), tone: "warn" } : null },
+        { key: "inbox", label: "შეტყობინებები", Icon: MessengerIcon, badge: unreadChatsCount > 0 ? { text: String(unreadChatsCount), tone: "warn" } : null },
         { key: "coupons", label: "კუპონები", Icon: TicketIcon },
         { key: "transfers", label: "ტრანსფერის ფასები", Icon: CarIcon },
         { key: "transferPlaces", label: "ტრანსფერის ლოკაციები", Icon: LocationIcon },
@@ -960,9 +953,7 @@ export default function AdminPage() {
   const SECTION_INFO = {
     analytics: ["ანალიტიკა", "ვინ არის საიტზე, საიდან მოვიდა და რას აკეთებს."],
     bookings: ["ჯავშნები", "ახალი მოთხოვნები, დადასტურება და სტატუსები."],
-    whatsapp: ["WhatsApp", "კლიენტების მიმოწერა — იგივე, რაც ტელეფონის WhatsApp Business-ში."],
-    messenger: ["Messenger", "Facebook Page-ზე მოწერილი შეტყობინებები და პასუხები."],
-    instagram: ["Instagram", "Instagram Direct-ში მოწერილი შეტყობინებები და პასუხები."],
+    inbox: ["შეტყობინებები", "WhatsApp, Messenger და Instagram ერთად — ყოველ ჩატს აწერია, საიდან მოგვწერეს."],
     coupons: ["კუპონები", "ფასდაკლების კოდები და IP შეზღუდვები."],
     transfers: ["ტრანსფერის ფასები", "ფასები მანძილისა და ავტომობილის მიხედვით."],
     tours: ["ტურები", "ტურის დამატება, რედაქტირება და კატალოგი."],
@@ -2302,15 +2293,9 @@ export default function AdminPage() {
             <BookingManager />
           )}
 
-          {/* TAB: WHATSAPP INBOX (mirrored from the business phone) */}
-          {activeTab === "whatsapp" && (
-            <WhatsAppManager />
-          )}
-          {activeTab === "instagram" && (
-            <MessengerManager key="instagram" channel="instagram" />
-          )}
-          {activeTab === "messenger" && (
-            <MessengerManager key="messenger" />
+          {/* TAB: INBOX (WhatsApp, Messenger and Instagram chats together) */}
+          {activeTab === "inbox" && (
+            <InboxManager />
           )}
         </main>
       </div>
