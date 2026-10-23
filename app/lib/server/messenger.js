@@ -32,7 +32,7 @@ const ATTACHMENT_LABELS = {
   fallback: "🔗 ბმული",
 };
 
-// One line of readable text for any message (attachments are not downloaded).
+// One line of readable text for any message (the chat list shows it too).
 function messageText(message = {}) {
   const parts = [];
   if (message.sticker_id) parts.push("🙂 სტიკერი");
@@ -41,13 +41,28 @@ function messageText(message = {}) {
   return parts.join(" · ") || "[შეტყობინება]";
 }
 
+// Stickers and photos arrive as image attachments with a CDN link.
+function messageMedia(message = {}) {
+  const image = (message.attachments || []).find((a) => a.type === "image" && a.payload?.url);
+  return {
+    type: message.sticker_id ? "sticker" : message.attachments?.[0]?.type || "text",
+    mediaUrl: image?.payload?.url,
+  };
+}
+
 const pageConfig = () => loadConfig(CONFIG_KEY, FIRESTORE_CONFIG_PATH);
 
-// Name of the person behind a page-scoped ID; Meta may refuse it, which is fine.
-async function profileName(psid, pageToken) {
+// Name of the person behind a page-scoped ID. Meta refuses /{psid} without
+// the Business Asset User Profile Access feature, but the Page's own
+// conversation list names its participants.
+async function profileName(psid, cfg) {
   try {
-    const p = await graph(`/${psid}?fields=name,first_name,last_name`, { token: pageToken });
-    return p.name || [p.first_name, p.last_name].filter(Boolean).join(" ") || undefined;
+    const res = await graph(
+      `/${cfg.pageId}/conversations?platform=messenger&user_id=${psid}&fields=participants`,
+      { token: cfg.pageToken }
+    );
+    const people = res.data?.[0]?.participants?.data || [];
+    return people.find((p) => p.id === psid)?.name || undefined;
   } catch {
     return undefined;
   }
@@ -75,6 +90,7 @@ export async function processWebhook(body) {
         // Echoes of replies sent by this app are "site"; Business Suite / the app are "page".
         source: echo ? (String(message.app_id) === WHATSAPP_APP_ID ? "site" : "page") : "customer",
         text: messageText(message),
+        ...messageMedia(message),
         timestamp: Number(event.timestamp) || Date.now(),
         status: echo ? "sent" : undefined,
       });
@@ -83,7 +99,7 @@ export async function processWebhook(body) {
       let name;
       if (!echo && !(await getConversation(CHANNEL, psid))?.profileName) {
         cfg ||= await pageConfig();
-        if (cfg.pageToken) name = await profileName(psid, cfg.pageToken);
+        if (cfg.pageToken) name = await profileName(psid, cfg);
       }
 
       // Meta retries deliveries; saveMessages stores each message once.

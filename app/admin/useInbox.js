@@ -85,6 +85,48 @@ export function useInbox(channel, selected) {
   return { conversations, contacts, imported, messages, error, markRead, refresh };
 }
 
+const MEDIA_LABEL = /^(📷 ფოტო|🙂 სტიკერი)( · )?/;
+
+// Photo or sticker of a message, when it has one: Messenger sends a public
+// link, WhatsApp media is fetched through /api/admin/inbox/media (it needs
+// the admin token, so it is loaded as a blob rather than a plain <img src>).
+export function MessageMedia({ message }) {
+  const isImage = message.type === "image" || message.type === "sticker";
+  const [src, setSrc] = useState(message.mediaUrl || "");
+
+  useEffect(() => {
+    if (message.mediaUrl || !isImage || !message.mediaId) return undefined;
+    let objectUrl = "";
+    let cancelled = false;
+    adminFetch(`/api/admin/inbox/media?id=${encodeURIComponent(message.mediaId)}`)
+      .then((res) => (res.ok ? res.blob() : null))
+      .then((blob) => {
+        if (!blob || cancelled) return;
+        objectUrl = URL.createObjectURL(blob);
+        setSrc(objectUrl);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [message.mediaUrl, message.mediaId, isImage]);
+
+  // Not loaded (yet, or Meta refused it): the label the caption left out.
+  if (!src) return isImage ? <span className="wa-msg-text">{message.type === "sticker" ? "🙂 სტიკერი" : "📷 ფოტო"}</span> : null;
+  return (
+    <a href={src} target="_blank" rel="noopener noreferrer" className={`wa-media${message.type === "sticker" ? " is-sticker" : ""}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={message.type === "sticker" ? "სტიკერი" : "ფოტო"} loading="lazy" />
+    </a>
+  );
+}
+
+// The text under a photo or sticker, without the "📷 ფოტო" label.
+export function messageCaption(message, hasMedia) {
+  return hasMedia ? message.text.replace(MEDIA_LABEL, "") : message.text;
+}
+
 // Copies the chats stored in Firestore before the move (one time).
 export async function importOldChats() {
   const res = await adminFetch("/api/admin/inbox", {

@@ -1408,6 +1408,9 @@
 .wa-msg { max-width: min(78%, 560px); padding: 0.5rem 0.75rem; border-radius: 12px; background: #fff; box-shadow: 0 1px 1px rgba(0, 0, 0, 0.06); }
 .wa-msg.is-out { align-self: flex-end; background: #dcf3e3; }
 .wa-msg-text { display: block; white-space: pre-wrap; overflow-wrap: anywhere; color: #1e293b; }
+.wa-media { display: block; margin-bottom: 0.25rem; }
+.wa-media img { display: block; max-width: min(260px, 100%); max-height: 320px; border-radius: 8px; object-fit: contain; }
+.wa-media.is-sticker img { max-width: 140px; max-height: 140px; border-radius: 0; }
 .wa-msg small { display: block; margin-top: 0.2rem; text-align: end; font-size: 0.7rem; color: #64748b; }
 .wa-read { color: #2563eb; }
 .wa-reply { display: flex; gap: 0.6rem; align-items: flex-end; padding: 0.75rem; background: #fff; border-top: 1px solid #e2e8f0; }

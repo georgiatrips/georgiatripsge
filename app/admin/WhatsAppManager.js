@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { adminFetch } from "../lib/apiClient";
-import { importOldChats, useInbox } from "./useInbox";
+import { MessageMedia, importOldChats, messageCaption, useInbox } from "./useInbox";
 import { listAllBookingsAdmin } from "../lib/bookingsFirestore";
 import { STATUS_CONFIG } from "../lib/bookingModel";
 import {
@@ -356,7 +356,10 @@ export default function WhatsAppManager() {
                 <ol className="wa-messages">
                   {messages.map((m) => (
                     <li key={m.id} className={`wa-msg is-${m.direction}`}>
-                      <span className="wa-msg-text">{m.text}</span>
+                      <MessageMedia message={m} />
+                      {messageCaption(m, Boolean(m.mediaUrl || m.mediaId)) && (
+                        <span className="wa-msg-text">{messageCaption(m, Boolean(m.mediaUrl || m.mediaId))}</span>
+                      )}
                       <small>
                         {SOURCE_LABELS[m.source] && `${SOURCE_LABELS[m.source]} · `}
                         {formatTime(m.timestamp)}

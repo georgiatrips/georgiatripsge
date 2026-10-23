@@ -50,6 +50,8 @@ const SCHEMA = [
     primary key (channel, id)
   )`,
   `create index if not exists inbox_messages_thread on inbox_messages (channel, conversation_id, timestamp)`,
+  // Messenger photos and stickers come with a public CDN link.
+  `alter table inbox_messages add column if not exists media_url text`,
   `create table if not exists inbox_contacts (
     phone text primary key,
     name text not null default '',
@@ -101,8 +103,8 @@ export async function saveMessages(channel, items, { live = false } = {}) {
       part.map(({ conversationId, record: r }) =>
         query(
           `insert into inbox_messages
-             (channel, conversation_id, id, direction, source, type, text, timestamp, media_id, reply_to, status, error)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+             (channel, conversation_id, id, direction, source, type, text, timestamp, media_id, reply_to, status, error, media_url)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
            on conflict (channel, id) do nothing
            returning id`,
           [
@@ -118,6 +120,7 @@ export async function saveMessages(channel, items, { live = false } = {}) {
             r.replyTo ?? null,
             r.status ?? null,
             r.error ?? null,
+            r.mediaUrl ?? null,
           ]
         )
       )
@@ -214,6 +217,8 @@ export async function listMessages(channel, conversationId, limit = 300) {
     type: r.type || "",
     text: r.text || "",
     timestamp: Number(r.timestamp) || 0,
+    mediaId: r.media_id || "",
+    mediaUrl: r.media_url || "",
     status: r.status || "",
     error: r.error || "",
   }));
@@ -242,6 +247,10 @@ export async function putConversation(channel, c) {
       c.unread || 0,
     ]
   );
+}
+
+export async function setProfileName(channel, id, name) {
+  await query(`update inbox_conversations set profile_name = $3 where channel = $1 and id = $2`, [channel, id, name]);
 }
 
 export async function markRead(channel, id) {

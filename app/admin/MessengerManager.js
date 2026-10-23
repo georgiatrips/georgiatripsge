@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { adminFetch } from "../lib/apiClient";
 import { REPLY_WINDOW_MS } from "../lib/whatsappConfig";
-import { importOldChats, useInbox } from "./useInbox";
+import { MessageMedia, importOldChats, messageCaption, useInbox } from "./useInbox";
 
 // Facebook Page inbox: messages people send to the Page, and the Page's
 // replies (from here, Business Suite or the Facebook app). Same layout as the
@@ -187,7 +187,10 @@ export default function MessengerManager() {
                 <ol className="wa-messages">
                   {messages.map((m) => (
                     <li key={m.id} className={`wa-msg is-${m.direction}`}>
-                      <span className="wa-msg-text">{m.text}</span>
+                      <MessageMedia message={m} />
+                      {messageCaption(m, Boolean(m.mediaUrl || m.mediaId)) && (
+                        <span className="wa-msg-text">{messageCaption(m, Boolean(m.mediaUrl || m.mediaId))}</span>
+                      )}
                       <small>
                         {SOURCE_LABELS[m.source] && `${SOURCE_LABELS[m.source]} · `}
                         {formatTime(m.timestamp)}
