@@ -90,7 +90,13 @@ export async function processWebhook(body) {
   const alerts = [];
 
   for (const entry of body.entry || []) {
-    for (const event of entry.messaging || []) {
+    // Messenger sends entry.messaging[]; Instagram may send the same events
+    // as entry.changes[] with field "messages".
+    const events = [
+      ...(entry.messaging || []),
+      ...(entry.changes || []).filter((c) => c.field === "messages" && c.value).map((c) => c.value),
+    ];
+    for (const event of events) {
       const message = event.message;
       if (!message?.mid || message.is_deleted) continue;
       const echo = Boolean(message.is_echo);
