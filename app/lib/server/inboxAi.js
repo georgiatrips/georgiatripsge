@@ -20,13 +20,14 @@ import { claimAiTurn, getConfig, getConversation, listMessages, setAiDraft, setC
 import { sendText as sendWhatsApp } from "./whatsapp";
 import { sendText as sendPageMessage } from "./messenger";
 
-// The free tier limits requests per model, so a busy minute falls back.
-// Thinking is kept short: a chat reply needs speed more than deep reasoning
-// (the models default to medium; flash-lite allows "minimal").
+// Flash-Lite with minimal thinking answers a chat in a few seconds; 3.8
+// Flash took over 30 s on the free tier with the full company brief, so it
+// is only the fallback (rate limit, overload or timeout of the first).
 const MODELS = [
-  { name: process.env.GEMINI_MODEL || "gemini-3.8-flash", thinkingLevel: "low" },
-  { name: "gemini-3.5-flash-lite", thinkingLevel: "minimal" },
+  { name: process.env.GEMINI_MODEL || "gemini-3.5-flash-lite", thinkingLevel: "minimal" },
+  { name: "gemini-3.8-flash", thinkingLevel: "low" },
 ];
+const MODEL_TIMEOUT_MS = 20000;
 // Customers often write in a few quick messages: wait, then answer them all.
 const SETTLE_MS = 3000;
 const HISTORY = 30;
@@ -146,31 +147,40 @@ function toContents(messages) {
 async function generate(system, contents) {
   let lastError;
   for (const model of MODELS) {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model.name}:generateContent`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: system }] },
-        contents,
-        generationConfig: {
-          thinkingConfig: { thinkingLevel: model.thinkingLevel },
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "OBJECT",
-            properties: { reply: { type: "STRING" }, handoff: { type: "BOOLEAN" }, reason: { type: "STRING" } },
-            required: ["reply", "handoff"],
+    let res;
+    try {
+      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model.name}:generateContent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: system }] },
+          contents,
+          generationConfig: {
+            thinkingConfig: { thinkingLevel: model.thinkingLevel },
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "OBJECT",
+              properties: { reply: { type: "STRING" }, handoff: { type: "BOOLEAN" }, reason: { type: "STRING" } },
+              required: ["reply", "handoff"],
+            },
           },
-        },
-      }),
-      signal: AbortSignal.timeout(30000),
-    });
+        }),
+        signal: AbortSignal.timeout(MODEL_TIMEOUT_MS),
+      });
+    } catch (err) {
+      // Timed out or unreachable: the next model may still answer.
+      const message = err?.name === "TimeoutError" ? `no answer in ${MODEL_TIMEOUT_MS / 1000} s` : err?.message;
+      await recordUsage(model.name, { ok: false, status: "timeout", message });
+      lastError = new Error(`Gemini ${model.name}: ${message}`);
+      continue;
+    }
     const data = await res.json().catch(() => ({}));
     if (res.ok) {
       await recordUsage(model.name, { ok: true });
       // Thought summaries, if any, are not part of the answer.
       const text = data.candidates?.[0]?.content?.parts?.filter((p) => !p.thought).map((p) => p.text || "").join("") || "";
       const out = JSON.parse(text);
-      return { reply: String(out.reply || "").trim(), handoff: Boolean(out.handoff), reason: out.reason || "" };
+      return { reply: String(out.reply || "").trim(), handoff: Boolean(out.handoff), reason: out.reason || "", model: model.name };
     }
     await recordUsage(model.name, { ok: false, status: res.status, message: data.error?.message });
     lastError = new Error(`Gemini ${model.name} ${res.status}: ${data.error?.message || ""}`);
@@ -186,10 +196,12 @@ export async function testAi() {
   if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY არ არის Vercel-ში.");
   const started = Date.now();
   try {
-    const { reply } = await generate(systemPrompt("whatsapp", await buildSiteBrief()), [
+    const brief = await buildSiteBrief();
+    const briefMs = Date.now() - started;
+    const { reply, model } = await generate(systemPrompt("whatsapp", brief), [
       { role: "user", parts: [{ text: "გამარჯობათ, ტურები გაქვთ საქართველოში?" }] },
     ]);
-    return { reply, ms: Date.now() - started };
+    return { reply, model, briefMs, ms: Date.now() - started };
   } catch (err) {
     await recordFailure(err);
     throw err;

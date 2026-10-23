@@ -449,8 +449,8 @@ function AiUsage({ usage }) {
   const runTest = async () => {
     setTest({ busy: true });
     try {
-      const { reply, ms } = await inboxAction({ action: "ai-test" });
-      setTest({ ok: `✓ მუშაობს (${(ms / 1000).toFixed(1)} წმ): „${reply}“` });
+      const { reply, ms, model, briefMs } = await inboxAction({ action: "ai-test" });
+      setTest({ ok: `✓ მუშაობს (${(ms / 1000).toFixed(1)} წმ, ${model.replace("gemini-", "")}, ინფორმაცია ${(briefMs / 1000).toFixed(1)} წმ): „${reply}“` });
     } catch (err) {
       setTest({ error: err.message });
     }

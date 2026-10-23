@@ -27,6 +27,8 @@ import { AI_MODES, getAiSettings, testAi } from "../../../lib/server/inboxAi";
 //   POST { action: "ai-draft-clear", channel, id }  drop a suggested reply
 //   POST { action: "ai-test" }                       one test request to Gemini
 export const dynamic = "force-dynamic";
+// The AI test may wait on two Gemini models in turn.
+export const maxDuration = 60;
 
 function fail(err) {
   if (!(err instanceof InboxError)) console.error("[admin inbox]", err);
