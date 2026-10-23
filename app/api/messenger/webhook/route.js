@@ -2,9 +2,10 @@ import { NextResponse, after } from "next/server";
 import { verifySignature } from "../../../lib/server/whatsapp";
 import { alertNewMessages, processWebhook } from "../../../lib/server/messenger";
 
-// Meta's Page webhook (Meta app → Messenger → Webhooks, object "page").
-// GET answers the one-time verification; POST receives messages people send
-// to the Facebook Page and echoes of the Page's replies.
+// Meta's Page and Instagram webhook (Meta app → Messenger → Webhooks, objects
+// "page" and "instagram"). GET answers the one-time verification; POST
+// receives messages people send to the Facebook Page or Instagram account
+// and echoes of the business's replies.
 export const dynamic = "force-dynamic";
 
 export async function GET(request) {

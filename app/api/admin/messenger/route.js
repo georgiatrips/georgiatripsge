@@ -3,10 +3,10 @@ import { requireAdmin } from "../../../lib/server/adminAuth";
 import { WhatsAppError } from "../../../lib/server/whatsapp";
 import { connectPage, getConnectionStatus, sendText } from "../../../lib/server/messenger";
 
-// Admin panel → Messenger tab.
-//   GET                                     connection status (never the token)
+// Admin panel → Messenger and Instagram tabs (both go through the Page).
+//   GET ?channel=messenger|instagram        connection status (never the token)
 //   POST { action: "connect", token, pageId? }   system-user token → Page token
-//   POST { action: "send", to, text }       reply to a person (page-scoped ID)
+//   POST { action: "send", channel, to, text }   reply to a person (page- or Instagram-scoped ID)
 export const dynamic = "force-dynamic";
 
 function fail(err) {
@@ -18,7 +18,8 @@ export async function GET(request) {
   const admin = await requireAdmin(request);
   if (admin.error) return NextResponse.json({ error: admin.error }, { status: admin.status });
   try {
-    return NextResponse.json(await getConnectionStatus());
+    const channel = request.nextUrl.searchParams.get("channel") === "instagram" ? "instagram" : "messenger";
+    return NextResponse.json(await getConnectionStatus(channel));
   } catch (err) {
     return fail(err);
   }

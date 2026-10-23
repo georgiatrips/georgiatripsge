@@ -5,18 +5,24 @@ import { adminFetch } from "../lib/apiClient";
 import { REPLY_WINDOW_MS } from "../lib/whatsappConfig";
 import { MessageMedia, importOldChats, messageCaption, useInbox } from "./useInbox";
 
-// Facebook Page inbox: messages people send to the Page, and the Page's
-// replies (from here, Business Suite or the Facebook app). Same layout as the
-// WhatsApp tab, so it reuses its .wa-* styles.
+// Facebook Page and Instagram Direct inboxes: messages people send to the
+// Page or its Instagram account, and the business's replies (from here,
+// Business Suite or the apps). Same layout as the WhatsApp tab, so it reuses
+// its .wa-* styles.
 
-const SOURCE_LABELS = { site: "საიტიდან", page: "Facebook-იდან" };
+const CHANNELS = {
+  messenger: { label: "Messenger", app: "Facebook", unnamed: "Facebook მომხმარებელი" },
+  instagram: { label: "Instagram", app: "Instagram", unnamed: "Instagram მომხმარებელი" },
+};
 
 const formatTime = (ms) =>
   ms
     ? new Date(ms).toLocaleString("ka-GE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
     : "";
 
-export default function MessengerManager() {
+export default function MessengerManager({ channel = "messenger" }) {
+  const info = CHANNELS[channel];
+  const sourceLabels = { site: "საიტიდან", page: `${info.app}-იდან` };
   const [status, setStatus] = useState(null);
   const [selected, setSelected] = useState(null);
   const [filter, setFilter] = useState("");
@@ -32,7 +38,7 @@ export default function MessengerManager() {
 
   const loadStatus = async () => {
     try {
-      const res = await adminFetch("/api/admin/messenger");
+      const res = await adminFetch(`/api/admin/messenger?channel=${channel}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setStatus(data);
@@ -41,7 +47,7 @@ export default function MessengerManager() {
     }
   };
 
-  const { conversations, imported, messages, error: inboxError, markRead, refresh } = useInbox("messenger", selected);
+  const { conversations, imported, messages, error: inboxError, markRead, refresh } = useInbox(channel, selected);
 
   const [importing, setImporting] = useState(false);
   const runImport = async () => {
@@ -72,7 +78,7 @@ export default function MessengerManager() {
     if (current?.unread > 0) markRead(current.id);
   }, [current?.id, current?.unread, markRead]);
 
-  const displayName = (c) => c.profileName || "Facebook მომხმარებელი";
+  const displayName = (c) => c.profileName || info.unnamed;
 
   const shown = useMemo(() => {
     const term = filter.trim().toLowerCase();
@@ -91,7 +97,7 @@ export default function MessengerManager() {
       const res = await adminFetch("/api/admin/messenger", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "send", to: current.id, text }),
+        body: JSON.stringify({ action: "send", channel, to: current.id, text }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -180,7 +186,7 @@ export default function MessengerManager() {
                   </button>
                   <div>
                     <strong>{displayName(current)}</strong>
-                    <small>Messenger</small>
+                    <small>{info.label}</small>
                   </div>
                 </header>
 
@@ -192,7 +198,7 @@ export default function MessengerManager() {
                         <span className="wa-msg-text">{messageCaption(m, Boolean(m.mediaUrl || m.mediaId))}</span>
                       )}
                       <small>
-                        {SOURCE_LABELS[m.source] && `${SOURCE_LABELS[m.source]} · `}
+                        {sourceLabels[m.source] && `${sourceLabels[m.source]} · `}
                         {formatTime(m.timestamp)}
                       </small>
                     </li>
@@ -219,7 +225,7 @@ export default function MessengerManager() {
                 ) : (
                   <p className="admin-hint wa-warn">
                     ბოლო შეტყობინებიდან 24 საათზე მეტი გავიდა — Meta საიტიდან წერის უფლებას აღარ იძლევა.
-                    უპასუხეთ Facebook-იდან ან Business Suite-იდან (პასუხი აქაც გამოჩნდება).
+                    უპასუხეთ {info.app}-იდან ან Business Suite-იდან (პასუხი აქაც გამოჩნდება).
                   </p>
                 )}
               </>
@@ -229,7 +235,7 @@ export default function MessengerManager() {
       )}
 
       <PageConnect open={status && !status.connected} onConnected={(data) => {
-        showMsg("success", `✓ მიერთდა ${data.pageName}.`);
+        showMsg("success", `✓ მიერთდა ${data.pageName}${data.igUsername ? ` და @${data.igUsername}` : ""}.`);
         loadStatus();
       }} />
     </div>
@@ -266,10 +272,11 @@ function PageConnect({ open, onConnected }) {
 
   return (
     <details className="tp-card wa-demo" open={Boolean(open)}>
-      <summary className="tp-subtitle">Facebook Page-ის მიერთება ტოკენით</summary>
+      <summary className="tp-subtitle">Facebook Page-ის და Instagram-ის მიერთება ტოკენით</summary>
       <p className="admin-hint">
         Business settings → System users → GeorgiaTrips Inbox → Assign assets → Page (Full control), მერე Generate token
-        (ვადა Never; pages_messaging, pages_manage_metadata, pages_show_list). ტოკენი მხოლოდ სერვერზე ინახება.
+        (ვადა Never; pages_messaging, pages_manage_metadata, pages_show_list, pages_read_engagement, instagram_basic,
+        instagram_manage_messages). Instagram-ი Page-ზე მიბმული ანგარიშით ერთდება. ტოკენი მხოლოდ სერვერზე ინახება.
       </p>
       <form className="tpl-form" onSubmit={submit}>
         <label className="tpl-field tpl-field--wide">

@@ -10,7 +10,7 @@
 
 import { neon } from "@neondatabase/serverless";
 
-export const CHANNELS = new Set(["whatsapp", "messenger"]);
+export const CHANNELS = new Set(["whatsapp", "messenger", "instagram"]);
 
 export class InboxError extends Error {
   constructor(message, status = 500) {
@@ -260,7 +260,7 @@ export async function markRead(channel, id) {
 // Number of chats with unread messages, per channel (admin menu badges).
 export async function unreadCounts() {
   const rows = await query(`select channel, count(*)::int as n from inbox_conversations where unread > 0 group by channel`);
-  const counts = { whatsapp: 0, messenger: 0 };
+  const counts = { whatsapp: 0, messenger: 0, instagram: 0 };
   for (const r of rows) counts[r.channel] = r.n;
   return counts;
 }

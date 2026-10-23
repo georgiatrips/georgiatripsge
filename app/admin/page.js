@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { BarChartIcon, BedIcon, CarIcon, ClipboardIcon, LocationIcon, MessageIcon, MessengerIcon, MountainIcon, TicketIcon, WhatsAppIcon } from "../components/Icons";
+import { BarChartIcon, BedIcon, CarIcon, ClipboardIcon, LocationIcon, MessageIcon, InstagramIcon, MessengerIcon, MountainIcon, TicketIcon, WhatsAppIcon } from "../components/Icons";
 import DatePicker from "../components/DatePicker";
 import { GEORGIA_REGIONS } from "../lib/placesMeta";
 import { listPlaces } from "../lib/placesFirestore";
@@ -215,7 +215,11 @@ export default function AdminPage() {
   }, [isAdminUser]);
 
   // Chats live in Neon, not Firestore: polled, no read quota.
-  const { whatsapp: unreadChatsCount, messenger: unreadMessengerCount } = useUnreadCounts(isAdminUser);
+  const {
+    whatsapp: unreadChatsCount,
+    messenger: unreadMessengerCount,
+    instagram: unreadInstagramCount,
+  } = useUnreadCounts(isAdminUser);
 
 
   const schedulePreview = groupDepartureDates(departureDates);
@@ -936,6 +940,7 @@ export default function AdminPage() {
         { key: "bookings", label: "ჯავშნები", Icon: ClipboardIcon, badge: pendingBookingsCount > 0 ? { text: String(pendingBookingsCount), tone: "warn" } : null },
         { key: "whatsapp", label: "WhatsApp", Icon: WhatsAppIcon, badge: unreadChatsCount > 0 ? { text: String(unreadChatsCount), tone: "warn" } : null },
         { key: "messenger", label: "Messenger", Icon: MessengerIcon, badge: unreadMessengerCount > 0 ? { text: String(unreadMessengerCount), tone: "warn" } : null },
+        { key: "instagram", label: "Instagram", Icon: InstagramIcon, badge: unreadInstagramCount > 0 ? { text: String(unreadInstagramCount), tone: "warn" } : null },
         { key: "coupons", label: "კუპონები", Icon: TicketIcon },
         { key: "transfers", label: "ტრანსფერის ფასები", Icon: CarIcon },
         { key: "transferPlaces", label: "ტრანსფერის ლოკაციები", Icon: LocationIcon },
@@ -957,6 +962,7 @@ export default function AdminPage() {
     bookings: ["ჯავშნები", "ახალი მოთხოვნები, დადასტურება და სტატუსები."],
     whatsapp: ["WhatsApp", "კლიენტების მიმოწერა — იგივე, რაც ტელეფონის WhatsApp Business-ში."],
     messenger: ["Messenger", "Facebook Page-ზე მოწერილი შეტყობინებები და პასუხები."],
+    instagram: ["Instagram", "Instagram Direct-ში მოწერილი შეტყობინებები და პასუხები."],
     coupons: ["კუპონები", "ფასდაკლების კოდები და IP შეზღუდვები."],
     transfers: ["ტრანსფერის ფასები", "ფასები მანძილისა და ავტომობილის მიხედვით."],
     tours: ["ტურები", "ტურის დამატება, რედაქტირება და კატალოგი."],
@@ -2300,8 +2306,11 @@ export default function AdminPage() {
           {activeTab === "whatsapp" && (
             <WhatsAppManager />
           )}
+          {activeTab === "instagram" && (
+            <MessengerManager key="instagram" channel="instagram" />
+          )}
           {activeTab === "messenger" && (
-            <MessengerManager />
+            <MessengerManager key="messenger" />
           )}
         </main>
       </div>

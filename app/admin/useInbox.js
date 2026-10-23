@@ -141,7 +141,7 @@ export async function importOldChats() {
 
 // Unread chat counts for the admin menu badges.
 export function useUnreadCounts(enabled) {
-  const [counts, setCounts] = useState({ whatsapp: 0, messenger: 0 });
+  const [counts, setCounts] = useState({ whatsapp: 0, messenger: 0, instagram: 0 });
   usePolling(
     async () => setCounts(await getJson("/api/admin/inbox?counts=1")),
     30000,
