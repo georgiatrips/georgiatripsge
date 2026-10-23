@@ -259,7 +259,7 @@ function PageConnect({ open, onConnected }) {
       <summary className="tp-subtitle">Facebook Page-ის მიერთება ტოკენით</summary>
       <p className="admin-hint">
         Business settings → System users → GeorgiaTrips Inbox → Assign assets → Page (Full control), მერე Generate token
-        (ვადა Never; pages_messaging, pages_manage_metadata, pages_read_engagement, pages_show_list). ტოკენი მხოლოდ სერვერზე ინახება.
+        (ვადა Never; pages_messaging, pages_manage_metadata, pages_show_list). ტოკენი მხოლოდ სერვერზე ინახება.
       </p>
       <form className="tpl-form" onSubmit={submit}>
         <label className="tpl-field tpl-field--wide">
