@@ -247,10 +247,6 @@ export function ClipboardIcon(props) {
   return <StrokeIcon {...props}><rect x="8" y="2" width="8" height="4" rx="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="m9 14 2 2 4-4" /></StrokeIcon>;
 }
 
-export function MessengerIcon(props) {
-  return <StrokeIcon {...props}><path d="M12 3C7 3 3 6.7 3 11.3c0 2.6 1.3 4.9 3.3 6.4V21l3-1.7c.9.3 1.8.4 2.7.4 5 0 9-3.7 9-8.4S17 3 12 3z" /><path d="m7.5 13.5 3-3.2 2 2 3-3.2" /></StrokeIcon>;
-}
-
 export function MessageIcon(props) {
   return <StrokeIcon {...props}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></StrokeIcon>;
 }

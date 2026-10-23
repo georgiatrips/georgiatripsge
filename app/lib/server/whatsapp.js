@@ -49,7 +49,7 @@ export class WhatsAppError extends Error {
   }
 }
 
-export function requireDb() {
+function requireDb() {
   const db = getAdminDb();
   if (!db) {
     throw new WhatsAppError(
@@ -285,7 +285,7 @@ export async function alertNewMessages(alerts) {
 
 // ── Graph API ────────────────────────────────────────────────────────
 
-export async function graph(path, { token, method = "GET", body } = {}) {
+async function graph(path, { token, method = "GET", body } = {}) {
   const res = await fetch(`${GRAPH}${path}`, {
     method,
     headers: { Authorization: `Bearer ${token}`, ...(body ? { "Content-Type": "application/json" } : {}) },
