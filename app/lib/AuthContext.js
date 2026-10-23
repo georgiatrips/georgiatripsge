@@ -18,6 +18,13 @@ export function AuthProvider({ children }) {
       if (firebaseUser) {
         let isAdmin = false;
         try {
+          // Admins carry an `admin` claim in their ID token (set by the
+          // server, adminAuth.js). Reading it is local, so the admin panel
+          // opens without waiting on, or spending, a Firestore read.
+          const { claims } = await firebaseUser.getIdTokenResult();
+          isAdmin = claims.admin === true;
+        } catch (_) {}
+        if (!isAdmin) try {
           const userRef = doc(db, "users", firebaseUser.uid);
           const userDoc = await getDoc(userRef);
           if (userDoc.exists()) {
