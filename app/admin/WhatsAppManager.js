@@ -45,8 +45,9 @@ function signupUrl() {
     response_type: "code",
     override_default_response_type: "true",
     state: WA_CONNECT_STATE,
-    // Onboard the number already used in the WhatsApp Business app (coexistence).
-    extras: JSON.stringify({ setup: {}, featureType: "whatsapp_business_app_onboarding", sessionInfoVersion: "3" }),
+    // v5 offers the number already used in the WhatsApp Business app
+    // (coexistence) by default; v3 was retired on 2026-10-15.
+    extras: JSON.stringify({ setup: {}, version: "v5" }),
   });
   return `https://www.facebook.com/${GRAPH_API_VERSION}/dialog/oauth?${params}`;
 }
