@@ -1,6 +1,7 @@
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
+import { getConfig, setConfig } from "./inboxStore";
 
 const DEFAULT_PROJECT_ID = "georgiatripsge";
 const FIREBASE_WEB_API_KEY =
@@ -148,6 +149,27 @@ async function grantAdminClaim(app, uid) {
   }
 }
 
+// Neon copy of the admin list (inbox_config "admins": { uids: [...] }).
+async function isListedAdmin(uid) {
+  if (!process.env.DATABASE_URL) return false;
+  try {
+    return ((await getConfig("admins"))?.uids || []).includes(uid);
+  } catch (err) {
+    console.error("[adminAuth] Neon admin list unavailable:", err.message);
+    return false;
+  }
+}
+
+async function listAdmin(uid) {
+  if (!process.env.DATABASE_URL) return;
+  try {
+    const uids = (await getConfig("admins"))?.uids || [];
+    if (!uids.includes(uid)) await setConfig("admins", { uids: [...uids, uid] });
+  } catch (err) {
+    console.error("[adminAuth] could not list admin in Neon:", err.message);
+  }
+}
+
 export async function requireAdmin(request) {
   const authorization = request.headers.get("authorization") || "";
   const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
@@ -165,12 +187,20 @@ export async function requireAdmin(request) {
       // remembered here and turned into an `admin` claim: the next ID token
       // (refreshed hourly) proves admin without any Firestore read.
       let isAdmin = decoded.admin === true || (knownAdmins.get(decoded.uid) || 0) > Date.now();
+      // Admins are also listed in Neon, which has no read quota: when
+      // Firestore's free reads run out, the admin panel still opens.
+      if (!isAdmin && (await isListedAdmin(decoded.uid))) {
+        isAdmin = true;
+        knownAdmins.set(decoded.uid, Date.now() + KNOWN_ADMIN_TTL_MS);
+        grantAdminClaim(app, decoded.uid);
+      }
       if (!isAdmin) {
         const userDoc = await getFirestore(app).collection("users").doc(decoded.uid).get();
         isAdmin = userDoc.exists && userDoc.data()?.isAdmin === true;
         if (isAdmin) {
           knownAdmins.set(decoded.uid, Date.now() + KNOWN_ADMIN_TTL_MS);
           grantAdminClaim(app, decoded.uid);
+          listAdmin(decoded.uid);
         }
       }
 
