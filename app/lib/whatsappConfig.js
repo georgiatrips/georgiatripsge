@@ -11,6 +11,10 @@ export const WHATSAPP_SIGNUP_CONFIG_ID = "2000416800523507";
 
 export const GRAPH_API_VERSION = "v25.0";
 
+// Embedded Signup can also run as a full page (no popup): Meta sends the
+// browser back to /admin?code=…&state=wa-connect.
+export const WA_CONNECT_STATE = "wa-connect";
+
 // Meta only lets a business start a free-form chat within 24 hours of the
 // customer's last message; after that, reply from the phone app instead.
 export const REPLY_WINDOW_MS = 24 * 60 * 60 * 1000;

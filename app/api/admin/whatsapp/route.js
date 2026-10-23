@@ -11,7 +11,7 @@ import {
 
 // Admin panel → WhatsApp tab.
 //   GET                                   connection status (never the token)
-//   POST { action: "connect", code, wabaId, phoneNumberId }   finish Embedded Signup
+//   POST { action: "connect", code, redirectUri, wabaId? }   finish Embedded Signup
 //   POST { action: "send", to, text }     reply to a customer
 //   POST { action: "demo-send" | "demo-templates", token, ... }   Meta App Review recording
 export const dynamic = "force-dynamic";

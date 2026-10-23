@@ -299,10 +299,12 @@ async function graph(path, { token, method = "GET", body } = {}) {
   return data;
 }
 
-async function exchangeCode(code) {
+async function exchangeCode(code, redirectUri) {
   const secret = process.env.WHATSAPP_APP_SECRET;
   if (!secret) throw new WhatsAppError("WHATSAPP_APP_SECRET არ არის მითითებული Vercel-ში.", 503);
   const params = new URLSearchParams({ client_id: WHATSAPP_APP_ID, client_secret: secret, code });
+  // The full-page signup must repeat its redirect_uri; the popup flow has none.
+  if (redirectUri) params.set("redirect_uri", redirectUri);
   const res = await fetch(`${GRAPH}/oauth/access_token?${params}`, { signal: AbortSignal.timeout(15000) });
   const data = await res.json().catch(() => ({}));
   if (!res.ok || !data.access_token) {
@@ -311,14 +313,28 @@ async function exchangeCode(code) {
   return { token: data.access_token, expiresIn: Number(data.expires_in) || 0 };
 }
 
+async function grantedWabaId(token, previousWabaId) {
+  const appToken = `${WHATSAPP_APP_ID}|${process.env.WHATSAPP_APP_SECRET}`;
+  const info = await graph(`/debug_token?input_token=${encodeURIComponent(token)}`, { token: appToken });
+  const scope = (info.data?.granular_scopes || []).find((s) => s.scope === "whatsapp_business_management");
+  const ids = scope?.target_ids || [];
+  // A reconnect means a different account: prefer one we are not on yet.
+  const id = ids.filter((x) => x !== previousWabaId).pop() || ids.pop();
+  if (!id) throw new WhatsAppError("Meta-მ WhatsApp ანგარიში არ დააბრუნა.", 400);
+  return id;
+}
+
 // Finishes Embedded Signup: swaps the one-time code for a business token,
 // subscribes this app to the account's webhooks and asks Meta to send the
 // phone's contacts and chat history. History can only be requested within
 // 24 hours of connecting, so this runs right away.
-export async function connectWhatsApp({ code, wabaId, phoneNumberId }) {
-  if (!code || !wabaId) throw new WhatsAppError("Meta-მ მიერთების მონაცემები არ დააბრუნა.", 400);
+export async function connectWhatsApp({ code, wabaId, phoneNumberId, redirectUri }) {
+  if (!code) throw new WhatsAppError("Meta-მ მიერთების მონაცემები არ დააბრუნა.", 400);
   const db = requireDb();
-  const { token, expiresIn } = await exchangeCode(code);
+  const { token, expiresIn } = await exchangeCode(code, redirectUri);
+  // The full-page signup has no session message: read the account the
+  // token was granted for.
+  if (!wabaId) wabaId = await grantedWabaId(token, (await db.doc(CONFIG_PATH).get()).data()?.wabaId);
 
   const numbers = await graph(`/${wabaId}/phone_numbers?fields=id,display_phone_number,verified_name`, { token });
   const number = (numbers.data || []).find((n) => !phoneNumberId || n.id === phoneNumberId) || numbers.data?.[0];

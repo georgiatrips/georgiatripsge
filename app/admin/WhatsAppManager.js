@@ -9,6 +9,7 @@ import { STATUS_CONFIG } from "../lib/bookingModel";
 import {
   GRAPH_API_VERSION,
   REPLY_WINDOW_MS,
+  WA_CONNECT_STATE,
   WHATSAPP_APP_ID,
   WHATSAPP_CONVERSATIONS,
   WHATSAPP_SIGNUP_CONFIG_ID,
@@ -32,35 +33,26 @@ const formatTime = (ms) =>
 
 const tourName = (title) => (title && typeof title === "object" ? title.ka || title.en || "" : title || "");
 
-// The Facebook SDK must be loaded before the click: FB.login opens a popup,
-// and browsers only allow that directly inside the click handler.
-let sdkPromise = null;
-function loadFacebookSdk() {
-  if (window.FB) return Promise.resolve(window.FB);
-  if (!sdkPromise) {
-    sdkPromise = new Promise((resolve, reject) => {
-      window.fbAsyncInit = () => {
-        window.FB.init({ appId: WHATSAPP_APP_ID, autoLogAppEvents: true, xfbml: false, version: GRAPH_API_VERSION });
-        resolve(window.FB);
-      };
-      const script = document.createElement("script");
-      script.src = "https://connect.facebook.net/en_US/sdk.js";
-      script.async = true;
-      script.defer = true;
-      script.crossOrigin = "anonymous";
-      script.onerror = () => {
-        sdkPromise = null;
-        reject(new Error("Facebook SDK ვერ ჩაიტვირთა."));
-      };
-      document.body.appendChild(script);
-    });
-  }
-  return sdkPromise;
+// Embedded Signup runs as a full page rather than the SDK popup: popups get
+// lost behind the window, and Meta sends the browser back here with ?code=.
+const signupRedirectUri = () => `${window.location.origin}/admin`;
+
+function signupUrl() {
+  const params = new URLSearchParams({
+    client_id: WHATSAPP_APP_ID,
+    config_id: WHATSAPP_SIGNUP_CONFIG_ID,
+    redirect_uri: signupRedirectUri(),
+    response_type: "code",
+    override_default_response_type: "true",
+    state: WA_CONNECT_STATE,
+    // Onboard the number already used in the WhatsApp Business app (coexistence).
+    extras: JSON.stringify({ setup: {}, featureType: "whatsapp_business_app_onboarding", sessionInfoVersion: "3" }),
+  });
+  return `https://www.facebook.com/${GRAPH_API_VERSION}/dialog/oauth?${params}`;
 }
 
 export default function WhatsAppManager() {
   const [status, setStatus] = useState(null);
-  const [sdkReady, setSdkReady] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [conversations, setConversations] = useState([]);
   const [contacts, setContacts] = useState({});
@@ -110,12 +102,35 @@ export default function WhatsAppManager() {
     );
   }, []);
 
+  // Back from Meta's signup page: finish the connection once.
   useEffect(() => {
-    if (!status || !WHATSAPP_SIGNUP_CONFIG_ID) return;
-    loadFacebookSdk()
-      .then(() => setSdkReady(true))
-      .catch((err) => showMsg("error", err.message));
-  }, [status]);
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("state") !== WA_CONNECT_STATE) return;
+    const code = params.get("code");
+    window.history.replaceState(null, "", window.location.pathname);
+    if (!code) {
+      showMsg("error", params.get("error_description") || "მიერთება შეწყდა.");
+      return;
+    }
+    setConnecting(true);
+    (async () => {
+      try {
+        const res = await adminFetch("/api/admin/whatsapp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "connect", code, redirectUri: signupRedirectUri() }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        showMsg("success", `✓ მიერთდა ${data.displayPhone}. ძველი მიმოწერა რამდენიმე წუთში გამოჩნდება.`);
+        await loadStatus();
+      } catch (err) {
+        showMsg("error", err.message);
+      } finally {
+        setConnecting(false);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     if (!selected) return undefined;
@@ -149,64 +164,8 @@ export default function WhatsAppManager() {
   }, [conversations, contacts, filter]);
 
   const startConnect = () => {
-    const FB = window.FB;
-    if (!FB) return;
     setConnecting(true);
-    const session = {};
-    const onMessage = (event) => {
-      if (!event.origin.endsWith("facebook.com")) return;
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type !== "WA_EMBEDDED_SIGNUP") return;
-        if (String(data.event).startsWith("FINISH")) {
-          session.wabaId = data.data?.waba_id;
-          session.phoneNumberId = data.data?.phone_number_id;
-        } else if (data.event === "CANCEL") {
-          session.cancelled = true;
-        } else if (data.event === "ERROR") {
-          session.error = data.data?.error_message;
-        }
-      } catch {
-        // Other facebook.com messages are not JSON.
-      }
-    };
-    window.addEventListener("message", onMessage);
-
-    FB.login(
-      (response) => {
-        const code = response?.authResponse?.code;
-        (async () => {
-          try {
-            // The session message can arrive just after this callback.
-            for (let i = 0; i < 20 && code && !session.wabaId; i++) await new Promise((r) => setTimeout(r, 250));
-            if (!code || !session.wabaId) {
-              throw new Error(session.error || (session.cancelled ? "მიერთება შეწყდა." : "მიერთება არ დასრულდა."));
-            }
-            const res = await adminFetch("/api/admin/whatsapp", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ action: "connect", code, wabaId: session.wabaId, phoneNumberId: session.phoneNumberId }),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error);
-            showMsg("success", `✓ მიერთდა ${data.displayPhone}. ძველი მიმოწერა რამდენიმე წუთში გამოჩნდება.`);
-            await loadStatus();
-          } catch (err) {
-            showMsg("error", err.message);
-          } finally {
-            window.removeEventListener("message", onMessage);
-            setConnecting(false);
-          }
-        })();
-      },
-      {
-        config_id: WHATSAPP_SIGNUP_CONFIG_ID,
-        response_type: "code",
-        override_default_response_type: true,
-        // Onboard the number already used in the WhatsApp Business app (coexistence).
-        extras: { setup: {}, featureType: "whatsapp_business_app_onboarding", sessionInfoVersion: "3" },
-      }
-    );
+    window.location.assign(signupUrl());
   };
 
   const canReply = current?.lastIncomingAt && Date.now() - current.lastIncomingAt < REPLY_WINDOW_MS;
@@ -271,8 +230,8 @@ export default function WhatsAppManager() {
             </div>
           ) : (
             <div className="admin-form-actions">
-              <button type="button" className="admin-btn-primary" onClick={startConnect} disabled={!sdkReady || connecting}>
-                {connecting ? "მიმდინარეობს..." : sdkReady ? "WhatsApp-ის მიერთება" : "იტვირთება..."}
+              <button type="button" className="admin-btn-primary" onClick={startConnect} disabled={connecting}>
+                {connecting ? "მიმდინარეობს..." : "WhatsApp-ის მიერთება"}
               </button>
             </div>
           )}
@@ -288,7 +247,7 @@ export default function WhatsAppManager() {
           {tokenDaysLeft !== null && tokenDaysLeft <= 10 && (
             <span className="wa-warn"> · Meta-ს წვდომის ვადა იწურება {tokenDaysLeft} დღეში</span>
           )}{" "}
-          <button type="button" className="admin-btn-ghost wa-reconnect" onClick={startConnect} disabled={!sdkReady || connecting}>
+          <button type="button" className="admin-btn-ghost wa-reconnect" onClick={startConnect} disabled={connecting}>
             {connecting ? "მიმდინარეობს..." : "ნომრის შეცვლა / თავიდან მიერთება"}
           </button>
         </p>

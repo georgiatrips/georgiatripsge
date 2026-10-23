@@ -22,7 +22,7 @@ import TransferPlacesManager from "./TransferPlacesManager";
 import WhatsAppManager from "./WhatsAppManager";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { WHATSAPP_CONVERSATIONS } from "../lib/whatsappConfig";
+import { WA_CONNECT_STATE, WHATSAPP_CONVERSATIONS } from "../lib/whatsappConfig";
 import { subscribeToLiveSessions } from "../lib/analytics";
 import { subscribeToBookings } from "../lib/bookingsFirestore";
 import LocalizedInputGroup, { emptyLangObj, parseLocal } from "./LocalizedInputGroup";
@@ -143,6 +143,10 @@ export default function AdminPage() {
     });
 
   const [activeTab, setActiveTab] = useState("tours");
+  // Back from Meta's WhatsApp signup page (?state=wa-connect&code=…).
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("state") === WA_CONNECT_STATE) setActiveTab("whatsapp");
+  }, []);
   const [tourSearchQuery, setTourSearchQuery] = useState("");
   const [tourRegionFilter, setTourRegionFilter] = useState("all");
   const [tourStatusFilter, setTourStatusFilter] = useState("all");
