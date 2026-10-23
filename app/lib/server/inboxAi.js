@@ -20,9 +20,14 @@ import { sendText as sendWhatsApp } from "./whatsapp";
 import { sendText as sendPageMessage } from "./messenger";
 
 // The free tier limits requests per model, so a busy minute falls back.
-const MODELS = [process.env.GEMINI_MODEL || "gemini-3.8-flash", "gemini-3.5-flash-lite"];
+// Thinking is kept short: a chat reply needs speed more than deep reasoning
+// (the models default to medium; flash-lite allows "minimal").
+const MODELS = [
+  { name: process.env.GEMINI_MODEL || "gemini-3.8-flash", thinkingLevel: "low" },
+  { name: "gemini-3.5-flash-lite", thinkingLevel: "minimal" },
+];
 // Customers often write in a few quick messages: wait, then answer them all.
-const SETTLE_MS = 8000;
+const SETTLE_MS = 3000;
 // A chat the team answered this recently is theirs.
 const HUMAN_QUIET_MS = 6 * 60 * 60 * 1000;
 const HISTORY = 30;
@@ -81,13 +86,14 @@ function toContents(messages) {
 async function generate(system, contents) {
   let lastError;
   for (const model of MODELS) {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model.name}:generateContent`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: system }] },
         contents,
         generationConfig: {
+          thinkingConfig: { thinkingLevel: model.thinkingLevel },
           responseMimeType: "application/json",
           responseSchema: {
             type: "OBJECT",
@@ -104,9 +110,8 @@ async function generate(system, contents) {
       const out = JSON.parse(text);
       return { reply: String(out.reply || "").trim(), handoff: Boolean(out.handoff), reason: out.reason || "" };
     }
-    lastError = new Error(`Gemini ${model} ${res.status}: ${data.error?.message || ""}`);
-    // Only a rate limit or an overloaded model is worth trying the next one.
-    if (res.status !== 429 && res.status < 500) break;
+    lastError = new Error(`Gemini ${model.name} ${res.status}: ${data.error?.message || ""}`);
+    // Rate limit, overload or a setting this model refuses: try the next one.
   }
   throw lastError;
 }
