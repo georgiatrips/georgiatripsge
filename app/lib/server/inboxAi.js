@@ -16,7 +16,7 @@
 import { buildSiteBrief } from "./siteBrief";
 import { sendTelegram } from "./notifyBooking";
 import { SITE_URL } from "../siteConfig";
-import { claimAiTurn, getConfig, getConversation, listMessages, setAiDraft } from "./inboxStore";
+import { claimAiTurn, getConfig, getConversation, listMessages, setAiDraft, setConfig } from "./inboxStore";
 import { sendText as sendWhatsApp } from "./whatsapp";
 import { sendText as sendPageMessage } from "./messenger";
 
@@ -179,12 +179,31 @@ async function generate(system, contents) {
   throw lastError;
 }
 
-// The admin's "test" button: one tiny request, so the panel shows at once
-// whether Gemini answers (and the error if not).
+// The admin's "test" button: the same request a real customer question
+// makes (full company brief), so the panel shows at once whether replies
+// work, how long they take, and the error if not.
 export async function testAi() {
   if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY არ არის Vercel-ში.");
-  const { reply } = await generate("Answer the customer in one short sentence.", [{ role: "user", parts: [{ text: "გამარჯობა" }] }]);
-  return reply;
+  const started = Date.now();
+  try {
+    const { reply } = await generate(systemPrompt("whatsapp", await buildSiteBrief()), [
+      { role: "user", parts: [{ text: "გამარჯობათ, ტურები გაქვთ საქართველოში?" }] },
+    ]);
+    return { reply, ms: Date.now() - started };
+  } catch (err) {
+    await recordFailure(err);
+    throw err;
+  }
+}
+
+// Errors outside the HTTP call (an unreadable answer, a failed send) are
+// shown in the panel too.
+async function recordFailure(err) {
+  if (/^Gemini /.test(err?.message || "")) return; // recorded by generate()
+  try {
+    const message = String(err?.message || err).slice(0, 400);
+    await setConfig(USAGE_KEY, { lastError: { model: "-", status: "app", message, at: Date.now() } });
+  } catch {}
 }
 
 // Answers the latest customer message of one chat, if the settings allow.
@@ -228,7 +247,10 @@ export async function answerNewMessages(chats) {
   await new Promise((resolve) => setTimeout(resolve, SETTLE_MS));
   await Promise.all(
     unique.map((c) =>
-      answerChat(c.channel, c.id).catch((err) => console.error("[inbox ai]", c.channel, c.id, err?.message || err))
+      answerChat(c.channel, c.id).catch((err) => {
+        console.error("[inbox ai]", c.channel, c.id, err?.message || err);
+        return recordFailure(err);
+      })
     )
   );
 }

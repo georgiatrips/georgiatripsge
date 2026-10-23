@@ -81,7 +81,7 @@ export async function POST(request) {
     }
     if (payload.action === "ai-test") {
       try {
-        return NextResponse.json({ reply: await testAi() });
+        return NextResponse.json(await testAi());
       } catch (err) {
         return NextResponse.json({ error: err.message }, { status: 502 });
       }
