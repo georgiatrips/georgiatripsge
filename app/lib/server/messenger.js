@@ -14,7 +14,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { sendTelegram } from "./notifyBooking";
 import { SITE_URL } from "../siteConfig";
 import { MESSENGER_CONVERSATIONS, WHATSAPP_APP_ID } from "../whatsappConfig";
-import { WhatsAppError, graph, requireDb } from "./whatsapp";
+import { WhatsAppError, createOnce, graph, requireDb, updateSummary } from "./whatsapp";
 
 const CONFIG_PATH = "messenger_config/main";
 
@@ -73,7 +73,6 @@ export async function processWebhook(body) {
 
       // Meta retries deliveries; store each message once.
       const msgRef = convs.doc(psid).collection("messages").doc(message.mid);
-      if ((await msgRef.get()).exists) continue;
       const record = clean({
         id: message.mid,
         direction: echo ? "out" : "in",
@@ -83,29 +82,37 @@ export async function processWebhook(body) {
         timestamp: Number(event.timestamp) || Date.now(),
         status: echo ? "sent" : undefined,
       });
-      await msgRef.set({ ...record, createdAt: FieldValue.serverTimestamp() });
+      if (!(await createOnce(msgRef, { ...record, createdAt: FieldValue.serverTimestamp() }))) continue;
 
       const convRef = convs.doc(psid);
-      const current = (await convRef.get()).data() || {};
-      let name = current.profileName;
-      if (!name && !echo) {
-        cfg ||= await pageConfig(db);
-        if (cfg.pageToken) name = await profileName(psid, cfg.pageToken);
+      // Reads here are optional: when the read quota is spent the message is
+      // still saved, just without the sender's name.
+      let name;
+      if (!echo) {
+        try {
+          name = (await convRef.get()).data()?.profileName;
+          if (!name) {
+            cfg ||= await pageConfig(db);
+            if (cfg.pageToken) name = await profileName(psid, cfg.pageToken);
+          }
+        } catch (err) {
+          console.warn("[messenger] profile lookup skipped:", err?.message);
+        }
       }
-      await db.runTransaction(async (tx) => {
-        const now = (await tx.get(convRef)).data() || {};
+      // now is null when it could not be read: assume this message is the latest.
+      await updateSummary(db, convRef, (now) => {
         const update = { psid, updatedAt: FieldValue.serverTimestamp() };
         if (name) update.profileName = name;
-        if (!now.lastMessageAt || record.timestamp >= now.lastMessageAt) {
+        if (!now?.lastMessageAt || record.timestamp >= now.lastMessageAt) {
           update.lastMessageAt = record.timestamp;
           update.lastText = record.text;
           update.lastDirection = record.direction;
         }
         if (!echo) {
-          update.lastIncomingAt = Math.max(now.lastIncomingAt || 0, record.timestamp);
-          update.unread = (now.unread || 0) + 1;
+          update.lastIncomingAt = Math.max(now?.lastIncomingAt || 0, record.timestamp);
+          update.unread = now ? (now.unread || 0) + 1 : FieldValue.increment(1);
         }
-        tx.set(convRef, update, { merge: true });
+        return update;
       });
       if (!echo) alerts.push({ psid, name, record });
     }

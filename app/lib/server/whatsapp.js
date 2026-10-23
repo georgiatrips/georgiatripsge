@@ -41,6 +41,32 @@ const chunks = (list) => {
 // Firestore rejects undefined fields.
 const clean = (obj) => Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined));
 
+// Writes a document only if it does not exist yet; true when it was written.
+// A write, not a read, so it keeps working when the daily read quota is spent.
+export async function createOnce(ref, data) {
+  try {
+    await ref.create(data);
+    return true;
+  } catch (err) {
+    if (err?.code === 6) return false; // ALREADY_EXISTS
+    throw err;
+  }
+}
+
+// Updates a conversation summary in a transaction, or, when reads fail
+// (e.g. RESOURCE_EXHAUSTED on the free plan), with a blind merge so the
+// message still shows up.
+export async function updateSummary(db, ref, build) {
+  try {
+    await db.runTransaction(async (tx) => {
+      tx.set(ref, build((await tx.get(ref)).data() || {}), { merge: true });
+    });
+  } catch (err) {
+    console.warn("[whatsapp] summary transaction failed, writing blind:", err?.message);
+    await ref.set(build(null), { merge: true });
+  }
+}
+
 export class WhatsAppError extends Error {
   constructor(message, status = 500, code) {
     super(message);
@@ -133,14 +159,10 @@ async function saveMessages(db, items, { live = false } = {}) {
 
   const fresh = [];
   for (const part of chunks(valid)) {
-    const snaps = await db.getAll(...part.map(ref));
-    const batch = db.batch();
-    part.forEach((item, i) => {
-      if (snaps[i].exists) return;
-      batch.set(ref(item), { ...item.record, createdAt: FieldValue.serverTimestamp() });
-      fresh.push(item);
-    });
-    await batch.commit();
+    const written = await Promise.all(
+      part.map((item) => createOnce(ref(item), { ...item.record, createdAt: FieldValue.serverTimestamp() }))
+    );
+    part.forEach((item, i) => written[i] && fresh.push(item));
   }
 
   const byPhone = new Map();
@@ -157,19 +179,20 @@ async function saveMessages(db, items, { live = false } = {}) {
 
   await Promise.all(
     [...byPhone].map(([phone, entry]) =>
-      db.runTransaction(async (tx) => {
-        const convRef = convs.doc(phone);
-        const current = (await tx.get(convRef)).data() || {};
+      // current is null when it could not be read: assume this message is the latest.
+      updateSummary(db, convs.doc(phone), (current) => {
         const update = { phone, updatedAt: FieldValue.serverTimestamp() };
         if (entry.profileName) update.profileName = entry.profileName;
-        if (!current.lastMessageAt || entry.latest.timestamp >= current.lastMessageAt) {
+        if (!current?.lastMessageAt || entry.latest.timestamp >= current.lastMessageAt) {
           update.lastMessageAt = entry.latest.timestamp;
           update.lastText = entry.latest.text;
           update.lastDirection = entry.latest.direction;
         }
-        if (entry.lastIncomingAt > (current.lastIncomingAt || 0)) update.lastIncomingAt = entry.lastIncomingAt;
-        if (entry.incoming) update.unread = (current.unread || 0) + entry.incoming;
-        tx.set(convRef, update, { merge: true });
+        if (entry.lastIncomingAt > (current?.lastIncomingAt || 0)) update.lastIncomingAt = entry.lastIncomingAt;
+        if (entry.incoming) {
+          update.unread = current ? (current.unread || 0) + entry.incoming : FieldValue.increment(entry.incoming);
+        }
+        return update;
       })
     )
   );
