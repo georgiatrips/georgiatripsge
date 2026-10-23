@@ -1374,6 +1374,7 @@
 
 /* ── WhatsApp inbox ── */
 .wa-connected { margin: 0; }
+.wa-reconnect { margin-inline-start: 0.5rem; border: 1px solid var(--gt-line, #ddd); color: var(--gt-ink); }
 .wa-warn { color: #7a5712; }
 .wa-missing { margin-top: 0.75rem; padding: 0.8rem 1rem; border-radius: 12px; background: #fbefd5; color: #7a5712; font-size: 0.9rem; }
 .wa-missing ul { margin: 0.4rem 0 0; padding-inline-start: 1.1rem; }

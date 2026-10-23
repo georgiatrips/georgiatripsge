@@ -288,7 +288,7 @@ export default function WhatsAppManager() {
           {tokenDaysLeft !== null && tokenDaysLeft <= 10 && (
             <span className="wa-warn"> · Meta-ს წვდომის ვადა იწურება {tokenDaysLeft} დღეში</span>
           )}{" "}
-          <button type="button" className="admin-btn-secondary" onClick={startConnect} disabled={!sdkReady || connecting}>
+          <button type="button" className="admin-btn-ghost wa-reconnect" onClick={startConnect} disabled={!sdkReady || connecting}>
             {connecting ? "მიმდინარეობს..." : "ნომრის შეცვლა / თავიდან მიერთება"}
           </button>
         </p>
