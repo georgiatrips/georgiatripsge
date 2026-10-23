@@ -3,17 +3,16 @@ import { requireAdmin } from "../../../lib/server/adminAuth";
 import {
   WhatsAppError,
   connectWhatsApp,
+  connectWithToken,
   getConnectionStatus,
-  listDemoTemplates,
-  sendDemoMessage,
   sendText,
 } from "../../../lib/server/whatsapp";
 
 // Admin panel → WhatsApp tab.
 //   GET                                   connection status (never the token)
 //   POST { action: "connect", code, redirectUri, wabaId? }   finish Embedded Signup
+//   POST { action: "connect-token", token, wabaId, phoneNumberId }   own number, system-user token
 //   POST { action: "send", to, text }     reply to a customer
-//   POST { action: "demo-send" | "demo-templates", token, ... }   Meta App Review recording
 export const dynamic = "force-dynamic";
 
 function fail(err) {
@@ -40,14 +39,11 @@ export async function POST(request) {
     if (payload.action === "connect") {
       return NextResponse.json(await connectWhatsApp(payload));
     }
+    if (payload.action === "connect-token") {
+      return NextResponse.json(await connectWithToken(payload));
+    }
     if (payload.action === "send") {
       return NextResponse.json(await sendText(payload));
-    }
-    if (payload.action === "demo-send") {
-      return NextResponse.json(await sendDemoMessage(payload));
-    }
-    if (payload.action === "demo-templates") {
-      return NextResponse.json(await listDemoTemplates(payload));
     }
     return NextResponse.json({ error: "unknown_action" }, { status: 400 });
   } catch (err) {

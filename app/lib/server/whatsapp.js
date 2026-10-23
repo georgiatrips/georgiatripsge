@@ -335,7 +335,21 @@ export async function connectWhatsApp({ code, wabaId, phoneNumberId, redirectUri
   // The full-page signup has no session message: read the account the
   // token was granted for.
   if (!wabaId) wabaId = await grantedWabaId(token, (await db.doc(CONFIG_PATH).get()).data()?.wabaId);
+  return finishConnect(db, { token, expiresIn, wabaId, phoneNumberId });
+}
 
+// Our own number lives in the same business portfolio as this app, and
+// Embedded Signup refuses to share an account with its own owner. So after
+// the QR step that number is connected with a system-user token from
+// Business settings instead (it does not expire).
+export async function connectWithToken({ token, wabaId, phoneNumberId }) {
+  token = String(token || "").trim();
+  if (!token || !digits(wabaId)) throw new WhatsAppError("ტოკენი ან WABA ID ცარიელია.", 400);
+  const db = requireDb();
+  return finishConnect(db, { token, expiresIn: 0, wabaId: digits(wabaId), phoneNumberId: digits(phoneNumberId) });
+}
+
+async function finishConnect(db, { token, expiresIn, wabaId, phoneNumberId }) {
   const numbers = await graph(`/${wabaId}/phone_numbers?fields=id,display_phone_number,verified_name`, { token });
   const number = (numbers.data || []).find((n) => !phoneNumberId || n.id === phoneNumberId) || numbers.data?.[0];
   if (!number) throw new WhatsAppError("ამ ანგარიშზე ტელეფონის ნომერი ვერ მოიძებნა.", 404);
@@ -431,33 +445,4 @@ export async function sendText({ to, text }) {
   const record = { id: data.messages?.[0]?.id, direction: "out", source: "site", type: "text", text: body, timestamp: Date.now(), status: "sent" };
   if (record.id) await saveMessages(db, [{ phone, record }]);
   return record;
-}
-
-// ── Meta App Review demo ─────────────────────────────────────────────
-// Tech Provider review needs a video of this app sending a message, made
-// with the test number from Meta's "Try it out" page and its temporary
-// token. The token is pasted into the admin form for the recording and is
-// used for this one call only, never stored.
-export async function sendDemoMessage({ token, phoneNumberId, to, text }) {
-  const phone = digits(to);
-  const body = String(text || "").trim();
-  if (!token || !phoneNumberId || !phone || !body) {
-    throw new WhatsAppError("შეავსეთ ყველა ველი (token, Phone number ID, ნომერი, ტექსტი).", 400);
-  }
-  const data = await graph(`/${digits(phoneNumberId)}/messages`, {
-    token: String(token).trim(),
-    method: "POST",
-    body: { messaging_product: "whatsapp", recipient_type: "individual", to: phone, type: "text", text: { preview_url: false, body } },
-  });
-  return { id: data.messages?.[0]?.id || "" };
-}
-
-// Lists the message templates of a WhatsApp account (an API test call for
-// the whatsapp_business_management review).
-export async function listDemoTemplates({ token, wabaId }) {
-  if (!token || !wabaId) throw new WhatsAppError("საჭიროა token და WhatsApp Business Account ID.", 400);
-  const data = await graph(`/${digits(wabaId)}/message_templates?fields=name,status,category,language&limit=50`, {
-    token: String(token).trim(),
-  });
-  return { templates: (data.data || []).map(({ name, status, category, language }) => ({ name, status, category, language })) };
 }

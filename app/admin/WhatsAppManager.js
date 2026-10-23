@@ -365,34 +365,42 @@ export default function WhatsAppManager() {
         </div>
       )}
 
-      {!status?.connected && <ReviewDemo />}
+      <TokenConnect
+        onConnected={(data) => {
+          showMsg("success", `✓ მიერთდა ${data.displayPhone}. ძველი მიმოწერა რამდენიმე წუთში გამოჩნდება.`);
+          loadStatus();
+        }}
+      />
     </div>
   );
 }
 
-// Meta App Review (Tech Provider) needs a screen recording of this panel
-// sending a WhatsApp message. Uses the test number and temporary token from
-// Meta's "Try it out" page; nothing typed here is saved.
-function ReviewDemo() {
-  const [form, setForm] = useState({ token: "", phoneNumberId: "", wabaId: "", to: "", text: "Hello from GeorgiaTrips! Your tour booking request was received." });
+// Our own number shares a business portfolio with the Meta app, which
+// Embedded Signup can't finish ("isn't a valid Business ID"). After the QR
+// step there, the number is connected here with a system-user token from
+// Business settings → System users (permanent, so no 60-day expiry).
+function TokenConnect({ onConnected }) {
+  const [form, setForm] = useState({ token: "", wabaId: "864089679715720", phoneNumberId: "964147060119889" });
   const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
-  const call = async (action) => {
+  const submit = async (e) => {
+    e.preventDefault();
     setBusy(true);
-    setResult(null);
+    setError("");
     try {
       const res = await adminFetch("/api/admin/whatsapp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, ...form }),
+        body: JSON.stringify({ action: "connect-token", ...form }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setResult({ type: "success", data });
+      setForm((f) => ({ ...f, token: "" }));
+      onConnected(data);
     } catch (err) {
-      setResult({ type: "error", text: err.message });
+      setError(err.message);
     } finally {
       setBusy(false);
     }
@@ -400,52 +408,31 @@ function ReviewDemo() {
 
   return (
     <details className="tp-card wa-demo">
-      <summary className="tp-subtitle">Meta App Review — test message</summary>
+      <summary className="tp-subtitle">საკუთარი ნომრის მიერთება ტოკენით</summary>
       <p className="admin-hint">
-        For the review video: values from developers.facebook.com → WhatsApp → API Setup (test number). Nothing here is stored.
+        Business settings → System users → Generate token (აპი GeorgiaTrips Inbox, ვადა Never,
+        whatsapp_business_messaging + whatsapp_business_management). ტოკენი მხოლოდ სერვერზე ინახება.
       </p>
-      <div className="tpl-form">
+      <form className="tpl-form" onSubmit={submit}>
         <label className="tpl-field tpl-field--wide">
-          <span>Temporary access token</span>
+          <span>System user token</span>
           <input type="password" className="tpl-input" autoComplete="off" value={form.token} onChange={(e) => set({ token: e.target.value })} />
-        </label>
-        <label className="tpl-field">
-          <span>Phone number ID</span>
-          <input type="text" className="tpl-input" value={form.phoneNumberId} onChange={(e) => set({ phoneNumberId: e.target.value })} />
         </label>
         <label className="tpl-field">
           <span>WhatsApp Business Account ID</span>
           <input type="text" className="tpl-input" value={form.wabaId} onChange={(e) => set({ wabaId: e.target.value })} />
         </label>
         <label className="tpl-field">
-          <span>To (WhatsApp number)</span>
-          <input type="tel" className="tpl-input" placeholder="+995…" value={form.to} onChange={(e) => set({ to: e.target.value })} />
+          <span>Phone number ID</span>
+          <input type="text" className="tpl-input" value={form.phoneNumberId} onChange={(e) => set({ phoneNumberId: e.target.value })} />
         </label>
-        <label className="tpl-field">
-          <span>Message</span>
-          <input type="text" className="tpl-input" value={form.text} onChange={(e) => set({ text: e.target.value })} />
-        </label>
-      </div>
-      <div className="admin-form-actions">
-        <button type="button" className="admin-btn-primary" disabled={busy} onClick={() => call("demo-send")}>
-          {busy ? "..." : "Send WhatsApp message"}
-        </button>
-        <button type="button" className="admin-btn-ghost" disabled={busy} onClick={() => call("demo-templates")}>
-          List message templates
-        </button>
-      </div>
-      {result?.type === "error" && <p className="admin-hint wa-warn">{result.text}</p>}
-      {result?.type === "success" && result.data.id !== undefined && (
-        <p className="admin-hint">✓ Message sent (id: {result.data.id})</p>
-      )}
-      {result?.type === "success" && result.data.templates && (
-        <ul className="admin-hint">
-          {result.data.templates.map((t) => (
-            <li key={`${t.name}-${t.language}`}>{t.name} · {t.category} · {t.language} · {t.status}</li>
-          ))}
-          {result.data.templates.length === 0 && <li>No templates yet.</li>}
-        </ul>
-      )}
+        <div className="admin-form-actions">
+          <button type="submit" className="admin-btn-primary" disabled={busy || !form.token.trim()}>
+            {busy ? "..." : "მიერთება"}
+          </button>
+        </div>
+      </form>
+      {error && <p className="admin-hint wa-warn">{error}</p>}
     </details>
   );
 }
