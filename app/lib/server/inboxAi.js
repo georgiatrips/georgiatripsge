@@ -35,12 +35,73 @@ const CHANNEL_LABELS = { whatsapp: "WhatsApp", messenger: "Facebook Messenger", 
 export const AI_MODES = ["off", "suggest", "auto"];
 
 export async function getAiSettings() {
-  const saved = (await getConfig("ai")) || {};
+  const [saved, usage] = await Promise.all([getConfig("ai"), getConfig(USAGE_KEY)]);
   return {
-    mode: AI_MODES.includes(saved.mode) ? saved.mode : "off",
-    channels: { whatsapp: true, messenger: true, instagram: true, ...saved.channels },
+    mode: AI_MODES.includes(saved?.mode) ? saved.mode : "off",
+    channels: { whatsapp: true, messenger: true, instagram: true, ...saved?.channels },
     ready: Boolean(process.env.GEMINI_API_KEY),
+    usage: usageView(usage),
   };
+}
+
+// ── Free-tier usage ──────────────────────────────────────────────────
+// Google shows no "requests left" through the API, so the site counts its
+// own requests per model and day. The free tier's daily limits reset at
+// midnight Pacific time; a 429 reply names the limit it hit, which is kept.
+
+const USAGE_KEY = "ai_usage";
+
+const pacificDay = (ms = Date.now()) => new Date(ms).toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
+
+// Next midnight in California, as a timestamp.
+function nextReset(now = Date.now()) {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" })
+      .formatToParts(now)
+      .map((p) => [p.type, Number(p.value)])
+  );
+  const elapsed = (((parts.hour % 24) * 60 + parts.minute) * 60 + parts.second) * 1000;
+  return now - elapsed + 24 * 60 * 60 * 1000;
+}
+
+function usageView(usage) {
+  const today = usage?.day === pacificDay();
+  return {
+    resetAt: nextReset(),
+    models: MODELS.map(({ name }) => ({
+      name,
+      used: today ? usage.counts?.[name] || 0 : 0,
+      limit: usage?.limits?.[name] || null,
+      exhausted: today && usage.exhausted?.[name] === true,
+    })),
+    lastOkAt: usage?.lastOkAt || null,
+    lastError: usage?.lastError || null,
+  };
+}
+
+async function recordUsage(model, { ok, status, message }) {
+  try {
+    const usage = (await getConfig(USAGE_KEY)) || {};
+    const day = pacificDay();
+    const fresh = usage.day === day;
+    const counts = fresh ? { ...usage.counts } : {};
+    const exhausted = fresh ? { ...usage.exhausted } : {};
+    counts[model] = (counts[model] || 0) + 1;
+    const patch = { day, counts, exhausted, limits: usage.limits || {} };
+    if (ok) patch.lastOkAt = Date.now();
+    else {
+      patch.lastError = { model, status, message: String(message || "").slice(0, 400), at: Date.now() };
+      if (status === 429) {
+        const limit = Number(/limit:\s*(\d+)/i.exec(message || "")?.[1]);
+        if (limit) patch.limits = { ...patch.limits, [model]: limit };
+        // A per-day quota (not a per-minute one) is spent until the reset.
+        if (/per ?day|PerDay/i.test(message || "")) exhausted[model] = true;
+      }
+    }
+    await setConfig(USAGE_KEY, patch);
+  } catch (err) {
+    console.error("[inbox ai] usage not recorded:", err?.message || err);
+  }
 }
 
 const RULES = `You are the virtual assistant of GeorgiaTrips, a tour and transfer company in Batumi, Georgia, answering customers who write to the company in {CHANNEL}.
@@ -105,14 +166,25 @@ async function generate(system, contents) {
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok) {
-      const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") || "";
+      await recordUsage(model.name, { ok: true });
+      // Thought summaries, if any, are not part of the answer.
+      const text = data.candidates?.[0]?.content?.parts?.filter((p) => !p.thought).map((p) => p.text || "").join("") || "";
       const out = JSON.parse(text);
       return { reply: String(out.reply || "").trim(), handoff: Boolean(out.handoff), reason: out.reason || "" };
     }
+    await recordUsage(model.name, { ok: false, status: res.status, message: data.error?.message });
     lastError = new Error(`Gemini ${model.name} ${res.status}: ${data.error?.message || ""}`);
     // Rate limit, overload or a setting this model refuses: try the next one.
   }
   throw lastError;
+}
+
+// The admin's "test" button: one tiny request, so the panel shows at once
+// whether Gemini answers (and the error if not).
+export async function testAi() {
+  if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY არ არის Vercel-ში.");
+  const { reply } = await generate("Answer the customer in one short sentence.", [{ role: "user", parts: [{ text: "გამარჯობა" }] }]);
+  return reply;
 }
 
 // Answers the latest customer message of one chat, if the settings allow.

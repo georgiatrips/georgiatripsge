@@ -1434,6 +1434,7 @@
 .wa-thread-head div { align-items: flex-start; gap: 0.15rem; }
 .inbox-ai-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.9rem; padding: 0.6rem 0.9rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; font-size: 0.85rem; }
 .inbox-ai-bar small { color: #64748b; }
+.inbox-ai-usage { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; padding-top: 0.45rem; border-top: 1px dashed #e2e8f0; font-size: 0.8rem; color: #475569; }
 .inbox-ai-channel { display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer; }
 .inbox-ai-toggle { margin-inline-start: auto; font-size: 0.8rem; opacity: 0.7; }
 .inbox-ai-toggle.is-on { opacity: 1; color: #6d28d9; }

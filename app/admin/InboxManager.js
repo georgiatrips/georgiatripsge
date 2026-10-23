@@ -433,6 +433,60 @@ function AiBar({ ai, onChange }) {
       {!ai.ready && <small className="wa-warn">ჩასართავად Vercel-ში საჭიროა GEMINI_API_KEY.</small>}
       {ai.mode === "suggest" && <small>AI წერს მონახაზს, თქვენ აგზავნით.</small>}
       {ai.mode === "auto" && <small>AI თვითონ პასუხობს ყველა ახალ შეტყობინებას.</small>}
+      {ai.ready && ai.usage && <AiUsage usage={ai.usage} />}
+    </div>
+  );
+}
+
+const formatClock = (ms) => new Date(ms).toLocaleString("ka-GE", { hour: "2-digit", minute: "2-digit" });
+
+// Today's Gemini requests per model, the daily reset and the last error.
+// Google does not report what is left, so the limit shows once a 429 has
+// named it (it is also on aistudio.google.com/rate-limit).
+function AiUsage({ usage }) {
+  const [test, setTest] = useState(null);
+
+  const runTest = async () => {
+    setTest({ busy: true });
+    try {
+      const { reply } = await inboxAction({ action: "ai-test" });
+      setTest({ ok: `✓ მუშაობს: „${reply}“` });
+    } catch (err) {
+      setTest({ error: err.message });
+    }
+  };
+
+  const allSpent = usage.models.every((m) => m.exhausted);
+  return (
+    <div className="inbox-ai-usage">
+      <span>
+        დღეს გამოყენებული:{" "}
+        {usage.models.map((m, i) => (
+          <span key={m.name} className={m.exhausted ? "wa-warn" : ""}>
+            {i > 0 && " · "}
+            {m.name.replace("gemini-", "")}: <strong>{m.used}</strong>
+            {m.limit ? ` / ${m.limit}` : ""}
+            {m.exhausted && " (ამოიწურა)"}
+          </span>
+        ))}
+      </span>
+      <span>
+        ლიმიტი განახლდება: <strong>{formatClock(usage.resetAt)}</strong>
+        {allSpent && <span className="wa-warn"> — მანამდე AI ვერ უპასუხებს</span>}
+      </span>
+      {usage.lastOkAt && <span>ბოლო წარმატებული პასუხი: {formatClock(usage.lastOkAt)}</span>}
+      {usage.lastError && (!usage.lastOkAt || usage.lastError.at > usage.lastOkAt) && (
+        <span className="wa-warn">
+          ბოლო შეცდომა ({formatClock(usage.lastError.at)}, {usage.lastError.model}, {usage.lastError.status}): {usage.lastError.message}
+        </span>
+      )}
+      <span>
+        <button type="button" className="admin-btn-ghost wa-reconnect" onClick={runTest} disabled={test?.busy}>
+          {test?.busy ? "..." : "შემოწმება"}
+        </button>{" "}
+        {test?.ok && <span className="wa-connected">{test.ok}</span>}
+        {test?.error && <span className="wa-warn">{test.error}</span>}
+      </span>
     </div>
   );
 }

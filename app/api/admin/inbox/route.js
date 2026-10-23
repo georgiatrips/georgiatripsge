@@ -14,7 +14,7 @@ import {
   unreadCounts,
 } from "../../../lib/server/inboxStore";
 import { importFromFirestore } from "../../../lib/server/inboxImport";
-import { AI_MODES, getAiSettings } from "../../../lib/server/inboxAi";
+import { AI_MODES, getAiSettings, testAi } from "../../../lib/server/inboxAi";
 
 // Admin panel → WhatsApp / Messenger chats (Neon). The tabs poll this.
 //   GET ?counts=1                          chats with unread messages, per channel
@@ -25,6 +25,7 @@ import { AI_MODES, getAiSettings } from "../../../lib/server/inboxAi";
 //   POST { action: "ai-settings", mode, channels }   inbox assistant mode (off / suggest / auto)
 //   POST { action: "ai-chat", channel, id, off }     assistant on/off for one chat
 //   POST { action: "ai-draft-clear", channel, id }  drop a suggested reply
+//   POST { action: "ai-test" }                       one test request to Gemini
 export const dynamic = "force-dynamic";
 
 function fail(err) {
@@ -77,6 +78,13 @@ export async function POST(request) {
       const channels = Object.fromEntries([...CHANNELS].map((c) => [c, payload.channels?.[c] !== false]));
       await setConfig("ai", { mode: payload.mode, channels });
       return NextResponse.json(await getAiSettings());
+    }
+    if (payload.action === "ai-test") {
+      try {
+        return NextResponse.json({ reply: await testAi() });
+      } catch (err) {
+        return NextResponse.json({ error: err.message }, { status: 502 });
+      }
     }
     if (payload.action === "ai-chat") {
       await setAiOff(channelOf(payload.channel), String(payload.id || ""), payload.off);
