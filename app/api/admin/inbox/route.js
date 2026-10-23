@@ -8,9 +8,13 @@ import {
   listConversations,
   listMessages,
   markRead,
+  setAiDraft,
+  setAiOff,
+  setConfig,
   unreadCounts,
 } from "../../../lib/server/inboxStore";
 import { importFromFirestore } from "../../../lib/server/inboxImport";
+import { AI_MODES, getAiSettings } from "../../../lib/server/inboxAi";
 
 // Admin panel → WhatsApp / Messenger chats (Neon). The tabs poll this.
 //   GET ?counts=1                          chats with unread messages, per channel
@@ -18,6 +22,9 @@ import { importFromFirestore } from "../../../lib/server/inboxImport";
 //   GET ?channel=whatsapp&conversation=ID  one chat's latest messages
 //   POST { action: "read", channel, id }   mark a chat read
 //   POST { action: "import" }              copy the old chats over from Firestore
+//   POST { action: "ai-settings", mode, channels }   inbox assistant mode (off / suggest / auto)
+//   POST { action: "ai-chat", channel, id, off }     assistant on/off for one chat
+//   POST { action: "ai-draft-clear", channel, id }  drop a suggested reply
 export const dynamic = "force-dynamic";
 
 function fail(err) {
@@ -43,12 +50,13 @@ export async function GET(request) {
     }
     // Without a channel: every channel's chats, newest first (the shared inbox).
     const channel = params.get("channel") ? channelOf(params.get("channel")) : "";
-    const [conversations, contacts, imported] = await Promise.all([
+    const [conversations, contacts, imported, ai] = await Promise.all([
       listConversations(channel),
       !channel || channel === "whatsapp" ? listContacts() : {},
       getConfig("import"),
+      getAiSettings(),
     ]);
-    return NextResponse.json({ conversations, contacts, imported: Boolean(imported) });
+    return NextResponse.json({ conversations, contacts, imported: Boolean(imported), ai });
   } catch (err) {
     return fail(err);
   }
@@ -62,6 +70,20 @@ export async function POST(request) {
   try {
     if (payload.action === "read") {
       await markRead(channelOf(payload.channel), String(payload.id || ""));
+      return NextResponse.json({ ok: true });
+    }
+    if (payload.action === "ai-settings") {
+      if (!AI_MODES.includes(payload.mode)) throw new InboxError("unknown_mode", 400);
+      const channels = Object.fromEntries([...CHANNELS].map((c) => [c, payload.channels?.[c] !== false]));
+      await setConfig("ai", { mode: payload.mode, channels });
+      return NextResponse.json(await getAiSettings());
+    }
+    if (payload.action === "ai-chat") {
+      await setAiOff(channelOf(payload.channel), String(payload.id || ""), payload.off);
+      return NextResponse.json({ ok: true });
+    }
+    if (payload.action === "ai-draft-clear") {
+      await setAiDraft(channelOf(payload.channel), String(payload.id || ""), "");
       return NextResponse.json({ ok: true });
     }
     if (payload.action === "import") {

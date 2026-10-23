@@ -368,7 +368,8 @@ export async function getConnectionStatus() {
 
 const OUTSIDE_WINDOW_CODES = new Set([131047, 131026]);
 
-export async function sendText({ to, text }) {
+// `source` is "site" for the admin, "ai" for the inbox assistant.
+export async function sendText({ to, text, source = "site" }) {
   const phone = digits(to);
   const body = String(text || "").trim();
   if (!phone || !body) throw new WhatsAppError("ნომერი ან ტექსტი ცარიელია.", 400);
@@ -391,7 +392,7 @@ export async function sendText({ to, text }) {
     throw err;
   }
 
-  const record = { id: data.messages?.[0]?.id, direction: "out", source: "site", type: "text", text: body, timestamp: Date.now(), status: "sent" };
+  const record = { id: data.messages?.[0]?.id, direction: "out", source, type: "text", text: body, timestamp: Date.now(), status: "sent" };
   if (record.id) await saveMessages([{ phone, record }]);
   return record;
 }

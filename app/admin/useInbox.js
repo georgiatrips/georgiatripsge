@@ -56,7 +56,12 @@ function readCache() {
 }
 
 function writeCache(data) {
-  listCache = { conversations: data.conversations || [], contacts: data.contacts || {}, imported: Boolean(data.imported) };
+  listCache = {
+    conversations: data.conversations || [],
+    contacts: data.contacts || {},
+    imported: Boolean(data.imported),
+    ai: data.ai || null,
+  };
   try {
     localStorage.setItem(LIST_CACHE_KEY, JSON.stringify(listCache));
   } catch {}
@@ -124,6 +129,7 @@ export function useInbox(selected) {
     conversations: list?.conversations || [],
     contacts: list?.contacts || {},
     imported: list ? list.imported : true,
+    ai: list?.ai || null,
     messages,
     error,
     markRead,
@@ -171,6 +177,19 @@ export function MessageMedia({ message }) {
 // The text under a photo or sticker, without the "📷 ფოტო" label.
 export function messageCaption(message, hasMedia) {
   return hasMedia ? message.text.replace(MEDIA_LABEL, "") : message.text;
+}
+
+// Inbox actions that change a setting and then reload the list.
+export async function inboxAction(body) {
+  const res = await adminFetch("/api/admin/inbox", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error);
+  await fetchList().catch(() => {});
+  return data;
 }
 
 // Copies the chats stored in Firestore before the move (one time).

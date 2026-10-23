@@ -123,7 +123,7 @@ export async function processWebhook(body) {
 
       // Meta retries deliveries; saveMessages stores each message once.
       const fresh = await saveMessages(channel, [{ conversationId: personId, profileName: name, record }], { live: true });
-      if (fresh.length && !echo) alerts.push({ channel, name, record });
+      if (fresh.length && !echo) alerts.push({ channel, id: personId, name, record });
     }
   }
   return alerts;
@@ -190,7 +190,8 @@ export async function getConnectionStatus(channel = "messenger") {
   return { connected: Boolean(cfg.pageToken && cfg.pageId), pageId: cfg.pageId || "", pageName: cfg.pageName || "", connectedAt: cfg.connectedAt || null };
 }
 
-export async function sendText({ to, text, channel = "messenger" }) {
+// `source` is "site" for the admin, "ai" for the inbox assistant.
+export async function sendText({ to, text, channel = "messenger", source = "site" }) {
   if (!MAX_TEXT[channel]) throw new WhatsAppError("unknown_channel", 400);
   const recipient = String(to || "").replace(/\D/g, "");
   const body = String(text || "").trim();
@@ -218,7 +219,7 @@ export async function sendText({ to, text, channel = "messenger" }) {
     throw err;
   }
 
-  const record = { id: data.message_id, direction: "out", source: "site", text: body, timestamp: Date.now(), status: "sent" };
+  const record = { id: data.message_id, direction: "out", source, text: body, timestamp: Date.now(), status: "sent" };
   if (record.id) await saveMessages(channel, [{ conversationId: recipient, record }]);
   return record;
 }

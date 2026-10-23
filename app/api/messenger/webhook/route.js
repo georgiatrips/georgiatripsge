@@ -1,12 +1,15 @@
 import { NextResponse, after } from "next/server";
 import { verifySignature } from "../../../lib/server/whatsapp";
 import { alertNewMessages, processWebhook } from "../../../lib/server/messenger";
+import { answerNewMessages } from "../../../lib/server/inboxAi";
 
 // Meta's Page and Instagram webhook (Meta app → Messenger → Webhooks, objects
 // "page" and "instagram"). GET answers the one-time verification; POST
 // receives messages people send to the Facebook Page or Instagram account
 // and echoes of the business's replies.
 export const dynamic = "force-dynamic";
+// The inbox assistant answers after the webhook reply (inboxAi.js).
+export const maxDuration = 60;
 
 export async function GET(request) {
   const params = request.nextUrl.searchParams;
@@ -33,7 +36,10 @@ export async function POST(request) {
   // Saved before answering so Meta retries on an error; the alert waits.
   try {
     const alerts = await processWebhook(body);
-    if (alerts.length) after(() => alertNewMessages(alerts));
+    if (alerts.length) {
+      after(() => alertNewMessages(alerts));
+      after(() => answerNewMessages(alerts));
+    }
   } catch (err) {
     console.error("[messenger webhook] failed:", err?.message || err);
     return NextResponse.json({ error: "processing_failed" }, { status: 500 });

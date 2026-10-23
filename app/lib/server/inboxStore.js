@@ -52,6 +52,12 @@ const SCHEMA = [
   `create index if not exists inbox_messages_thread on inbox_messages (channel, conversation_id, timestamp)`,
   // Messenger photos and stickers come with a public CDN link.
   `alter table inbox_messages add column if not exists media_url text`,
+  // The inbox assistant (inboxAi.js): switched off for one chat, its
+  // suggested reply, and the customer message it last answered.
+  `alter table inbox_conversations add column if not exists ai_off boolean not null default false`,
+  `alter table inbox_conversations add column if not exists ai_draft text`,
+  `alter table inbox_conversations add column if not exists ai_draft_at bigint`,
+  `alter table inbox_conversations add column if not exists ai_handled_at bigint`,
   `create table if not exists inbox_contacts (
     phone text primary key,
     name text not null default '',
@@ -187,6 +193,9 @@ const toConversation = (row) => ({
   lastDirection: row.last_direction || "",
   lastIncomingAt: Number(row.last_incoming_at) || 0,
   unread: row.unread || 0,
+  aiOff: Boolean(row.ai_off),
+  aiDraft: row.ai_draft || "",
+  aiDraftAt: Number(row.ai_draft_at) || 0,
 });
 
 // Latest chats of one channel, or of all channels when `channel` is empty.
@@ -259,6 +268,33 @@ export async function setProfileName(channel, id, name) {
 
 export async function markRead(channel, id) {
   await query(`update inbox_conversations set unread = 0 where channel = $1 and id = $2 and unread > 0`, [channel, id]);
+}
+
+// ── Inbox assistant ──────────────────────────────────────────────────
+
+// Claims the reply to the customer message sent at `at`: true for exactly
+// one caller, so two webhook deliveries never answer the same message twice.
+export async function claimAiTurn(channel, id, at) {
+  const rows = await query(
+    `update inbox_conversations set ai_handled_at = $3
+     where channel = $1 and id = $2 and (ai_handled_at is null or ai_handled_at < $3)
+     returning id`,
+    [channel, id, at]
+  );
+  return rows.length > 0;
+}
+
+export async function setAiDraft(channel, id, text) {
+  await query(`update inbox_conversations set ai_draft = $3, ai_draft_at = $4 where channel = $1 and id = $2`, [
+    channel,
+    id,
+    text || null,
+    text ? Date.now() : null,
+  ]);
+}
+
+export async function setAiOff(channel, id, off) {
+  await query(`update inbox_conversations set ai_off = $3 where channel = $1 and id = $2`, [channel, id, Boolean(off)]);
 }
 
 // Number of chats with unread messages, per channel (admin menu badges).

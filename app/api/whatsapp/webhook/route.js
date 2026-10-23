@@ -1,10 +1,13 @@
 import { NextResponse, after } from "next/server";
 import { alertNewMessages, processWebhook, verifySignature } from "../../../lib/server/whatsapp";
+import { answerNewMessages } from "../../../lib/server/inboxAi";
 
 // Meta's WhatsApp webhook (Meta app → WhatsApp → Configuration).
 // GET answers the one-time verification; POST receives messages, echoes of
 // replies sent from the phone, chat history and contacts.
 export const dynamic = "force-dynamic";
+// The inbox assistant answers after the webhook reply (inboxAi.js).
+export const maxDuration = 60;
 
 export async function GET(request) {
   const params = request.nextUrl.searchParams;
@@ -32,7 +35,10 @@ export async function POST(request) {
   // message is lost. Only the Telegram alert waits until after the reply.
   try {
     const alerts = await processWebhook(body);
-    if (alerts.length) after(() => alertNewMessages(alerts));
+    if (alerts.length) {
+      after(() => alertNewMessages(alerts));
+      after(() => answerNewMessages(alerts.map((a) => ({ channel: "whatsapp", id: a.phone }))));
+    }
   } catch (err) {
     console.error("[whatsapp webhook] failed:", err?.message || err);
     return NextResponse.json({ error: "processing_failed" }, { status: 500 });

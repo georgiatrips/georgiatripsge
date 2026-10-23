@@ -6,7 +6,7 @@ import { REPLY_WINDOW_MS, WA_CONNECT_STATE } from "../lib/whatsappConfig";
 import { listAllBookingsAdmin } from "../lib/bookingsFirestore";
 import { STATUS_CONFIG } from "../lib/bookingModel";
 import { InstagramIcon, MessengerIcon, WhatsAppIcon } from "../components/Icons";
-import { MessageMedia, chatKey, importOldChats, messageCaption, useInbox } from "./useInbox";
+import { MessageMedia, chatKey, importOldChats, inboxAction, messageCaption, useInbox } from "./useInbox";
 import WhatsAppConnection from "./WhatsAppConnection";
 import PageConnection from "./PageConnection";
 
@@ -21,7 +21,7 @@ const CHANNELS = {
     Icon: WhatsAppIcon,
     sendUrl: "/api/admin/whatsapp",
     unnamed: "",
-    sources: { site: "საიტიდან", phone: "ტელეფონიდან" },
+    sources: { site: "საიტიდან", phone: "ტელეფონიდან", ai: "🤖 AI" },
     lateReply: "უპასუხეთ ტელეფონის WhatsApp-იდან",
   },
   messenger: {
@@ -29,7 +29,7 @@ const CHANNELS = {
     Icon: MessengerIcon,
     sendUrl: "/api/admin/messenger",
     unnamed: "Facebook მომხმარებელი",
-    sources: { site: "საიტიდან", page: "Facebook-იდან" },
+    sources: { site: "საიტიდან", page: "Facebook-იდან", ai: "🤖 AI" },
     lateReply: "უპასუხეთ Messenger-იდან ან Business Suite-იდან",
   },
   instagram: {
@@ -37,11 +37,17 @@ const CHANNELS = {
     Icon: InstagramIcon,
     sendUrl: "/api/admin/messenger",
     unnamed: "Instagram მომხმარებელი",
-    sources: { site: "საიტიდან", page: "Instagram-იდან" },
+    sources: { site: "საიტიდან", page: "Instagram-იდან", ai: "🤖 AI" },
     lateReply: "უპასუხეთ Instagram-იდან ან Business Suite-იდან",
   },
 };
 const FILTERS = [["", "ყველა"], ...Object.entries(CHANNELS).map(([key, c]) => [key, c.label])];
+
+const AI_MODES = [
+  ["off", "გამორთული"],
+  ["suggest", "მონახაზი"],
+  ["auto", "ავტომატური"],
+];
 
 const STATUS_TICKS = { sent: "✓", delivered: "✓✓", read: "✓✓", failed: "⚠" };
 
@@ -81,7 +87,7 @@ export default function InboxManager() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const threadEnd = useRef(null);
 
-  const { loaded, conversations, contacts, imported, messages, error, markRead, refresh } = useInbox(selected);
+  const { loaded, conversations, contacts, imported, ai, messages, error, markRead, refresh } = useInbox(selected);
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("state") === WA_CONNECT_STATE) setSettingsOpen(true);
@@ -161,9 +167,20 @@ export default function InboxManager() {
 
   const canReply = current?.lastIncomingAt && Date.now() - current.lastIncomingAt < REPLY_WINDOW_MS;
 
-  const handleSend = async (e) => {
+  const runAction = async (body) => {
+    try {
+      await inboxAction(body);
+    } catch (err) {
+      showMsg("error", err.message);
+    }
+  };
+
+  // A suggested reply is shown until anything newer is written in the chat.
+  const aiDraft = current?.aiDraft && current.aiDraftAt >= current.lastMessageAt ? current.aiDraft : "";
+
+  const handleSend = async (e, override) => {
     e.preventDefault();
-    const text = draft.trim();
+    const text = (override ?? draft).trim();
     if (!text || !current) return;
     setSending(true);
     try {
@@ -174,7 +191,7 @@ export default function InboxManager() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setDraft("");
+      if (override === undefined) setDraft("");
       await refresh();
     } catch (err) {
       showMsg("error", err.message);
@@ -203,6 +220,8 @@ export default function InboxManager() {
           </button>
         </p>
       )}
+
+      {ai && <AiBar ai={ai} onChange={runAction} />}
 
       <div className={`wa-inbox${current ? " has-thread" : ""}`}>
         <aside className="wa-list">
@@ -276,6 +295,16 @@ export default function InboxManager() {
                     </small>
                   )}
                 </div>
+                {ai && ai.mode !== "off" && (
+                  <button
+                    type="button"
+                    className={`admin-btn-ghost inbox-ai-toggle${current.aiOff ? "" : " is-on"}`}
+                    onClick={() => runAction({ action: "ai-chat", channel: current.channel, id: current.id, off: !current.aiOff })}
+                    title="AI-ის პასუხები ამ ჩატში"
+                  >
+                    🤖 {current.aiOff ? "AI გამორთულია" : "AI ჩართულია"}
+                  </button>
+                )}
               </header>
 
               {matchedBookings.length > 0 && (
@@ -308,6 +337,28 @@ export default function InboxManager() {
                 })}
                 <li ref={threadEnd} aria-hidden="true" />
               </ol>
+
+              {aiDraft && canReply && (
+                <div className="inbox-ai-draft">
+                  <small>🤖 AI-ის შემოთავაზებული პასუხი</small>
+                  <p>{aiDraft}</p>
+                  <div>
+                    <button type="button" className="admin-btn-primary" disabled={sending} onClick={(e) => handleSend(e, aiDraft)}>
+                      გაგზავნა
+                    </button>
+                    <button type="button" className="admin-btn-ghost" onClick={() => setDraft(aiDraft)}>
+                      ჩასწორება
+                    </button>
+                    <button
+                      type="button"
+                      className="admin-btn-ghost"
+                      onClick={() => runAction({ action: "ai-draft-clear", channel: current.channel, id: current.id })}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {canReply ? (
                 <form className="wa-reply" onSubmit={handleSend}>
@@ -345,6 +396,43 @@ export default function InboxManager() {
           </>
         )}
       </details>
+    </div>
+  );
+}
+
+// The inbox assistant's mode and channels (lib/server/inboxAi.js).
+function AiBar({ ai, onChange }) {
+  const save = (patch) => onChange({ action: "ai-settings", mode: ai.mode, channels: ai.channels, ...patch });
+  return (
+    <div className="inbox-ai-bar">
+      <strong>🤖 AI პასუხები:</strong>
+      <div className="inbox-filters" role="group" aria-label="AI რეჟიმი">
+        {AI_MODES.map(([mode, label]) => (
+          <button
+            key={mode}
+            type="button"
+            className={`inbox-filter${ai.mode === mode ? " is-active" : ""}`}
+            onClick={() => save({ mode })}
+            disabled={!ai.ready && mode !== "off"}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {ai.mode !== "off" &&
+        Object.entries(CHANNELS).map(([key, info]) => (
+          <label key={key} className="inbox-ai-channel">
+            <input
+              type="checkbox"
+              checked={ai.channels[key] !== false}
+              onChange={(e) => save({ channels: { ...ai.channels, [key]: e.target.checked } })}
+            />
+            {info.label}
+          </label>
+        ))}
+      {!ai.ready && <small className="wa-warn">ჩასართავად Vercel-ში საჭიროა GEMINI_API_KEY.</small>}
+      {ai.mode === "suggest" && <small>AI წერს მონახაზს, თქვენ აგზავნით.</small>}
+      {ai.mode === "auto" && <small>AI თვითონ პასუხობს; თქვენ თუ ჩაერთეთ, 6 საათი ჩუმადაა.</small>}
     </div>
   );
 }
