@@ -374,11 +374,17 @@ async function finishConnect(db, { token, expiresIn, wabaId, phoneNumberId }) {
     { merge: true }
   );
 
-  // Contacts first, then history: the order Meta documents.
+  const sync = await requestSync(config, token, number.id);
+  return { displayPhone: number.display_phone_number, verifiedName: number.verified_name, sync };
+}
+
+// Asks Meta for the phone's contacts and chat history (contacts first, the
+// order Meta documents). Allowed only within 24 hours of onboarding.
+async function requestSync(config, token, phoneNumberId) {
   const sync = {};
   for (const syncType of ["smb_app_state_sync", "history"]) {
     try {
-      await graph(`/${number.id}/smb_app_data`, {
+      await graph(`/${phoneNumberId}/smb_app_data`, {
         token,
         method: "POST",
         body: { messaging_product: "whatsapp", sync_type: syncType },
@@ -389,8 +395,17 @@ async function finishConnect(db, { token, expiresIn, wabaId, phoneNumberId }) {
     }
   }
   await config.set({ sync, syncRequestedAt: Date.now() }, { merge: true });
+  return sync;
+}
 
-  return { displayPhone: number.display_phone_number, verifiedName: number.verified_name, sync };
+// Retry from the admin panel, e.g. when the first request came before Meta
+// had finished onboarding the number.
+export async function retrySync() {
+  const db = requireDb();
+  const config = db.doc(CONFIG_PATH);
+  const cfg = (await config.get()).data() || {};
+  if (!cfg.token || !cfg.phoneNumberId) throw new WhatsAppError("WhatsApp ჯერ არ არის მიერთებული.", 409);
+  return { sync: await requestSync(config, cfg.token, cfg.phoneNumberId) };
 }
 
 // What the admin panel may know about the connection (never the token).

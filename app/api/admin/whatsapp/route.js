@@ -5,6 +5,7 @@ import {
   connectWhatsApp,
   connectWithToken,
   getConnectionStatus,
+  retrySync,
   sendText,
 } from "../../../lib/server/whatsapp";
 
@@ -12,6 +13,7 @@ import {
 //   GET                                   connection status (never the token)
 //   POST { action: "connect", code, redirectUri, wabaId? }   finish Embedded Signup
 //   POST { action: "connect-token", token, wabaId, phoneNumberId }   own number, system-user token
+//   POST { action: "sync" }              re-request contacts + chat history
 //   POST { action: "send", to, text }     reply to a customer
 export const dynamic = "force-dynamic";
 
@@ -41,6 +43,9 @@ export async function POST(request) {
     }
     if (payload.action === "connect-token") {
       return NextResponse.json(await connectWithToken(payload));
+    }
+    if (payload.action === "sync") {
+      return NextResponse.json(await retrySync());
     }
     if (payload.action === "send") {
       return NextResponse.json(await sendText(payload));

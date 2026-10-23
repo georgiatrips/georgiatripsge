@@ -55,6 +55,7 @@ function signupUrl() {
 export default function WhatsAppManager() {
   const [status, setStatus] = useState(null);
   const [connecting, setConnecting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [conversations, setConversations] = useState([]);
   const [contacts, setContacts] = useState({});
   const [bookingsByPhone, setBookingsByPhone] = useState({});
@@ -164,6 +165,27 @@ export default function WhatsAppManager() {
     return conversations.filter((c) => `${contacts[c.id] || ""} ${c.profileName || ""} ${c.id}`.toLowerCase().includes(term));
   }, [conversations, contacts, filter]);
 
+  const retrySync = async () => {
+    setSyncing(true);
+    try {
+      const res = await adminFetch("/api/admin/whatsapp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "sync" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      const failed = Object.values(data.sync).find((v) => v !== "requested");
+      if (failed) throw new Error(failed);
+      showMsg("success", "✓ მოთხოვნა გაიგზავნა. ძველი მიმოწერა და კონტაქტები რამდენიმე წუთში გამოჩნდება.");
+      await loadStatus();
+    } catch (err) {
+      showMsg("error", err.message);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const startConnect = () => {
     setConnecting(true);
     window.location.assign(signupUrl());
@@ -245,6 +267,14 @@ export default function WhatsAppManager() {
           {status.verifiedName && ` · ${status.verifiedName}`}
           {status.historyProgress && status.historyProgress.progress < 100 && ` · ძველი მიმოწერა იტვირთება: ${status.historyProgress.progress}%`}
           {status.historyError && ` · ისტორია არ გადმოვიდა: ${status.historyError}`}
+          {status.sync && Object.values(status.sync).some((v) => v !== "requested") && (
+            <>
+              {" "}
+              <button type="button" className="admin-btn-ghost wa-reconnect" onClick={retrySync} disabled={syncing}>
+                {syncing ? "..." : "ძველი მიმოწერის გადმოტანა"}
+              </button>
+            </>
+          )}
           {tokenDaysLeft !== null && tokenDaysLeft <= 10 && (
             <span className="wa-warn"> · Meta-ს წვდომის ვადა იწურება {tokenDaysLeft} დღეში</span>
           )}{" "}
