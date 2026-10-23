@@ -21,14 +21,10 @@ import TransferPricingManager from "./TransferPricingManager";
 import TransferPlacesManager from "./TransferPlacesManager";
 import WhatsAppManager from "./WhatsAppManager";
 import MessengerManager from "./MessengerManager";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { collection, getCountFromServer, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { MESSENGER_CONVERSATIONS, WA_CONNECT_STATE, WHATSAPP_CONVERSATIONS } from "../lib/whatsappConfig";
-import { subscribeToLiveSessions } from "../lib/analytics";
-import { subscribeToBookings } from "../lib/bookingsFirestore";
 import LocalizedInputGroup, { emptyLangObj, parseLocal } from "./LocalizedInputGroup";
-import { listHotels } from "../lib/hotelsFirestore";
-import { listReviews } from "../lib/reviewsFirestore";
 import { useAuth } from "../lib/AuthContext";
 import { useCurrency } from "../lib/currency/CurrencyContext";
 import { useLanguage } from "../lib/i18n/LanguageContext";
@@ -170,15 +166,13 @@ export default function AdminPage() {
         }
       })
       .catch((error) => console.error("Places ვერ ჩაიტვირთა", error));
-    listHotels()
-      .then((items) => {
-        if (active) setHotelsCount(items.length);
-      })
+    // Counts only: an aggregation costs one read per 1000 documents, where
+    // listing them cost one read each (the free plan allows 50k reads a day).
+    getCountFromServer(collection(db, "hotels"))
+      .then((snap) => active && setHotelsCount(snap.data().count))
       .catch(() => {});
-    listReviews()
-      .then((items) => {
-        if (active) setReviewsCount(items.length);
-      })
+    getCountFromServer(collection(db, "reviews"))
+      .then((snap) => active && setReviewsCount(snap.data().count))
       .catch(() => {});
 
     return () => {
@@ -195,18 +189,24 @@ export default function AdminPage() {
     if (!isAdminUser) return undefined;
     let active = true;
 
-    const unsubSessions = subscribeToLiveSessions((sessions) => {
-      if (!active) return;
-      const now = Date.now();
-      const online = sessions.filter((s) => now - (s.lastActiveMillis || 0) <= 4 * 60 * 1000).length;
-      setLiveVisitorsCount(online);
-    });
+    // Both badges listen to just the documents they count, not the whole
+    // collection: every document a listener loads is a billed read.
+    const ONLINE_MS = 4 * 60 * 1000;
+    const unsubSessions = onSnapshot(
+      query(collection(db, "visitor_sessions"), where("lastActiveMillis", ">=", Date.now() - ONLINE_MS)),
+      (snap) => {
+        if (!active) return;
+        const now = Date.now();
+        setLiveVisitorsCount(snap.docs.filter((d) => now - (d.data().lastActiveMillis || 0) <= ONLINE_MS).length);
+      },
+      () => {}
+    );
 
-    const unsubBookings = subscribeToBookings((items) => {
-      if (!active) return;
-      const pendingCount = items.filter((b) => (b.status || "pending") === "pending").length;
-      setPendingBookingsCount(pendingCount);
-    });
+    const unsubBookings = onSnapshot(
+      query(collection(db, "bookings"), where("status", "==", "pending")),
+      (snap) => active && setPendingBookingsCount(snap.size),
+      () => {}
+    );
 
     const unsubChats = onSnapshot(
       query(collection(db, WHATSAPP_CONVERSATIONS), where("unread", ">", 0)),
