@@ -432,7 +432,7 @@ function AiBar({ ai, onChange }) {
         ))}
       {!ai.ready && <small className="wa-warn">ჩასართავად Vercel-ში საჭიროა GEMINI_API_KEY.</small>}
       {ai.mode === "suggest" && <small>AI წერს მონახაზს, თქვენ აგზავნით.</small>}
-      {ai.mode === "auto" && <small>AI თვითონ პასუხობს; თქვენ თუ ჩაერთეთ, 6 საათი ჩუმადაა.</small>}
+      {ai.mode === "auto" && <small>AI თვითონ პასუხობს ყველა ახალ შეტყობინებას.</small>}
     </div>
   );
 }

@@ -5,8 +5,9 @@
 //   off      nothing happens
 //   suggest  a reply is drafted into the chat; the admin sends it or edits it
 //   auto     the reply goes out at once, marked "AI" in the inbox
-// The assistant stays quiet in a chat the team answered in the last few
-// hours, in chats switched off one by one, and hands anything it can't settle
+// It answers every new customer message, even in chats the team is also
+// answering (the owner asked for that); it stays quiet only in chats
+// switched off one by one, and hands anything it can't settle
 // (complaints, changes, availability) to the team with a Telegram alert.
 //
 // It knows only what the site states (siteBrief.js, the same text as
@@ -28,8 +29,6 @@ const MODELS = [
 ];
 // Customers often write in a few quick messages: wait, then answer them all.
 const SETTLE_MS = 3000;
-// A chat the team answered this recently is theirs.
-const HUMAN_QUIET_MS = 6 * 60 * 60 * 1000;
 const HISTORY = 30;
 const CHANNEL_LABELS = { whatsapp: "WhatsApp", messenger: "Facebook Messenger", instagram: "Instagram" };
 
@@ -127,8 +126,6 @@ async function answerChat(channel, id) {
   const last = messages[messages.length - 1];
   // Someone already answered while we waited.
   if (!last || last.direction !== "in") return;
-  const now = Date.now();
-  if (messages.some((m) => m.direction === "out" && m.source !== "ai" && now - m.timestamp < HUMAN_QUIET_MS)) return;
   if (!(await claimAiTurn(channel, id, last.timestamp))) return;
 
   const { reply, handoff, reason } = await generate(systemPrompt(channel, await buildSiteBrief()), toContents(messages));
