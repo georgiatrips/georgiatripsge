@@ -111,7 +111,7 @@ export default function WhatsAppManager() {
   }, []);
 
   useEffect(() => {
-    if (!status || status.connected || !WHATSAPP_SIGNUP_CONFIG_ID) return;
+    if (!status || !WHATSAPP_SIGNUP_CONFIG_ID) return;
     loadFacebookSdk()
       .then(() => setSdkReady(true))
       .catch((err) => showMsg("error", err.message));
@@ -287,7 +287,10 @@ export default function WhatsAppManager() {
           {status.historyError && ` · ისტორია არ გადმოვიდა: ${status.historyError}`}
           {tokenDaysLeft !== null && tokenDaysLeft <= 10 && (
             <span className="wa-warn"> · Meta-ს წვდომის ვადა იწურება {tokenDaysLeft} დღეში</span>
-          )}
+          )}{" "}
+          <button type="button" className="admin-btn-secondary" onClick={startConnect} disabled={!sdkReady || connecting}>
+            {connecting ? "მიმდინარეობს..." : "ნომრის შეცვლა / თავიდან მიერთება"}
+          </button>
         </p>
       )}
 

@@ -337,6 +337,9 @@ export async function connectWhatsApp({ code, wabaId, phoneNumberId }) {
       connectedAt: Date.now(),
       // The signup configuration issues 60-day tokens; the admin tab warns before expiry.
       tokenExpiresAt: expiresIn ? Date.now() + expiresIn * 1000 : null,
+      // A reconnect (e.g. another number) starts a fresh history sync.
+      historyProgress: null,
+      historyError: "",
     },
     { merge: true }
   );
