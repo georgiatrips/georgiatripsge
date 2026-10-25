@@ -84,24 +84,129 @@ function rank(items, limit = 6) {
     .slice(0, limit);
 }
 
-// A ranked list with one thin bar per row. Each value is written beside its
-// label, so nothing depends on hovering or on the bar colour.
-function BarList({ rows, total, emptyText = "ჯერ მონაცემი არ არის" }) {
+// Categorical slots in fixed order (never cycled: rank() returns at most 8
+// rows). The remainder of the whole is one grey "სხვა" slice.
+const SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"];
+const OTHER_COLOR = "#bdbcb6";
+// One hue, dark to light, for the ordered booking stages.
+const STAGE_COLORS = ["#1c5cab", "#3987e5", "#6da7ec"];
+
+// A donut with its legend beside it. Each value is written in the legend, so
+// nothing depends on hovering or on the slice colour; hovering a slice or a
+// legend row highlights the pair and puts its number in the centre.
+function Donut({ rows, total, emptyText = "ჯერ მონაცემი არ არის", showShare = true, centerLabel = "სულ" }) {
+  const [active, setActive] = useState(null);
   if (!rows.length) return <p className="an-empty">{emptyText}</p>;
-  const max = Math.max(1, ...rows.map((row) => row.value));
+
+  const sum = rows.reduce((n, row) => n + row.value, 0);
+  const whole = Math.max(1, sum, total || 0);
+  const slices = rows.map((row, i) => ({ ...row, color: SERIES[i] }));
+  if (whole > sum) slices.push({ label: "სხვა", value: whole - sum, color: OTHER_COLOR });
+
+  const r = 52;
+  const circumference = 2 * Math.PI * r;
+  const gap = slices.length > 1 ? 2 : 0;
+  const shareOf = (value) => Math.round((value / whole) * 100);
+  const focus = active !== null ? slices[active] : null;
+  let offset = 0;
+
   return (
-    <ol className="an-bars">
-      {rows.map((row) => {
-        const share = total ? Math.round((row.value / total) * 100) : null;
-        return (
-          <li key={row.label} title={`${row.label}: ${row.value}${share !== null ? ` (${share}%)` : ""}`}>
-            <span className="an-bar-label">{row.label}</span>
+    <div className="an-donut">
+      <svg
+        className="an-donut-chart"
+        viewBox="0 0 140 140"
+        role="img"
+        aria-label={slices.map((s) => `${s.label}: ${s.value}`).join(", ")}
+      >
+        <circle className="an-donut-track" cx="70" cy="70" r={r} />
+        {slices.map((slice, i) => {
+          const length = (slice.value / whole) * circumference;
+          const arc = (
+            <circle
+              key={slice.label}
+              cx="70"
+              cy="70"
+              r={r}
+              fill="none"
+              stroke={slice.color}
+              strokeWidth={active === i ? 20 : 16}
+              strokeDasharray={`${Math.max(0.5, length - gap)} ${circumference}`}
+              strokeDashoffset={-offset}
+              transform="rotate(-90 70 70)"
+              opacity={active === null || active === i ? 1 : 0.3}
+              onMouseEnter={() => setActive(i)}
+              onMouseLeave={() => setActive(null)}
+            >
+              <title>{`${slice.label}: ${slice.value} (${shareOf(slice.value)}%)`}</title>
+            </circle>
+          );
+          offset += length;
+          return arc;
+        })}
+        <text className="an-donut-total" x="70" y="74">
+          {focus ? focus.value : whole}
+        </text>
+        <text className="an-donut-caption" x="70" y="92">
+          {focus ? `${shareOf(focus.value)}%` : centerLabel}
+        </text>
+      </svg>
+      <ol className="an-legend">
+        {slices.map((slice, i) => (
+          <li
+            key={slice.label}
+            className={active === i ? "is-active" : ""}
+            title={`${slice.label}: ${slice.value} (${shareOf(slice.value)}%)`}
+            onMouseEnter={() => setActive(i)}
+            onMouseLeave={() => setActive(null)}
+          >
+            <span className="an-swatch" style={{ background: slice.color }} aria-hidden="true" />
+            <span className="an-bar-label">{slice.label}</span>
             <span className="an-bar-value">
-              {row.value}
-              {share !== null && <small>{share}%</small>}
+              {slice.value}
+              {showShare && <small>{shareOf(slice.value)}%</small>}
             </span>
-            <span className="an-bar-track" aria-hidden="true">
-              <span className="an-bar-fill" style={{ width: `${Math.max(2, (row.value / max) * 100)}%` }} />
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+// The booking stages as rings: each ring fills to that stage's share of the
+// first stage.
+function StageRings({ rows }) {
+  const base = rows[0]?.value || 0;
+  const r = 36;
+  const circumference = 2 * Math.PI * r;
+  return (
+    <ol className="an-stages">
+      {rows.map((row, i) => {
+        const share = base ? row.value / base : 0;
+        const pct = Math.round(share * 100);
+        return (
+          <li key={row.label} title={`${row.label}: ${row.value} (${pct}%)`}>
+            <svg viewBox="0 0 96 96" aria-hidden="true">
+              <circle className="an-donut-track an-stage-track" cx="48" cy="48" r={r} />
+              {share > 0 && (
+                <circle
+                  cx="48"
+                  cy="48"
+                  r={r}
+                  fill="none"
+                  stroke={STAGE_COLORS[i] || STAGE_COLORS[STAGE_COLORS.length - 1]}
+                  strokeWidth="10"
+                  strokeLinecap="round"
+                  strokeDasharray={`${share * circumference} ${circumference}`}
+                  transform="rotate(-90 48 48)"
+                />
+              )}
+              <text className="an-stage-pct" x="48" y="54">
+                {pct}%
+              </text>
+            </svg>
+            <strong className="an-stage-count">{row.value}</strong>
+            <span className="an-stage-label">
+              {i + 1}. {row.label}
             </span>
           </li>
         );
@@ -319,28 +424,28 @@ export function AnalyticsView({ sessions = [], events = [], loading = false, onC
 
           <div className="an-grid">
             <Card title="ჯავშნის ეტაპები" note="რამდენმა ვიზიტმა მიაღწია თითოეულ ეტაპს">
-              <BarList rows={funnel} total={funnel[0].value || null} />
+              <StageRings rows={funnel} />
             </Card>
             <Card title="კონტაქტი" note="WhatsApp, ზარი და მოთხოვნები">
-              <BarList rows={contacts} emptyText="ჯერ კონტაქტი არ ყოფილა" />
+              <Donut rows={contacts} showShare={false} emptyText="ჯერ კონტაქტი არ ყოფილა" />
             </Card>
             <Card title="საიდან მოდიან" note="ვიზიტის წყარო">
-              <BarList rows={sources} total={sessions.length} />
+              <Donut rows={sources} total={sessions.length} centerLabel="ვიზიტი" />
             </Card>
             <Card title="ქვეყნები" note="ვიზიტორები ქვეყნების მიხედვით">
-              <BarList rows={countries} total={visitors.length} />
+              <Donut rows={countries} total={visitors.length} centerLabel="ვიზიტორი" />
             </Card>
             <Card title="მოწყობილობები">
-              <BarList rows={deviceTypes} total={sessions.length} />
+              <Donut rows={deviceTypes} total={sessions.length} centerLabel="ვიზიტი" />
               {browsers.length > 0 && (
                 <>
                   <p className="an-subhead">ბრაუზერები</p>
-                  <BarList rows={browsers} total={sessions.length} />
+                  <Donut rows={browsers} total={sessions.length} centerLabel="ვიზიტი" />
                 </>
               )}
             </Card>
             <Card title="პოპულარული გვერდები" note="ბოლოს ნანახი გვერდი თითოეულ ვიზიტში">
-              <BarList rows={pages} total={sessions.length} />
+              <Donut rows={pages} total={sessions.length} centerLabel="ვიზიტი" />
             </Card>
           </div>
         </div>

@@ -934,32 +934,48 @@
 .an-card-head p { margin: 0.15rem 0 0; font-size: 0.8rem; color: var(--gt-muted); }
 .an-subhead { margin: 0.4rem 0 -0.3rem; font-size: 0.78rem; font-weight: 700; color: var(--gt-muted); }
 
-/* Ranked bars: label and value on one line, a thin bar under them. */
-.an-bars { display: grid; gap: 0.55rem; margin: 0; padding: 0; list-style: none; }
+/* Donuts: the ring on the left, a legend with every value on the right. */
+.an-donut { display: grid; grid-template-columns: 132px minmax(0, 1fr); align-items: center; gap: 1.1rem; }
+.an-donut-chart { width: 132px; height: 132px; overflow: visible; }
+.an-donut-track { fill: none; stroke: var(--gt-paper); stroke-width: 16; }
+.an-donut-total { font-family: var(--gt-font-body); font-size: 24px; font-weight: 800; fill: var(--gt-ink); text-anchor: middle; font-variant-numeric: tabular-nums; }
+.an-donut-caption { font-size: 11px; font-weight: 600; fill: var(--gt-muted); text-anchor: middle; }
 
-.an-bars li {
+.an-legend { display: grid; gap: 0.15rem; margin: 0; padding: 0; list-style: none; }
+
+.an-legend li {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.3rem 0.75rem;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
   margin: 0 -0.4rem;
-  padding: 0.25rem 0.4rem;
+  padding: 0.28rem 0.4rem;
   border-radius: 8px;
 }
 
-.an-bars li:hover { background: var(--gt-paper); }
+.an-legend li:hover,
+.an-legend li.is-active { background: var(--gt-paper); }
+
+.an-swatch { width: 10px; height: 10px; border-radius: 3px; }
 
 .an-bar-label { min-width: 0; overflow: hidden; font-size: 0.88rem; color: var(--gt-ink-2); white-space: nowrap; text-overflow: ellipsis; }
 
 .an-bar-value { font-size: 0.88rem; font-weight: 700; color: var(--gt-ink); font-variant-numeric: tabular-nums; }
 .an-bar-value small { margin-inline-start: 0.4rem; font-size: 0.76rem; font-weight: 600; color: var(--gt-muted); }
 
-.an-bar-track { grid-column: 1 / -1; height: 6px; }
+/* Booking stages: one ring per stage, filled to its share of the first. */
+.an-stages { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
+.an-stages li { display: grid; justify-items: center; gap: 0.15rem; text-align: center; }
+.an-stages svg { width: 96px; height: 96px; }
+.an-stage-track { stroke-width: 10; }
+.an-stage-pct { font-family: var(--gt-font-body); font-size: 18px; font-weight: 800; fill: var(--gt-ink); text-anchor: middle; font-variant-numeric: tabular-nums; }
+.an-stage-count { font-size: 1.05rem; font-weight: 800; color: var(--gt-ink); font-variant-numeric: tabular-nums; }
+.an-stage-label { font-size: 0.8rem; color: var(--gt-muted); }
 
-.an-bar-fill {
-  display: block;
-  height: 100%;
-  border-radius: 0 4px 4px 0;
-  background: var(--gt-primary);
+@media (max-width: 520px) {
+  .an-donut { grid-template-columns: 1fr; justify-items: center; }
+  .an-legend { width: 100%; }
+  .an-stages svg { width: 76px; height: 76px; }
 }
 
 /* Visitors */
