@@ -75,6 +75,10 @@ export default function LoginPage() {
   const { claimWelcomeCoupon } = useCoupon();
   const router = useRouter();
   const searchParams = useSearchParams();
+  // Where to go after signing in: ?next=/en/tours/x sends the visitor back to
+  // the tour they were booking. Same-site paths only.
+  const nextParam = searchParams?.get("next") || "";
+  const afterSignIn = nextParam.startsWith("/") && !nextParam.startsWith("//") && !nextParam.includes("\\") ? nextParam : "/";
 
   useEffect(() => {
     const tabParam = searchParams?.get("tab");
@@ -92,7 +96,7 @@ export default function LoginPage() {
         if (!redirected) return;
         claimWelcomeCoupon();
         setSuccess(t("loginPage.welcomeRedirect"));
-        setTimeout(() => router.push("/"), 900);
+        setTimeout(() => router.push(afterSignIn), 900);
       })
       .catch((e) => setError(getErrorMessage(e.code, t)));
     // Runs once per page load: the token is removed from the URL on first read.
@@ -129,7 +133,7 @@ export default function LoginPage() {
       await signInWithGoogle();
       claimWelcomeCoupon();
       showSuccess(t("loginPage.welcomeRedirect"));
-      setTimeout(() => router.push("/"), 900);
+      setTimeout(() => router.push(afterSignIn), 900);
     } catch (e) {
       showError(getErrorMessage(e.code, t));
     } finally {
@@ -147,7 +151,7 @@ export default function LoginPage() {
       if (!facebookUser) return;
       claimWelcomeCoupon();
       showSuccess(t("loginPage.welcomeRedirect"));
-      setTimeout(() => router.push("/"), 900);
+      setTimeout(() => router.push(afterSignIn), 900);
     } catch (e) {
       showError(getErrorMessage(e.code, t));
     } finally {
@@ -164,7 +168,7 @@ export default function LoginPage() {
       await signInWithEmail(siEmail, siPassword);
       claimWelcomeCoupon();
       showSuccess(t("loginPage.welcomeRedirect"));
-      setTimeout(() => router.push("/"), 900);
+      setTimeout(() => router.push(afterSignIn), 900);
     } catch (e) {
       showError(getErrorMessage(e.code, t));
     } finally {

@@ -2,8 +2,9 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import {
   getAuth,
-  setPersistence,
+  initializeAuth,
   browserLocalPersistence,
+  browserPopupRedirectResolver,
   signInWithPopup,
   signInWithCredential,
   GoogleAuthProvider,
@@ -32,11 +33,20 @@ const firebaseConfig = {
 };
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-export const auth = getAuth(app);
 
-if (typeof window !== "undefined") {
-  setPersistence(auth, browserLocalPersistence).catch(() => {});
+// No popup/redirect resolver at start-up. getAuth() installs one by default,
+// and with it Firebase loads its sign-in iframe (/__/auth/iframe + gapi, ~1 MB)
+// on every page view, signed in or not. The two popup sign-ins pass the
+// resolver themselves. Sessions stay in localStorage, as before.
+function createBrowserAuth() {
+  try {
+    return initializeAuth(app, { persistence: browserLocalPersistence });
+  } catch (_) {
+    // Already initialised (module re-evaluated by hot reload).
+    return getAuth(app);
+  }
 }
+export const auth = typeof window === "undefined" ? getAuth(app) : createBrowserAuth();
 
 export const db = getFirestore(app);
 
@@ -51,7 +61,7 @@ function createFacebookProvider() {
 
 // ── Google Sign In ───────────────────────────────────────────
 export async function signInWithGoogle() {
-  const result = await signInWithPopup(auth, googleProvider);
+  const result = await signInWithPopup(auth, googleProvider, browserPopupRedirectResolver);
   return result.user;
 }
 
@@ -155,7 +165,7 @@ export async function signInWithFacebook() {
     return null;
   }
   try {
-    const result = await signInWithPopup(auth, createFacebookProvider());
+    const result = await signInWithPopup(auth, createFacebookProvider(), browserPopupRedirectResolver);
     return result.user;
   } catch (e) {
     if (e.code === "auth/popup-blocked" || e.code === "auth/operation-not-supported-in-this-environment") {

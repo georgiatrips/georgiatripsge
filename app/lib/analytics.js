@@ -709,9 +709,41 @@ export async function getGeoData() {
   };
 }
 
+// ── Owner & team devices ────────────────────────────────────
+// Set on a device when an admin opens the admin panel (or by hand from the
+// analytics tab), so the team's own browsing of the site never counts as a
+// visitor — not in Firestore, GA4 or the Meta Pixel. SiteDocument's inline
+// head script reads the same key before the pixels start.
+export const NO_TRACK_KEY = "gt_no_track";
+
+export function isTrackingDisabled() {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(NO_TRACK_KEY) === "1";
+  } catch (_) {
+    return false;
+  }
+}
+
+// "1" = not counted, "0" = the admin chose to be counted on this device.
+export function setTrackingDisabled(disabled) {
+  try {
+    window.localStorage.setItem(NO_TRACK_KEY, disabled ? "1" : "0");
+  } catch (_) {}
+}
+
+// Called by the admin panel: marks the device once, and leaves it alone if
+// the admin switched counting back on.
+export function markAdminDevice() {
+  try {
+    if (window.localStorage.getItem(NO_TRACK_KEY) === null) setTrackingDisabled(true);
+  } catch (_) {}
+}
+
 // ── Initialize or Refresh Visitor Session in Firestore ──────
 export async function registerPageVisit({ path, title }) {
   if (typeof window === "undefined") return null;
+  if (isTrackingDisabled()) return null;
   const { db, doc, setDoc, serverTimestamp } = await loadFirestore();
   if (!db) return null;
 
@@ -814,6 +846,7 @@ export async function registerPageVisit({ path, title }) {
 // ── Session Heartbeat (Live Online Status & Dwell Time) ─────
 export async function sendHeartbeat(path, title, totalDurationSeconds) {
   if (typeof window === "undefined") return;
+  if (isTrackingDisabled()) return;
   const sessionId = getSessionId();
   if (!sessionId) return;
 
@@ -834,6 +867,7 @@ export async function sendHeartbeat(path, title, totalDurationSeconds) {
 // (WhatsApp Clicks, Call Clicks, Tour Bookings, Tour Views)
 export async function trackEvent(eventName, eventParams = {}) {
   if (typeof window === "undefined") return;
+  if (isTrackingDisabled()) return;
 
   const sessionId = getSessionId();
   const visitorId = getVisitorId();

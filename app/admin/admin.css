@@ -885,6 +885,7 @@
 .an-view:focus-visible { outline: 2px solid var(--gt-primary); outline-offset: 1px; }
 
 .an-scope { margin: 0; font-size: 0.8rem; color: var(--gt-muted); }
+.an-link-btn { padding: 0; border: 0; background: none; font: inherit; font-weight: 700; color: var(--gt-primary); text-decoration: underline; cursor: pointer; }
 
 .an-empty { margin: 0; font-size: 0.88rem; color: var(--gt-muted); }
 .an-empty--block { padding: 2.5rem 1rem; border: 1px dashed var(--gt-line-strong); border-radius: 14px; background: #fff; text-align: center; }

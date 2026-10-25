@@ -91,6 +91,12 @@ export default function TourDetailClient({
   const bookingSidebarRef = useRef(null);
   // Funnel events fire once per tour page view.
   const formStartedRef = useRef(false);
+  // Where visitors stop in the form: the last field they touched, whether the
+  // request went out, and the fields the browser refused as empty.
+  const lastFieldRef = useRef("");
+  const formSentRef = useRef(false);
+  const formLeftReportedRef = useRef(false);
+  const invalidFieldsRef = useRef(null);
   // A coupon the visitor removed is not re-applied automatically.
   const couponDismissedRef = useRef(false);
 
@@ -177,15 +183,6 @@ export default function TourDetailClient({
     [allFsTours, currentTourId, lang, placesList, t]
   );
 
-  const tourFaqs = [
-    { q: t("faq.q1"), a: t("faq.a1") },
-    { q: t("faq.q2"), a: t("faq.a2") },
-    { q: t("faq.q3"), a: t("faq.a3") },
-    { q: t("faq.q4"), a: t("faq.a4") },
-    { q: t("faq.q5"), a: t("faq.a5") },
-    { q: t("faq.q6"), a: t("faq.a6") },
-  ];
-
   // Upcoming group departures as full ISO dates (no year guessing).
   // Sold-out departures (0 free seats, as the admin stores them) are not
   // offered; the homepage already hides them.
@@ -201,6 +198,36 @@ export default function TourDetailClient({
   const hasGroupSupport = isFirestoreTour && rawTour ? !!rawTour.hasGroup : true;
   const hasPrivateSupport = isFirestoreTour && rawTour ? !!rawTour.hasPrivate : true;
   const hasGroupDates = hasGroupSupport && groupDatesIso.length > 0;
+
+  // Questions about this tour, answered from its own data (start time,
+  // duration, inclusions, group or private), then the site-wide ones that hold
+  // for every tour. The same list feeds the FAQPage structured data below.
+  const durationText = tour ? translateDuration(tour.duration, lang) : "";
+  const tourFaqs = [
+    { q: t("tourDetail.faqBookQ"), a: t("tourDetail.faqBookA") },
+    { q: t("tourDetail.faqPayQ"), a: t("tourDetail.faqPayA") },
+    { q: t("faq.q6"), a: t("faq.a6") },
+    ...(tour?.startTime
+      ? [{
+          q: t("tourDetail.faqStartQ"),
+          a: tour.meetingPoint ? `${tour.startTime} · ${t("tourDetail.meetingPoint")}: ${tour.meetingPoint}` : tour.startTime,
+        }]
+      : []),
+    ...(durationText ? [{ q: t("tourDetail.faqDurationQ"), a: durationText }] : []),
+    ...(hasGroupSupport && hasPrivateSupport ? [{ q: t("tourDetail.faqTypesQ"), a: t("tourDetail.faqTypesA") }] : []),
+    { q: t("faq.q3"), a: tour?.includes?.length ? tour.includes.join(", ") : t("faq.a3") },
+    { q: t("faq.q5"), a: t("faq.a5") },
+    { q: t("faq.q4"), a: t("faq.a4") },
+  ];
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": tourFaqs.map((item) => ({
+      "@type": "Question",
+      "name": item.q,
+      "acceptedAnswer": { "@type": "Answer", "text": item.a },
+    })),
+  };
 
   const seatsByChip = {};
   if (firestoreSchedule) {
@@ -376,7 +403,11 @@ export default function TourDetailClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tour?.id]);
 
-  const handleFormStart = () => {
+  const fieldName = (el) => String(el?.id || el?.name || "unknown").replace(/^booking-/, "");
+
+  const handleFormStart = (e) => {
+    const field = e?.target?.closest?.("input, select, textarea");
+    if (field) lastFieldRef.current = fieldName(field);
     if (formStartedRef.current || !tour) return;
     formStartedRef.current = true;
     trackEvent("begin_checkout", {
@@ -386,6 +417,44 @@ export default function TourDetailClient({
       price: totalPrice,
     }).catch?.(() => {});
   };
+
+  // The browser fires "invalid" once per empty required field on a submit
+  // attempt and blocks the submit silently; they are sent as one event.
+  const handleFormInvalid = (e) => {
+    if (!invalidFieldsRef.current) {
+      invalidFieldsRef.current = new Set();
+      setTimeout(() => {
+        const fields = [...invalidFieldsRef.current].join(", ");
+        invalidFieldsRef.current = null;
+        trackEvent("booking_form_invalid", { tourId: tour?.id, fields, label: fields }).catch?.(() => {});
+      }, 0);
+    }
+    invalidFieldsRef.current.add(fieldName(e.target));
+  };
+
+  const handleWhatsappBooking = () => {
+    lastFieldRef.current = "whatsapp";
+  };
+
+  // A started form that was never sent: reported once, when the visitor
+  // hides the page (leaves, switches app) or moves on to another page here.
+  useEffect(() => {
+    const reportLeft = () => {
+      if (!formStartedRef.current || formSentRef.current || formLeftReportedRef.current) return;
+      formLeftReportedRef.current = true;
+      const lastField = lastFieldRef.current || "none";
+      trackEvent("booking_form_left", { tourId: tour?.id, lastField, label: lastField }).catch?.(() => {});
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") reportLeft();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      reportLeft();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tour?.id]);
 
   const handleTourTypeChange = (newType) => {
     setTourType(newType);
@@ -461,8 +530,10 @@ export default function TourDetailClient({
     e.preventDefault();
     if (!bookingPhone.trim() || !isValidPhone(bookingPhone)) {
       setPhoneError(t("tourDetail.phoneError") || "გთხოვთ შეიყვანოთ სწორი მობილურის ნომერი");
+      trackEvent("booking_form_invalid", { tourId: tour.id, fields: "phone", label: "phone" }).catch?.(() => {});
       return;
     }
+    formSentRef.current = true;
     setPhoneError("");
     setBookingError("");
     setBookingSubmitting(true);
@@ -703,6 +774,8 @@ export default function TourDetailClient({
             bookingSubmitting={bookingSubmitting}
             handleBookingSubmit={handleBookingSubmit}
             handleFormStart={handleFormStart}
+            handleFormInvalid={handleFormInvalid}
+            onWhatsappBooking={handleWhatsappBooking}
             bookingError={bookingError}
             user={user}
           />
@@ -720,6 +793,7 @@ export default function TourDetailClient({
       <TourDetailPromoBanners />
 
       {/* 6. FAQ Section */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd).replace(/</g, "\\u003c") }} />
       <TourDetailFaq
         tourFaqs={tourFaqs}
         openFaqIndex={openFaqIndex}

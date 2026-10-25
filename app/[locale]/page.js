@@ -127,6 +127,10 @@ export default async function HomePage({ params }) {
     .flatMap((tour) => (tour.groupPrice ? openDepartures(tour).slice(0, 1).map((departure) => ({ tour, departure })) : []))
     .sort((a, b) => a.departure.date.localeCompare(b.departure.date))
     .slice(0, 3);
+  // No group dates coming up: the card shows the most popular tours instead,
+  // so the first screen always has something bookable with a price.
+  const heroPicks = nextDepartures.length ? [] : tours.filter((tour) => tour.groupPrice || tour.privatePrice).slice(0, 3);
+  const hasHeroCard = nextDepartures.length > 0 || heroPicks.length > 0;
 
   // Tours with 2+ days (or marked multi-day) get their own homepage section.
   const dayTours = tours.filter((tour) => !tour.isMultiDay);
@@ -241,7 +245,7 @@ export default async function HomePage({ params }) {
             goLabel={t("homepage.heroSlideGo")}
           />
 
-          <div className={`gt-container gt-hero-inner${nextDepartures.length ? "" : " gt-hero-inner--solo"}`}>
+          <div className={`gt-container gt-hero-inner${hasHeroCard ? "" : " gt-hero-inner--solo"}`}>
             <div className="gt-hero-copy">
               <p className="gt-hero-eyebrow">{t("homepage.heroEyebrow")}</p>
               <h1 id="hero-title" className="gt-display gt-hero-title">{heroTitle(t("homepage.heroTitle"))}</h1>
@@ -298,6 +302,41 @@ export default async function HomePage({ params }) {
                   ))}
                 </ul>
                 <p className="gt-hero-card-note">{t("homepage.departuresNote")}</p>
+                <Link href={href("/tours")} className="gt-link">
+                  {t("homepage.departuresAll")}
+                  <ArrowRightIcon size={16} />
+                </Link>
+              </aside>
+            )}
+
+            {heroPicks.length > 0 && (
+              <aside className="gt-hero-card" aria-labelledby="hero-popular-title">
+                <h2 id="hero-popular-title" className="gt-hero-card-title">
+                  <CompassIcon size={18} />
+                  {t("homepage.popularTitle")}
+                </h2>
+                <ul className="gt-departure-list">
+                  {heroPicks.map((tour) => (
+                    <li key={tour.id}>
+                      <Link href={href(tourPath(tour))} className="gt-departure">
+                        <span className="gt-departure-media" aria-hidden="true">
+                          {tour.img && <Image src={tour.img} alt="" fill sizes="64px" />}
+                        </span>
+                        <span className="gt-departure-title">
+                          {tour.title}
+                          <small>
+                            {[tour.duration, tour.regions.length > 1 ? `${tour.region} +${tour.regions.length - 1}` : tour.region].filter(Boolean).join(" · ")}
+                          </small>
+                        </span>
+                        <span className="gt-departure-price">
+                          <TourPrice price={tour.groupPrice || tour.privatePrice} lang={lang} variant="card" showBadge={false} />
+                          <small>{t(tour.groupPrice ? "tourCard.perPerson" : "tourCard.privateLabel")}</small>
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                <p className="gt-hero-card-note">{t("homepage.popularNote")}</p>
                 <Link href={href("/tours")} className="gt-link">
                   {t("homepage.departuresAll")}
                   <ArrowRightIcon size={16} />

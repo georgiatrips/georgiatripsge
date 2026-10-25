@@ -13,7 +13,7 @@ import { CalendarIcon, CarIcon, CheckIcon, ClockIcon, LuggageIcon, RouteIcon, Us
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { useCurrency } from "../../lib/currency/CurrencyContext";
 import { isValidPhone } from "../../lib/bookingModel";
-import { trackEvent } from "../../lib/analytics";
+import { trackEvent, isTrackingDisabled } from "../../lib/analytics";
 import {
   LOCATION_BY_ID,
   TRANSFER_VEHICLES,
@@ -487,7 +487,7 @@ export default function TransfersClient({ pricing: pricingProp, children }) {
       }
 
       if (bId) {
-        if (typeof window !== "undefined" && window.fbq) {
+        if (typeof window !== "undefined" && window.fbq && !isTrackingDisabled()) {
           window.fbq("track", "Lead", {
             content_name: `Transfer: ${selectedVehicleName} (${pickupLabel} -> ${dropoffLabel})`,
             content_category: "Transfer",

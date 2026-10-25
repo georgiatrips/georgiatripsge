@@ -26,8 +26,11 @@ function cloudinary(src, width, quality) {
 function local(src, width) {
   const widths = localVariants[src.split("?")[0]];
   if (!widths) return src;
-  const w = widths.find((v) => v >= width);
-  // Wider than every variant: the original is the best size available.
+  // Wider than every variant: the largest one when it is the top size (the
+  // originals above it are 4K camera files of 1 MB+ — phones asked for them
+  // for the full-height hero), otherwise the original itself.
+  const top = LOCAL_WIDTHS[LOCAL_WIDTHS.length - 1];
+  const w = widths.find((v) => v >= width) || (widths.includes(top) ? top : null);
   if (!w) return src;
   return `/img-opt/${src.slice(1).replace(/\.[^.?]+(\?.*)?$/, "")}-${w}.webp`;
 }

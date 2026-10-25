@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { registerPageVisit, sendHeartbeat, trackEvent } from "../lib/analytics";
+import { registerPageVisit, sendHeartbeat, trackEvent, isTrackingDisabled } from "../lib/analytics";
 import { captureMarketingParams } from "../lib/utmTracker";
 import { whenIdle } from "../lib/whenIdle";
 
@@ -20,7 +20,8 @@ export default function AnalyticsTracker() {
     captureMarketingParams();
 
     // Don't track admin panel visits to avoid polluting visitor analytics
-    if (pathname && pathname.startsWith("/admin")) {
+    // nor the team's own devices (marked from the admin panel).
+    if ((pathname && pathname.startsWith("/admin")) || isTrackingDisabled()) {
       return;
     }
 

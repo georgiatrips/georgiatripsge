@@ -26,6 +26,7 @@ import { WA_CONNECT_STATE } from "../lib/whatsappConfig";
 import { useUnreadCount } from "./useInbox";
 import LocalizedInputGroup, { emptyLangObj, parseLocal } from "./LocalizedInputGroup";
 import { useAuth } from "../lib/AuthContext";
+import { markAdminDevice } from "../lib/analytics";
 import { useCurrency } from "../lib/currency/CurrencyContext";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 import { adminFetch } from "../lib/apiClient";
@@ -183,6 +184,12 @@ export default function AdminPage() {
   // session and confirmed the admin flag; subscribing on first render ran
   // them signed-out and Firestore answered permission-denied.
   const isAdminUser = Boolean(user?.isAdmin);
+
+  // This device belongs to the team: its visits to the site stop counting.
+  useEffect(() => {
+    if (isAdminUser) markAdminDevice();
+  }, [isAdminUser]);
+
   useEffect(() => {
     if (!isAdminUser) return undefined;
     let active = true;

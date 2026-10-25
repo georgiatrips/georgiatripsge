@@ -2526,3 +2526,49 @@
   color: #ffffff;
   gap: 0.5rem;
 }
+
+/* Booking form: the optional-field hint, the signed-out coupon nudge and the
+   WhatsApp alternative under the submit button (as tall as it, quieter). */
+.tdp-optional {
+  font-weight: 500;
+  color: var(--gt-muted);
+}
+
+.tdp-coupon-guest {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 14px 0;
+  padding: 0.7rem 0.9rem;
+  border: 1px dashed rgba(58, 146, 150, 0.45);
+  border-radius: 12px;
+  background: rgba(58, 146, 150, 0.07);
+  color: #2c7477;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.tdp-coupon-guest:hover {
+  background: rgba(58, 146, 150, 0.14);
+}
+
+.tdp-wa-book {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  margin-top: 0.6rem;
+  border: 1.5px solid var(--gt-wa, #1f7a64);
+  border-radius: 12px;
+  background: #ffffff;
+  color: var(--gt-wa, #1f7a64);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.tdp-wa-book:hover {
+  background: rgba(31, 122, 100, 0.07);
+}

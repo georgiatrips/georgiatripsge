@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import { useCurrency } from "../../lib/currency/CurrencyContext";
 import { asLocalizedText } from "../../lib/toursShared";
@@ -59,12 +61,22 @@ export default function TourBookingSidebar({
   bookingSubmitting,
   handleBookingSubmit,
   handleFormStart,
+  handleFormInvalid,
+  onWhatsappBooking,
   bookingError = "",
   user,
 }) {
   const { t, lang } = useLanguage();
   const { format } = useCurrency();
+  const pathname = usePathname();
   const tourTitle = asLocalizedText(tour.title, lang);
+  // The same request as the form, as a prefilled WhatsApp message: many
+  // visitors would rather write than fill in a form.
+  const waBookingText = selectedDate
+    ? interpolate(t("tourDetail.bookingFallbackWa"), { title: tourTitle, date: selectedDate, people: bookingPeople || peopleMin })
+    : interpolate(t("tourCard.waMessage"), { title: tourTitle });
+  // Back to this form after signing in (the login page honours ?next=).
+  const loginHref = `/login?next=${encodeURIComponent(`${pathname || ""}#tour-booking-form`)}`;
   // Contact channel and notes are optional: kept behind one toggle so
   // the form shows only what a booking needs. Opens by itself when in use.
   const [moreOpen, setMoreOpen] = useState(false);
@@ -136,12 +148,16 @@ export default function TourBookingSidebar({
           id="tour-booking-form"
           onFocusCapture={handleFormStart}
           onPointerDownCapture={handleFormStart}
+          onInvalidCapture={handleFormInvalid}
         >
           <h3>{t("tourDetail.onlineBooking")}</h3>
           <p className="form-sub">{t("tourDetail.formSubtitle")}</p>
 
           <div className="tdp-form-group">
-            <label htmlFor="booking-name">{t("tourDetail.yourName")}</label>
+            {/* Optional: the server books it as "Guest" and the team confirms by phone. */}
+            <label htmlFor="booking-name">
+              {t("tourDetail.yourName")} <span className="tdp-optional">{t("tourDetail.nameOptional")}</span>
+            </label>
             <input
               id="booking-name"
               type="text"
@@ -149,7 +165,6 @@ export default function TourBookingSidebar({
               placeholder={t("tourDetail.namePlaceholder")}
               value={bookingName}
               onChange={(e) => setBookingName(e.target.value)}
-              required
             />
           </div>
 
@@ -281,6 +296,15 @@ export default function TourBookingSidebar({
             )}
           </div>
 
+          {/* Coupons are for signed-in visitors only. A signed-out visitor saw an
+              empty code field, left to look for a code and got "sign in" back;
+              now they get the way to the discount instead. */}
+          {!user && !appliedCoupon ? (
+            <Link href={loginHref} className="tdp-coupon-guest">
+              <span aria-hidden="true">🎁</span>
+              <span>{t("tourDetail.guestCoupon")}</span>
+            </Link>
+          ) : (
           <div className="tdp-coupon-section">
             <div className="tdp-coupon-label-row">
               <label htmlFor="booking-coupon">{t("bookingCoupon.title")}</label>
@@ -336,6 +360,7 @@ export default function TourBookingSidebar({
               </div>
             )}
           </div>
+          )}
 
           <details className="tdp-more-options" open={showMore} onToggle={(e) => setMoreOpen(e.currentTarget.open)}>
             <summary>{t("tourDetail.moreOptions")}</summary>
@@ -393,6 +418,17 @@ export default function TourBookingSidebar({
               {bookingSubmitting ? t("tourDetail.sending") : `${t("tourDetail.bookNow")}${totalPrice > 0 ? ` — ${format(totalPrice, lang)}` : ""}`}
             </span>
           </button>
+
+          <a
+            href={whatsappHref(waBookingText)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="tdp-wa-book"
+            onClick={onWhatsappBooking}
+          >
+            <WhatsAppIcon size={18} />
+            <span>{t("tourDetail.orWhatsapp")}</span>
+          </a>
 
           {bookingError && (
             <div className="tdp-booking-error" role="alert">

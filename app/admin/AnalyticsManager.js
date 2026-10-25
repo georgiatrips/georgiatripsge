@@ -7,6 +7,8 @@ import {
   getNationalityAndCitizenship,
   getDemographicProfile,
   getVisitorInterests,
+  isTrackingDisabled,
+  setTrackingDisabled,
 } from "../lib/analytics";
 import { db } from "../lib/firebase";
 import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
@@ -33,7 +35,23 @@ const EVENT_INFO = {
   click_call: { category: "contact", label: "დარეკვა" },
   hero_search: { category: "search", label: "ტურების ძებნა" },
   book_tour_failed: { category: "error", label: "ჯავშანი ვერ გაიგზავნა" },
+  booking_form_invalid: { category: "error", label: "ფორმაში ველი შეუვსებელია" },
+  booking_form_left: { category: "start", label: "ფორმა გაუგზავნელად დატოვა" },
 };
+
+// Booking-form field ids (without the "booking-" prefix) as the admin reads them.
+const FORM_FIELDS = {
+  name: "სახელი",
+  date: "თარიღი",
+  people: "ხალხის რაოდენობა",
+  phone: "ტელეფონი",
+  coupon: "კუპონი",
+  contact: "კონტაქტის გზა",
+  notes: "შენიშვნა",
+  whatsapp: "WhatsApp-ზე გადავიდა",
+  none: "ველს არ შეხებია",
+};
+const fieldLabel = (key) => FORM_FIELDS[key] || key;
 
 const CATEGORIES = [
   { key: "view", label: "ნახვა" },
@@ -260,6 +278,13 @@ export function AnalyticsView({ sessions = [], events = [], loading = false, onC
   const [expanded, setExpanded] = useState({});
   const [eventFilter, setEventFilter] = useState("all");
   const [now, setNow] = useState(() => Date.now());
+  // Read after mount: localStorage is not available while rendering on the server.
+  const [deviceExcluded, setDeviceExcluded] = useState(null);
+  useEffect(() => setDeviceExcluded(isTrackingDisabled()), []);
+  const toggleDeviceExcluded = () => {
+    setTrackingDisabled(!deviceExcluded);
+    setDeviceExcluded(!deviceExcluded);
+  };
 
   // "Online" and "x min ago" stay current without a reload.
   useEffect(() => {
@@ -335,6 +360,18 @@ export function AnalyticsView({ sessions = [], events = [], loading = false, onC
     { label: "ტურების ძებნა", value: countEvents(["hero_search"]) },
   ].filter((row) => row.value > 0);
 
+  // Where the booking form loses people: the last field touched before
+  // leaving, and the fields the browser refused as empty on a submit attempt.
+  const formLeft = rank(
+    events.filter((e) => e.eventName === "booking_form_left").map((e) => fieldLabel(e.params?.lastField || "none"))
+  );
+  const formInvalid = rank(
+    events
+      .filter((e) => e.eventName === "booking_form_invalid")
+      .flatMap((e) => String(e.params?.fields || "").split(",").map((f) => f.trim()).filter(Boolean))
+      .map(fieldLabel)
+  );
+
   const sources = rank(sessions.map((s) => s.source || "პირდაპირი"));
   const countries = rank(visitors.map((v) => [v.flag, v.country || "უცნობი"].filter(Boolean).join(" ")));
   const deviceTypes = rank(
@@ -408,6 +445,15 @@ export function AnalyticsView({ sessions = [], events = [], loading = false, onC
         </div>
         <p className="an-scope">
           ბოლო {SESSION_WINDOW} ვიზიტი და ბოლო {EVENT_WINDOW} მოქმედება · განახლდება ავტომატურად
+          {deviceExcluded !== null && (
+            <>
+              {" · "}
+              {deviceExcluded ? "ეს მოწყობილობა არ ითვლება" : "ეს მოწყობილობა ითვლება"}{" "}
+              <button type="button" className="an-link-btn" onClick={toggleDeviceExcluded}>
+                {deviceExcluded ? "ჩათვლა" : "გამორიცხვა"}
+              </button>
+            </>
+          )}
         </p>
       </div>
 
@@ -425,6 +471,15 @@ export function AnalyticsView({ sessions = [], events = [], loading = false, onC
           <div className="an-grid">
             <Card title="ჯავშნის ეტაპები" note="რამდენმა ვიზიტმა მიაღწია თითოეულ ეტაპს">
               <StageRings rows={funnel} />
+            </Card>
+            <Card title="სად ჩერდებიან ფორმაში" note="ბოლო ველი, სანამ ფორმას გაუგზავნელად დატოვებდნენ">
+              <Donut rows={formLeft} centerLabel="დატოვა" emptyText="ჯერ არავის დაუტოვებია ფორმა" />
+              {formInvalid.length > 0 && (
+                <>
+                  <p className="an-subhead">შეუვსებელი ველები გაგზავნისას</p>
+                  <Donut rows={formInvalid} showShare={false} centerLabel="შემთხვევა" />
+                </>
+              )}
             </Card>
             <Card title="კონტაქტი" note="WhatsApp, ზარი და მოთხოვნები">
               <Donut rows={contacts} showShare={false} emptyText="ჯერ კონტაქტი არ ყოფილა" />

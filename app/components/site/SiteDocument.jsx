@@ -124,10 +124,14 @@ export default function SiteDocument({ lang, children }) {
         <script
           dangerouslySetInnerHTML={{
             __html:
+              // The team's own devices (gt_no_track, see lib/analytics.js) send
+              // nothing: GA4 is switched off and the pixel is never started.
+              `var gtOff=false;try{gtOff=localStorage.getItem('gt_no_track')==='1'}catch(e){}` +
+              (process.env.NEXT_PUBLIC_GA_ID ? `if(gtOff)window['ga-disable-${process.env.NEXT_PUBLIC_GA_ID}']=true;` : "") +
               `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}` +
               (process.env.NEXT_PUBLIC_GA_ID ? `gtag('js',new Date());gtag('config','${process.env.NEXT_PUBLIC_GA_ID}');` : "") +
               `!function(f){if(f.fbq)return;var n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[]}(window);` +
-              `fbq('init','4302985556633819');fbq('track','PageView');`,
+              `if(!gtOff){fbq('init','4302985556633819');fbq('track','PageView');}`,
           }}
         />
       </head>
