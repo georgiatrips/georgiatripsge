@@ -100,7 +100,9 @@ export function useInbox(selected) {
   const loadThread = useCallback(async () => {
     if (!id) return;
     const data = await getJson(`/api/admin/inbox?channel=${channel}&conversation=${encodeURIComponent(id)}`);
-    setMessages(data.messages || []);
+    const next = data.messages || [];
+    // An unchanged poll keeps the same array, so the thread does not re-render.
+    setMessages((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next));
   }, [channel, id]);
 
   useEffect(() => setMessages([]), [channel, id]);

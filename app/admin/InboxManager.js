@@ -49,6 +49,8 @@ const AI_MODES = [
   ["auto", "ავტომატური"],
 ];
 
+const AI_PAUSE_MS = 3 * 60 * 60 * 1000;
+
 const STATUS_TICKS = { sent: "✓", delivered: "✓✓", read: "✓✓", failed: "⚠" };
 
 // Bookings store phones as typed ("+995 555…", "555…"); the last 9 digits
@@ -106,9 +108,26 @@ export default function InboxManager() {
     if (current?.unread > 0) markRead(current);
   }, [current?.channel, current?.id, current?.unread, markRead]);
 
+  // The thread scrolls inside its own box (never the page): to the bottom when
+  // a chat opens, and on a new message only if the admin is already near the
+  // bottom, so reading older messages is not interrupted by the 3 s poll.
+  const lastMessageId = messages[messages.length - 1]?.id;
+  const scrolledChat = useRef("");
+  const atBottom = useRef(true);
+  const onThreadScroll = (e) => {
+    const box = e.currentTarget;
+    atBottom.current = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+  };
   useEffect(() => {
-    threadEnd.current?.scrollIntoView({ block: "end" });
-  }, [messages]);
+    const box = threadEnd.current?.parentElement;
+    if (!box || !lastMessageId) return;
+    const key = chatKey(selected);
+    if (scrolledChat.current !== key || atBottom.current) {
+      box.scrollTop = box.scrollHeight;
+      atBottom.current = true;
+    }
+    scrolledChat.current = key;
+  }, [lastMessageId, selected]);
 
   // Bookings are matched to WhatsApp numbers, read from Firestore only once a
   // WhatsApp chat is opened (not on every visit to the inbox).
@@ -176,6 +195,10 @@ export default function InboxManager() {
   };
 
   // A suggested reply is shown until anything newer is written in the chat.
+  // The assistant pauses for 3 hours after the team writes in a chat (inboxAi.js).
+  const lastTeamAt = Math.max(0, ...messages.filter((m) => m.direction === "out" && m.source !== "ai").map((m) => m.timestamp));
+  const aiPausedUntil = lastTeamAt + AI_PAUSE_MS > Date.now() ? lastTeamAt + AI_PAUSE_MS : 0;
+
   const aiDraft = current?.aiDraft && current.aiDraftAt >= current.lastMessageAt ? current.aiDraft : "";
 
   const handleSend = async (e, override) => {
@@ -302,7 +325,12 @@ export default function InboxManager() {
                     onClick={() => runAction({ action: "ai-chat", channel: current.channel, id: current.id, off: !current.aiOff })}
                     title="AI-ის პასუხები ამ ჩატში"
                   >
-                    🤖 {current.aiOff ? "AI გამორთულია" : "AI ჩართულია"}
+                    🤖{" "}
+                    {current.aiOff
+                      ? "AI გამორთულია"
+                      : aiPausedUntil
+                        ? `AI პაუზაზეა ${formatClock(aiPausedUntil)}-მდე`
+                        : "AI ჩართულია"}
                   </button>
                 )}
               </header>
@@ -318,7 +346,7 @@ export default function InboxManager() {
                 </div>
               )}
 
-              <ol className="wa-messages">
+              <ol className="wa-messages" onScroll={onThreadScroll}>
                 {messages.map((m) => {
                   const caption = messageCaption(m, Boolean(m.mediaUrl || m.mediaId));
                   return (
@@ -432,7 +460,7 @@ function AiBar({ ai, onChange }) {
         ))}
       {!ai.ready && <small className="wa-warn">ჩასართავად Vercel-ში საჭიროა GEMINI_API_KEY.</small>}
       {ai.mode === "suggest" && <small>AI წერს მონახაზს, თქვენ აგზავნით.</small>}
-      {ai.mode === "auto" && <small>AI თვითონ პასუხობს ყველა ახალ შეტყობინებას.</small>}
+      {ai.mode === "auto" && <small>AI თვითონ პასუხობს; ჩატში თქვენ თუ დაწერეთ, იქ 3 საათი ჩუმადაა.</small>}
       {ai.ready && ai.usage && <AiUsage usage={ai.usage} />}
       {ai.ready && <AiInstructions saved={ai.instructions || ""} />}
     </div>
