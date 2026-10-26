@@ -2,6 +2,7 @@ import { NextResponse, after } from "next/server";
 import { verifySignature } from "../../../lib/server/whatsapp";
 import { alertNewMessages, processWebhook } from "../../../lib/server/messenger";
 import { answerNewMessages } from "../../../lib/server/inboxAi";
+import { keepManagerWindowOpen } from "../../../lib/server/tourRequests";
 
 // Meta's Page and Instagram webhook (Meta app → Messenger → Webhooks, objects
 // "page" and "instagram"). GET answers the one-time verification; POST
@@ -44,5 +45,7 @@ export async function POST(request) {
     console.error("[messenger webhook] failed:", err?.message || err);
     return NextResponse.json({ error: "processing_failed" }, { status: 500 });
   }
+  // Any webhook call is a chance to keep the manager's WhatsApp window open.
+  after(() => keepManagerWindowOpen().catch((err) => console.error("[messenger webhook] manager ping:", err?.message || err)));
   return NextResponse.json({ ok: true });
 }

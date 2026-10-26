@@ -1,7 +1,9 @@
 // Ready tour requests: when the inbox assistant (inboxAi.js) sees that a
 // customer has given everything needed to plan a trip (what, when, how many,
 // where from), the request goes straight to the manager on WhatsApp, and the
-// owner gets a copy in Telegram.
+// owner gets a copy in Telegram. The manager gets only the trip details in
+// Georgian, never the customer's name, number or own words: the team stays
+// the customer's contact.
 //
 // WhatsApp lets the business write freely only to a number that wrote in the
 // last 24 hours; otherwise only an approved template may be sent. So the
@@ -14,18 +16,23 @@ import { SITE_URL } from "../siteConfig";
 import { getConfig, getConversation, markRequestForwarded, setConfig } from "./inboxStore";
 import { createTemplate, digits, getTemplate, sendTemplate, sendText } from "./whatsapp";
 
-export const TEMPLATE_NAME = "tour_request";
+// "tour_request" (2026-10-26) carried a client field; this one has none.
+export const TEMPLATE_NAME = "tour_request_details";
 const TEMPLATE_LANGUAGE = "ka";
 const TEMPLATE_BODY =
-  "ახალი მოთხოვნა ტურზე GeorgiaTrips-იდან.\n\nკლიენტი: {{1}}\nდეტალები: {{2}}\n\nგთხოვთ, გაეცნოთ და მოამზადოთ შეთავაზება.";
+  "ახალი მოთხოვნა ტურზე GeorgiaTrips-იდან:\n\n{{1}}\n\nგთხოვთ, მოამზადოთ შეთავაზება და გამოგვიგზავნოთ ფასი.";
 const TEMPLATE_EXAMPLE = [
-  "John · WhatsApp · +995555123456",
   "თარიღი: 29 ოქტომბერი; ხალხი: 1; ადგილები: დაშბაშის კანიონი, ალგეთის ტბა; აყვანა: სასტუმრო თბილისში",
 ];
 // One forward per chat a day: later messages of the same customer are the
 // manager's to answer.
 const FORWARD_AGAIN_AFTER_MS = 24 * 60 * 60 * 1000;
 const WINDOW_MS = 24 * 60 * 60 * 1000;
+// From this long after the manager's last message, they are asked to answer
+// anything, so the next 24 hours stay open for plain-text forwards.
+const PING_AFTER_MS = 22 * 60 * 60 * 1000;
+const PING_TEXT =
+  "🤖 სატესტო შეტყობინება GeorgiaTrips-ის AI-დან. გთხოვთ, უპასუხეთ ნებისმიერი სიტყვით (მაგ. „ok“), რომ AI-მ მომდევნო 24 საათი შეძლოს ტურების მოთხოვნების გამოგზავნა.";
 const CHANNEL_LABELS = { whatsapp: "WhatsApp", messenger: "Messenger", instagram: "Instagram" };
 
 const DEFAULTS = { enabled: true, phone: "995599186927", name: "Travel Georgia" };
@@ -64,6 +71,15 @@ export async function submitTemplate() {
   return templateStatus();
 }
 
+// What the AI wrote, minus anything that looks like contact details.
+const withoutContacts = (text) =>
+  String(text || "")
+    .replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, "")
+    .replace(/\+?\d[\d\s()-]{6,}\d/g, (m) => (m.replace(/\D/g, "").length >= 9 ? "" : m))
+    .replace(/(?:https?:\/\/|www\.)\S+/g, "")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+
 const oneLine = (text, max) => {
   const flat = String(text || "").replace(/\s*\n+\s*/g, " · ").replace(/\s{2,}/g, " ").trim();
   return flat.length > max ? `${flat.slice(0, max)}…` : flat;
@@ -79,10 +95,9 @@ export async function forwardTourRequest({ channel, id, name, summary, customerT
   await markRequestForwarded(channel, id);
 
   const who = [name, CHANNEL_LABELS[channel], channel === "whatsapp" ? `+${id}` : ""].filter(Boolean).join(" · ");
-  const details = String(summary || "").trim();
-  const text =
-    `📨 ახალი მოთხოვნა ტურზე — GeorgiaTrips\n\nკლიენტი: ${who}\n${details.split(/;\s*/).join("\n")}` +
-    (customerText ? `\n\nკლიენტის შეტყობინება:\n${String(customerText).slice(0, 1500)}` : "");
+  const details = withoutContacts(summary);
+  const lines = details.split(/;\s*/).filter(Boolean).join("\n");
+  const text = `📨 ახალი მოთხოვნა ტურზე GeorgiaTrips-იდან:\n\n${lines}\n\nგთხოვთ, მოამზადოთ შეთავაზება და გამოგვიგზავნოთ ფასი.`;
 
   let how;
   try {
@@ -95,7 +110,7 @@ export async function forwardTourRequest({ channel, id, name, summary, customerT
         to: settings.phone,
         name: TEMPLATE_NAME,
         language: TEMPLATE_LANGUAGE,
-        params: [oneLine(who, 200), oneLine(details, 900)],
+        params: [oneLine(details, 1000)],
         text,
       });
       how = "შაბლონით";
@@ -107,8 +122,31 @@ export async function forwardTourRequest({ channel, id, name, summary, customerT
   const ok = !how.startsWith("ვერ");
   await sendTelegram(
     `${ok ? "📨" : "⚠️"} მზა მოთხოვნა ${ok ? "გადაეგზავნა" : "ვერ გადაეგზავნა"} ${settings.name || "მენეჯერს"}-ს (+${settings.phone}) — ${how}\n\n` +
-      `${text}\n\nადმინი: ${SITE_URL}/admin`,
+      `${text}\n\nკლიენტი (მხოლოდ თქვენთვის): ${who}` +
+        (customerText ? `\n\nკლიენტის შეტყობინება:\n${String(customerText).slice(0, 1500)}` : "") +
+        `\n\nადმინი: ${SITE_URL}/admin`,
     "tour-request"
   );
   return { ok, how };
+}
+
+// Keeps the manager's 24-hour window open: some 22 hours after their last
+// message they get one short note asking for any answer. Runs after every
+// webhook call and from /api/cron/manager-window; at most one note per
+// message of theirs.
+let pingCheckedAt = 0;
+export async function keepManagerWindowOpen() {
+  if (Date.now() - pingCheckedAt < 5 * 60 * 1000) return { checked: false };
+  pingCheckedAt = Date.now();
+  const settings = await getForwardSettings();
+  if (!settings.enabled || !settings.phone) return { checked: true };
+  const manager = await getConversation("whatsapp", settings.phone);
+  const last = manager?.lastIncomingAt || 0;
+  const since = Date.now() - last;
+  if (!last || since < PING_AFTER_MS || since > WINDOW_MS - 60 * 1000) return { checked: true };
+  const ping = (await getConfig("forward_ping")) || {};
+  if (ping.forIncomingAt === last) return { checked: true };
+  await setConfig("forward_ping", { forIncomingAt: last, sentAt: Date.now() });
+  await sendText({ to: settings.phone, text: PING_TEXT, source: "ai" });
+  return { checked: true, sent: true };
 }

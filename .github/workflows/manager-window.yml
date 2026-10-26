@@ -1,0 +1,18 @@
+# Every 20 minutes: lets the site send the tour-request manager a short note
+# about 22 hours after their last WhatsApp message, asking for any answer, so
+# ready requests can keep going as plain text (app/lib/server/tourRequests.js).
+name: Manager WhatsApp window
+
+on:
+  schedule:
+    - cron: "*/20 * * * *"
+  workflow_dispatch: {}
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - run: curl -fsS --max-time 60 https://www.georgiatrips.ge/api/cron/manager-window
