@@ -396,3 +396,51 @@ export async function sendText({ to, text, source = "site" }) {
   if (record.id) await saveMessages([{ phone, record }]);
   return record;
 }
+
+// ── Templates (messages outside the 24-hour window) ──────────────────
+// A number that has not written in the last 24 hours can only be sent a
+// template Meta has approved. Used to forward tour requests to a partner.
+
+export async function getTemplate(name) {
+  const cfg = await loadConfig();
+  if (!cfg.token || !cfg.wabaId) throw new WhatsAppError("WhatsApp ჯერ არ არის მიერთებული.", 409);
+  const res = await graph(`/${cfg.wabaId}/message_templates?name=${encodeURIComponent(name)}&fields=name,status,language,rejected_reason`, {
+    token: cfg.token,
+  });
+  return (res.data || []).find((t) => t.name === name) || null;
+}
+
+// Submits a body-only UTILITY template for Meta's review.
+export async function createTemplate({ name, language, body, example }) {
+  const cfg = await loadConfig();
+  if (!cfg.token || !cfg.wabaId) throw new WhatsAppError("WhatsApp ჯერ არ არის მიერთებული.", 409);
+  return graph(`/${cfg.wabaId}/message_templates`, {
+    token: cfg.token,
+    method: "POST",
+    body: { name, language, category: "UTILITY", components: [{ type: "BODY", text: body, example: { body_text: [example] } }] },
+  });
+}
+
+// Sends an approved template; `text` is what the inbox shows for it.
+export async function sendTemplate({ to, name, language, params, text, source = "ai" }) {
+  const phone = digits(to);
+  const cfg = await loadConfig();
+  if (!cfg.token || !cfg.phoneNumberId) throw new WhatsAppError("WhatsApp ჯერ არ არის მიერთებული.", 409);
+  const data = await graph(`/${cfg.phoneNumberId}/messages`, {
+    token: cfg.token,
+    method: "POST",
+    body: {
+      messaging_product: "whatsapp",
+      to: phone,
+      type: "template",
+      template: {
+        name,
+        language: { code: language },
+        components: [{ type: "body", parameters: params.map((p) => ({ type: "text", text: p })) }],
+      },
+    },
+  });
+  const record = { id: data.messages?.[0]?.id, direction: "out", source, type: "template", text, timestamp: Date.now(), status: "sent" };
+  if (record.id) await saveMessages([{ phone, record }]);
+  return record;
+}

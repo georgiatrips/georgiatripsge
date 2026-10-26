@@ -333,6 +333,11 @@ export default function InboxManager() {
                         : "AI ჩართულია"}
                   </button>
                 )}
+                {current.requestForwardedAt > 0 && (
+                  <small className="wa-connected" title="AI-მ მზა მოთხოვნა მენეჯერს გადაუგზავნა">
+                    📨 გადაეგზავნა {formatClock(current.requestForwardedAt)}
+                  </small>
+                )}
               </header>
 
               {matchedBookings.length > 0 && (
@@ -464,6 +469,7 @@ function AiBar({ ai, onChange }) {
       {ai.ready && ai.usage && <AiUsage usage={ai.usage} />}
       {ai.ready && <AiInstructions saved={ai.instructions || ""} />}
       {ai.ready && <AiLearned ai={ai} />}
+      {ai.ready && ai.forward && <AiForward forward={ai.forward} />}
     </div>
   );
 }
@@ -480,8 +486,12 @@ function AiUsage({ usage }) {
   const runTest = async () => {
     setTest({ busy: true });
     try {
-      const { reply, ms, model, briefMs, examples } = await inboxAction({ action: "ai-test", question });
-      setTest({ ok: `✓ მუშაობს (${(ms / 1000).toFixed(1)} წმ, ${model.replace("gemini-", "")}, ინფორმაცია ${(briefMs / 1000).toFixed(1)} წმ, თქვენი ${examples} მაგალითი): „${reply}“` });
+      const { reply, ms, model, briefMs, examples, requestReady, requestSummary } = await inboxAction({ action: "ai-test", question });
+      setTest({
+        ok:
+          `✓ მუშაობს (${(ms / 1000).toFixed(1)} წმ, ${model.replace("gemini-", "")}, ინფორმაცია ${(briefMs / 1000).toFixed(1)} წმ, თქვენი ${examples} მაგალითი): „${reply}“` +
+          (requestReady ? ` 📨 მზა მოთხოვნაა — გადაეგზავნებოდა მენეჯერს: ${requestSummary}` : ""),
+      });
     } catch (err) {
       setTest({ error: err.message });
     }
@@ -526,6 +536,110 @@ function AiUsage({ usage }) {
       {test?.ok && <span className="wa-connected">{test.ok}</span>}
       {test?.error && <span className="wa-warn">{test.error}</span>}
     </div>
+  );
+}
+
+const TEMPLATE_STATUS = {
+  APPROVED: ["✅ დამტკიცებულია", "wa-connected"],
+  PENDING: ["⏳ Meta ამოწმებს (ჩვეულებრივ რამდენიმე წუთი)", ""],
+  REJECTED: ["❌ Meta-მ უარყო", "wa-warn"],
+};
+
+// Where ready tour requests are forwarded (lib/server/tourRequests.js), and
+// the WhatsApp template used when the manager has not written in 24 hours.
+function AiForward({ forward }) {
+  const [form, setForm] = useState(forward);
+  const [template, setTemplate] = useState(undefined);
+  const [status, setStatus] = useState(null);
+  const savedKey = JSON.stringify(forward);
+  useEffect(() => setForm(JSON.parse(savedKey)), [savedKey]);
+  const changed = JSON.stringify(form) !== savedKey;
+  const set = (patch) => setForm((f) => ({ ...f, ...patch }));
+
+  const loadTemplate = async () => {
+    try {
+      setTemplate((await inboxAction({ action: "forward-status" })).template);
+    } catch (err) {
+      setTemplate({ status: "ERROR", reason: err.message });
+    }
+  };
+
+  const run = async (body, done) => {
+    setStatus({ busy: body.action });
+    try {
+      const data = await inboxAction(body);
+      if ("template" in data) setTemplate(data.template);
+      setStatus({ ok: done });
+    } catch (err) {
+      setStatus({ error: err.message });
+    }
+  };
+
+  const [templateLabel, templateClass] = template ? TEMPLATE_STATUS[template.status] || [template.status, "wa-warn"] : [];
+  return (
+    <details className="inbox-ai-rules" onToggle={(e) => e.currentTarget.open && template === undefined && loadTemplate()}>
+      <summary>
+        📨 მზა მოთხოვნების გადაგზავნა{" "}
+        {forward.enabled ? `→ ${forward.name || "მენეჯერი"} (+${forward.phone})` : "(გამორთულია)"}
+      </summary>
+      <p className="admin-hint">
+        როცა კლიენტმა ყველაფერი თქვა, რაც ტურის დასაგეგმად საჭიროა (რა/სად, თარიღი, რამდენი კაცი, საიდან აიყვანონ), AI
+        კლიენტს სწერს, რომ მოთხოვნა მიღებულია და მენეჯერს გადაეცა, მოთხოვნას კი მაშინვე WhatsApp-ით უგზავნის ამ ნომერს
+        (თითო კლიენტს დღეში ერთხელ). ასლი Telegram-ში მოგივათ. მუშაობს „ავტომატურ“ რეჟიმში.
+      </p>
+      <div className="tpl-form">
+        <label className="inbox-ai-channel">
+          <input type="checkbox" checked={form.enabled} onChange={(e) => set({ enabled: e.target.checked })} />
+          ჩართულია
+        </label>
+        <label className="tpl-field">
+          <span>სახელი</span>
+          <input type="text" className="tpl-input" value={form.name} onChange={(e) => set({ name: e.target.value })} />
+        </label>
+        <label className="tpl-field">
+          <span>WhatsApp ნომერი (ქვეყნის კოდით)</span>
+          <input type="tel" className="tpl-input" value={form.phone} onChange={(e) => set({ phone: e.target.value })} />
+        </label>
+      </div>
+      <div className="admin-form-actions">
+        <button
+          type="button"
+          className="admin-btn-primary"
+          onClick={() => run({ action: "forward-settings", ...form }, "✓ შენახულია.")}
+          disabled={Boolean(status?.busy) || !changed}
+        >
+          {status?.busy === "forward-settings" ? "..." : "შენახვა"}
+        </button>
+        {status?.ok && !changed && <span className="wa-connected">{status.ok}</span>}
+        {status?.error && <span className="wa-warn">{status.error}</span>}
+      </div>
+      <p className="admin-hint">
+        WhatsApp-ის შაბლონი „tour_request“ (საჭიროა, როცა მენეჯერს ბოლო 24 საათში არ მოუწერია):{" "}
+        {template === undefined ? (
+          "..."
+        ) : template === null ? (
+          <>
+            ჯერ არ არის შექმნილი.{" "}
+            <button
+              type="button"
+              className="admin-btn-ghost wa-reconnect"
+              onClick={() => run({ action: "forward-template" }, "✓ შაბლონი გაიგზავნა Meta-ზე დასამტკიცებლად.")}
+              disabled={Boolean(status?.busy)}
+            >
+              {status?.busy === "forward-template" ? "..." : "შაბლონის შექმნა"}
+            </button>
+          </>
+        ) : (
+          <>
+            <span className={templateClass}>{templateLabel}</span>
+            {template.reason && template.reason !== "NONE" && ` — ${template.reason}`}{" "}
+            <button type="button" className="admin-btn-ghost wa-reconnect" onClick={loadTemplate}>
+              განახლება
+            </button>
+          </>
+        )}
+      </p>
+    </details>
   );
 }
 

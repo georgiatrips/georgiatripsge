@@ -14,6 +14,7 @@ import {
   unreadCounts,
 } from "../../../lib/server/inboxStore";
 import { importFromFirestore } from "../../../lib/server/inboxImport";
+import { saveForwardSettings, submitTemplate, templateStatus } from "../../../lib/server/tourRequests";
 import { AI_MODES, MAX_INSTRUCTIONS, getAiSettings, learnFromTeam, saveLearned, testAi } from "../../../lib/server/inboxAi";
 
 // Admin panel → WhatsApp / Messenger chats (Neon). The tabs poll this.
@@ -28,6 +29,8 @@ import { AI_MODES, MAX_INSTRUCTIONS, getAiSettings, learnFromTeam, saveLearned, 
 //   POST { action: "ai-test", question? }            one test request to Gemini
 //   POST { action: "ai-instructions", text }         the owner's own rules for the assistant
 //   POST { action: "ai-learn" }                      learn from the team's replies now
+//   POST { action: "forward-settings", enabled, phone, name }  where ready tour requests go
+//   POST { action: "forward-status" | "forward-template" }    the WhatsApp template: status / submit
 //   POST { action: "ai-learned", text }              save the owner's edits of what it learned
 export const dynamic = "force-dynamic";
 // The AI test may wait on two Gemini models in turn.
@@ -96,6 +99,15 @@ export async function POST(request) {
       if (text.length > MAX_INSTRUCTIONS) throw new InboxError(`ტექსტი ძალიან გრძელია (მაქს. ${MAX_INSTRUCTIONS} სიმბოლო).`, 400);
       await setConfig("ai", { instructions: text });
       return NextResponse.json(await getAiSettings());
+    }
+    if (payload.action === "forward-settings" || payload.action === "forward-status" || payload.action === "forward-template") {
+      try {
+        if (payload.action === "forward-settings") return NextResponse.json(await saveForwardSettings(payload));
+        if (payload.action === "forward-template") return NextResponse.json({ template: await submitTemplate() });
+        return NextResponse.json({ template: await templateStatus() });
+      } catch (err) {
+        return NextResponse.json({ error: err.message }, { status: 400 });
+      }
     }
     if (payload.action === "ai-learn" || payload.action === "ai-learned") {
       try {
