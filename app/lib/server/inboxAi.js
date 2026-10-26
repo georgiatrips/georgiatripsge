@@ -183,6 +183,9 @@ function systemPrompt(channel, brief, { instructions = "", learned = "", example
     prompt += EXAMPLES.replace("{EXAMPLES}", text);
   }
   if (instructions.trim()) prompt += OWNER_RULES.replace("{RULES}", instructions.trim());
+  // The notes and examples are mostly Georgian; the reply still follows the customer.
+  prompt +=
+    '\n\nLanguage: write "reply" in the language of the customer\'s latest message (English → English, Russian → Russian, and so on), even though the notes and examples above are in Georgian. Only "requestSummary" is always Georgian.';
   return prompt;
 }
 
