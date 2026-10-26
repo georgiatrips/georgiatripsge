@@ -15,4 +15,5 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-      - run: curl -fsS --max-time 60 https://www.georgiatrips.ge/api/cron/manager-window
+      # A plain curl User-Agent is turned away by proxy.js as a bot.
+      - run: curl -fsS --max-time 60 -A "Mozilla/5.0 (X11; Linux x86_64) GeorgiaTrips-ManagerWindow/1.0" https://www.georgiatrips.ge/api/cron/manager-window
