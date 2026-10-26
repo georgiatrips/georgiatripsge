@@ -463,6 +463,7 @@ function AiBar({ ai, onChange }) {
       {ai.mode === "auto" && <small>AI თვითონ პასუხობს; ჩატში თქვენ თუ დაწერეთ, იქ 3 საათი ჩუმადაა.</small>}
       {ai.ready && ai.usage && <AiUsage usage={ai.usage} />}
       {ai.ready && <AiInstructions saved={ai.instructions || ""} />}
+      {ai.ready && <AiLearned ai={ai} />}
     </div>
   );
 }
@@ -479,8 +480,8 @@ function AiUsage({ usage }) {
   const runTest = async () => {
     setTest({ busy: true });
     try {
-      const { reply, ms, model, briefMs } = await inboxAction({ action: "ai-test", question });
-      setTest({ ok: `✓ მუშაობს (${(ms / 1000).toFixed(1)} წმ, ${model.replace("gemini-", "")}, ინფორმაცია ${(briefMs / 1000).toFixed(1)} წმ): „${reply}“` });
+      const { reply, ms, model, briefMs, examples } = await inboxAction({ action: "ai-test", question });
+      setTest({ ok: `✓ მუშაობს (${(ms / 1000).toFixed(1)} წმ, ${model.replace("gemini-", "")}, ინფორმაცია ${(briefMs / 1000).toFixed(1)} წმ, თქვენი ${examples} მაგალითი): „${reply}“` });
     } catch (err) {
       setTest({ error: err.message });
     }
@@ -525,6 +526,70 @@ function AiUsage({ usage }) {
       {test?.ok && <span className="wa-connected">{test.ok}</span>}
       {test?.error && <span className="wa-warn">{test.error}</span>}
     </div>
+  );
+}
+
+// What the assistant learned from the team's own replies (lib/server/inboxAi.js
+// rewrites it once a day). The owner reads it, fixes or deletes wrong points.
+function AiLearned({ ai }) {
+  const saved = ai.learned || "";
+  const [text, setText] = useState(saved);
+  const [status, setStatus] = useState(null);
+  useEffect(() => setText(saved), [saved]);
+  const changed = text !== saved;
+
+  const run = async (body, done) => {
+    setStatus({ busy: body.action });
+    try {
+      await inboxAction(body);
+      setStatus({ ok: done });
+    } catch (err) {
+      setStatus({ error: err.message });
+    }
+  };
+
+  return (
+    <details className="inbox-ai-rules">
+      <summary>
+        📚 რა ისწავლა AI-მ თქვენი პასუხებიდან{" "}
+        {ai.learnedAt ? `(${ai.learnedFrom} პასუხიდან, ${new Date(ai.learnedAt).toLocaleDateString("ka-GE")})` : "(ჯერ არაფერი)"}
+      </summary>
+      <p className="admin-hint">
+        AI კითხულობს, რას პასუხობთ კლიენტებს ტელეფონიდან, Facebook-იდან, Instagram-იდან და საიტიდან. ყოველ პასუხზე
+        უყურებს, როგორ უპასუხეთ მსგავს კითხვას, და დღეში ერთხელ აქ წერს, რა ისწავლა. თუ რამე არასწორია, შეასწორეთ ან
+        წაშალეთ და შეინახეთ — მომდევნო სწავლისას თქვენს შესწორებას დაიტოვებს.
+      </p>
+      <textarea
+        className="tpl-input"
+        rows={10}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        maxLength={8000}
+        placeholder="ჯერ ცარიელია — დააჭირეთ „ახლავე შეისწავლე“."
+      />
+      <div className="admin-form-actions">
+        <button
+          type="button"
+          className="admin-btn-primary"
+          onClick={() => run({ action: "ai-learned", text }, "✓ შენახულია.")}
+          disabled={Boolean(status?.busy) || !changed}
+        >
+          {status?.busy === "ai-learned" ? "..." : "შენახვა"}
+        </button>
+        <button
+          type="button"
+          className="admin-btn-ghost"
+          onClick={() => run({ action: "ai-learn" }, "✓ AI-მ მიმოწერა ხელახლა შეისწავლა.")}
+          disabled={Boolean(status?.busy) || changed}
+          title={changed ? "ჯერ შეინახეთ ცვლილებები" : ""}
+        >
+          {status?.busy === "ai-learn" ? "სწავლობს..." : "ახლავე შეისწავლე"}
+        </button>
+        <small>{text.length} / 8000</small>
+        {status?.ok && !changed && <span className="wa-connected">{status.ok}</span>}
+        {status?.error && <span className="wa-warn">{status.error}</span>}
+      </div>
+    </details>
   );
 }
 

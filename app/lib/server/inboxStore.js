@@ -297,6 +297,34 @@ export async function setAiOff(channel, id, off) {
   await query(`update inbox_conversations set ai_off = $3 where channel = $1 and id = $2`, [channel, id, Boolean(off)]);
 }
 
+// The team's own replies (not the assistant's) with the customer messages
+// they answered: up to 3 customer messages from the day before each reply.
+// The assistant learns the team's answers from these (inboxAi.js).
+export async function listTeamReplies(limit = 400) {
+  const rows = await query(
+    `select o.channel, o.conversation_id, o.text as reply, o.timestamp,
+       (select string_agg(q.text, E'\\n' order by q.timestamp)
+          from (select i.text, i.timestamp from inbox_messages i
+                where i.channel = o.channel and i.conversation_id = o.conversation_id
+                  and i.direction = 'in' and i.timestamp < o.timestamp and i.timestamp > o.timestamp - 86400000
+                order by i.timestamp desc limit 3) q) as question
+     from inbox_messages o
+     where o.direction = 'out' and coalesce(o.source, '') <> 'ai' and coalesce(o.text, '') <> ''
+     order by o.timestamp desc
+     limit $1`,
+    [limit]
+  );
+  return rows
+    .filter((r) => r.question)
+    .map((r) => ({
+      channel: r.channel,
+      conversationId: r.conversation_id,
+      question: r.question,
+      reply: r.reply,
+      timestamp: Number(r.timestamp) || 0,
+    }));
+}
+
 // Number of chats with unread messages, per channel (admin menu badges).
 export async function unreadCounts() {
   const rows = await query(`select channel, count(*)::int as n from inbox_conversations where unread > 0 group by channel`);

@@ -14,7 +14,7 @@ import {
   unreadCounts,
 } from "../../../lib/server/inboxStore";
 import { importFromFirestore } from "../../../lib/server/inboxImport";
-import { AI_MODES, MAX_INSTRUCTIONS, getAiSettings, testAi } from "../../../lib/server/inboxAi";
+import { AI_MODES, MAX_INSTRUCTIONS, getAiSettings, learnFromTeam, saveLearned, testAi } from "../../../lib/server/inboxAi";
 
 // Admin panel → WhatsApp / Messenger chats (Neon). The tabs poll this.
 //   GET ?counts=1                          chats with unread messages, per channel
@@ -27,6 +27,8 @@ import { AI_MODES, MAX_INSTRUCTIONS, getAiSettings, testAi } from "../../../lib/
 //   POST { action: "ai-draft-clear", channel, id }  drop a suggested reply
 //   POST { action: "ai-test", question? }            one test request to Gemini
 //   POST { action: "ai-instructions", text }         the owner's own rules for the assistant
+//   POST { action: "ai-learn" }                      learn from the team's replies now
+//   POST { action: "ai-learned", text }              save the owner's edits of what it learned
 export const dynamic = "force-dynamic";
 // The AI test may wait on two Gemini models in turn.
 export const maxDuration = 60;
@@ -94,6 +96,13 @@ export async function POST(request) {
       if (text.length > MAX_INSTRUCTIONS) throw new InboxError(`ტექსტი ძალიან გრძელია (მაქს. ${MAX_INSTRUCTIONS} სიმბოლო).`, 400);
       await setConfig("ai", { instructions: text });
       return NextResponse.json(await getAiSettings());
+    }
+    if (payload.action === "ai-learn" || payload.action === "ai-learned") {
+      try {
+        return NextResponse.json(payload.action === "ai-learn" ? await learnFromTeam() : await saveLearned(payload.text));
+      } catch (err) {
+        return NextResponse.json({ error: err.message }, { status: 400 });
+      }
     }
     if (payload.action === "ai-chat") {
       await setAiOff(channelOf(payload.channel), String(payload.id || ""), payload.off);
