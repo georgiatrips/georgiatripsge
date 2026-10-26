@@ -294,13 +294,16 @@ function toContents(messages) {
 const REPLY_SCHEMA = {
   type: "OBJECT",
   properties: {
-    reply: { type: "STRING" },
+    // Named first so the reply that follows is written in it.
+    language: { type: "STRING", description: "Language of the customer's latest message, e.g. English, Russian, Georgian" },
+    reply: { type: "STRING", description: "The answer, written in that language" },
     handoff: { type: "BOOLEAN" },
     reason: { type: "STRING" },
     requestReady: { type: "BOOLEAN" },
-    requestSummary: { type: "STRING" },
+    requestSummary: { type: "STRING", description: "Always in Georgian" },
   },
-  required: ["reply", "handoff", "requestReady"],
+  required: ["language", "reply", "handoff", "requestReady"],
+  propertyOrdering: ["language", "reply", "handoff", "reason", "requestReady", "requestSummary"],
 };
 const NOTES_SCHEMA = { type: "OBJECT", properties: { notes: { type: "STRING" } }, required: ["notes"] };
 
