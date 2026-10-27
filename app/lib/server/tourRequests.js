@@ -85,19 +85,24 @@ const oneLine = (text, max) => {
   return flat.length > max ? `${flat.slice(0, max)}…` : flat;
 };
 
-// Sends one ready request on, at most once a day per chat. Returns how it
-// went, for the owner's Telegram copy.
+// Sends one ready request on, once a day per chat; within that day only an
+// update whose details changed (the customer added or corrected something)
+// goes again, as the whole updated request. Returns how it went.
 export async function forwardTourRequest({ channel, id, name, summary, customerText }) {
   const settings = await getForwardSettings();
   if (!settings.enabled || !settings.phone) return null;
+  const details = withoutContacts(summary);
+  if (!details) return null;
   const conversation = await getConversation(channel, id);
-  if (conversation?.requestForwardedAt && Date.now() - conversation.requestForwardedAt < FORWARD_AGAIN_AFTER_MS) return null;
-  await markRequestForwarded(channel, id);
+  const update = Boolean(conversation?.requestForwardedAt && Date.now() - conversation.requestForwardedAt < FORWARD_AGAIN_AFTER_MS);
+  if (update && oneLine(details, 2000) === oneLine(conversation.requestSummary, 2000)) return null;
+  await markRequestForwarded(channel, id, details);
 
   const who = [name, CHANNEL_LABELS[channel], channel === "whatsapp" ? `+${id}` : ""].filter(Boolean).join(" · ");
-  const details = withoutContacts(summary);
   const lines = details.split(/;\s*/).filter(Boolean).join("\n");
-  const text = `📨 ახალი მოთხოვნა ტურზე GeorgiaTrips-იდან:\n\n${lines}\n\nგთხოვთ, მოამზადოთ შეთავაზება და გამოგვიგზავნოთ ფასი.`;
+  const text = update
+    ? `✏️ განახლება წინა მოთხოვნაზე (იგივე კლიენტი), სრული მოთხოვნა:\n\n${lines}\n\nგთხოვთ, შეთავაზება ამის მიხედვით მოამზადოთ.`
+    : `📨 ახალი მოთხოვნა ტურზე GeorgiaTrips-იდან:\n\n${lines}\n\nგთხოვთ, მოამზადოთ შეთავაზება და გამოგვიგზავნოთ ფასი.`;
 
   let how;
   try {
@@ -110,7 +115,7 @@ export async function forwardTourRequest({ channel, id, name, summary, customerT
         to: settings.phone,
         name: TEMPLATE_NAME,
         language: TEMPLATE_LANGUAGE,
-        params: [oneLine(details, 1000)],
+        params: [oneLine(`${update ? "(განახლება წინა მოთხოვნაზე) " : ""}${details}`, 1000)],
         text,
       });
       how = "შაბლონით";
@@ -121,7 +126,7 @@ export async function forwardTourRequest({ channel, id, name, summary, customerT
 
   const ok = !how.startsWith("ვერ");
   await sendTelegram(
-    `${ok ? "📨" : "⚠️"} მზა მოთხოვნა ${ok ? "გადაეგზავნა" : "ვერ გადაეგზავნა"} ${settings.name || "მენეჯერს"}-ს (+${settings.phone}) — ${how}\n\n` +
+    `${ok ? "📨" : "⚠️"} ${update ? "მოთხოვნის განახლება" : "მზა მოთხოვნა"} ${ok ? "გადაეგზავნა" : "ვერ გადაეგზავნა"} ${settings.name || "მენეჯერს"}-ს (+${settings.phone}) — ${how}\n\n` +
       `${text}\n\nკლიენტი (მხოლოდ თქვენთვის): ${who}` +
         (customerText ? `\n\nკლიენტის შეტყობინება:\n${String(customerText).slice(0, 1500)}` : "") +
         `\n\nადმინი: ${SITE_URL}/admin`,

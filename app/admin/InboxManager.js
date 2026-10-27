@@ -522,10 +522,10 @@ function AiUsage({ usage }) {
         </span>
       )}
       <span className="inbox-ai-test">
-        <input
-          type="text"
+        <textarea
           className="tpl-input"
-          placeholder="სატესტო კითხვა (ცარიელი — „ტურები გაქვთ საქართველოში?“)"
+          rows={question.includes("\n") ? 6 : 1}
+          placeholder="სატესტო კითხვა (ცარიელი — „ტურები გაქვთ საქართველოში?“). მთელი ჩატისთვის: შეტყობინებები --- ხაზით გამოყავით, AI-ს პასუხი დაიწყეთ „AI:“-ით."
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
         />

@@ -60,6 +60,7 @@ const SCHEMA = [
   `alter table inbox_conversations add column if not exists ai_handled_at bigint`,
   // When the assistant last forwarded this chat as a ready tour request.
   `alter table inbox_conversations add column if not exists request_forwarded_at bigint`,
+  `alter table inbox_conversations add column if not exists request_summary text`,
   `create table if not exists inbox_contacts (
     phone text primary key,
     name text not null default '',
@@ -199,6 +200,7 @@ const toConversation = (row) => ({
   aiDraft: row.ai_draft || "",
   aiDraftAt: Number(row.ai_draft_at) || 0,
   requestForwardedAt: Number(row.request_forwarded_at) || 0,
+  requestSummary: row.request_summary || "",
 });
 
 // Latest chats of one channel, or of all channels when `channel` is empty.
@@ -296,8 +298,12 @@ export async function setAiDraft(channel, id, text) {
   ]);
 }
 
-export async function markRequestForwarded(channel, id) {
-  await query(`update inbox_conversations set request_forwarded_at = $3 where channel = $1 and id = $2`, [channel, id, Date.now()]);
+// When a ready tour request went to the manager, and what it said.
+export async function markRequestForwarded(channel, id, summary = "") {
+  await query(
+    `update inbox_conversations set request_forwarded_at = $3, request_summary = $4 where channel = $1 and id = $2`,
+    [channel, id, Date.now(), summary]
+  );
 }
 
 export async function setAiOff(channel, id, off) {
