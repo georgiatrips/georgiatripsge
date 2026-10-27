@@ -32,7 +32,9 @@ const WINDOW_MS = 24 * 60 * 60 * 1000;
 // anything, so the next 24 hours stay open for plain-text forwards.
 const PING_AFTER_MS = 22 * 60 * 60 * 1000;
 const PING_TEXT =
-  "🤖 სატესტო შეტყობინება GeorgiaTrips-ის AI-დან. გთხოვთ, უპასუხეთ ნებისმიერი სიტყვით (მაგ. „ok“), რომ AI-მ მომდევნო 24 საათი შეძლოს ტურების მოთხოვნების გამოგზავნა.";
+  "🤖 გამარჯობა! მე ვარ GeorgiaTrips-ის ასისტენტი გიდო, ეს სატესტო შეტყობინებაა. გთხოვთ, უპასუხეთ ნებისმიერი სიტყვით (მაგ. „ok“), რომ AI-მ მომდევნო 24 საათი შეძლოს ტურების მოთხოვნების გამოგზავნა.";
+// How the assistant opens every message to the manager.
+const GREETING = "📨 გამარჯობა! მე ვარ GeorgiaTrips-ის ასისტენტი გიდო.";
 const CHANNEL_LABELS = { whatsapp: "WhatsApp", messenger: "Messenger", instagram: "Instagram" };
 
 const DEFAULTS = { enabled: true, phone: "995599186927", name: "Travel Georgia" };
@@ -101,8 +103,8 @@ export async function forwardTourRequest({ channel, id, name, summary, customerT
   const who = [name, CHANNEL_LABELS[channel], channel === "whatsapp" ? `+${id}` : ""].filter(Boolean).join(" · ");
   const lines = details.split(/;\s*/).filter(Boolean).join("\n");
   const text = update
-    ? `✏️ განახლება წინა მოთხოვნაზე (იგივე კლიენტი), სრული მოთხოვნა:\n\n${lines}\n\nგთხოვთ, შეთავაზება ამის მიხედვით მოამზადოთ.`
-    : `📨 ახალი მოთხოვნა ტურზე GeorgiaTrips-იდან:\n\n${lines}\n\nგთხოვთ, მოამზადოთ შეთავაზება და გამოგვიგზავნოთ ფასი.`;
+    ? `${GREETING} გიგზავნით განახლებას წინა მოთხოვნაზე (იგივე კლიენტი), სრული მოთხოვნა:\n\n${lines}\n\nგთხოვთ, შეთავაზება ამის მიხედვით მოამზადოთ.`
+    : `${GREETING} გიგზავნით კლიენტის მოთხოვნას ტურზე:\n\n${lines}\n\nგთხოვთ, მოამზადოთ შეთავაზება და გამოგვიგზავნოთ ფასი.`;
 
   let how;
   try {
@@ -115,7 +117,10 @@ export async function forwardTourRequest({ channel, id, name, summary, customerT
         to: settings.phone,
         name: TEMPLATE_NAME,
         language: TEMPLATE_LANGUAGE,
-        params: [oneLine(`${update ? "(განახლება წინა მოთხოვნაზე) " : ""}${details}`, 1000)],
+        // The approved template text is fixed, so the introduction rides in the parameter.
+        params: [
+          oneLine(`${GREETING} გიგზავნით ${update ? "განახლებას წინა მოთხოვნაზე" : "კლიენტის მოთხოვნას"} — ${details}`, 1000),
+        ],
         text,
       });
       how = "შაბლონით";
