@@ -33,14 +33,16 @@ import { sendText as sendWhatsApp } from "./whatsapp";
 import { sendText as sendPageMessage } from "./messenger";
 import { forwardSettingsFrom, forwardTourRequest, isForwardTarget } from "./tourRequests";
 
-// Flash-Lite with minimal thinking answers a chat in a few seconds; 3.8
-// Flash took over 30 s on the free tier with the full company brief, so it
-// is only the fallback (rate limit, overload or timeout of the first).
+// Flash-Lite with minimal thinking answers a chat in about a second; the
+// others are fallbacks (rate limit, overload or timeout of the one before),
+// each with its own free-tier quota. 3.7 / 3.8 Flash were left out: on the
+// free tier they answered 503 or not at all within 60 s (October 2026).
+// Together with SETTLE_MS the timeouts stay under the routes' 60 s.
 const MODELS = [
-  { name: process.env.GEMINI_MODEL || "gemini-3.5-flash-lite", thinkingLevel: "minimal" },
-  { name: "gemini-3.8-flash", thinkingLevel: "low" },
+  { name: process.env.GEMINI_MODEL || "gemini-3.5-flash-lite", thinkingLevel: "minimal", timeoutMs: 15000 },
+  { name: "gemini-3.5-flash", thinkingLevel: "low", timeoutMs: 20000 },
+  { name: "gemini-3.1-flash-lite", thinkingLevel: "minimal", timeoutMs: 15000 },
 ];
-const MODEL_TIMEOUT_MS = 20000;
 // Customers often write in a few quick messages: wait, then answer them all.
 const SETTLE_MS = 3000;
 // After the team writes in a chat, the chat is theirs for this long.
@@ -347,7 +349,8 @@ const NOTES_SCHEMA = { type: "OBJECT", properties: { notes: { type: "STRING" } }
 
 // One JSON answer from Gemini in the given shape; { out, model }.
 async function generate(system, contents, schema = REPLY_SCHEMA) {
-  let lastError;
+  // Every model's error, so the panel shows why the first one failed too.
+  const errors = [];
   for (const model of MODELS) {
     let res;
     try {
@@ -363,13 +366,13 @@ async function generate(system, contents, schema = REPLY_SCHEMA) {
             responseSchema: schema,
           },
         }),
-        signal: AbortSignal.timeout(MODEL_TIMEOUT_MS),
+        signal: AbortSignal.timeout(model.timeoutMs),
       });
     } catch (err) {
       // Timed out or unreachable: the next model may still answer.
-      const message = err?.name === "TimeoutError" ? `no answer in ${MODEL_TIMEOUT_MS / 1000} s` : err?.message;
+      const message = err?.name === "TimeoutError" ? `no answer in ${model.timeoutMs / 1000} s` : err?.message;
       await recordUsage(model.name, { ok: false, status: "timeout", message });
-      lastError = new Error(`Gemini ${model.name}: ${message}`);
+      errors.push({ model: model.name, status: "timeout", message });
       continue;
     }
     const data = await res.json().catch(() => ({}));
@@ -380,10 +383,14 @@ async function generate(system, contents, schema = REPLY_SCHEMA) {
       return { out: JSON.parse(text), model: model.name };
     }
     await recordUsage(model.name, { ok: false, status: res.status, message: data.error?.message });
-    lastError = new Error(`Gemini ${model.name} ${res.status}: ${data.error?.message || ""}`);
+    errors.push({ model: model.name, status: res.status, message: data.error?.message || "" });
     // Rate limit, overload or a setting this model refuses: try the next one.
   }
-  throw lastError;
+  const message = errors.map((e) => `${e.model.replace("gemini-", "")} ${e.status}: ${e.message}`).join(" | ");
+  try {
+    await setConfig(USAGE_KEY, { lastError: { model: "all", status: errors.at(-1)?.status, message: message.slice(0, 600), at: Date.now() } });
+  } catch {}
+  throw new Error(`Gemini ${message}`);
 }
 
 // The admin's "test" button: the same request a real customer question
