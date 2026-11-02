@@ -16,6 +16,7 @@ import { getLocalizedHref } from "../../lib/siteConfig";
 import { useCurrency } from "../../lib/currency/CurrencyContext";
 import { formatPriceStr } from "../../lib/i18n/formatPriceStr";
 import { isValidPhone } from "../../lib/bookingModel";
+import { isTooLateToBook, tooLateMessage } from "../../lib/bookingLeadTime";
 import { useAuth } from "../../lib/AuthContext";
 import { useCoupon } from "../../lib/CouponContext";
 import { trackEvent } from "../../lib/analytics";
@@ -88,6 +89,8 @@ export default function TourDetailClient({
   const [lightboxImgIndex, setLightboxImgIndex] = useState(null);
   const [bookingSubmitting, setBookingSubmitting] = useState(false);
   const [bookingError, setBookingError] = useState("");
+  // The 24-hour rule: shown under the date field.
+  const [dateError, setDateError] = useState("");
   const bookingSidebarRef = useRef(null);
   // Funnel events fire once per tour page view.
   const formStartedRef = useRef(false);
@@ -533,7 +536,14 @@ export default function TourDetailClient({
       trackEvent("booking_form_invalid", { tourId: tour.id, fields: "phone", label: "phone" }).catch?.(() => {});
       return;
     }
+    // Group and private tours are booked at least 24 hours before the start.
+    if (isTooLateToBook(selectedDate, tour.startTime)) {
+      setDateError(tooLateMessage(lang));
+      trackEvent("booking_form_invalid", { tourId: tour.id, fields: "date", label: "too_late" }).catch?.(() => {});
+      return;
+    }
     formSentRef.current = true;
+    setDateError("");
     setPhoneError("");
     setBookingError("");
     setBookingSubmitting(true);
@@ -587,7 +597,9 @@ export default function TourDetailClient({
     } catch (err) {
       console.error("Booking error:", err);
       trackEvent("book_tour_failed", { tourId: tour.id, reason: String(err?.message || "").slice(0, 120) }).catch?.(() => {});
-      if (err?.isValidation) {
+      if (err?.code === "too_late") {
+        setDateError(err.message || tooLateMessage(lang));
+      } else if (err?.isValidation) {
         setPhoneError(t("tourDetail.phoneError"));
       } else {
         // Shown next to the button with a prefilled WhatsApp link. Opening
@@ -777,6 +789,8 @@ export default function TourDetailClient({
             handleFormInvalid={handleFormInvalid}
             onWhatsappBooking={handleWhatsappBooking}
             bookingError={bookingError}
+            dateError={dateError}
+            setDateError={setDateError}
             user={user}
           />
 

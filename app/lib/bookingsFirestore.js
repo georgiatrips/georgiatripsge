@@ -51,6 +51,7 @@ export async function createBooking(payload) {
     }
     const err = new Error(data.error || "Booking submission failed");
     if (isValidation) err.isValidation = true;
+    if (data.code) err.code = data.code;
     throw err;
   } catch (err) {
     if (err.isValidation) {

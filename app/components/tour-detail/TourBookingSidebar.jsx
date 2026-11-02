@@ -12,6 +12,7 @@ import TourPrice from "../TourPrice";
 import DatePicker from "../DatePicker";
 import { LocationIcon, PhoneIcon, ShieldCheckIcon, WalletIcon, WhatsAppIcon } from "../Icons";
 import { VEHICLES, VEHICLE_KEYS } from "../../lib/vehicles";
+import { firstBookableDate } from "../../lib/bookingLeadTime";
 
 const VEHICLE_ICONS = { sedan: "🚗", minivan: "🚐", jeep: "🚙", sprinter: "🚌" };
 
@@ -64,6 +65,8 @@ export default function TourBookingSidebar({
   handleFormInvalid,
   onWhatsappBooking,
   bookingError = "",
+  dateError = "",
+  setDateError,
   user,
 }) {
   const { t, lang } = useLanguage();
@@ -236,14 +239,23 @@ export default function TourBookingSidebar({
             <DatePicker
               id="booking-date"
               value={selectedDate}
-              onChange={(value) => setSelectedDate(value)}
+              onChange={(value) => {
+                setSelectedDate(value);
+                setDateError?.("");
+              }}
               placeholder={t("tourDetail.selectDatePlaceholder")}
               availableDates={tourType === "group" ? groupDatesIso : null}
+              minDate={firstBookableDate(tour.startTime)}
               highlightDates={groupDatesIso}
               highlightLabel={t("datePicker.groupDeparture")}
               anyDayLabel={tourType === "private" ? t("datePicker.anyDay") : undefined}
             />
             {tourType === "private" && <p className="tdp-type-hint">{t("tourDetail.privateDateHint")}</p>}
+            {dateError && (
+              <p role="alert" style={{ color: "#b42318", fontSize: "0.84rem", marginTop: "0.35rem", fontWeight: 600 }}>
+                {dateError}
+              </p>
+            )}
           </div>
 
           <div className="tdp-form-group">

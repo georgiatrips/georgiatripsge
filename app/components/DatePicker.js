@@ -60,6 +60,8 @@ function weekdayNames(lang, dictionary) {
  *                     day stays selectable.
  *  availableDates     optional restriction: when given and non-empty, ONLY
  *                     these dates can be picked (booking form, group mode).
+ *  minDate            optional "YYYY-MM-DD": earlier days can't be picked
+ *                     (tours are booked 24 hours ahead)
  *  highlightLabel     legend text for highlighted days
  *  anyDayLabel        optional legend text for ordinary days
  *  variant            "form" | "hero" | "filter" (trigger styling only)
@@ -71,6 +73,7 @@ export default function DatePicker({
   placeholder,
   direction = "down",
   availableDates = null,
+  minDate = "",
   highlightDates = null,
   highlightLabel,
   anyDayLabel,
@@ -90,6 +93,8 @@ export default function DatePicker({
 
   const today = todayParts();
   const todayIso = toIso(today.y, today.m, today.d);
+  // The first day that can be picked.
+  const firstIso = parseIso(minDate) && minDate > todayIso ? minDate : todayIso;
   const selected = parseIso(value);
 
   const available = useMemo(() => buildDateSet(availableDates), [availableDates]);
@@ -105,7 +110,7 @@ export default function DatePicker({
   const popoverRef = useRef(null);
   const dayRefs = useRef(new Map());
 
-  const isPast = useCallback((y, m, d) => toIso(y, m, d) < todayIso, [todayIso]);
+  const isPast = useCallback((y, m, d) => toIso(y, m, d) < firstIso, [firstIso]);
   const isDisabled = useCallback(
     (y, m, d) => isPast(y, m, d) || (available ? !available.has(y, m, d) : false),
     [isPast, available]
@@ -113,8 +118,8 @@ export default function DatePicker({
 
   const nextHighlight = useMemo(() => {
     const source = available || highlighted;
-    return source?.isoList.find((iso) => iso >= todayIso) || null;
-  }, [available, highlighted, todayIso]);
+    return source?.isoList.find((iso) => iso >= firstIso) || null;
+  }, [available, highlighted, firstIso]);
 
   const cells = useMemo(() => {
     const { y, m } = view;
@@ -137,7 +142,7 @@ export default function DatePicker({
       start = { y: p.y, m: p.m };
     }
     setView(start);
-    setFocusIso(value || (available && nextHighlight) || todayIso);
+    setFocusIso(value || (available && nextHighlight) || firstIso);
     setOpen(true);
   };
 

@@ -56,6 +56,7 @@ export async function buildSiteBrief() {
     "## Key facts",
     "- Base: Batumi, Georgia. Pickup from hotels and addresses in Batumi, Gonio, Kvariati, Makhinjauri and Kobuleti.",
     "- Booking: free request on the website or WhatsApp; the team confirms by WhatsApp or phone. No prepayment — payment on the day.",
+    "- Tours (group and private) must be booked at least 24 hours before they start.",
     "- Prices are in Georgian lari (₾, GEL). Group tours are priced per person; private tours and transfers per vehicle.",
     `- Vehicles: ${VEHICLE_KEYS.map((key) => `${getVehicleLabel(key)} (up to ${VEHICLES[key].capacityPax} passengers)`).join(", ")}.`,
     `- Contact: WhatsApp / phone ${PHONE_DISPLAY} (${WA_LINK}), email ${EMAIL}.`,

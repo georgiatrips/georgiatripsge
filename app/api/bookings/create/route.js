@@ -6,6 +6,7 @@ import { validateCouponServer, recordCouponUsage } from "../../../lib/coupons";
 import { VEHICLES, getPrivateVehiclePrices } from "../../../lib/vehicles";
 import { notifyNewBooking } from "../../../lib/server/notifyBooking";
 import { requireAuthenticatedUser } from "../../../lib/server/adminAuth";
+import { isTooLateToBook, tooLateMessage } from "../../../lib/bookingLeadTime";
 
 // Short-term in-memory cache for anti-spam / duplicate prevention (60 seconds)
 const recentSubmissions = new Map();
@@ -82,6 +83,8 @@ export async function POST(request) {
     // True whenever the total below comes from the request body instead of
     // Firestore, so the team knows to check it before confirming.
     let clientPriced = false;
+    // The tour's start time from the admin panel, for the 24-hour rule.
+    let tourStartTime = "";
 
     if (type === "tour" && tourId) {
       try {
@@ -95,6 +98,7 @@ export async function POST(request) {
               { status: 400 }
             );
           }
+          if (typeof tData.startTime === "string") tourStartTime = tData.startTime;
           const tPriceGroup = Number(tData.priceGroupNum) || (parseInt(String(tData.priceGroup || "0").replace(/\D/g, ""), 10) || 0);
           const tPricePrivate = Number(tData.pricePrivateNum) || (parseInt(String(tData.pricePrivate || "0").replace(/\D/g, ""), 10) || 0);
 
@@ -133,6 +137,14 @@ export async function POST(request) {
       clientPriced = true;
       baseTotalPrice = Number(body.price) || 0;
       unitPrice = baseTotalPrice;
+    }
+
+    // Group and private tours are booked at least 24 hours before the start.
+    if (type === "tour" && isTooLateToBook(date, tourStartTime)) {
+      return NextResponse.json(
+        { success: false, code: "too_late", error: tooLateMessage(language) },
+        { status: 400 }
+      );
     }
 
     // 4. Secure Server-Side Coupon Validation (Strict Firestore & Whitelist Rules)

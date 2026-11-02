@@ -32,6 +32,7 @@ import {
 import { sendText as sendWhatsApp } from "./whatsapp";
 import { sendText as sendPageMessage } from "./messenger";
 import { forwardSettingsFrom, forwardTourRequest, isForwardTarget } from "./tourRequests";
+import { isTooLateToBook, tooLateMessage } from "../bookingLeadTime";
 
 // Flash-Lite with minimal thinking answers a chat in about a second; the
 // others are fallbacks (rate limit, overload or timeout of the one before),
@@ -151,9 +152,12 @@ Ready requests: a manager needs four things to prepare an offer: what the custom
 - write "requestSummary": one line with every trip detail from the whole chat (earlier messages too, with later corrections winning), as "label: value; label: value" (თარიღი, ხალხი, ადგილები/მარშრუტი, აყვანა, დრო, სასტუმრო, and any wishes or questions such as car type, language, budget, entrance tickets, currency). It goes to a partner manager, so write it in clear, correct Georgian, translating everything the customer wrote (place names too, e.g. Diamond Bridge → ბრილიანტის ხიდი, Tbilisi → თბილისი; dates as "3 ნოემბერი"), and never include the customer's name, phone, e-mail, profile or any other contact detail;
 - in "reply", tell the customer in their language that their request has been received and passed to a manager who is now preparing their trip and price, and that they will hear back soon. Do not quote a price yourself unless it is a listed price from the brief, and do not set "handoff".
 
+24-hour rule: tours, group and private alike, must be booked at least 24 hours before they start (a tour without a stated start time starts at 09:00). A tour on 3 November can no longer be booked on 2 November at 23:00. If the customer wants a tour that starts less than 24 hours from now, do not take or forward the request: set "requestReady" to false, and in "reply" tell them in their language that tours must be booked at least 24 hours in advance, so that date is no longer possible, and offer a later date. Transfers are not covered by this rule.
+For every request, set "tripKind" ("tour" for a group or private tour, "transfer", "package" for a multi-day trip, or "other") and "tripDate" (the first trip date as YYYY-MM-DD, empty if not known yet).
+
 Unless the request is ready (then always forward it instead), set "handoff" to true (a team member must answer) when the customer: complains or is unhappy, asks about a refund or cancelling or changing an existing booking, asks to talk to a person, asks for a specific date's availability or a confirmation, sends something you cannot understand (only a photo, a voice message), or asks anything that neither the brief nor the team's answers below cover. With handoff, still write a short polite reply saying the team will answer shortly, plus any facts that help.
 
-Today is {TODAY} (Batumi time).
+Now it is {TODAY} (Batumi time).
 
 Company brief:
 {BRIEF}`;
@@ -215,7 +219,7 @@ function similarity(a, b) {
 }
 
 function systemPrompt(channel, brief, { instructions = "", learned = "", examples = [] } = {}) {
-  const today = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Tbilisi", weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const today = new Date().toLocaleString("en-GB", { timeZone: "Asia/Tbilisi", weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
   let prompt = RULES.replace("{CHANNEL}", CHANNEL_LABELS[channel]).replace("{TODAY}", today).replace("{BRIEF}", brief);
   if (learned.trim()) prompt += LEARNED.replace("{LEARNED}", learned.trim());
   if (examples.length) {
@@ -341,9 +345,11 @@ const REPLY_SCHEMA = {
     reason: { type: "STRING" },
     requestReady: { type: "BOOLEAN" },
     requestSummary: { type: "STRING", description: "Always in Georgian" },
+    tripKind: { type: "STRING", enum: ["tour", "transfer", "package", "other"] },
+    tripDate: { type: "STRING", description: "First trip date as YYYY-MM-DD, empty if not known" },
   },
   required: ["language", "reply", "handoff", "requestReady"],
-  propertyOrdering: ["language", "reply", "handoff", "reason", "requestReady", "requestSummary"],
+  propertyOrdering: ["language", "reply", "handoff", "reason", "requestReady", "requestSummary", "tripKind", "tripDate"],
 };
 const NOTES_SCHEMA = { type: "OBJECT", properties: { notes: { type: "STRING" } }, required: ["notes"] };
 
@@ -393,6 +399,13 @@ async function generate(system, contents, schema = REPLY_SCHEMA) {
   throw new Error(`Gemini ${message}`);
 }
 
+// The 24-hour rule, checked in code too: a tour that starts too soon is
+// never forwarded, and the customer is told why.
+function withLeadTime(out) {
+  if (out.tripKind !== "tour" || !isTooLateToBook(out.tripDate, "")) return out;
+  return { ...out, reply: tooLateMessage(out.language), requestReady: false, handoff: false };
+}
+
 // The admin's "test" button: the same request a real customer question
 // makes (full company brief), so the panel shows at once whether replies
 // work, how long they take, and the error if not.
@@ -410,15 +423,18 @@ export async function testAi(question) {
     });
     const customerText = messages.filter((m) => m.direction === "in").map((m) => m.text).join("\n");
     const examples = pickExamples(pairs, customerText, "");
-    const { out, model } = await generate(
+    const { out: answer, model } = await generate(
       systemPrompt("whatsapp", brief, { ...settings, examples }) + chatSoFar(messages),
       toContents(messages)
     );
+    const out = withLeadTime(answer);
     return {
       reply: String(out.reply || "").trim(),
       // The test never forwards anything; it only shows what would go.
       requestReady: Boolean(out.requestReady),
       requestSummary: out.requestSummary || "",
+      tripKind: out.tripKind || "",
+      tripDate: out.tripDate || "",
       model,
       briefMs,
       examples: examples.length,
@@ -474,6 +490,7 @@ async function answerChat(channel, id) {
     ).catch(() => null);
     if (again?.out?.reply) out = again.out;
   }
+  out = withLeadTime(out);
   const reply = String(out.reply || "").trim();
   const handoff = Boolean(out.handoff);
   const reason = out.reason || "";
