@@ -20,6 +20,7 @@ import BookingManager from "./BookingManager";
 import TransferPricingManager from "./TransferPricingManager";
 import TransferPlacesManager from "./TransferPlacesManager";
 import InboxManager from "./InboxManager";
+import GetTransferManager from "./GetTransferManager";
 import { collection, getCountFromServer, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { WA_CONNECT_STATE } from "../lib/whatsappConfig";
@@ -941,6 +942,7 @@ export default function AdminPage() {
       items: [
         { key: "bookings", label: "ჯავშნები", Icon: ClipboardIcon, badge: pendingBookingsCount > 0 ? { text: String(pendingBookingsCount), tone: "warn" } : null },
         { key: "inbox", label: "შეტყობინებები", Icon: MessengerIcon, badge: unreadChatsCount > 0 ? { text: String(unreadChatsCount), tone: "warn" } : null },
+        { key: "gettransfer", label: "GetTransfer", Icon: CarIcon },
         { key: "coupons", label: "კუპონები", Icon: TicketIcon },
         { key: "transfers", label: "ტრანსფერის ფასები", Icon: CarIcon },
         { key: "transferPlaces", label: "ტრანსფერის ლოკაციები", Icon: LocationIcon },
@@ -961,6 +963,7 @@ export default function AdminPage() {
     analytics: ["ანალიტიკა", "ვინ არის საიტზე, საიდან მოვიდა და რას აკეთებს."],
     bookings: ["ჯავშნები", "ახალი მოთხოვნები, დადასტურება და სტატუსები."],
     inbox: ["შეტყობინებები", "WhatsApp, Messenger და Instagram ერთად — ყოველ ჩატს აწერია, საიდან მოგვწერეს."],
+    gettransfer: ["GetTransfer", "GetTransfer-ის შეკვეთები ფასებით — ოფერს აქედან აგზავნი, გაფართოება GT Sync მას GetTransfer-ზე დადებს."],
     coupons: ["კუპონები", "ფასდაკლების კოდები და IP შეზღუდვები."],
     transfers: ["ტრანსფერის ფასები", "ფასები მანძილისა და ავტომობილის მიხედვით."],
     tours: ["ტურები", "ტურის დამატება, რედაქტირება და კატალოგი."],
@@ -2303,6 +2306,11 @@ export default function AdminPage() {
           {/* TAB: INBOX (WhatsApp, Messenger and Instagram chats together) */}
           {activeTab === "inbox" && (
             <InboxManager />
+          )}
+
+          {/* TAB: GETTRANSFER (ride requests synced by the GT Sync extension) */}
+          {activeTab === "gettransfer" && (
+            <GetTransferManager />
           )}
         </main>
       </div>

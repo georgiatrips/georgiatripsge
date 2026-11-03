@@ -1467,3 +1467,41 @@
 .inbox-ai-draft div { display: flex; gap: 0.5rem; }
 .wa-demo summary { cursor: pointer; }
 .wa-demo[open] summary { margin-bottom: 0.5rem; }
+
+/* ── GetTransfer (GetTransferManager.js) ── */
+.gtx-wrap { display: grid; gap: 1rem; }
+.gtx-status { display: grid; gap: 0.5rem; background: #fff; border: 1px solid var(--gt-line); border-radius: 14px; padding: 0.9rem 1rem; }
+.gtx-status p { margin: 0; }
+.gtx-key { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.gtx-key code { background: var(--gt-stone); padding: 0.3rem 0.5rem; border-radius: 6px; font-size: 0.8rem; word-break: break-all; }
+.gtx-toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.gtx-search { flex: 1 1 200px; max-width: 320px; }
+.gtx-list { display: grid; gap: 0.75rem; }
+.gtx-card { background: #fff; border: 1px solid var(--gt-line); border-radius: 14px; padding: 0.9rem 1rem; display: grid; gap: 0.55rem; }
+.gtx-card.is-urgent { border-color: #f59e0b; }
+.gtx-card.is-gone { opacity: 0.55; }
+.gtx-card-head { display: flex; flex-wrap: wrap; gap: 0.35rem 0.8rem; align-items: baseline; font-size: 0.9rem; }
+.gtx-card-head a { font-weight: 700; color: var(--gt-primary); }
+.gtx-right { margin-left: auto; }
+.gtx-route { display: grid; gap: 0.25rem; font-weight: 600; color: var(--gt-ink); }
+.gtx-pin { display: inline-grid; place-items: center; width: 1.3rem; height: 1.3rem; margin-right: 0.45rem; border-radius: 50%; background: var(--gt-ink); color: #fff; font-size: 0.7rem; }
+.gtx-facts { display: flex; flex-wrap: wrap; gap: 0.35rem 1rem; margin: 0; font-size: 0.9rem; color: var(--gt-ink-2); }
+.gtx-comment { margin: 0; padding: 0.45rem 0.6rem; background: #fffbeb; border-radius: 8px; font-size: 0.9rem; }
+.gtx-prices { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.gtx-price-tag { display: inline-flex; gap: 0.35rem; align-items: baseline; padding: 0.25rem 0.55rem; border: 1px solid var(--gt-line); border-radius: 8px; font-size: 0.85rem; }
+.gtx-price-tag b { color: #047857; }
+.gtx-type { color: var(--gt-muted); }
+.gtx-max { color: #b91c1c; font-weight: 600; }
+.gtx-muted { color: var(--gt-muted); font-size: 0.85rem; }
+.gtx-warn { color: #b91c1c; font-weight: 600; }
+.gtx-offer { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; padding-top: 0.55rem; border-top: 1px dashed var(--gt-line); }
+.gtx-offer select { flex: 1 1 220px; max-width: 360px; }
+.gtx-price { display: inline-flex; gap: 0.35rem; align-items: center; font-size: 0.85rem; color: var(--gt-muted); }
+.gtx-price input { width: 6.5rem; }
+.gtx-net { flex-basis: 100%; margin: 0; font-size: 0.85rem; color: var(--gt-ink-2); }
+.gtx-state { margin: 0; padding: 0.45rem 0.6rem; border-radius: 8px; font-size: 0.9rem; }
+.gtx-state.is-wait { background: #eff6ff; }
+.gtx-state.is-ok { background: #ecfdf5; }
+.gtx-state.is-bad { background: #fef2f2; }
+.gtx-card-foot { display: flex; justify-content: flex-end; }
+.gtx-card-foot:empty { display: none; }
