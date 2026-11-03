@@ -9,6 +9,7 @@
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { neon } from "@neondatabase/serverless";
 import { getConfig, setConfig } from "./inboxStore";
+import { translateSingle } from "./translate";
 
 export class GetTransferError extends Error {
   constructor(message, status = 500) {
@@ -31,6 +32,12 @@ const SCHEMA = [
     offer_at bigint
   )`,
   `create index if not exists gt_requests_seen on gt_requests (last_seen_at desc)`,
+  // Addresses and comments in Georgian, translated once per distinct text.
+  `create table if not exists gt_translations (
+    src text primary key,
+    ka text not null,
+    at bigint not null
+  )`,
 ];
 
 // status:       new → (skipped) | gone (no longer listed on GetTransfer)
@@ -80,6 +87,12 @@ export async function checkExtensionKey(request) {
 
 // ── Sync from the extension ──────────────────────────────────────────
 
+// "(41.69,44.81)" → [41.69, 44.81]
+function parsePoint(point) {
+  const m = /(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/.exec(String(point || ""));
+  return m ? [Number(m[1]), Number(m[2])] : null;
+}
+
 // Keeps only what the admin page shows, so a GetTransfer field rename
 // cannot bloat the table.
 function slimTransfer(t) {
@@ -94,6 +107,10 @@ function slimTransfer(t) {
     type: t.type,
     from: t.from?.name || "",
     to: t.to?.name || "",
+    from_point: parsePoint(t.from?.point),
+    to_point: parsePoint(t.to?.point),
+    from_country: t.from?.country || null,
+    to_country: t.to?.country || null,
     transport_type_ids: t.transport_type_ids || [],
     child_seats_infant: t.child_seats_infant || 0,
     child_seats_convertible: t.child_seats_convertible || 0,
@@ -108,6 +125,47 @@ function slimTransfer(t) {
     carrier_offer: t.carrier_offer ? { price: t.carrier_offer.price?.default || t.carrier_offer.price?.base?.default || null } : null,
     created_at: t.created_at,
   };
+}
+
+// ── Georgian translations ────────────────────────────────────────────
+
+const GEORGIAN = /[ა-ჿ]/;
+const TRANSLATE_PER_SYNC = 60;
+const TRANSLATE_PARALLEL = 6;
+
+const needsTranslation = (text) => !!text && text.length <= 400 && !GEORGIAN.test(text);
+
+// Translates the texts not seen before. A sync only spends a few seconds on
+// this; whatever is left gets translated on the next round.
+async function translateMissing(texts) {
+  const unique = [...new Set(texts.filter(needsTranslation))];
+  if (!unique.length) return;
+  const known = await query(`select src from gt_translations where src = any($1)`, [unique]);
+  const have = new Set(known.map((r) => r.src));
+  const todo = unique.filter((t) => !have.has(t)).slice(0, TRANSLATE_PER_SYNC);
+
+  for (let i = 0; i < todo.length; i += TRANSLATE_PARALLEL) {
+    const part = todo.slice(i, i + TRANSLATE_PARALLEL);
+    const results = await Promise.allSettled(part.map((t) => translateSingle(t, "ka")));
+    const rows = part
+      .map((src, j) => [src, results[j].status === "fulfilled" ? results[j].value?.trim() : ""])
+      .filter(([, ka]) => ka);
+    if (rows.length) {
+      await query(
+        `insert into gt_translations (src, ka, at)
+         select * from unnest($1::text[], $2::text[], $3::bigint[])
+         on conflict (src) do nothing`,
+        [rows.map((r) => r[0]), rows.map((r) => r[1]), rows.map(() => Date.now())]
+      );
+    }
+  }
+}
+
+async function translationsFor(texts) {
+  const unique = [...new Set(texts.filter(needsTranslation))];
+  if (!unique.length) return new Map();
+  const rows = await query(`select src, ka from gt_translations where src = any($1)`, [unique]);
+  return new Map(rows.map((r) => [r.src, r.ka]));
 }
 
 export async function syncFromExtension({ transfers = [], vehicles = [], drivers = [], currency } = {}) {
@@ -166,7 +224,12 @@ export async function syncFromExtension({ transfers = [], vehicles = [], drivers
      returning id, offer`,
     [now, now - 10 * 60 * 1000]
   );
-  return { ok: true, offers: rows.map((r) => ({ id: Number(r.id), ...r.offer })) };
+  return {
+    ok: true,
+    offers: rows.map((r) => ({ id: Number(r.id), ...r.offer })),
+    // Run by the route after the response, so the extension doesn't wait.
+    translate: () => translateMissing(list.flatMap((t) => [t.from?.name, t.to?.name, t.comment])),
+  };
 }
 
 export async function reportOfferResult({ id, ok, error }) {
@@ -202,7 +265,14 @@ export async function listRequests() {
     [Date.now() - 3 * 24 * 60 * 60 * 1000]
   );
   const { key, ...settings } = await getSettings();
-  return { requests: rows.map(toItem), settings: { ...settings, hasKey: !!key } };
+  const items = rows.map(toItem);
+  const ka = await translationsFor(items.flatMap((r) => [r.from, r.to, r.comment]));
+  for (const r of items) {
+    r.from_ka = ka.get(r.from) || null;
+    r.to_ka = ka.get(r.to) || null;
+    r.comment_ka = ka.get(r.comment) || null;
+  }
+  return { requests: items, settings: { ...settings, hasKey: !!key } };
 }
 
 export async function queueOffer({ id, vehicleId, price, priceReturn, withNameSign }) {

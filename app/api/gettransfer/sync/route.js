@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import {
   GetTransferError,
   checkExtensionKey,
@@ -16,7 +16,12 @@ export async function POST(request) {
   try {
     await checkExtensionKey(request);
     const payload = await request.json().catch(() => ({}));
-    if (payload.action === "sync") return NextResponse.json(await syncFromExtension(payload));
+    if (payload.action === "sync") {
+      const { translate, ...result } = await syncFromExtension(payload);
+      // New addresses get their Georgian names once the extension has its answer.
+      after(() => translate().catch((err) => console.error("[gettransfer translate]", err)));
+      return NextResponse.json(result);
+    }
     if (payload.action === "result") return NextResponse.json(await reportOfferResult(payload));
     return NextResponse.json({ error: "unknown_action" }, { status: 400 });
   } catch (err) {
