@@ -191,11 +191,12 @@ const TOWNS = [
   ["ართვინი", 41.1828, 41.8183, 10],
 ];
 
-const LINK_KM = 25; // next pickup this close to the last drop-off
+const LINK_KM = 25; // next pickup within 0–25 km of the last drop-off
+const ABROAD_LINK_KM = 100; // …or 0–100 km after a ride out of Georgia (to Armenia, Turkey …)
 const CHAIN_MIN_GAP_MS = 30 * 60 * 1000;
-const CHAIN_MAX_GAP_MS = 12 * 60 * 60 * 1000;
+const CHAIN_MAX_DAYS = 1; // next ride on the arrival day or the day after
 const INTERCITY_MIN_KM = 30;
-const MAX_LEGS = 6;
+const MAX_LEGS = 8;
 const CORRIDOR_WINDOW_MS = 36 * 60 * 60 * 1000;
 const CORRIDOR_MIN_KM = 80;
 
@@ -226,10 +227,23 @@ export function placeShort(r, end) {
   return String(text || "").split(",")[0].trim().slice(0, 28);
 }
 
+// Calendar day number in the ride's own local time (digits as written).
+function localDay(s, plusMinutes = 0) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(s || "");
+  if (!m) return NaN;
+  const [, y, mo, d, hh, mm] = m.map(Number);
+  return Math.floor((Date.UTC(y, mo - 1, d, hh, mm) + plusMinutes * 60000) / 86400000);
+}
+
 function rideWindow(r) {
   const start = rideMs(r.date_to_local);
   const minutes = r.duration ? r.duration * 60 : r.time || 0;
-  return { start, end: start + minutes * 60 * 1000 };
+  return {
+    start,
+    end: start + minutes * 60 * 1000,
+    startDay: localDay(r.date_to_local),
+    endDay: localDay(r.date_to_local, minutes),
+  };
 }
 
 // Price figures of a request for the cheapest type GetTransfer priced.
@@ -284,12 +298,19 @@ function openRides(requests) {
   return kept;
 }
 
+// A ride out of Georgia: the car is abroad anyway, so a pickup further from
+// the drop-off is still worth taking. Only on the way out, not on the way back.
+const leavesGeorgia = (x) => x.r.from_country === "GE" && !!x.r.to_country && x.r.to_country !== "GE";
+const linkKm = (x) => (leavesGeorgia(x) ? ABROAD_LINK_KM : LINK_KM);
+
 const isIntercity = (x) =>
   (x.r.distance || 0) >= INTERCITY_MIN_KM && !(x.fromTown && x.toTown && x.fromTown === x.toTown);
 
 // Chains of intercity rides one car can drive back to back: each next ride
-// starts near where the previous one ends, 30 min – 12 h after it arrives.
-// Batumi → Kutaisi, then Kutaisi → Tbilisi, then Tbilisi → … up to 6 rides.
+// is picked up within 25 km (100 km after a ride out of Georgia) of where
+// the previous one drops off, on the
+// arrival day or the next day (and at least 30 min after arrival).
+// Batumi → Kutaisi, then Kutaisi → Tbilisi, then Tbilisi → … up to 8 rides.
 // Only the longest chains are kept (a chain that is part of a longer one is
 // dropped). A chain that ends near its start is a round trip.
 export function findChains(requests) {
@@ -299,10 +320,10 @@ export function findChains(requests) {
       a,
       legs.filter((b) => {
         if (b === a) return false;
-        const gap = b.start - a.end;
-        if (gap < CHAIN_MIN_GAP_MS || gap > CHAIN_MAX_GAP_MS) return false;
-        const sameTown = a.toTown && a.toTown === b.fromTown;
-        return sameTown || kmBetween(a.r.to_point, b.r.from_point) <= LINK_KM;
+        if (b.start - a.end < CHAIN_MIN_GAP_MS) return false;
+        const days = b.startDay - a.endDay;
+        if (!(days >= 0 && days <= CHAIN_MAX_DAYS)) return false;
+        return kmBetween(a.r.to_point, b.r.from_point) <= linkKm(a);
       }),
     ])
   );
@@ -333,6 +354,7 @@ export function findChains(requests) {
       const links = path.slice(1).map((b, i) => ({
         gapMs: b.start - path[i].end,
         emptyKm: kmBetween(path[i].r.to_point, b.r.from_point),
+        abroad: leavesGeorgia(path[i]),
       }));
       const prices = path.map((x) => priceSummary(x.r));
       const home = first.r.from_point;
