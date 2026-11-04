@@ -158,12 +158,46 @@ export function useGetTransferData() {
 
 // ── Trip matching (ტურტრანსფერები) ───────────────────────────────────
 
-const NEAR_KM = 40;
-const CHAIN_MIN_GAP_MS = 20 * 60 * 1000;
-const CHAIN_MAX_GAP_MS = 18 * 60 * 60 * 1000;
+// Towns a request is matched by: [name, lat, lng, radius km]. A point within
+// the radius belongs to the town, so a hotel → airport ride inside Tbilisi
+// is "intra-city" and never part of a chain.
+const TOWNS = [
+  ["თბილისი", 41.7151, 44.8271, 25],
+  ["ბათუმი", 41.6168, 41.6367, 14],
+  ["ქუთაისი", 42.2679, 42.6946, 26],
+  ["ქობულეთი", 41.8214, 41.7792, 9],
+  ["ურეკი", 41.995, 41.776, 7],
+  ["ფოთი", 42.1461, 41.6719, 9],
+  ["ზუგდიდი", 42.5088, 41.8709, 10],
+  ["მესტია", 43.0459, 42.7298, 12],
+  ["ბორჯომი", 41.8396, 43.3896, 9],
+  ["ბაკურიანი", 41.7497, 43.5286, 9],
+  ["გუდაური", 42.4774, 44.4785, 9],
+  ["სტეფანწმინდა", 42.6571, 44.6431, 9],
+  ["მცხეთა", 41.8456, 44.7206, 6],
+  ["გორი", 41.9842, 44.1158, 9],
+  ["თელავი", 41.9198, 45.4731, 10],
+  ["წინანდალი", 41.8933, 45.5715, 6],
+  ["სიღნაღი", 41.6195, 45.9221, 9],
+  ["ლოპოტა", 42.0446, 45.5983, 6],
+  ["სარფი", 41.5216, 41.5478, 5],
+  ["ერევანი", 40.1812, 44.5136, 22],
+  ["გიუმრი", 40.7894, 43.8475, 12],
+  ["დილიჟანი", 40.7404, 44.8636, 10],
+  ["რიზე (აეროპორტი)", 41.1713, 40.8468, 12],
+  ["რიზე", 41.0201, 40.5234, 12],
+  ["ტრაპიზონი", 41.0027, 39.7168, 16],
+  ["ჰოპა", 41.3925, 41.4312, 8],
+  ["ართვინი", 41.1828, 41.8183, 10],
+];
+
+const LINK_KM = 25; // next pickup this close to the last drop-off
+const CHAIN_MIN_GAP_MS = 30 * 60 * 1000;
+const CHAIN_MAX_GAP_MS = 12 * 60 * 60 * 1000;
+const INTERCITY_MIN_KM = 30;
+const MAX_LEGS = 6;
 const CORRIDOR_WINDOW_MS = 36 * 60 * 60 * 1000;
 const CORRIDOR_MIN_KM = 80;
-const TOGETHER_WINDOW_MS = 3 * 60 * 60 * 1000;
 
 export function kmBetween(a, b) {
   if (!a || !b) return Infinity;
@@ -174,68 +208,187 @@ export function kmBetween(a, b) {
   return 6371 * 2 * Math.asin(Math.sqrt(h));
 }
 
+function townAt(point) {
+  if (!point) return null;
+  let best = null;
+  for (const [name, lat, lng, radius] of TOWNS) {
+    const d = kmBetween(point, [lat, lng]);
+    if (d <= radius && (!best || d < best.d)) best = { name, d };
+  }
+  return best?.name || null;
+}
+
+// Short place name for chain headers: the town, else the address's first part.
+export function placeShort(r, end) {
+  const town = townAt(end === "from" ? r.from_point : r.to_point);
+  if (town) return town;
+  const text = end === "from" ? fromKa(r) : toKa(r);
+  return String(text || "").split(",")[0].trim().slice(0, 28);
+}
+
 function rideWindow(r) {
   const start = rideMs(r.date_to_local);
   const minutes = r.duration ? r.duration * 60 : r.time || 0;
   return { start, end: start + minutes * 60 * 1000 };
 }
 
-// Pairs of open requests one car could serve together:
-//   roundtrip — B starts where A ends and brings the car back to A's start
-//   chain     — B starts near where A ends, soon after A arrives
-//   corridor  — same direction (same countries, or same start and end areas)
-//               within 36 h; "together" when within 3 h and the seats add up
-export function findMatches(requests) {
+// Price figures of a request for the cheapest type GetTransfer priced.
+export function priceSummary(r) {
+  const row = cheapestRow(priceRows(r));
+  const limits = priceRows(r).map((p) => p.max).filter((v) => v != null);
+  return {
+    type: row?.key || null,
+    rec: row?.rec ?? null,
+    low: row?.low ?? null,
+    high: row?.high ?? null,
+    max: row?.max ?? (limits.length ? Math.min(...limits) : null),
+  };
+}
+
+// Totals over the rides that have a price; `partial` when some ride has none
+// (GetTransfer prices only some car classes).
+function sumPrices(prices) {
+  const sum = (k) => {
+    const known = prices.filter((p) => p[k] != null);
+    return known.length ? known.reduce((s, p) => s + p[k], 0) : null;
+  };
+  return { rec: sum("rec"), low: sum("low"), high: sum("high"), partial: prices.some((p) => p.rec == null) };
+}
+
+// Passengers sometimes post the same ride twice (for another car class).
+function isDuplicate(a, b) {
+  return (
+    Math.abs(a.start - b.start) <= 30 * 60 * 1000 &&
+    a.r.pax === b.r.pax &&
+    kmBetween(a.r.from_point, b.r.from_point) <= 1.5 &&
+    kmBetween(a.r.to_point, b.r.to_point) <= 1.5
+  );
+}
+
+// Open, future requests with coordinates; duplicates folded into one
+// (the one already offered on, else the better paid).
+function openRides(requests) {
   const now = Date.now();
-  const open = requests
+  const rides = requests
     .filter((r) => r.status !== "gone" && r.status !== "skipped" && r.from_point && r.to_point)
-    .map((r) => ({ r, ...rideWindow(r) }))
+    .map((r) => ({ r, ...rideWindow(r), fromTown: townAt(r.from_point), toTown: townAt(r.to_point), dups: [] }))
     .filter((x) => Number.isFinite(x.start) && x.start > now);
 
-  const matches = [];
-  for (const a of open) {
-    for (const b of open) {
-      if (a.r.id === b.r.id) continue;
+  const rank = (x) => (hasOffer(x.r) ? 1e9 : 0) + (mainPrice(x.r) || 0);
+  const kept = [];
+  for (const x of rides.sort((a, b) => rank(b) - rank(a))) {
+    const twin = kept.find((k) => isDuplicate(k, x));
+    if (twin) twin.dups.push(x.r);
+    else kept.push(x);
+  }
+  return kept;
+}
 
-      const gap = b.start - a.end;
-      const emptyKm = kmBetween(a.r.to_point, b.r.from_point);
-      if (emptyKm <= NEAR_KM && gap >= CHAIN_MIN_GAP_MS && gap <= CHAIN_MAX_GAP_MS) {
-        const back = kmBetween(b.r.to_point, a.r.from_point) <= NEAR_KM;
-        matches.push({ kind: back ? "roundtrip" : "chain", first: a.r, second: b.r, gapMs: gap, emptyKm });
-        continue;
-      }
+const isIntercity = (x) =>
+  (x.r.distance || 0) >= INTERCITY_MIN_KM && !(x.fromTown && x.toTown && x.fromTown === x.toTown);
 
-      // Corridor pairs once per pair: the earlier ride first.
-      if (a.start > b.start || (a.start === b.start && a.r.id > b.r.id)) continue;
-      if ((a.r.distance || 0) < CORRIDOR_MIN_KM || (b.r.distance || 0) < CORRIDOR_MIN_KM) continue;
-      if (Math.abs(b.start - a.start) > CORRIDOR_WINDOW_MS) continue;
-      const international = a.r.from_country !== a.r.to_country;
+// Chains of intercity rides one car can drive back to back: each next ride
+// starts near where the previous one ends, 30 min – 12 h after it arrives.
+// Batumi → Kutaisi, then Kutaisi → Tbilisi, then Tbilisi → … up to 6 rides.
+// Only the longest chains are kept (a chain that is part of a longer one is
+// dropped). A chain that ends near its start is a round trip.
+export function findChains(requests) {
+  const legs = openRides(requests).filter(isIntercity);
+  const next = new Map(
+    legs.map((a) => [
+      a,
+      legs.filter((b) => {
+        if (b === a) return false;
+        const gap = b.start - a.end;
+        if (gap < CHAIN_MIN_GAP_MS || gap > CHAIN_MAX_GAP_MS) return false;
+        const sameTown = a.toTown && a.toTown === b.fromTown;
+        return sameTown || kmBetween(a.r.to_point, b.r.from_point) <= LINK_KM;
+      }),
+    ])
+  );
+  const hasPrev = new Set([...next.values()].flat());
+
+  const paths = [];
+  const walk = (path) => {
+    const options = path.length < MAX_LEGS ? next.get(path[path.length - 1]) : [];
+    if (!options.length) {
+      if (path.length > 1) paths.push(path);
+      return;
+    }
+    for (const b of options) if (!path.includes(b)) walk([...path, b]);
+    if (paths.length > 400) return;
+  };
+  // Start from rides nothing leads into; rides inside a cycle start anywhere.
+  for (const a of legs) if (!hasPrev.has(a) && next.get(a).length) walk([a]);
+  for (const a of legs) if (hasPrev.has(a) && next.get(a).length && !paths.some((p) => p.includes(a))) walk([a]);
+
+  const key = (p) => p.map((x) => x.r.id).join(">");
+  const keys = paths.map(key);
+  const longest = paths.filter((p, i) => !keys.some((k, j) => j !== i && k.length > keys[i].length && `>${k}>`.includes(`>${keys[i]}>`)));
+
+  return longest
+    .map((path) => {
+      const first = path[0];
+      const last = path[path.length - 1];
+      const links = path.slice(1).map((b, i) => ({
+        gapMs: b.start - path[i].end,
+        emptyKm: kmBetween(path[i].r.to_point, b.r.from_point),
+      }));
+      const prices = path.map((x) => priceSummary(x.r));
+      const home = first.r.from_point;
+      return {
+        kind: kmBetween(last.r.to_point, home) <= LINK_KM ? "roundtrip" : "chain",
+        // The car passes its starting town again on the way (Tbilisi → Yerevan → Tbilisi → …).
+        passesHome: path.slice(0, -1).some((x) => kmBetween(x.r.to_point, home) <= LINK_KM),
+        rides: path.map((x, i) => ({ request: x.r, duplicates: x.dups, price: prices[i] })),
+        links,
+        towns: [placeShort(first.r, "from"), ...path.map((x) => placeShort(x.r, "to"))],
+        totals: {
+          ...sumPrices(prices),
+          km: path.reduce((s, x) => s + (x.r.distance || 0), 0),
+          emptyKm: links.reduce((s, l) => s + l.emptyKm, 0),
+          startMs: first.start,
+          endMs: last.end,
+        },
+      };
+    })
+    .sort((a, b) => b.rides.length - a.rides.length || a.totals.startMs - b.totals.startMs);
+}
+
+// Long rides in the same direction within 36 h (same countries for trips
+// abroad, else the same start and end towns): one car can take one after
+// the other, or both passengers together if they agree.
+export function findCorridors(requests) {
+  const rides = openRides(requests).filter((x) => isIntercity(x) && (x.r.distance || 0) >= CORRIDOR_MIN_KM);
+  const out = [];
+  for (const a of rides) {
+    for (const b of rides) {
+      if (a.start > b.start || (a.start === b.start && a.r.id >= b.r.id)) continue;
+      if (b.start - a.start > CORRIDOR_WINDOW_MS) continue;
+      const abroad = a.r.from_country !== a.r.to_country;
       const sameCountries = a.r.from_country === b.r.from_country && a.r.to_country === b.r.to_country;
-      const sameAreas =
-        kmBetween(a.r.from_point, b.r.from_point) <= NEAR_KM * 1.5 && kmBetween(a.r.to_point, b.r.to_point) <= NEAR_KM * 1.5;
-      if ((international && sameCountries) || sameAreas) {
-        const together = Math.abs(b.start - a.start) <= TOGETHER_WINDOW_MS && sameAreas;
-        // Passengers sometimes post the same ride twice (another car class).
-        const duplicate =
-          Math.abs(b.start - a.start) <= 30 * 60 * 1000 &&
-          a.r.pax === b.r.pax &&
-          kmBetween(a.r.from_point, b.r.from_point) <= 1.5 &&
-          kmBetween(a.r.to_point, b.r.to_point) <= 1.5;
-        matches.push({
-          kind: together ? "together" : "corridor",
-          duplicate,
-          first: a.r,
-          second: b.r,
-          gapMs: b.start - a.start,
-          emptyKm: kmBetween(a.r.from_point, b.r.from_point),
-        });
-      }
+      const sameTowns =
+        (a.fromTown ? a.fromTown === b.fromTown : kmBetween(a.r.from_point, b.r.from_point) <= LINK_KM) &&
+        (a.toTown ? a.toTown === b.toTown : kmBetween(a.r.to_point, b.r.to_point) <= LINK_KM);
+      if (!((abroad && sameCountries) || sameTowns)) continue;
+      const prices = [priceSummary(a.r), priceSummary(b.r)];
+      const sums = sumPrices(prices);
+      out.push({
+        kind: "corridor",
+        rides: [a, b].map((x, i) => ({ request: x.r, duplicates: x.dups, price: prices[i] })),
+        links: [{ gapMs: b.start - a.start, emptyKm: kmBetween(a.r.from_point, b.r.from_point), parallel: true }],
+        towns: [placeShort(a.r, "from"), placeShort(a.r, "to")],
+        totals: {
+          ...sums,
+          km: (a.r.distance || 0) + (b.r.distance || 0),
+          emptyKm: null,
+          startMs: a.start,
+          endMs: b.end,
+        },
+      });
     }
   }
-
-  return matches
-    .map((m) => ({ ...m, income: (mainPrice(m.first) || 0) + (mainPrice(m.second) || 0) }))
-    .sort((x, y) => rideMs(x.first.date_to_local) - rideMs(y.first.date_to_local));
+  return out.sort((x, y) => x.totals.startMs - y.totals.startMs);
 }
 
 // ── Offer UI ─────────────────────────────────────────────────────────
