@@ -3,12 +3,14 @@
 import React, { useMemo, useState } from "react";
 import { ClockIcon, RouteIcon, SearchIcon, UsersIcon } from "../components/Icons";
 import {
+  CAR_CLASSES,
   OfferForm,
   OfferState,
   canOffer,
   countryLabel,
   findChains,
   findCorridors,
+  fleetFor,
   fmtMinutes,
   fromKa,
   hasOffer,
@@ -63,7 +65,7 @@ function PriceFields({ price }) {
   );
 }
 
-function Ride({ step, ride, vehicles, currency, onChange }) {
+function Ride({ step, ride, price, vehicles, currency, onChange, preferVehicleId }) {
   const r = ride.request;
   const date = rideDate(r.date_to_local);
   const [offering, setOffering] = useState(false);
@@ -94,20 +96,20 @@ function Ride({ step, ride, vehicles, currency, onChange }) {
             <li><RouteIcon size={15} />{r.distance} კმ</li>
             {r.time != null && <li><ClockIcon size={15} />{fmtMinutes(r.time)}</li>}
             <li><UsersIcon size={15} />{r.pax} მგზ.</li>
-            {ride.price.type && <li>{typeLabel(ride.price.type)}</li>}
+            {price.type && <li>{typeLabel(price.type)}</li>}
             {ride.duplicates.length > 0 && (
               <li className="is-warn" title={ride.duplicates.map((d) => `#${d.id}`).join(", ")}>
                 + {ride.duplicates.length} დუბლიკატი
               </li>
             )}
           </ul>
-          <PriceFields price={ride.price} />
+          <PriceFields price={price} />
         </div>
 
         <OfferState request={r} onChange={onChange} />
         {canOffer(r) &&
           (offering ? (
-            <OfferForm request={r} vehicles={vehicles} currency={currency} onDone={onChange} />
+            <OfferForm request={r} vehicles={vehicles} currency={currency} onDone={onChange} preferVehicleId={preferVehicleId} />
           ) : (
             <button type="button" className="admin-btn-ghost ttx-offer-btn" onClick={() => setOffering(true)}>
               ოფერის მომზადება
@@ -136,12 +138,57 @@ function Link({ link }) {
   );
 }
 
+const EXAMPLE = Object.fromEntries(CAR_CLASSES.map((c) => [c.type, c.example]));
+const MAX_CAR_PICKS = 4;
+
+// Recommended cars for the whole trip: own cars that fit every ride, and
+// the car classes (up to 4) one car of which can drive all of it.
+function CarPicks({ options, chosen, onChoose, fleet, maxPax }) {
+  return (
+    <div className="ttx-cars">
+      <span className="ttx-cars-label">ერთი მანქანა მთელ გზაზე · მაქს. {maxPax} მგზ.</span>
+      <div className="ttx-cars-list" role="group" aria-label="რეკომენდებული მანქანა">
+        {options.slice(0, MAX_CAR_PICKS).map((o, i) => (
+          <button
+            key={o.type}
+            type="button"
+            className={`ttx-car${o.type === chosen ? " is-active" : ""}`}
+            aria-pressed={o.type === chosen}
+            onClick={() => onChoose(o.type)}
+          >
+            <b>
+              {typeLabel(o.type)}
+              {i === 0 && <em>რეკომენდებული</em>}
+            </b>
+            <small>{EXAMPLE[o.type]} · {o.seats} ადგ.</small>
+            <span>{o.priced ? `${money(o.rec)}${o.partial ? " + ?" : ""}` : "ფასი არ არის"}</span>
+          </button>
+        ))}
+      </div>
+      {fleet.length > 0 ? (
+        <p className="ttx-cars-fleet">
+          შენი მანქანები: {fleet.map((v) => `${v.name}${v.plate ? ` (${v.plate})` : ""}`).join(", ")}
+        </p>
+      ) : (
+        <p className="ttx-cars-fleet is-none">შენს ავტოპარკში მთელ გზაზე შესაფერისი მანქანა არ არის.</p>
+      )}
+    </div>
+  );
+}
+
 function TripCard({ trip, vehicles, currency, onChange }) {
   const kind = KINDS[trip.kind];
+  const [carType, setCarType] = useState(trip.carType);
+  const option = trip.carOptions.find((o) => o.type === carType) || trip.carOptions[0];
+  const prices = option?.priced ? option.prices : trip.rides.map((x) => x.price);
+  const t = option?.priced ? { ...trip.totals, rec: option.rec, low: option.low, high: option.high, partial: option.partial } : trip.totals;
+  const fleet = fleetFor(trip, vehicles);
+  // The own car the chain is offered with: the chosen class first.
+  const car = fleet.find((v) => v.type === carType) || fleet[0];
+  const maxPax = Math.max(...trip.rides.map((x) => x.request.pax || 1));
   const offered = trip.rides.filter((x) => hasOffer(x.request)).length;
   const first = trip.rides[0].request;
   const abroad = trip.rides.some((x) => x.request.from_country !== x.request.to_country);
-  const t = trip.totals;
   const start = rideDate(first.date_to_local);
 
   return (
@@ -168,6 +215,8 @@ function TripCard({ trip, vehicles, currency, onChange }) {
           ))}
         </p>
       </header>
+
+      <CarPicks options={trip.carOptions} chosen={carType} onChoose={setCarType} fleet={fleet} maxPax={maxPax} />
 
       <dl className="ttx-totals">
         <div className="is-rec">
@@ -200,7 +249,15 @@ function TripCard({ trip, vehicles, currency, onChange }) {
         {trip.rides.map((ride, i) => (
           <React.Fragment key={ride.request.id}>
             {i > 0 && <Link link={trip.links[i - 1]} />}
-            <Ride step={i + 1} ride={ride} vehicles={vehicles} currency={currency} onChange={onChange} />
+            <Ride
+              step={i + 1}
+              ride={ride}
+              price={prices[i]}
+              vehicles={vehicles}
+              currency={currency}
+              onChange={onChange}
+              preferVehicleId={car?.id}
+            />
           </React.Fragment>
         ))}
       </ol>
@@ -247,6 +304,8 @@ export default function TourTransfersManager() {
           ვიღებ ქალაქთაშორის შეკვეთებს და ვაბამ ერთმანეთს: თუ X ადგილას Y დღეს ჩადიხარ, ვეძებ გასვლას ჩასვლის
           წერტილიდან 0–25 კმ-ში (თუ საქართველოდან გავედით, მაგ. სომხეთში ან თურქეთში — 0–100 კმ-ში) იმავე Y დღეს ან Y+1 დღეს; მერე იმ შეკვეთის ბოლო წერტილიდან ისევ იგივე წესით და ა.შ.
           — ერთ ჯაჭვში შეიძლება 4–5 და მეტი (მაქს. 8) შეკვეთა გადაებას.
+          მთელ ჯაჭვს ერთი მანქანა ასრულებს: ყველა შეკვეთა უნდა ეთანხმებოდეს ერთსა და იმავე კლასს და ყველა მგზავრი უნდა ეტეოდეს
+          (მაგ. Vito-ს შეკვეთა 15-კაციან Sprinter-ის შეკვეთას არ გადაებმება). ბარათზე ჩანს 3–4 შესაფერისი მანქანა — აირჩიე და ფასები მის მიხედვით გადაითვლება.
           ქალაქის შიგნით გადაადგილება (მაგ. სასტუმრო → აეროპორტი) და ერთი მგზავრის ორჯერ განთავსებული შეკვეთა გადაბმაში არ შედის.
         </p>
       </section>

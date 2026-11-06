@@ -24,6 +24,40 @@ export const TYPE_LABELS = {
 };
 export const typeLabel = (key) => TYPE_LABELS[key] || key;
 
+// Car classes a chain can be driven with: GetTransfer's type, how many
+// passengers it seats, and a typical model so the class is easy to picture.
+export const CAR_CLASSES = [
+  { type: "economy", seats: 3, example: "Toyota Prius" },
+  { type: "comfort", seats: 3, example: "Toyota Camry" },
+  { type: "suv", seats: 4, example: "Land Cruiser" },
+  { type: "business", seats: 3, example: "Mercedes E-class" },
+  { type: "premium", seats: 3, example: "Mercedes S-class" },
+  { type: "van", seats: 7, example: "Mercedes Vito" },
+  { type: "business_van", seats: 7, example: "Mercedes V-class" },
+  { type: "limousine", seats: 6, example: "ლიმუზინი" },
+  { type: "minibus", seats: 19, example: "Mercedes Sprinter" },
+  { type: "bus", seats: 50, example: "ავტობუსი" },
+];
+const CLASS_SEATS = Object.fromEntries(CAR_CLASSES.map((c) => [c.type, c.seats]));
+
+// Classes that can take this ride: one the passenger asked for ("Any" = all)
+// with enough seats.
+function rideClasses(r) {
+  const asked = r.transport_type_ids?.length ? r.transport_type_ids : CAR_CLASSES.map((c) => c.type);
+  const pax = r.pax || 1;
+  return new Set(asked.filter((t) => CLASS_SEATS[t] && CLASS_SEATS[t] >= pax));
+}
+
+// Own cars that can drive every ride of a trip (type asked for, enough seats).
+export function fleetFor(trip, vehicles) {
+  return vehicles.filter((v) =>
+    trip.rides.every(({ request: r }) => {
+      const asked = r.transport_type_ids?.length ? r.transport_type_ids : null;
+      return (!asked || asked.includes(v.type)) && (!v.pax || v.pax >= (r.pax || 1));
+    })
+  );
+}
+
 export const COUNTRY_LABELS = {
   GE: "საქართველო",
   AM: "სომხეთი",
@@ -259,6 +293,50 @@ export function priceSummary(r) {
   };
 }
 
+// Price figures of a request for one car class.
+function priceForType(r, type) {
+  const row = priceRows(r).find((p) => p.key === type);
+  const sp = r.suggested_prices?.[type];
+  return {
+    type,
+    rec: row?.rec ?? sp?.amount ?? null,
+    low: row?.low ?? sp?.low?.amount ?? null,
+    high: row?.high ?? sp?.high?.amount ?? null,
+    max: row?.max ?? r.restricted_prices?.[type]?.restricted_max?.amount ?? null,
+  };
+}
+
+// Car classes one car of which can drive the whole trip, best first:
+// priced on more rides, then the smallest car that fits, then cheaper.
+function carOptions(path, fit) {
+  return [...fit]
+    .map((type) => {
+      const prices = path.map((x) => priceForType(x.r, type));
+      const sums = sumPrices(prices);
+      return { type, seats: CLASS_SEATS[type], prices, priced: prices.filter((p) => p.rec != null).length, ...sums };
+    })
+    .sort((a, b) => b.priced - a.priced || a.seats - b.seats || (a.rec ?? Infinity) - (b.rec ?? Infinity));
+}
+
+const intersect = (a, b) => new Set([...a].filter((t) => b.has(t)));
+
+// One trip card: rides, links and totals, priced for the best common car.
+function buildTrip(kind, path, links, towns, fit, { totals, ...extra }) {
+  const options = carOptions(path, fit);
+  const best = options[0];
+  const prices = best.priced ? best.prices : path.map((x) => priceSummary(x.r));
+  return {
+    kind,
+    ...extra,
+    carType: best.type,
+    carOptions: options.map(({ type, seats, prices: p, rec, low, high, partial, priced }) => ({ type, seats, prices: p, rec, low, high, partial, priced })),
+    rides: path.map((x, i) => ({ request: x.r, duplicates: x.dups, price: prices[i] })),
+    links,
+    towns,
+    totals: { ...sumPrices(prices), ...totals },
+  };
+}
+
 // Totals over the rides that have a price; `partial` when some ride has none
 // (GetTransfer prices only some car classes).
 function sumPrices(prices) {
@@ -285,14 +363,19 @@ function openRides(requests) {
   const now = Date.now();
   const rides = requests
     .filter((r) => r.status !== "gone" && r.status !== "skipped" && r.from_point && r.to_point)
-    .map((r) => ({ r, ...rideWindow(r), fromTown: townAt(r.from_point), toTown: townAt(r.to_point), dups: [] }))
+    .map((r) => ({ r, ...rideWindow(r), fromTown: townAt(r.from_point), toTown: townAt(r.to_point), classes: rideClasses(r), dups: [] }))
+    .filter((x) => x.classes.size)
     .filter((x) => Number.isFinite(x.start) && x.start > now);
 
   const rank = (x) => (hasOffer(x.r) ? 1e9 : 0) + (mainPrice(x.r) || 0);
   const kept = [];
   for (const x of rides.sort((a, b) => rank(b) - rank(a))) {
     const twin = kept.find((k) => isDuplicate(k, x));
-    if (twin) twin.dups.push(x.r);
+    if (twin) {
+      // The twin was posted for another car class: either class will do.
+      twin.dups.push(x.r);
+      twin.classes = new Set([...twin.classes, ...x.classes]);
+    }
     else kept.push(x);
   }
   return kept;
@@ -308,9 +391,12 @@ const isIntercity = (x) =>
 
 // Chains of intercity rides one car can drive back to back: each next ride
 // is picked up within 25 km (100 km after a ride out of Georgia) of where
-// the previous one drops off, on the
-// arrival day or the next day (and at least 30 min after arrival).
-// Batumi → Kutaisi, then Kutaisi → Tbilisi, then Tbilisi → … up to 8 rides.
+// the previous one drops off, on the arrival day or the next day (and at
+// least 30 min after arrival). Batumi → Kutaisi, then Kutaisi → Tbilisi,
+// then Tbilisi → … up to 8 rides.
+// The SAME car drives every ride, so every ride must accept one common car
+// class with enough seats — no "Vito for the first ride, Sprinter for the
+// 15 people of the next one".
 // Only the longest chains are kept (a chain that is part of a longer one is
 // dropped). A chain that ends near its start is a round trip.
 export function findChains(requests) {
@@ -320,6 +406,7 @@ export function findChains(requests) {
       a,
       legs.filter((b) => {
         if (b === a) return false;
+        if (!intersect(a.classes, b.classes).size) return false;
         if (b.start - a.end < CHAIN_MIN_GAP_MS) return false;
         const days = b.startDay - a.endDay;
         if (!(days >= 0 && days <= CHAIN_MAX_DAYS)) return false;
@@ -330,25 +417,31 @@ export function findChains(requests) {
   const hasPrev = new Set([...next.values()].flat());
 
   const paths = [];
-  const walk = (path) => {
-    const options = path.length < MAX_LEGS ? next.get(path[path.length - 1]) : [];
+  const walk = (path, fit) => {
+    if (paths.length > 600) return;
+    const options =
+      path.length < MAX_LEGS
+        ? next.get(path[path.length - 1]).filter((b) => !path.includes(b) && intersect(fit, b.classes).size)
+        : [];
     if (!options.length) {
-      if (path.length > 1) paths.push(path);
+      if (path.length > 1) paths.push({ path, fit });
       return;
     }
-    for (const b of options) if (!path.includes(b)) walk([...path, b]);
-    if (paths.length > 400) return;
+    for (const b of options) walk([...path, b], intersect(fit, b.classes));
   };
-  // Start from rides nothing leads into; rides inside a cycle start anywhere.
-  for (const a of legs) if (!hasPrev.has(a) && next.get(a).length) walk([a]);
-  for (const a of legs) if (hasPrev.has(a) && next.get(a).length && !paths.some((p) => p.includes(a))) walk([a]);
+  // Start from rides nothing leads into, then from any ride not yet in a
+  // chain (inside a cycle, or cut off from its predecessor by the car class).
+  for (const a of legs) if (!hasPrev.has(a) && next.get(a).length) walk([a], a.classes);
+  for (const a of legs) if (hasPrev.has(a) && next.get(a).length && !paths.some((p) => p.path[0] === a)) walk([a], a.classes);
 
-  const key = (p) => p.map((x) => x.r.id).join(">");
+  const key = (p) => p.path.map((x) => x.r.id).join(">");
   const keys = paths.map(key);
-  const longest = paths.filter((p, i) => !keys.some((k, j) => j !== i && k.length > keys[i].length && `>${k}>`.includes(`>${keys[i]}>`)));
+  const longest = paths.filter(
+    (p, i) => keys.indexOf(keys[i]) === i && !keys.some((k, j) => j !== i && k.length > keys[i].length && `>${k}>`.includes(`>${keys[i]}>`))
+  );
 
   return longest
-    .map((path) => {
+    .map(({ path, fit }) => {
       const first = path[0];
       const last = path[path.length - 1];
       const links = path.slice(1).map((b, i) => ({
@@ -356,30 +449,32 @@ export function findChains(requests) {
         emptyKm: kmBetween(path[i].r.to_point, b.r.from_point),
         abroad: leavesGeorgia(path[i]),
       }));
-      const prices = path.map((x) => priceSummary(x.r));
       const home = first.r.from_point;
-      return {
-        kind: kmBetween(last.r.to_point, home) <= LINK_KM ? "roundtrip" : "chain",
-        // The car passes its starting town again on the way (Tbilisi → Yerevan → Tbilisi → …).
-        passesHome: path.slice(0, -1).some((x) => kmBetween(x.r.to_point, home) <= LINK_KM),
-        rides: path.map((x, i) => ({ request: x.r, duplicates: x.dups, price: prices[i] })),
+      return buildTrip(
+        kmBetween(last.r.to_point, home) <= LINK_KM ? "roundtrip" : "chain",
+        path,
         links,
-        towns: [placeShort(first.r, "from"), ...path.map((x) => placeShort(x.r, "to"))],
-        totals: {
-          ...sumPrices(prices),
-          km: path.reduce((s, x) => s + (x.r.distance || 0), 0),
-          emptyKm: links.reduce((s, l) => s + l.emptyKm, 0),
-          startMs: first.start,
-          endMs: last.end,
-        },
-      };
+        [placeShort(first.r, "from"), ...path.map((x) => placeShort(x.r, "to"))],
+        fit,
+        {
+          // The car passes its starting town again on the way (Tbilisi → Yerevan → Tbilisi → …).
+          passesHome: path.slice(0, -1).some((x) => kmBetween(x.r.to_point, home) <= LINK_KM),
+          totals: {
+            km: path.reduce((s, x) => s + (x.r.distance || 0), 0),
+            emptyKm: links.reduce((s, l) => s + l.emptyKm, 0),
+            startMs: first.start,
+            endMs: last.end,
+          },
+        }
+      );
     })
     .sort((a, b) => b.rides.length - a.rides.length || a.totals.startMs - b.totals.startMs);
 }
 
 // Long rides in the same direction within 36 h (same countries for trips
 // abroad, else the same start and end towns): one car can take one after
-// the other, or both passengers together if they agree.
+// the other, or both passengers together if they agree. As with chains,
+// both rides must fit one common car class.
 export function findCorridors(requests) {
   const rides = openRides(requests).filter((x) => isIntercity(x) && (x.r.distance || 0) >= CORRIDOR_MIN_KM);
   const out = [];
@@ -387,27 +482,31 @@ export function findCorridors(requests) {
     for (const b of rides) {
       if (a.start > b.start || (a.start === b.start && a.r.id >= b.r.id)) continue;
       if (b.start - a.start > CORRIDOR_WINDOW_MS) continue;
+      const fit = intersect(a.classes, b.classes);
+      if (!fit.size) continue;
       const abroad = a.r.from_country !== a.r.to_country;
       const sameCountries = a.r.from_country === b.r.from_country && a.r.to_country === b.r.to_country;
       const sameTowns =
         (a.fromTown ? a.fromTown === b.fromTown : kmBetween(a.r.from_point, b.r.from_point) <= LINK_KM) &&
         (a.toTown ? a.toTown === b.toTown : kmBetween(a.r.to_point, b.r.to_point) <= LINK_KM);
       if (!((abroad && sameCountries) || sameTowns)) continue;
-      const prices = [priceSummary(a.r), priceSummary(b.r)];
-      const sums = sumPrices(prices);
-      out.push({
-        kind: "corridor",
-        rides: [a, b].map((x, i) => ({ request: x.r, duplicates: x.dups, price: prices[i] })),
-        links: [{ gapMs: b.start - a.start, emptyKm: kmBetween(a.r.from_point, b.r.from_point), parallel: true }],
-        towns: [placeShort(a.r, "from"), placeShort(a.r, "to")],
-        totals: {
-          ...sums,
-          km: (a.r.distance || 0) + (b.r.distance || 0),
-          emptyKm: null,
-          startMs: a.start,
-          endMs: b.end,
-        },
-      });
+      out.push(
+        buildTrip(
+          "corridor",
+          [a, b],
+          [{ gapMs: b.start - a.start, emptyKm: kmBetween(a.r.from_point, b.r.from_point), parallel: true }],
+          [placeShort(a.r, "from"), placeShort(a.r, "to")],
+          fit,
+          {
+            totals: {
+              km: (a.r.distance || 0) + (b.r.distance || 0),
+              emptyKm: null,
+              startMs: a.start,
+              endMs: b.end,
+            },
+          }
+        )
+      );
     }
   }
   return out.sort((x, y) => x.totals.startMs - y.totals.startMs);
@@ -434,9 +533,15 @@ function PriceBand({ low, high, rec, price }) {
   );
 }
 
-export function OfferForm({ request, vehicles, currency, onDone }) {
+// `preferVehicleId`: the car a whole chain is offered with, so every ride of
+// the chain goes out with the same car.
+export function OfferForm({ request, vehicles, currency, onDone, preferVehicleId }) {
   const fitting = useMemo(() => vehicles.filter((v) => !v.pax || v.pax >= (request.pax || 1)), [vehicles, request.pax]);
-  const preferred = fitting.find((v) => request.transport_type_ids?.includes(v.type)) || fitting[0] || vehicles[0];
+  const preferred =
+    vehicles.find((v) => preferVehicleId != null && String(v.id) === String(preferVehicleId)) ||
+    fitting.find((v) => request.transport_type_ids?.includes(v.type)) ||
+    fitting[0] ||
+    vehicles[0];
   const [vehicleId, setVehicleId] = useState(preferred ? String(preferred.id) : "");
   const vehicle = vehicles.find((v) => String(v.id) === vehicleId);
   const [price, setPrice] = useState(() => suggestedFor(request, preferred));

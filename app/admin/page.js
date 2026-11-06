@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { BarChartIcon, BedIcon, CarIcon, ClipboardIcon, LocationIcon, MessageIcon, MessengerIcon, MountainIcon, RouteIcon, TicketIcon } from "../components/Icons";
+import { BarChartIcon, BedIcon, CarIcon, ClipboardIcon, GlobeIcon, LocationIcon, MessageIcon, MessengerIcon, MountainIcon, RouteIcon, TicketIcon } from "../components/Icons";
 import DatePicker from "../components/DatePicker";
 import { GEORGIA_REGIONS } from "../lib/placesMeta";
 import { listPlaces } from "../lib/placesFirestore";
@@ -22,6 +22,7 @@ import TransferPlacesManager from "./TransferPlacesManager";
 import InboxManager from "./InboxManager";
 import GetTransferManager from "./GetTransferManager";
 import TourTransfersManager from "./TourTransfersManager";
+import MarketplaceManager from "./MarketplaceManager";
 import { collection, getCountFromServer, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { WA_CONNECT_STATE } from "../lib/whatsappConfig";
@@ -954,6 +955,7 @@ export default function AdminPage() {
       label: "კონტენტი",
       items: [
         { key: "tours", label: "ტურები", Icon: MountainIcon, badge: { text: String(existingTours.length) } },
+        { key: "marketplaces", label: "ტურები სხვა საიტზე", Icon: GlobeIcon },
         { key: "hotels", label: "სასტუმროები", Icon: BedIcon, badge: { text: String(hotelsCount) } },
         { key: "places", label: "ადგილები", Icon: LocationIcon, badge: { text: String(placesCount) } },
         { key: "reviews", label: "მიმოხილვები", Icon: MessageIcon, badge: { text: String(reviewsCount) } },
@@ -969,6 +971,7 @@ export default function AdminPage() {
     gettransfer: ["GetTransfer", "GetTransfer-ის შეკვეთები ფასებით — ოფერს აქედან აგზავნი, გაფართოება GT Sync მას GetTransfer-ზე დადებს."],
     coupons: ["კუპონები", "ფასდაკლების კოდები და IP შეზღუდვები."],
     transfers: ["ტრანსფერის ფასები", "ფასები მანძილისა და ავტომობილის მიხედვით."],
+    marketplaces: ["ტურები სხვა საიტზე", "GetYourGuide და Tripster: ყველა ველი, რასაც ტურის ატვირთვისას ითხოვენ — თითო ველს აწერია, რომელ საიტს სჭირდება. ფასები მანქანების მიხედვით, ჯგუფური ტურები ცალკე და ატვირთვის ვადები."],
     tours: ["ტურები", "ტურის დამატება, რედაქტირება და კატალოგი."],
     hotels: ["სასტუმროები", "სასტუმროების სია საიტზე."],
     places: ["ადგილები", "ტურისტული ადგილები ფოტოებითა და აღწერით."],
@@ -2319,6 +2322,11 @@ export default function AdminPage() {
           {/* TAB: TOUR TRANSFERS (GetTransfer requests one car can do together) */}
           {activeTab === "tourTransfers" && (
             <TourTransfersManager />
+          )}
+
+          {/* TAB: TOURS ON OTHER SITES (GetYourGuide, Tripster) */}
+          {activeTab === "marketplaces" && (
+            <MarketplaceManager />
           )}
         </main>
       </div>
