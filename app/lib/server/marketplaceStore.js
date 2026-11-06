@@ -73,3 +73,32 @@ export async function deleteListing(id) {
   await query(`delete from marketplace_listings where id = $1`, [id]);
   return { ok: true };
 }
+
+// ── From the GT Sync extension ───────────────────────────────────────
+
+const STATUSES = ["todo", "draft", "ready", "review", "live", "rejected", "postponed", "skip"];
+
+/** The extension found the listing on GYG / Tripster: remember its ID, link and status. */
+export async function reportFromExtension({ id, platform, productId, url, status }) {
+  if (!["gyg", "tripster"].includes(platform)) throw new MarketplaceError("bad_platform", 400);
+  if (!ID_RE.test(String(id || ""))) throw new MarketplaceError("bad_id", 400);
+  const rows = await query(`select data from marketplace_listings where id = $1`, [id]);
+  if (!rows.length) throw new MarketplaceError("not_found", 404);
+  const data = rows[0].data;
+  const launch = { ...(data.launch || {}) };
+  const cur = { ...(launch[platform] || {}) };
+  if (productId) cur.productId = String(productId).slice(0, 40);
+  if (url && /^https:\/\/(supplier\.getyourguide\.com|experience\.tripster\.ru)\//.test(url)) cur.url = url.slice(0, 300);
+  if (status && STATUSES.includes(status)) {
+    cur.status = status;
+    if (status === "review" && !cur.launched) cur.launched = new Date().toISOString().slice(0, 10);
+  }
+  launch[platform] = cur;
+  const now = Date.now();
+  await query(`update marketplace_listings set data = $2::jsonb, updated_at = $3 where id = $1`, [
+    id,
+    JSON.stringify({ ...data, launch }),
+    now,
+  ]);
+  return { ok: true, launch: cur };
+}

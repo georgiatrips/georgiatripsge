@@ -53,7 +53,7 @@ export const SECTIONS = [
       {
         key: "gygCategory", p: GYG, kind: "select", req: true,
         label: "პროდუქტის კატეგორია", orig: "Product category",
-        options: ["Day trip / Tour", "Multi-day tour", "Activity", "Attraction / Ticket", "Transfer", "Other"],
+        options: ["Tour", "Tour (more than one day)", "Entry ticket", "City card", "Hop-on hop-off ticket", "Transport experience", "Rental experience", "Other"],
       },
       {
         key: "gygWriteLang", p: GYG, kind: "select", req: true,

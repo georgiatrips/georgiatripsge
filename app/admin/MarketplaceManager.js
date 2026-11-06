@@ -821,6 +821,17 @@ export default function MarketplaceManager() {
         <button type="button" className="admin-btn-primary" onClick={() => setEditing(emptyListing())}>+ ახალი ტური</button>
       </div>
 
+      <details className="mkt-howto">
+        <summary>როგორ ავტვირთო GYG-ზე / Tripster-ზე გაფართოებით (GT Sync)</summary>
+        <ol>
+          <li>Chrome → <code>chrome://extensions</code> → <b>GT Sync</b> → ↻ (განახლება). გასაღები იგივეა, რაც GetTransfer-ისთვის.</li>
+          <li>აქ შეავსე ტური და დააჭირე „შენახვა“.</li>
+          <li>გახსენი <a href={PLATFORMS.gyg.editorUrl} target="_blank" rel="noreferrer">GYG</a> ან <a href={PLATFORMS.tripster.editorUrl} target="_blank" rel="noreferrer">Tripster</a>-ის ახალი ტურის ფორმა → ქვემოთ მარჯვნივ <b>GT</b> ღილაკი → აირჩიე ტური.</li>
+          <li>ყოველ ეტაპზე: „ამ გვერდის შევსება“. რაც ვერ იპოვა — დააჭირე საიტის ველს და მერე „ჩასმა“. ფოტოები — „ფოტოების ატვირთვა“.</li>
+          <li>შეამოწმე და Continue / Сохранить / გაგზავნა <b>თვითონ</b> დააჭირე. შემდეგ პანელში „გავგზავნე მოდერაციაზე“ — სტატუსი აქაც განახლდება.</li>
+        </ol>
+      </details>
+
       {error && <div className="admin-alert error">ვერ ჩაიტვირთა: {error}</div>}
       {loading ? (
         <p className="admin-hint">იტვირთება…</p>
