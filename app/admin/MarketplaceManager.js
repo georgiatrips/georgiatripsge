@@ -56,7 +56,10 @@ export function emptyListing() {
       gygEmergency: "+995 504220020",
       gygPets: "This activity doesn't allow pets",
       gygAutoAccept: true,
-      gygGuide: "Driver only (no guide)",
+      gygGuide: "Live guide or other staff member",
+      gygGuideRole: "Driver",
+      gygFood: "No",
+      gygTransportUsed: "Yes",
       gygCategories: ["Adult"],
       languages: ["Русский", "English"],
       kidsAllowed: true,
@@ -139,10 +142,15 @@ function CopyButton({ text }) {
   );
 }
 
-function Counter({ value, max }) {
-  if (!max) return null;
+function Counter({ value, max, min }) {
+  if (!max && !min) return null;
   const n = String(value || "").length;
-  return <span className={`mkt-counter${n > max ? " is-over" : ""}`}>{n} / {max}</span>;
+  const bad = (max && n > max) || (min && n < min);
+  return (
+    <span className={`mkt-counter${bad ? " is-over" : ""}`}>
+      {n}{max ? ` / ${max}` : ""}{min ? ` (მინ. ${min})` : ""}
+    </span>
+  );
 }
 
 function statusMeta(key) {
@@ -295,7 +303,7 @@ function FieldInput({ field, value, onChange, visible }) {
             {count} პუნქტი{field.min || field.max ? ` (${field.min || 0}–${field.max || "∞"})` : ""}
           </span>
         )}
-        {field.kind !== "list" && <Counter value={value} max={typeof field.max === "number" ? field.max : null} />}
+        {field.kind !== "list" && <Counter value={value} max={typeof field.max === "number" ? field.max : null} min={field.minChars} />}
         {["text", "textarea", "list"].includes(field.kind) && <CopyButton text={value} />}
       </div>
     </>

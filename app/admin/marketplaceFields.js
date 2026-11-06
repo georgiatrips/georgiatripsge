@@ -78,8 +78,9 @@ export const SECTIONS = [
         label: "მოკლე აღწერა", orig: "Short description",
       },
       {
-        key: "gygFull", p: GYG, kind: "textarea", req: true, rows: 7,
+        key: "gygFull", p: GYG, kind: "textarea", req: true, rows: 7, minChars: 500, max: 3000,
         label: "სრული აღწერა", orig: "Full description",
+        hint: "GYG: მინიმუმ 500, მაქსიმუმ 3000 სიმბოლო.",
       },
       {
         key: "gygHighlights", p: GYG, kind: "list", req: true, min: 3, max: 5, itemMax: 80,
@@ -97,8 +98,9 @@ export const SECTIONS = [
         hint: "GYG: გაჩერებები და ხანგრძლივობა. Tripster: მარშრუტი დროებით (09:00 …).",
       },
       {
-        key: "trThemes", p: TR, kind: "list",
-        label: "თემები", orig: "Темы",
+        key: "trThemes", p: TR, kind: "textarea", req: true, rows: 4,
+        label: "თემები — რას გაიგებენ", orig: "Темы",
+        hint: "Tripster: „Расскажите, что узнают путешественники“ — 2–4 წინადადება რუსულად.",
       },
       {
         key: "trOrg", p: TR, kind: "textarea", req: true, rows: 5,
@@ -125,7 +127,7 @@ export const SECTIONS = [
         label: "ადგილები, რასაც ნახავენ", orig: "Locations",
         hint: "Google Maps-ის ადგილის სახელით, თითო ხაზზე.",
       },
-      { key: "gygKeywords", p: GYG, kind: "list", max: 15, label: "საკვანძო სიტყვები", orig: "Keywords" },
+      { key: "gygKeywords", p: GYG, kind: "list", max: 15, label: "საკვანძო სიტყვები", orig: "Keywords", hint: "GYG-ის სიიდან, ინგლისურად: Nature, Scenic, Wine, Local culture, Family friendly, Guided Tour, Outdoor Recreation, Cooking…" },
       {
         key: "meetingMode", p: BOTH, kind: "select", req: true,
         label: "შეხვედრა", orig: "Meeting point or pickup / Где начинается",
@@ -157,8 +159,14 @@ export const SECTIONS = [
       { key: "kidsFrom", p: BOTH, kind: "number", label: "ბავშვები რა ასაკიდან (0 = ნებისმიერი)", orig: "Возраст / Age" },
       {
         key: "gygGuide", p: GYG, kind: "select", req: true,
-        label: "გიდი", orig: "Guide information",
-        options: ["Driver only (no guide)", "Driver-guide", "Live tour guide", "Audio guide", "Host / greeter"],
+        label: "ვინ ახლავს ტურს", orig: "Who leads or assists customers during the activity?",
+        options: ["Live guide or other staff member", "No guide", "Audio guide included"],
+        hint: "მძღოლი, რომელიც ტურს თან ახლავს = „Live guide or other staff member“.",
+      },
+      {
+        key: "gygGuideRole", p: GYG, kind: "select",
+        label: "მისი როლი", orig: "What is their role in the activity?",
+        options: ["Driver", "Tour guide", "Host or Greeter", "Instructor"],
       },
       { key: "gygPrivate", p: GYG, kind: "info", label: "პრივატულია?", orig: "Is this a private activity?", text: "ავტომატურად — ზემოთ არჩეული ფორმატიდან (ინდივიდუალური = Yes)." },
       { key: "gygSkipLine", p: GYG, kind: "check", label: "რიგის გარეშე შესვლა", orig: "Skip the line" },
@@ -169,7 +177,9 @@ export const SECTIONS = [
     key: "included",
     title: "რა შედის ფასში",
     fields: [
-      { key: "gygIncl", p: GYG, kind: "list", req: true, label: "შედის", orig: "Inclusions" },
+      { key: "gygIncl", p: GYG, kind: "list", req: true, label: "შედის", orig: "What's included?" },
+      { key: "gygFood", p: GYG, kind: "select", req: true, label: "საკვები შედის?", orig: "Is food included in your activity?", options: ["No", "Yes"] },
+      { key: "gygTransportUsed", p: GYG, kind: "select", req: true, label: "ტრანსპორტი გამოიყენება?", orig: "Is transportation used during this activity?", options: ["Yes", "No"], hint: "„Yes“-ის შემდეგ საძიებოში ჩაწერე „Car“ / „Minibus“ და მონიშნე ხელით." },
       { key: "gygExcl", p: GYG, kind: "list", label: "არ შედის", orig: "Exclusions" },
       { key: "trExtras", p: TR, kind: "list", label: "დამატებითი ფასიანი სერვისები", orig: "Доп. услуги", hint: "„სახელი — ფასი €“, თითო ხაზზე. Tripster: სერვისებით შეკვეთა საშუალოდ 40%-ით მეტია." },
     ],
@@ -183,11 +193,11 @@ export const SECTIONS = [
         label: "ვისთვის არ არის შესაფერისი", orig: "Who is this activity not suitable for?",
         options: ["Wheelchair users", "People with mobility impairments", "Pregnant women", "People with back problems", "People with heart problems", "Children under 3"],
       },
-      { key: "gygNotAllowed", p: GYG, kind: "list", label: "რა არ შეიძლება", orig: "What's not allowed?" },
+      { key: "gygNotAllowed", p: GYG, kind: "list", label: "რა არ შეიძლება", orig: "What's not allowed?", hint: "GYG-ზე სიიდან ირჩევ (საძიებო ველი) — აქ ჩაწერე შენთვის." },
       { key: "gygPets", p: GYG, kind: "select", label: "შინაური ცხოველები", orig: "Pet policy", options: ["This activity doesn't allow pets", "Pets allowed", "Service animals only"] },
-      { key: "gygBring", p: GYG, kind: "list", label: "რა წამოიღონ აუცილებლად", orig: "Mandatory items" },
+      { key: "gygBring", p: GYG, kind: "list", label: "რა წამოიღონ აუცილებლად", orig: "Mandatory items", hint: "GYG-ზე სიიდან ირჩევ (საძიებო ველი) — აქ ჩაწერე შენთვის." },
       { key: "gygKnow", p: GYG, kind: "list", label: "წინასწარ საცოდნი", orig: "Know before you go" },
-      { key: "gygEmergency", p: GYG, kind: "text", req: true, label: "საგანგებო ნომერი", orig: "Emergency contact number", placeholder: "+995 504220020" },
+      { key: "gygEmergency", p: GYG, kind: "text", req: true, label: "საგანგებო ნომერი", orig: "How can customers contact you in case of an emergency?", placeholder: "+995 504220020", hint: "GYG-ზე ქვეყნის კოდს (Georgia +995) ცალკე ირჩევ; გაფართოება მხოლოდ ნომერს ჩაწერს." },
       { key: "gygVoucher", p: GYG, kind: "textarea", rows: 2, label: "რა ეწეროს ვაუჩერზე", orig: "Ticket / voucher information" },
     ],
   },
@@ -252,6 +262,7 @@ export function fieldFilled(field, value, platform) {
     return n >= (field.min || 1);
   }
   if (field.kind === "chips") return Array.isArray(v) && v.length > 0;
+  if (field.minChars) return String(v || "").trim().length >= field.minChars;
   return v != null && String(v).trim() !== "";
 }
 

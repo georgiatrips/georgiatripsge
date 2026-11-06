@@ -32,13 +32,16 @@ const MATCH = {
   durationHours: { gyg: ["duration"] },
   trTransport: { tripster: ["способ передвижения"] },
   kidsFrom: { tripster: ["возраст", "с детьми"] },
+  gygGuide: { gyg: ["who leads or assists customers"] },
+  gygGuideRole: { gyg: ["what is their role"] },
+  gygFood: { gyg: ["is food included"] },
+  gygTransportUsed: { gyg: ["is transportation used"] },
   gygIncl: { gyg: ["what's included", "inclusions", "included"] },
   gygExcl: { gyg: ["what's not included", "exclusions", "not included"] },
-  gygNotAllowed: { gyg: ["what's not allowed", "not allowed"] },
-  gygBring: { gyg: ["mandatory items", "must the customer bring", "what to bring"] },
+  // GYG "not allowed" / "mandatory items" are pick-from-list search boxes: by hand.
   gygKnow: { gyg: ["know before you go", "important information"] },
-  gygEmergency: { gyg: ["emergency contact", "emergency phone"] },
-  gygVoucher: { gyg: ["ticket/voucher", "voucher"] },
+  gygEmergency: { gyg: ["in case of an emergency", "emergency contact"] },
+  gygVoucher: { gyg: ["appear on the ticket", "ticket/voucher"] },
   cutoffHours: { gyg: ["cut-off", "cutoff"] },
   trDiscount: { tripster: ["скидка"] },
   trPrice: { tripster: ["цена за"] },
@@ -105,7 +108,9 @@ export function buildPlan(listing, platform) {
   const fields = [];
   for (const f of ALL_FIELDS) {
     if (!f.p.includes(platform) || f.kind === "info") continue;
-    const value = fieldValue(f, listing.fields?.[f.key], platform);
+    let value = fieldValue(f, listing.fields?.[f.key], platform);
+    // GYG has a separate country-code box: the number goes in without +995.
+    if (platform === "gyg" && f.key === "gygEmergency" && value) value = value.replace(/^\s*\+?995/, "").replace(/\D/g, "");
     fields.push({
       key: f.key,
       label: f.label,
@@ -116,6 +121,10 @@ export function buildPlan(listing, platform) {
     });
   }
   const options = vehicleOptions(listing, platform);
+  // Tripster "Формат": individual (by car) or group, from the listing.
+  if (platform === "tripster") {
+    fields.unshift({ key: "trFormat", label: "ფორმატი", orig: "Формат", kind: "select", value: listing.format === "group" ? "Групповой" : "Индивидуальный", match: ["формат"] });
+  }
   // Tripster has one price per offer: the first (or only) vehicle / group price.
   if (platform === "tripster" && options[0]?.price) {
     fields.push({ key: "trPrice", label: "ფასი", orig: "Цена", kind: "number", value: String(options[0].price), match: MATCH.trPrice.tripster });
