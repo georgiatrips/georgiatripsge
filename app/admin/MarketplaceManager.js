@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { adminFetch } from "../lib/apiClient";
 import { VEHICLES, VEHICLE_KEYS, getPrivateVehiclePrices } from "../lib/vehicles";
 import { asLocalizedText, listFirestoreTours } from "../lib/toursFirestore";
+import { uploadImage } from "../lib/imageUpload";
 import {
   LAUNCH_STATUSES,
   PLATFORMS,
@@ -11,10 +12,14 @@ import {
   SECTIONS,
   VEHICLE_EN,
   WEEKDAYS,
+  ALL_FIELDS,
+  OPTION_KA,
   daysUntil,
   fieldFilled,
   hasPrices,
+  optionLabel,
   platformProgress,
+  writeLang,
 } from "./marketplaceFields";
 
 // "ტურები სხვა საიტზე": one card per tour we put on GetYourGuide and
@@ -86,10 +91,13 @@ function normalize(listing) {
     const v = listing.vehicles?.[key] || {};
     vehicles[key] = { ...base.vehicles[key], ...v, prices: { ...base.vehicles[key].prices, ...(v.prices || {}) } };
   }
+  const fields = { ...base.fields, ...(listing.fields || {}) };
+  // "meetExact" used to be one text for both sites; now GYG (EN) and Tripster (RU) apart.
+  if (typeof fields.meetExact === "string") fields.meetExact = { gyg: fields.meetExact, tripster: "" };
   return {
     ...base,
     ...listing,
-    fields: { ...base.fields, ...(listing.fields || {}) },
+    fields,
     vehicles,
     group: { ...base.group, ...(listing.group || {}), prices: { ...base.group.prices, ...(listing.group?.prices || {}) } },
     launch: {
@@ -119,6 +127,48 @@ function FieldLogos({ platforms }) {
         <PlatformLogo key={p} platform={p} />
       ))}
       {platforms.length === 2 && <span className="mkt-both">ორივე</span>}
+    </span>
+  );
+}
+
+function LangBadge({ lang }) {
+  if (!lang) return null;
+  return (
+    <span className={`mkt-lang is-${lang.code.toLowerCase()}`} title="ამ ენაზე ჩაწერე">
+      ✍ {lang.text}
+    </span>
+  );
+}
+
+// Photos from the computer → our Cloudinary → links in the field, so the
+// extension can put them into GYG / Tripster (it cannot read local files).
+function PhotoUpload({ value, onChange }) {
+  const [busy, setBusy] = useState("");
+  const [error, setError] = useState("");
+  const pick = async (e) => {
+    const files = [...(e.target.files || [])];
+    e.target.value = "";
+    if (!files.length) return;
+    setError("");
+    const urls = [];
+    for (const [i, file] of files.entries()) {
+      setBusy(`${i + 1}/${files.length}`);
+      try {
+        urls.push(await uploadImage(file));
+      } catch (err) {
+        setError(err.message);
+      }
+    }
+    setBusy("");
+    if (urls.length) onChange([String(value || "").trim(), ...urls].filter(Boolean).join("\n"));
+  };
+  return (
+    <span className="mkt-photo-up">
+      <label className="admin-btn-ghost">
+        {busy ? `იტვირთება ${busy}…` : "📷 ფოტოების ატვირთვა კომპიუტერიდან"}
+        <input type="file" accept="image/*" multiple hidden disabled={!!busy} onChange={pick} />
+      </label>
+      {error && <small className="mkt-warn">{error}</small>}
     </span>
   );
 }
@@ -213,7 +263,7 @@ function SingleInput({ field, value, onChange, max, placeholder }) {
   return <input type="text" {...common} />;
 }
 
-function FieldInput({ field, value, onChange, visible }) {
+function FieldInput({ field, value, onChange, visible, listing }) {
   if (field.kind === "info") return <p className="mkt-info">{field.text}</p>;
 
   if (field.kind === "check") {
@@ -230,7 +280,7 @@ function FieldInput({ field, value, onChange, visible }) {
       <select value={value ?? ""} onChange={(e) => onChange(e.target.value)}>
         <option value="">— აირჩიე —</option>
         {field.options.map((o) => (
-          <option key={o} value={o}>{o}</option>
+          <option key={o} value={o}>{optionLabel(o, field)}</option>
         ))}
       </select>
     );
@@ -246,10 +296,12 @@ function FieldInput({ field, value, onChange, visible }) {
             <button
               key={o}
               type="button"
+              title={o}
               className={`mkt-chip-btn${on ? " is-on" : ""}`}
               onClick={() => onChange(on ? list.filter((x) => x !== o) : [...list, o])}
             >
-              {on ? "✓ " : ""}{o}
+              {on ? "✓ " : ""}{OPTION_KA[o] || o}
+              {OPTION_KA[o] && OPTION_KA[o] !== o && <small className="mkt-chip-orig">{o}</small>}
             </button>
           );
         })}
@@ -282,7 +334,7 @@ function FieldInput({ field, value, onChange, visible }) {
           <div key={p} className="mkt-split-item">
             <div className="mkt-split-head">
               <PlatformLogo platform={p} />
-              <small>{PLATFORMS[p].lang}</small>
+              <LangBadge lang={writeLang(field, p, listing)} />
               <Counter value={v[p]} max={field.max?.[p]} />
               <CopyButton text={v[p]} />
             </div>
@@ -305,6 +357,7 @@ function FieldInput({ field, value, onChange, visible }) {
         )}
         {field.kind !== "list" && <Counter value={value} max={typeof field.max === "number" ? field.max : null} min={field.minChars} />}
         {["text", "textarea", "list"].includes(field.kind) && <CopyButton text={value} />}
+        {field.key === "photos" && <PhotoUpload value={value} onChange={onChange} />}
       </div>
     </>
   );
@@ -394,12 +447,12 @@ function PricingBlock({ listing, update, visible, rate }) {
                 {visible.includes("gyg") && (
                   <div className="mkt-vehicle-grid">
                     <label className="mkt-wide">
-                      <span className="mkt-lbl"><PlatformLogo platform="gyg" withName={false} size={14} /> Option title</span>
+                      <span className="mkt-lbl"><PlatformLogo platform="gyg" withName={false} size={14} /> ვარიანტის სათაური <small className="mkt-orig">საიტზე: Option title</small> <LangBadge lang={{ code: "EN", text: "ინგლისურად" }} /></span>
                       <input type="text" maxLength={75} placeholder={autoTitle} value={v.gygTitle} onChange={(e) => set({ gygTitle: e.target.value })} />
                       <span className="mkt-under"><CopyButton text={v.gygTitle || autoTitle} /></span>
                     </label>
                     <label>
-                      <span className="mkt-lbl"><PlatformLogo platform="gyg" withName={false} size={14} /> Reference code</span>
+                      <span className="mkt-lbl"><PlatformLogo platform="gyg" withName={false} size={14} /> შიდა კოდი <small className="mkt-orig">საიტზე: Reference code</small></span>
                       <input type="text" maxLength={20} value={v.ref} onChange={(e) => set({ ref: e.target.value })} />
                     </label>
                   </div>
@@ -461,6 +514,98 @@ function LaunchBlock({ listing, update, visible }) {
   );
 }
 
+// ── AI ───────────────────────────────────────────────────────────────
+
+const isBlank = (v) =>
+  v == null || (typeof v === "string" && !v.trim()) || (Array.isArray(v) && !v.length) ||
+  (typeof v === "object" && !Array.isArray(v) && !Object.values(v).some((x) => (typeof x === "string" ? x.trim() : x)));
+
+// What the site tour looks like to the AI: texts only, no photos.
+function tourForAi(tour) {
+  if (!tour) return null;
+  const { gallery, images, image, cover, reviews, ...rest } = tour;
+  return rest;
+}
+
+function AiPanel({ listing, siteTours, onImport, onApply, onUndo, canUndo }) {
+  const [brief, setBrief] = useState("");
+  const [busy, setBusy] = useState("");
+  const [msg, setMsg] = useState(null);
+  const [notes, setNotes] = useState([]);
+  const tour = siteTours.find((t) => t.id === listing.siteTourId);
+
+  const run = async (mode) => {
+    setBusy(mode);
+    setMsg(null);
+    setNotes([]);
+    try {
+      const res = await adminFetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "ai", mode, brief, tour: tourForAi(tour), listing }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      const n = onApply(data, mode);
+      setNotes(data.notes || []);
+      setMsg({ type: n ? "success" : "info", text: n ? `AI-მ შეავსო / შეასწორა ${n} ველი. გადახედე (მონიშნულია ✨) და დააჭირე „შენახვა“.` : "AI-მ ახალი არაფერი დაამატა — ცარიელი ველი აღარ დარჩა ან მასალა არ ეყო." });
+    } catch (err) {
+      setMsg({ type: "error", text: `AI ვერ მუშაობს: ${err.message}` });
+    } finally {
+      setBusy("");
+    }
+  };
+
+  return (
+    <fieldset className="admin-fieldset mkt-section mkt-ai">
+      <legend>✨ AI-ით შევსება</legend>
+      <div className="admin-field">
+        <label>ტექსტი / სკრიპტი ტურზე <small className="mkt-orig">ნებისმიერ ენაზე — ქართულად, რუსულად ან ინგლისურად</small></label>
+        <textarea
+          rows={6}
+          value={brief}
+          onChange={(e) => setBrief(e.target.value)}
+          placeholder={"მაგ: ბათუმიდან მთიან აჭარაში, 8-9 საათი. მახუნცეთის ჩანჩქერი, თამარის ხიდი, ღვინის მარანი, ფერმა… ავიყვანთ სასტუმროდან, მძღოლი რუსულად და ინგლისურად ლაპარაკობს. ფასში შედის ბენზინი, არ შედის სადილი."}
+        />
+      </div>
+      <div className="admin-grid-2">
+        <div className="admin-field">
+          <label>ან / და ტური საიტიდან</label>
+          <select value={listing.siteTourId} onChange={(e) => onImport(e.target.value)}>
+            <option value="">— არ არის არჩეული —</option>
+            {siteTours.map((t) => (
+              <option key={t.id} value={t.id}>{asLocalizedText(t.title, "ka") || t.id}</option>
+            ))}
+          </select>
+        </div>
+        <div className="admin-field mkt-ai-actions">
+          <button type="button" className="admin-btn-primary" disabled={!!busy} onClick={() => run("empty")}>
+            {busy === "empty" ? "AI წერს… (30–90 წმ)" : "✨ ცარიელი ველების შევსება"}
+          </button>
+          <button type="button" className="admin-btn-ghost" disabled={!!busy} onClick={() => run("fix")}>
+            {busy === "fix" ? "AI ამოწმებს… (30–90 წმ)" : "✨ ყველაფრის შემოწმება და გასწორება"}
+          </button>
+          {canUndo && !busy && (
+            <button type="button" className="admin-btn-ghost" onClick={() => { onUndo(); setMsg({ type: "info", text: "AI-ს ცვლილებები გაუქმდა." }); setNotes([]); }}>
+              ↶ AI-ს ცვლილებების გაუქმება
+            </button>
+          )}
+        </div>
+      </div>
+      <p className="admin-hint">
+        AI წერს GYG-ის ველებს ინგლისურად და Tripster-ის ველებს რუსულად. ფასებს, ტელეფონს, ფოტოებს, განრიგს და თარიღებს არ ეხება — მათ შენ წერ.
+        „ცარიელი ველების შევსება“ შევსებულს არ ცვლის; „შემოწმება და გასწორება“ ყველაფერს გადახედავს და საჭიროს გადაწერს. არაფერი ინახება, სანამ „შენახვას“ არ დააჭერ.
+      </p>
+      {msg && <div className={`admin-alert ${msg.type}`}>{msg.text}</div>}
+      {notes.length > 0 && (
+        <ul className="mkt-ai-notes">
+          {notes.map((n, i) => <li key={i}>{n}</li>)}
+        </ul>
+      )}
+    </fieldset>
+  );
+}
+
 // ── Editor ───────────────────────────────────────────────────────────
 
 function Editor({ initial, siteTours, rate, onSaved, onCancel, onDelete }) {
@@ -469,7 +614,47 @@ function Editor({ initial, siteTours, rate, onSaved, onCancel, onDelete }) {
   const [onlyMissing, setOnlyMissing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
+  const [aiChanged, setAiChanged] = useState([]);
+  const [aiUndo, setAiUndo] = useState(null);
   const visible = show === "all" ? PLATFORM_KEYS : [show];
+
+  // AI answer → fields. "empty": only what is blank now; "fix": everything it returned.
+  const applyAi = (data, mode) => {
+    const fix = mode === "fix";
+    const next = { ...listing.fields };
+    const changed = [];
+    for (const f of ALL_FIELDS) {
+      const v = data.fields?.[f.key];
+      if (v === undefined) continue;
+      const cur = next[f.key];
+      if (f.split) {
+        const obj = { ...(cur && typeof cur === "object" ? cur : {}) };
+        let any = false;
+        for (const p of f.p) {
+          if (v[p] == null || (!fix && !isBlank(obj[p])) || obj[p] === v[p]) continue;
+          obj[p] = v[p];
+          any = true;
+        }
+        if (any) {
+          next[f.key] = obj;
+          changed.push(f.key);
+        }
+      } else if ((fix || isBlank(cur)) && JSON.stringify(cur) !== JSON.stringify(v)) {
+        next[f.key] = v;
+        changed.push(f.key);
+      }
+    }
+    setAiUndo({ fields: listing.fields, name: listing.name });
+    setListing((prev) => ({ ...prev, name: prev.name || data.name || "", fields: next }));
+    setAiChanged(changed);
+    return changed.length;
+  };
+  const undoAi = () => {
+    if (!aiUndo) return;
+    setListing((prev) => ({ ...prev, fields: aiUndo.fields, name: aiUndo.name }));
+    setAiUndo(null);
+    setAiChanged([]);
+  };
 
   const update = (patch) => setListing((prev) => ({ ...prev, ...patch }));
   const setField = (key, value) => setListing((prev) => ({ ...prev, fields: { ...prev.fields, [key]: value } }));
@@ -486,7 +671,7 @@ function Editor({ initial, siteTours, rate, onSaved, onCancel, onDelete }) {
     if (!f.trIdea) f.trIdea = ru(tour.desc);
     if (!f.gygIncl && tour.includedText) f.gygIncl = en(tour.includedText);
     if (!f.gygExcl && tour.excludedText) f.gygExcl = en(tour.excludedText);
-    if (!f.meetExact && tour.meetingPoint) f.meetExact = en(tour.meetingPoint);
+    if (!f.meetExact?.gyg && !f.meetExact?.tripster && tour.meetingPoint) f.meetExact = { gyg: en(tour.meetingPoint), tripster: ru(tour.meetingPoint) };
     const hours = parseFloat(String(en(tour.duration) || asLocalizedText(tour.duration, "ka") || "").replace(",", "."));
     if (!f.durationHours && hours > 0 && hours < 24 && !/day|დღ/i.test(en(tour.duration))) f.durationHours = String(hours);
     if (!f.route && Array.isArray(tour.itinerary)) {
@@ -563,6 +748,8 @@ function Editor({ initial, siteTours, rate, onSaved, onCancel, onDelete }) {
         {visible.map((p) => <Progress key={p} listing={listing} platform={p} />)}
       </div>
 
+      <AiPanel listing={listing} siteTours={siteTours} onImport={importTour} onApply={applyAi} onUndo={undoAi} canUndo={!!aiUndo} />
+
       <fieldset className="admin-fieldset mkt-section">
         <legend>ტური</legend>
         <div className="admin-grid-2">
@@ -583,7 +770,7 @@ function Editor({ initial, siteTours, rate, onSaved, onCancel, onDelete }) {
         </div>
         <div className="admin-field">
           <label>
-            <FieldLogos platforms={PLATFORM_KEYS} /> ფორმატი <small className="mkt-orig">Формат / Is this a private activity?</small>
+            <FieldLogos platforms={PLATFORM_KEYS} /> ფორმატი <small className="mkt-orig">საიტზე: Формат / Is this a private activity?</small>
           </label>
           <div className="admin-segment">
             <button type="button" className={listing.format === "private" ? "is-active" : ""} onClick={() => update({ format: "private" })}>ინდივიდუალური (მანქანით)</button>
@@ -634,11 +821,13 @@ function Editor({ initial, siteTours, rate, onSaved, onCancel, onDelete }) {
                   </div>
                   {f.kind !== "check" && (
                     <label>
-                      {f.label} {f.orig && <small className="mkt-orig">{f.orig}</small>}
+                      {f.label} {f.orig && <small className="mkt-orig">საიტზე: {f.orig}</small>}
+                      {!f.split && <LangBadge lang={writeLang(f, null, listing)} />}
                     </label>
                   )}
-                  <FieldInput field={f} value={listing.fields[f.key]} onChange={(v) => setField(f.key, v)} visible={visible} />
-                  {f.kind === "check" && f.orig && <small className="mkt-orig">{f.orig}</small>}
+                  <FieldInput field={f} value={listing.fields[f.key]} onChange={(v) => setField(f.key, v)} visible={visible} listing={listing} />
+                  {f.kind === "check" && f.orig && <small className="mkt-orig">საიტზე: {f.orig}</small>}
+                  {aiChanged.includes(f.key) && <small className="mkt-ai-tag">✨ AI-მ შეავსო — გადახედე</small>}
                   {f.hint && <p className="admin-hint">{f.hint}</p>}
                 </div>
               );
@@ -838,6 +1027,24 @@ export default function MarketplaceManager() {
           <li>ყოველ ეტაპზე: „ამ გვერდის შევსება“. რაც ვერ იპოვა — დააჭირე საიტის ველს და მერე „ჩასმა“. ფოტოები — „ფოტოების ატვირთვა“.</li>
           <li>შეამოწმე და Continue / Сохранить / გაგზავნა <b>თვითონ</b> დააჭირე. შემდეგ პანელში „გავგზავნე მოდერაციაზე“ — სტატუსი აქაც განახლდება.</li>
         </ol>
+      </details>
+
+      <details className="mkt-howto">
+        <summary>რას ვერ ავსებს გაფართოება — და რა უნდა გააკეთო ხელით</summary>
+        <ul className="mkt-limits">
+          <li><b>გაგზავნის ღილაკები</b> (Continue, Save, Сохранить, Publish) — განზრახ არასდროს აჭერს; ყოველ ეტაპზე შენ აჭერ.</li>
+          <li><b>Tripster-ის ჩამოსაშლელი სიები</b> (ენა, ხანგრძლივობა, ჯავშნის დახურვა, ზოგჯერ ტიპი) — ჯერ შენ გახსენი სია, მერე ისევ „ამ გვერდის შევსება“ — სწორ პუნქტს თვითონ აირჩევს.</li>
+          <li><b>GYG ლოკაციები და საკვანძო სიტყვები</b> — საძიებოში უნდა ჩაწერო; რაც შემოთავაზებაში გამოჩნდება და ემთხვევა, იმას თვითონ დააჭერს.</li>
+          <li><b>GYG „რა არ შეიძლება“, „რა წამოიღონ“, ტრანსპორტის ტიპი (Car / Minibus)</b> — სიიდან ხელით ირჩევ.</li>
+          <li><b>განრიგი</b> (დღეები, დაწყების დრო, სეზონის თარიღები) და <b>კალენდარი</b> — ხელით; პანელში მნიშვნელობა ჩანს და „ჩასმა“ ღილაკით ჩასვამ ტექსტურ ველში.</li>
+          <li><b>ფასები</b> — GYG-ზე თითო ვარიანტს „ფასი“ ღილაკით ჩასვამ; ფასის საფეხურები (მონაწილეების რაოდენობით) ხელით. Tripster-ზე ერთი ფასი ერთ შეთავაზებაზე.</li>
+          <li><b>რუკაზე წერტილი</b> და <b>ქვეყნის კოდი +995</b> — ხელით.</li>
+          <li><b>ფოტოები</b> — მხოლოდ ბმულით (ჩვენი საიტი, Cloudinary, Firebase, Google, Unsplash). კომპიუტერიდან პირდაპირ ვერ ატვირთავს (Chrome-ის შეზღუდვა) — ამიტომ ფოტოების ველში გამოიყენე „📷 ფოტოების ატვირთვა კომპიუტერიდან“: ჯერ ჩვენთან აიტვირთება, მერე გაფართოება გადაიტანს. Tripster: მოკლე მხარე ≥1350px. ფოტოს წარწერა და მთავარი ფოტოს არჩევა — ხელით.</li>
+          <li><b>Tripster-ის ტიპი</b> შენახვის შემდეგ აღარ იცვლება (მხოლოდ editors@tripster.ru-ით).</li>
+          <li><b>ანგარიში, ხელშეკრულება, საბანკო რეკვიზიტები, დოკუმენტები, captcha, შესვლა</b> — მხოლოდ შენ.</li>
+          <li>თუ Chrome-მა გვერდი <b>თარგმნა</b>, ველებს ვერ პოულობს — ჩართე „ორიგინალის ჩვენება“.</li>
+          <li>საიტები დიზაინს ცვლიან: თუ ველი ვერ იპოვა, დააჭირე საიტის ველს და მერე პანელში „ჩასმა“ — ეს ყოველთვის მუშაობს.</li>
+        </ul>
       </details>
 
       {error && <div className="admin-alert error">ვერ ჩაიტვირთა: {error}</div>}

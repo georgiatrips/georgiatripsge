@@ -3,7 +3,7 @@
 // GetYourGuide or Tripster editor. `match` = label texts the field has on
 // that site (lower-case substrings; the first match on the page wins).
 
-import { ALL_FIELDS, PLATFORMS, VEHICLE_EN, WEEKDAYS } from "../admin/marketplaceFields";
+import { ALL_FIELDS, OPTION_KA, PLATFORMS, VEHICLE_EN, WEEKDAYS, writeLang } from "../admin/marketplaceFields";
 import { VEHICLES, VEHICLE_KEYS } from "./vehicles";
 
 const MATCH = {
@@ -111,19 +111,25 @@ export function buildPlan(listing, platform) {
     let value = fieldValue(f, listing.fields?.[f.key], platform);
     // GYG has a separate country-code box: the number goes in without +995.
     if (platform === "gyg" && f.key === "gygEmergency" && value) value = value.replace(/^\s*\+?995/, "").replace(/\D/g, "");
+    // Georgian for the panel; `value` stays in the site's language (it is what gets typed / picked).
+    const ka = (x) => OPTION_KA[x] || x;
+    const display = value == null ? null : f.kind === "select" ? ka(value) : f.kind === "chips" ? value.map(ka) : null;
     fields.push({
       key: f.key,
       label: f.label,
       orig: f.orig || "",
       kind: f.kind,
       value,
+      display,
+      lang: writeLang(f, platform, listing)?.text || "",
       match: MATCH[f.key]?.[platform] || [],
     });
   }
   const options = vehicleOptions(listing, platform);
   // Tripster "Формат": individual (by car) or group, from the listing.
   if (platform === "tripster") {
-    fields.unshift({ key: "trFormat", label: "ფორმატი", orig: "Формат", kind: "select", value: listing.format === "group" ? "Групповой" : "Индивидуальный", match: ["формат"] });
+    const group = listing.format === "group";
+    fields.unshift({ key: "trFormat", label: "ფორმატი", orig: "Формат", kind: "select", value: group ? "Групповой" : "Индивидуальный", display: group ? "ჯგუფური" : "ინდივიდუალური", match: ["формат"] });
   }
   // Tripster has one price per offer: the first (or only) vehicle / group price.
   if (platform === "tripster" && options[0]?.price) {
@@ -131,7 +137,9 @@ export function buildPlan(listing, platform) {
   }
   const photos = listToLines(listing.fields?.photos)
     .map((u) => (u.startsWith("/") ? `https://www.georgiatrips.ge${u}` : u))
-    .filter((u) => /^https:\/\//.test(u));
+    .filter((u) => /^https:\/\//.test(u))
+    // Our uploads are WebP; GYG and Tripster take JPG / PNG: Cloudinary converts on the fly.
+    .map((u) => (/^https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\//.test(u) && !/\.(jpe?g|png)(\?|$)/i.test(u) ? u.replace("/image/upload/", "/image/upload/f_jpg,q_90/") : u));
   return {
     id: listing.id,
     name: listing.name,

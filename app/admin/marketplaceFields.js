@@ -100,7 +100,7 @@ export const SECTIONS = [
       {
         key: "trThemes", p: TR, kind: "textarea", req: true, rows: 4,
         label: "თემები — რას გაიგებენ", orig: "Темы",
-        hint: "Tripster: „Расскажите, что узнают путешественники“ — 2–4 წინადადება რუსულად.",
+        hint: "Tripster-ზე ველს ჰქვია „Расскажите, что узнают путешественники“ (მოუყევით, რას გაიგებენ) — 2–4 წინადადება.",
       },
       {
         key: "trOrg", p: TR, kind: "textarea", req: true, rows: 5,
@@ -135,7 +135,7 @@ export const SECTIONS = [
       },
       { key: "gygPickupArea", p: GYG, kind: "textarea", rows: 2, label: "აყვანის ზონა", orig: "Pickup area", placeholder: "Hotels and apartments in Batumi city centre" },
       { key: "trMeetApprox", p: TR, kind: "text", req: true, label: "მიახლოებითი ადგილი", orig: "Примерное место встречи", hint: "ჯავშნამდე ჩანს მოგზაურს." },
-      { key: "meetExact", p: BOTH, kind: "text", label: "ზუსტი ადგილი / მისამართი", orig: "Meeting point / Точное место встречи" },
+      { key: "meetExact", p: BOTH, kind: "text", split: true, label: "ზუსტი ადგილი / მისამართი", orig: "Meeting point / Точное место встречи" },
       { key: "mapLink", p: BOTH, kind: "text", label: "წერტილი რუკაზე (ბმული)", orig: "Map pin / Точка на карте", placeholder: "https://maps.google.com/…" },
       { key: "endPoint", p: GYG, kind: "text", label: "სად მთავრდება", orig: "Arrive back at" },
     ],
@@ -224,7 +224,7 @@ export const SECTIONS = [
       { key: "seasonTo", p: BOTH, kind: "date", label: "სეზონი — მდე", orig: "End date / До какой даты" },
       { key: "trAhead", p: TR, kind: "select", label: "რამდენი თვით ადრე იჯავშნება", orig: "Публиковать вперёд", options: ["3", "4", "5", "6"] },
       { key: "cutoffHours", p: BOTH, kind: "number", req: true, label: "ჯავშნის დახურვა (სთ-ით ადრე)", orig: "Cut-off time / Закрытие бронирования" },
-      { key: "trCloseLate", p: TR, kind: "check", label: "1 სთ-ით ადრე დახურვა, თუ უკვე არის გადახდილი შეკვეთა", orig: "Закрывать бронирование за 1 час…" },
+      { key: "trCloseLate", p: TR, kind: "check", label: "1 სთ-ით ადრე დახურვა, თუ უკვე არის გადახდილი შეკვეთა", orig: "Закрывать бронирование за 1 час… (დახურვა 1 სთ-ით ადრე)" },
       { key: "gygAutoAccept", p: GYG, kind: "check", label: "ჯავშნების ავტომატური დადასტურება", orig: "Automatically accept new bookings" },
     ],
   },
@@ -245,6 +245,109 @@ export const SECTIONS = [
 ];
 
 export const ALL_FIELDS = SECTIONS.flatMap((s) => s.fields);
+
+// Georgian names for the values the sites show in their dropdowns. The value
+// itself stays in the site's language: the extension looks for that text.
+export const OPTION_KA = {
+  // Tripster „Тип“
+  "Экскурсия": "ექსკურსია",
+  "Многодневный тур": "მრავალდღიანი ტური",
+  "Активный отдых": "აქტიური დასვენება",
+  "На воде": "წყალზე",
+  "Квест": "კვესტი",
+  "Трансфер": "ტრანსფერი",
+  "Трансфер с экскурсией": "ტრანსფერი ექსკურსიით",
+  "Мастер-класс": "მასტერკლასი",
+  "Фотосессия": "ფოტოსესია",
+  // GYG product category
+  Tour: "ტური",
+  "Tour (more than one day)": "მრავალდღიანი ტური",
+  "Entry ticket": "შესასვლელი ბილეთი",
+  "City card": "ქალაქის ბარათი",
+  "Hop-on hop-off ticket": "Hop-on hop-off ავტობუსის ბილეთი",
+  "Transport experience": "ტრანსპორტით მომსახურება",
+  "Rental experience": "გაქირავება",
+  Other: "სხვა",
+  // Languages
+  English: "ინგლისური",
+  German: "გერმანული",
+  French: "ფრანგული",
+  Spanish: "ესპანური",
+  Italian: "იტალიური",
+  Portuguese: "პორტუგალიური",
+  Dutch: "ჰოლანდიური",
+  Polish: "პოლონური",
+  "Русский": "რუსული",
+  "Türkçe": "თურქული",
+  "العربية": "არაბული",
+  Deutsch: "გერმანული",
+  // Tripster „Способ передвижения“
+  "На машине": "მანქანით",
+  "На автобусе": "ავტობუსით",
+  "Пешком": "ფეხით",
+  "На машине и пешком": "მანქანით და ფეხით",
+  "Другое": "სხვა",
+  // GYG guide
+  "Live guide or other staff member": "გიდი ან სხვა თანამშრომელი (მძღოლიც)",
+  "No guide": "გიდის გარეშე",
+  "Audio guide included": "აუდიო გიდი",
+  Driver: "მძღოლი",
+  "Tour guide": "გიდი",
+  "Host or Greeter": "მასპინძელი / დამხვედრი",
+  Instructor: "ინსტრუქტორი",
+  Yes: "კი",
+  No: "არა",
+  // GYG not suitable for
+  "Wheelchair users": "ეტლით მოსარგებლეები",
+  "People with mobility impairments": "გადაადგილების პრობლემის მქონეები",
+  "Pregnant women": "ორსულები",
+  "People with back problems": "ზურგის პრობლემის მქონეები",
+  "People with heart problems": "გულის პრობლემის მქონეები",
+  "Children under 3": "3 წლამდე ბავშვები",
+  // GYG pets
+  "This activity doesn't allow pets": "ცხოველები არ დაიშვება",
+  "Pets allowed": "ცხოველები დაიშვება",
+  "Service animals only": "მხოლოდ დამხმარე ცხოველები",
+  // Tripster schedule
+  "Еженедельное": "ყოველკვირეული",
+  "Фиксированные даты": "კონკრეტული თარიღები",
+  // GYG pricing categories
+  Adult: "ზრდასრული",
+  Child: "ბავშვი",
+  Youth: "მოზარდი",
+  Infant: "ჩვილი",
+  Senior: "ხანდაზმული",
+  Student: "სტუდენტი",
+};
+
+/** "ექსკურსია (Экскурсия)" — Georgian first, the site's own word after it. */
+export function optionLabel(value, field) {
+  if (field?.key === "trAhead") return `${value} თვით ადრე`;
+  const ka = OPTION_KA[value];
+  return ka && ka !== value ? `${ka} (${value})` : String(value);
+}
+
+// Fields that are not prose: links, numbers, file names, phone.
+const NO_WRITE_LANG = new Set(["mapLink", "photos", "photosFolder", "gygEmergency"]);
+const LANG_KA = { EN: "ინგლისურად", RU: "რუსულად" };
+
+/**
+ * In which language the person writes a field for a platform:
+ * { code: "EN", text: "ინგლისურად" } or null (not prose).
+ * GYG is written in the "Product language" (English by default), Tripster in Russian.
+ */
+export function writeLang(field, platform, listing) {
+  if (!["text", "textarea", "list"].includes(field.kind) || NO_WRITE_LANG.has(field.key)) return null;
+  if (field.key === "city") return { code: "EN", text: "ლათინურად (Batumi)" };
+  const p = platform || (field.p.length === 1 ? field.p[0] : null);
+  if (!p) return { code: "EN", text: "ინგლისურად" };
+  if (p === "gyg") {
+    const lang = listing?.fields?.gygWriteLang || "English";
+    if (lang !== "English") return { code: lang.slice(0, 2).toUpperCase(), text: `${OPTION_KA[lang] || lang} ენაზე` };
+  }
+  const code = PLATFORMS[p].lang;
+  return { code, text: LANG_KA[code] };
+}
 
 export const WEEKDAYS = ["ორშ", "სამ", "ოთხ", "ხუთ", "პარ", "შაბ", "კვი"];
 

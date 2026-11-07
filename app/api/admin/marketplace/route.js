@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "../../../lib/server/adminAuth";
 import { MarketplaceError, deleteListing, listListings, saveListing } from "../../../lib/server/marketplaceStore";
+import { generateListing } from "../../../lib/server/marketplaceAi";
 
 // Admin panel → "ტურები სხვა საიტზე".
 //   GET                                   all listings
 //   POST { action: "save", listing }      create or replace one listing
 //   POST { action: "delete", id }
+//   POST { action: "ai", listing, brief, tour, mode }   AI writes the fields (nothing is saved)
 export const dynamic = "force-dynamic";
+export const maxDuration = 180;
 
 function fail(err) {
   if (!(err instanceof MarketplaceError)) console.error("[admin marketplace]", err);
@@ -30,6 +33,13 @@ export async function POST(request) {
   const payload = await request.json().catch(() => ({}));
   try {
     if (payload.action === "save") return NextResponse.json(await saveListing(payload.listing));
+    if (payload.action === "ai") {
+      try {
+        return NextResponse.json(await generateListing(payload));
+      } catch (err) {
+        return NextResponse.json({ error: err.message }, { status: 502 });
+      }
+    }
     if (payload.action === "delete") return NextResponse.json(await deleteListing(payload.id));
     return NextResponse.json({ error: "unknown_action" }, { status: 400 });
   } catch (err) {

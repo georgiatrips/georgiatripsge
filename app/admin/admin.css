@@ -1825,3 +1825,15 @@
 .mkt-howto summary { cursor: pointer; font-weight: 700; color: var(--gt-primary-700); }
 .mkt-howto ol { margin: 0.6rem 0 0.2rem; padding-left: 1.2rem; display: grid; gap: 0.35rem; color: var(--gt-ink-2); line-height: 1.5; }
 .mkt-howto code { padding: 0 0.3rem; border-radius: 4px; background: var(--gt-stone); }
+
+/* Marketplace: write-language badge, Georgian option names, AI box */
+.mkt-lang { display: inline-flex; align-items: center; gap: 0.2rem; margin-left: 0.4rem; padding: 0.05rem 0.45rem; border-radius: 99px; background: #eef4ff; color: #1d4ed8; font-size: 0.72rem; font-weight: 700; white-space: nowrap; vertical-align: middle; }
+.mkt-lang.is-ru { background: #ecfdf3; color: #047857; }
+.mkt-chip-orig { margin-left: 0.3rem; opacity: 0.6; font-size: 0.72rem; }
+.mkt-ai { border-color: #c7b8f5; background: linear-gradient(180deg, #faf7ff, #fff); }
+.mkt-ai legend { color: #5b3fc4; }
+.mkt-ai-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: flex-end; }
+.mkt-ai-tag { display: inline-block; margin-top: 0.3rem; color: #5b3fc4; font-size: 0.75rem; font-weight: 700; }
+.mkt-ai-notes { margin: 0.5rem 0 0; padding: 0.6rem 0.9rem 0.6rem 1.6rem; border-radius: 10px; background: #f4f0ff; color: #3e2b8a; font-size: 0.85rem; line-height: 1.5; }
+.mkt-limits { margin: 0.6rem 0 0.2rem; padding-left: 1.2rem; display: grid; gap: 0.35rem; color: var(--gt-ink-2); line-height: 1.5; }
+.mkt-photo-up { display: inline-flex; align-items: center; gap: 0.5rem; } .mkt-photo-up label { cursor: pointer; }
