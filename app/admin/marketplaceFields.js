@@ -125,7 +125,7 @@ export const SECTIONS = [
       {
         key: "gygLocations", p: GYG, kind: "list", req: true,
         label: "ადგილები, რასაც ნახავენ", orig: "Locations",
-        hint: "Google Maps-ის ადგილის სახელით, თითო ხაზზე.",
+        hint: "ინგლისურად, თითო ხაზზე: „სახელი, მუნიციპალიტეტი“ — მაგ. „Makhuntseti Waterfall, Keda“, „Batumi“. გაფართოება GYG-ის სიიდან მხოლოდ ზუსტად ამ ადგილს აირჩევს (სხვა ქალაქის ამავე სახელის ადგილს — არა); რასაც ვერ იპოვის, პანელში ჩამოგიწერს.",
       },
       { key: "gygKeywords", p: GYG, kind: "list", max: 15, label: "საკვანძო სიტყვები", orig: "Keywords", hint: "GYG-ის სიიდან, ინგლისურად: Nature, Scenic, Wine, Local culture, Family friendly, Guided Tour, Outdoor Recreation, Cooking…" },
       {

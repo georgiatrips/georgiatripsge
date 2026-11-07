@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { GetTransferError, checkExtensionKey } from "../../../lib/server/gettransferStore";
 import { MarketplaceError, listListings, reportFromExtension } from "../../../lib/server/marketplaceStore";
 import { buildPlan } from "../../../lib/marketplacePlan";
-import { mapPage } from "../../../lib/server/marketplaceAi";
+import { mapPage, reviewPage } from "../../../lib/server/marketplaceAi";
 
 // Called by the GT Sync extension on supplier.getyourguide.com and
 // experience.tripster.ru, with the same key as GetTransfer (header X-GT-Key).
 //   POST { action: "list", platform }                         fill plans of every listing for that site
 //   POST { action: "report", id, platform, productId?, url?, status? }
 //   POST { action: "map", platform, page, values, options }   AI: which value goes into which empty field
+//   POST { action: "review", platform, reason, page, values }  AI supervisor before / after Continue
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
@@ -24,9 +25,9 @@ export async function POST(request) {
       return NextResponse.json({ plans: listings.map((l) => buildPlan(l, platform)) });
     }
     if (payload.action === "report") return NextResponse.json(await reportFromExtension(payload));
-    if (payload.action === "map") {
+    if (payload.action === "map" || payload.action === "review") {
       try {
-        return NextResponse.json(await mapPage(payload));
+        return NextResponse.json(await (payload.action === "map" ? mapPage(payload) : reviewPage(payload)));
       } catch (err) {
         return NextResponse.json({ error: err.message }, { status: 502 });
       }

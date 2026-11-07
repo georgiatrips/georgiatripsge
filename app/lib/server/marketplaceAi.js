@@ -259,3 +259,56 @@ ${clip(JSON.stringify(options), 4000)}`,
     .map((f) => ({ ref: f.ref, value: String(f.value).slice(0, 3000) }));
   return { fills, notes: String(out.notes || "").slice(0, 400), model };
 }
+
+// ── GT Sync extension: the supervisor before / after Continue ─────────
+// Gets every message on the page, every field with its value and our tour's
+// values; decides whether a message is a real problem, fixes what it can,
+// and says when only the owner can decide.
+const REVIEW_SYSTEM = `You supervise an assistant that fills a tour listing form for GeorgiaTrips (Batumi, Georgia; private tours by car with a driver, hotel pick-up) on GetYourGuide (supplier portal, English) or Tripster (editor, Russian).
+You get: the messages visible on the current page (errors, warnings, notices, help texts), every field with its current value (empty / flagged = marked invalid by the site), and the tour's prepared values.
+Decide:
+- Most notices are guidance ("any obligatory fees must be included in the price…", "we customize the product creation process…", tips, character counters). They are NOT problems: if nothing on the page contradicts them, decision "continue".
+- A real problem is a field the site marks invalid or empty-but-required, a value that breaks a rule shown on the page (too short/long, wrong format, forbidden content such as prices, phone numbers or extra fees in a text that must not contain them), or a required choice that is missing.
+- Radio groups where the site marked every option invalid while nothing is chosen just mean "choose one": pick the option that fits the tour (e.g. duration, not validity, for a tour with fixed hours).
+- Fix what you can from the tour's values and common sense: return fixes as {ref, value} (text in the form's language; radio = copy one option's text; dropdown = the text to pick; search = one term per line). Only fix empty or flagged fields, or a text that clearly breaks a rule shown on the page. Never change a choice the owner already made unless the site marks it invalid.
+- decision "stop" only when the owner must decide or provide something you do not have: prices, legal/tax/bank data, documents, contract terms, real facts that are missing, accepting terms, or a conflict between the page and the tour values. Then "say" explains in one or two short Georgian sentences exactly what the owner should do.
+- reason "continue_failed" means Continue was pressed and the page did not move on: find what blocks it (look at empty/flagged fields) and fix it, or stop with an explanation.
+"say" is always Georgian, short, concrete (which field, what to do). Never invent prices, phone numbers, IBAN, documents or dates.`;
+
+const REVIEW_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    decision: { type: "STRING", enum: ["continue", "stop"] },
+    fixes: {
+      type: "ARRAY",
+      items: { type: "OBJECT", properties: { ref: { type: "INTEGER" }, value: { type: "STRING" } }, required: ["ref", "value"] },
+    },
+    say: { type: "STRING", description: "Georgian, for the owner" },
+  },
+  required: ["decision"],
+  propertyOrdering: ["decision", "fixes", "say"],
+};
+
+export async function reviewPage({ platform, reason, page, values, options, activeOption }) {
+  if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY არ არის Vercel-ში.");
+  const items = Array.isArray(page?.items) ? page.items.slice(0, 80) : [];
+  const messages = Array.isArray(page?.messages) ? page.messages.slice(0, 25) : [];
+  const site = platform === "gyg" ? "GetYourGuide (English)" : "Tripster (Russian)";
+  const opt = Number.isInteger(activeOption) && Array.isArray(options) ? options[activeOption] : null;
+  const prompt = [
+    `Site: ${site}. Page: ${clip(page?.url, 200)} — ${clip(page?.heading, 300)}. Reason: ${reason === "continue_failed" ? "continue_failed" : "before_continue"}.`,
+    `Messages on the page:\n${clip(JSON.stringify(messages), 8000)}`,
+    `Fields on the page (ref, kind, question, value, empty, flagged, options):\n${clip(JSON.stringify(items), 20000)}`,
+    `Tour values:\n${clip(JSON.stringify(values || []), 25000)}`,
+    Array.isArray(options) && options.length && `Options / vehicles:\n${clip(JSON.stringify(options), 3000)}`,
+    opt && `Option being edited: ${clip(JSON.stringify(opt), 1500)}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+  const { out, model } = await generate(prompt, REVIEW_SCHEMA, { system: REVIEW_SYSTEM, models: MAP_MODELS });
+  const refs = new Set(items.map((i) => i.ref));
+  const fixes = (Array.isArray(out.fixes) ? out.fixes : [])
+    .filter((f) => refs.has(f.ref) && String(f.value ?? "").trim())
+    .map((f) => ({ ref: f.ref, value: String(f.value).slice(0, 3000) }));
+  return { decision: out.decision === "stop" ? "stop" : "continue", fixes, say: String(out.say || "").slice(0, 400), model };
+}
