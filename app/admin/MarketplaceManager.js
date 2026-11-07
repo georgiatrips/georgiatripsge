@@ -702,10 +702,11 @@ function Editor({ initial, siteTours, rate, onSaved, onCancel, onDelete }) {
     }));
   };
 
-  const save = async () => {
-    if (!listing.name.trim()) {
+  const save = async (override, okText = "შენახულია. GYG-ზე / Tripster-ზე გადასვლისას გაფართოება ამ ტურს თვითონ აირჩევს და შეავსებს.") => {
+    const data0 = override || listing;
+    if (!data0.name.trim()) {
       setMsg({ type: "error", text: "ჩაწერე შიდა სახელი." });
-      return;
+      return false;
     }
     setSaving(true);
     setMsg(null);
@@ -713,17 +714,31 @@ function Editor({ initial, siteTours, rate, onSaved, onCancel, onDelete }) {
       const res = await adminFetch(API, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "save", listing }),
+        body: JSON.stringify({ action: "save", listing: data0 }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-      setMsg({ type: "success", text: "შენახულია." });
-      onSaved({ ...listing, updatedAt: data.updatedAt });
+      setMsg({ type: "success", text: okText });
+      onSaved({ ...data0, updatedAt: data.updatedAt });
+      return true;
     } catch (err) {
       setMsg({ type: "error", text: `ვერ შეინახა: ${err.message}` });
+      return false;
     } finally {
       setSaving(false);
     }
+  };
+
+  // Save, mark this tour as the one to fill, open the site in a new tab:
+  // the GT Sync panel there opens by itself and fills every step.
+  const openOn = async (p) => {
+    const tab = window.open("about:blank", "_blank");
+    const next = { ...listing, launch: { ...listing.launch, [p]: { ...listing.launch[p], openedAt: Date.now() } } };
+    setListing(next);
+    const ok = await save(next, `შენახულია და გაიხსნა ${PLATFORMS[p].name} — შევსება იქ თვითონ დაიწყება.`);
+    const url = listing.launch[p].url || PLATFORMS[p].editorUrl;
+    if (ok && tab) tab.location.href = url;
+    else if (tab) tab.close();
   };
 
   return (
@@ -845,9 +860,14 @@ function Editor({ initial, siteTours, rate, onSaved, onCancel, onDelete }) {
 
       {msg && <div className={`admin-alert ${msg.type}`}>{msg.text}</div>}
       <div className="admin-form-actions mkt-sticky">
-        <button type="button" className="admin-btn-primary" disabled={saving} onClick={save}>
+        <button type="button" className="admin-btn-primary" disabled={saving} onClick={() => save()}>
           {saving ? "ინახება…" : "შენახვა"}
         </button>
+        {PLATFORM_KEYS.filter((p) => listing.launch[p].status !== "skip").map((p) => (
+          <button key={p} type="button" className="admin-btn-ghost" disabled={saving} onClick={() => openOn(p)}>
+            შენახვა და {PLATFORMS[p].short}-ზე შევსება ↗
+          </button>
+        ))}
         <button type="button" className="admin-btn-ghost" onClick={onCancel}>გაუქმება</button>
         {initial.createdAt && (
           <button type="button" className="admin-action-btn delete" onClick={() => onDelete(listing.id)}>წაშლა</button>
@@ -1023,8 +1043,8 @@ export default function MarketplaceManager() {
         <ol>
           <li>Chrome → <code>chrome://extensions</code> → <b>GT Sync</b> → ↻ (განახლება). გასაღები იგივეა, რაც GetTransfer-ისთვის.</li>
           <li>აქ შეავსე ტური და დააჭირე „შენახვა“.</li>
-          <li>გახსენი <a href={PLATFORMS.gyg.editorUrl} target="_blank" rel="noreferrer">GYG</a> ან <a href={PLATFORMS.tripster.editorUrl} target="_blank" rel="noreferrer">Tripster</a>-ის ახალი ტურის ფორმა → ქვემოთ მარჯვნივ <b>GT</b> ღილაკი → აირჩიე ტური.</li>
-          <li>ყოველ ეტაპზე: „ამ გვერდის შევსება“. რაც ვერ იპოვა — დააჭირე საიტის ველს და მერე „ჩასმა“. ფოტოები — „ფოტოების ატვირთვა“.</li>
+          <li>დააჭირე „შენახვა და GYG-ზე / Tripster-ზე შევსება ↗“ (ან უბრალოდ შეინახე და თვითონ გახსენი <a href={PLATFORMS.gyg.editorUrl} target="_blank" rel="noreferrer">GYG</a> / <a href={PLATFORMS.tripster.editorUrl} target="_blank" rel="noreferrer">Tripster</a>). პანელი იქ თვითონ გაიხსნება და ბოლოს შენახულ ტურს თვითონ აირჩევს.</li>
+          <li>ახალი ტურის ფორმაში ყოველი ეტაპი <b>თვითონ ივსება</b> (მხოლოდ ცარიელი ველები), ფოტოები ერთხელ თვითონ აიტვირთება. რაც ვერ იპოვა — დააჭირე საიტის ველს და მერე „ჩასმა“. ავტომატურის გამორთვა — პანელში „ავტომატური შევსება“.</li>
           <li>შეამოწმე და Continue / Сохранить / გაგზავნა <b>თვითონ</b> დააჭირე. შემდეგ პანელში „გავგზავნე მოდერაციაზე“ — სტატუსი აქაც განახლდება.</li>
         </ol>
       </details>

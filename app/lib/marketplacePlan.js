@@ -151,5 +151,7 @@ export function buildPlan(listing, platform) {
     options,
     photos,
     launch: listing.launch?.[platform] || {},
+    // Newest save or "open on GYG / Tripster" click in the admin: the extension picks that tour by itself.
+    touchedAt: Math.max(Number(listing.updatedAt) || 0, Number(listing.launch?.[platform]?.openedAt) || 0),
   };
 }

@@ -94,11 +94,7 @@ export async function reportFromExtension({ id, platform, productId, url, status
     if (status === "review" && !cur.launched) cur.launched = new Date().toISOString().slice(0, 10);
   }
   launch[platform] = cur;
-  const now = Date.now();
-  await query(`update marketplace_listings set data = $2::jsonb, updated_at = $3 where id = $1`, [
-    id,
-    JSON.stringify({ ...data, launch }),
-    now,
-  ]);
+  // updated_at stays: only a save in the admin makes a tour the extension's active one.
+  await query(`update marketplace_listings set data = $2::jsonb where id = $1`, [id, JSON.stringify({ ...data, launch })]);
   return { ok: true, launch: cur };
 }
