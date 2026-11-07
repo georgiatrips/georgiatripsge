@@ -63,6 +63,8 @@ export function emptyListing() {
       gygAutoAccept: true,
       gygGuide: "Live guide or other staff member",
       gygGuideRole: "Driver",
+      gygFirstAid: "No",
+      gygOutsideCity: "Yes",
       gygFood: "No",
       gygTransportUsed: "Yes",
       gygCategories: ["Adult"],
