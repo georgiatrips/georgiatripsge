@@ -142,8 +142,8 @@ function LangBadge({ lang }) {
   );
 }
 
-// Photos from the computer → our Cloudinary → links in the field, so the
-// extension can put them into GYG / Tripster (it cannot read local files).
+// Photos from the computer → our Cloudinary → links in the field, ready to
+// download or open when uploading to GYG / Tripster.
 function PhotoUpload({ value, onChange }) {
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
@@ -646,7 +646,7 @@ function AiPanel({ listing, siteTours, onImport, onApply, onUndo, canUndo, setFi
           <ol className="mkt-limits">
             <li>GYG: <b>Create new product</b> → English, Tour → Continue.</li>
             <li><b>AI content creator</b> → <b>Use AI</b> → ჩასვი ეს ტექსტი → <b>Create content</b>.</li>
-            <li>GYG შეავსებს თითქმის ყველაფერს. შენ: შეამოწმე, <b>Photos</b> (პანელში „ფოტოების ატვირთვა“) და <b>Options</b> (ფასი, განრიგი).</li>
+            <li>GYG შეავსებს თითქმის ყველაფერს. შენ: შეამოწმე, <b>Photos</b> (ფოტოები ქვემოთ, „ფოტოები“ განყოფილებაში) და <b>Options</b> (ფასი, განრიგი).</li>
           </ol>
           <p className="admin-hint">⚠ „Use AI“ მხოლოდ ახალ პროდუქტზე — შევსებულ დრაფტზე GYG ყველაფრის წაშლას გთავაზობს („Start Over“) → Cancel.</p>
         </div>
@@ -660,7 +660,7 @@ function AiPanel({ listing, siteTours, onImport, onApply, onUndo, canUndo, setFi
           <button type="button" className="admin-btn-primary" disabled={!!busy} onClick={() => run("tripster")}>
             {busy === "tripster" ? "AI წერს… (20–60 წმ)" : "📝 ტექსტების გენერაცია Tripster-ისთვის"}
           </button>
-          <p className="admin-hint">Tripster-ს AI-შემვსები არ აქვს — ამიტომ AI წერს თითოეულ ველს ცალ-ცალკე, Tripster-ის ფორმის თანმიმდევრობით. ჩასვი კოპირებით ან პანელის „ჩასმა“ ღილაკით ({trFilled}/{TRIPSTER_BLOCKS.length} მზადაა).</p>
+          <p className="admin-hint">Tripster-ს AI-შემვსები არ აქვს — ამიტომ AI წერს თითოეულ ველს ცალ-ცალკე, Tripster-ის ფორმის თანმიმდევრობით. ჩასვი 📋 კოპირების ღილაკით ({trFilled}/{TRIPSTER_BLOCKS.length} მზადაა).</p>
           <div className="mkt-tr-blocks">
             {TRIPSTER_BLOCKS.map((b) => {
               const v = String(blockValue(b));
@@ -677,7 +677,7 @@ function AiPanel({ listing, siteTours, onImport, onApply, onUndo, canUndo, setFi
               );
             })}
           </div>
-          <p className="admin-hint">ფოტოები, ფასი, განრიგი, ენა და ხანგრძლივობა — Tripster-ის „Фото“ და „Условия“ ეტაპებზე (პანელიდან).</p>
+          <p className="admin-hint">ფოტოები, ფასი, განრიგი, ენა და ხანგრძლივობა — Tripster-ის „Фото“ და „Условия“ ეტაპებზე (მნიშვნელობები ქვემოთ, ველებში).</p>
         </div>
       </div>
 
@@ -803,7 +803,7 @@ function Editor({ initial, siteTours, rate, onSaved, onCancel, onDelete }) {
     }));
   };
 
-  const save = async (override, okText = "შენახულია. GYG-ზე / Tripster-ზე გადასვლისას გაფართოება ამ ტურს თვითონ აირჩევს და შეავსებს.") => {
+  const save = async (override, okText = "შენახულია.") => {
     const data0 = override || listing;
     if (!data0.name.trim()) {
       setMsg({ type: "error", text: "ჩაწერე შიდა სახელი." });
@@ -830,13 +830,12 @@ function Editor({ initial, siteTours, rate, onSaved, onCancel, onDelete }) {
     }
   };
 
-  // Save, mark this tour as the one to fill, open the site in a new tab:
-  // the GT Sync panel there opens by itself and fills every step.
+  // Save and open the platform's editor in a new tab (filled by hand, by copying).
   const openOn = async (p) => {
     const tab = window.open("about:blank", "_blank");
     const next = { ...listing, launch: { ...listing.launch, [p]: { ...listing.launch[p], openedAt: Date.now() } } };
     setListing(next);
-    const ok = await save(next, `შენახულია და გაიხსნა ${PLATFORMS[p].name} — შევსება იქ თვითონ დაიწყება.`);
+    const ok = await save(next, `შენახულია და გაიხსნა ${PLATFORMS[p].name}.`);
     const url = listing.launch[p].url || PLATFORMS[p].editorUrl;
     if (ok && tab) tab.location.href = url;
     else if (tab) tab.close();
@@ -966,7 +965,7 @@ function Editor({ initial, siteTours, rate, onSaved, onCancel, onDelete }) {
         </button>
         {PLATFORM_KEYS.filter((p) => listing.launch[p].status !== "skip").map((p) => (
           <button key={p} type="button" className="admin-btn-ghost" disabled={saving} onClick={() => openOn(p)}>
-            შენახვა და {PLATFORMS[p].short}-ზე შევსება ↗
+            შენახვა და {PLATFORMS[p].short}-ის გახსნა ↗
           </button>
         ))}
         <button type="button" className="admin-btn-ghost" onClick={onCancel}>გაუქმება</button>
@@ -1138,35 +1137,6 @@ export default function MarketplaceManager() {
         </label>
         <button type="button" className="admin-btn-primary" onClick={() => setEditing(emptyListing())}>+ ახალი ტური</button>
       </div>
-
-      <details className="mkt-howto">
-        <summary>როგორ ავტვირთო GYG-ზე / Tripster-ზე გაფართოებით (GT Sync)</summary>
-        <ol>
-          <li>Chrome → <code>chrome://extensions</code> → <b>GT Sync</b> → ↻ (განახლება). გასაღები იგივეა, რაც GetTransfer-ისთვის.</li>
-          <li>აქ შეავსე ტური და დააჭირე „შენახვა“.</li>
-          <li>დააჭირე „შენახვა და GYG-ზე / Tripster-ზე შევსება ↗“ (ან უბრალოდ შეინახე და თვითონ გახსენი <a href={PLATFORMS.gyg.editorUrl} target="_blank" rel="noreferrer">GYG</a> / <a href={PLATFORMS.tripster.editorUrl} target="_blank" rel="noreferrer">Tripster</a>). პანელი იქ თვითონ გაიხსნება და ბოლოს შენახულ ტურს თვითონ აირჩევს.</li>
-          <li>ახალი ტურის ფორმაში ყოველი ეტაპი <b>თვითონ ივსება</b> (მხოლოდ ცარიელი ველები), ფოტოები ერთხელ თვითონ აიტვირთება. რაც ვერ იპოვა — დააჭირე საიტის ველს და მერე „ჩასმა“. ავტომატურის გამორთვა — პანელში „ავტომატური შევსება“.</li>
-          <li>შეამოწმე და Continue / Сохранить / გაგზავნა <b>თვითონ</b> დააჭირე. შემდეგ პანელში „გავგზავნე მოდერაციაზე“ — სტატუსი აქაც განახლდება.</li>
-        </ol>
-      </details>
-
-      <details className="mkt-howto">
-        <summary>რას ვერ ავსებს გაფართოება — და რა უნდა გააკეთო ხელით</summary>
-        <ul className="mkt-limits">
-          <li><b>გაგზავნის ღილაკები</b> (Continue, Save, Сохранить, Publish) — განზრახ არასდროს აჭერს; ყოველ ეტაპზე შენ აჭერ.</li>
-          <li><b>Tripster-ის ჩამოსაშლელი სიები</b> (ენა, ხანგრძლივობა, ჯავშნის დახურვა, ზოგჯერ ტიპი) — ჯერ შენ გახსენი სია, მერე ისევ „ამ გვერდის შევსება“ — სწორ პუნქტს თვითონ აირჩევს.</li>
-          <li><b>GYG ლოკაციები და საკვანძო სიტყვები</b> — საძიებოში უნდა ჩაწერო; რაც შემოთავაზებაში გამოჩნდება და ემთხვევა, იმას თვითონ დააჭერს.</li>
-          <li><b>GYG „რა არ შეიძლება“, „რა წამოიღონ“, ტრანსპორტის ტიპი (Car / Minibus)</b> — სიიდან ხელით ირჩევ.</li>
-          <li><b>განრიგი</b> (დღეები, დაწყების დრო, სეზონის თარიღები) და <b>კალენდარი</b> — ხელით; პანელში მნიშვნელობა ჩანს და „ჩასმა“ ღილაკით ჩასვამ ტექსტურ ველში.</li>
-          <li><b>ფასები</b> — GYG-ზე თითო ვარიანტს „ფასი“ ღილაკით ჩასვამ; ფასის საფეხურები (მონაწილეების რაოდენობით) ხელით. Tripster-ზე ერთი ფასი ერთ შეთავაზებაზე.</li>
-          <li><b>რუკაზე წერტილი</b> და <b>ქვეყნის კოდი +995</b> — ხელით.</li>
-          <li><b>ფოტოები</b> — მხოლოდ ბმულით (ჩვენი საიტი, Cloudinary, Firebase, Google, Unsplash). კომპიუტერიდან პირდაპირ ვერ ატვირთავს (Chrome-ის შეზღუდვა) — ამიტომ ფოტოების ველში გამოიყენე „📷 ფოტოების ატვირთვა კომპიუტერიდან“: ჯერ ჩვენთან აიტვირთება, მერე გაფართოება გადაიტანს. Tripster: მოკლე მხარე ≥1350px. ფოტოს წარწერა და მთავარი ფოტოს არჩევა — ხელით.</li>
-          <li><b>Tripster-ის ტიპი</b> შენახვის შემდეგ აღარ იცვლება (მხოლოდ editors@tripster.ru-ით).</li>
-          <li><b>ანგარიში, ხელშეკრულება, საბანკო რეკვიზიტები, დოკუმენტები, captcha, შესვლა</b> — მხოლოდ შენ.</li>
-          <li>თუ Chrome-მა გვერდი <b>თარგმნა</b>, ველებს ვერ პოულობს — ჩართე „ორიგინალის ჩვენება“.</li>
-          <li>საიტები დიზაინს ცვლიან: თუ ველი ვერ იპოვა, დააჭირე საიტის ველს და მერე პანელში „ჩასმა“ — ეს ყოველთვის მუშაობს.</li>
-        </ul>
-      </details>
 
       {error && <div className="admin-alert error">ვერ ჩაიტვირთა: {error}</div>}
       {loading ? (

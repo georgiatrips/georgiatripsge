@@ -168,6 +168,23 @@ async function translationsFor(texts) {
   return new Map(rows.map((r) => [r.src, r.ka]));
 }
 
+// Hands out the approved offers; "sending" keeps a second tab from
+// submitting the same one.
+async function takeQueuedOffers(now = Date.now()) {
+  const rows = await query(
+    `update gt_requests set offer_status = 'sending', offer_at = $1
+     where offer_status = 'queued' or (offer_status = 'sending' and offer_at < $2)
+     returning id, offer`,
+    [now, now - 10 * 60 * 1000]
+  );
+  return rows.map((r) => ({ id: Number(r.id), ...r.offer }));
+}
+
+// Quick check from the extension between full rounds (every ~30 s).
+export async function offersForExtension() {
+  return { ok: true, offers: await takeQueuedOffers() };
+}
+
 export async function syncFromExtension({ transfers = [], vehicles = [], drivers = [], currency } = {}) {
   const now = Date.now();
   const list = transfers.filter((t) => Number.isFinite(Number(t?.id))).slice(0, 500);
@@ -216,17 +233,9 @@ export async function syncFromExtension({ transfers = [], vehicles = [], drivers
     drivers: drivers.map((d) => ({ id: d.id, name: d.name || d.full_name || "" })),
   });
 
-  // Hand out the approved offers; "sending" keeps a second tab from
-  // submitting the same one.
-  const rows = await query(
-    `update gt_requests set offer_status = 'sending', offer_at = $1
-     where offer_status = 'queued' or (offer_status = 'sending' and offer_at < $2)
-     returning id, offer`,
-    [now, now - 10 * 60 * 1000]
-  );
   return {
     ok: true,
-    offers: rows.map((r) => ({ id: Number(r.id), ...r.offer })),
+    offers: await takeQueuedOffers(now),
     // Run by the route after the response, so the extension doesn't wait.
     translate: () => translateMissing(list.flatMap((t) => [t.from?.name, t.to?.name, t.comment])),
   };
