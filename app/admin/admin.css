@@ -1837,3 +1837,18 @@
 .mkt-ai-notes { margin: 0.5rem 0 0; padding: 0.6rem 0.9rem 0.6rem 1.6rem; border-radius: 10px; background: #f4f0ff; color: #3e2b8a; font-size: 0.85rem; line-height: 1.5; }
 .mkt-limits { margin: 0.6rem 0 0.2rem; padding-left: 1.2rem; display: grid; gap: 0.35rem; color: var(--gt-ink-2); line-height: 1.5; }
 .mkt-photo-up { display: inline-flex; align-items: center; gap: 0.5rem; } .mkt-photo-up label { cursor: pointer; }
+.mkt-gygai { border-color: #ffc2b3; background: linear-gradient(180deg, #fff6f3, #fff); } .mkt-gygai legend { display: inline-flex; align-items: center; gap: 0.4rem; color: #c2410c; } .mkt-gygai textarea { width: 100%; font-size: 0.82rem; }
+.mkt-ai-targets { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 0.9rem; margin-top: 0.4rem; }
+.mkt-ai-target { display: grid; gap: 0.55rem; align-content: start; padding: 0.85rem; border: 1px solid var(--gt-line); border-radius: 12px; background: #fff; }
+.mkt-ai-target.is-gyg { border-top: 3px solid #ff5533; }
+.mkt-ai-target.is-tripster { border-top: 3px solid #2e9e4f; }
+.mkt-ai-target-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.mkt-ai-target textarea { width: 100%; font-size: 0.82rem; }
+.mkt-tr-blocks { display: grid; gap: 0.45rem; max-height: 520px; overflow: auto; }
+.mkt-tr-block { padding: 0.5rem 0.65rem; border: 1px solid var(--gt-line); border-radius: 9px; background: #f7fbf8; }
+.mkt-tr-block.is-empty { opacity: 0.55; background: #fff; }
+.mkt-tr-block-head { display: flex; align-items: center; gap: 0.35rem; }
+.mkt-tr-block-head .mkt-copy { margin-left: auto; }
+.mkt-tr-block-text { margin-top: 0.25rem; font-size: 0.82rem; color: var(--gt-ink-2); white-space: pre-wrap; max-height: 7.5em; overflow: auto; }
+.mkt-ai-more { margin-top: 0.7rem; font-size: 0.88rem; }
+.mkt-ai-more summary { cursor: pointer; color: var(--gt-muted); font-weight: 600; }

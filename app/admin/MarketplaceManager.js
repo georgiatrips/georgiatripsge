@@ -529,28 +529,64 @@ function tourForAi(tour) {
   return rest;
 }
 
-function AiPanel({ listing, siteTours, onImport, onApply, onUndo, canUndo }) {
+// Tripster has no AI import: its texts go field by field, in the order of
+// Tripster's own form ("Описание" step), each with a copy button.
+const TRIPSTER_BLOCKS = [
+  { key: "title", sub: "tripster", label: "Название", ka: "სათაური" },
+  { key: "trIdea", label: "Идея", ka: "იდეა" },
+  { key: "route", sub: "tripster", label: "Маршрут", ka: "მარშრუტი" },
+  { key: "trThemes", label: "Темы — что узнают", ka: "თემები" },
+  { key: "trOrg", label: "Организационные детали", ka: "ორგანიზაციული დეტალები" },
+  { key: "trFacts", label: "Факты и детали", ka: "ფაქტები" },
+  { key: "trAudience", label: "Целевая аудитория", ka: "ვისთვისაა" },
+  { key: "trMeetApprox", label: "Примерное место встречи", ka: "მიახლოებითი ადგილი" },
+  { key: "meetExact", sub: "tripster", label: "Точное место встречи", ka: "ზუსტი ადგილი" },
+  { key: "trExtras", label: "Доп. услуги", ka: "დამატებითი სერვისები" },
+];
+
+function AiPanel({ listing, siteTours, onImport, onApply, onUndo, canUndo, setField }) {
   const [brief, setBrief] = useState("");
   const [busy, setBusy] = useState("");
   const [msg, setMsg] = useState(null);
   const [notes, setNotes] = useState([]);
+  const [copied, setCopied] = useState("");
   const tour = siteTours.find((t) => t.id === listing.siteTourId);
+  const f = listing.fields || {};
+  const script = f.gygScript || "";
+  const n = script.length;
 
-  const run = async (mode) => {
-    setBusy(mode);
+  const call = async (body) => {
+    const res = await adminFetch(API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...body, brief, tour: tourForAi(tour), listing }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    return data;
+  };
+
+  const run = async (kind) => {
+    setBusy(kind);
     setMsg(null);
     setNotes([]);
     try {
-      const res = await adminFetch(API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "ai", mode, brief, tour: tourForAi(tour), listing }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-      const n = onApply(data, mode);
-      setNotes(data.notes || []);
-      setMsg({ type: n ? "success" : "info", text: n ? `AI-მ შეავსო / შეასწორა ${n} ველი. გადახედე (მონიშნულია ✨) და დააჭირე „შენახვა“.` : "AI-მ ახალი არაფერი დაამატა — ცარიელი ველი აღარ დარჩა ან მასალა არ ეყო." });
+      if (kind === "gyg") {
+        const data = await call({ action: "gyg-script" });
+        setField("gygScript", data.text);
+        setNotes(data.notes || []);
+        setMsg({ type: "success", text: `GetYourGuide-ის ტექსტი მზადაა (${data.text.length} სიმბოლო). შეამოწმე, დააკოპირე და ჩასვი GYG-ის „AI content creator“-ში. არ დაგავიწყდეს „შენახვა“.` });
+      } else if (kind === "tripster") {
+        const data = await call({ action: "ai", mode: "fix", only: "tripster" });
+        const changed = onApply(data, "fix");
+        setNotes(data.notes || []);
+        setMsg({ type: "success", text: `Tripster-ის ტექსტები მზადაა (${changed} ველი, რუსულად). ქვემოთ თითოეულს კოპირების ღილაკი აქვს — Tripster-ის „Описание“ ეტაპზე იმავე თანმიმდევრობით ჩასვი.` });
+      } else {
+        const data = await call({ action: "ai", mode: kind });
+        const changed = onApply(data, kind);
+        setNotes(data.notes || []);
+        setMsg({ type: changed ? "success" : "info", text: changed ? `AI-მ შეავსო / შეასწორა ${changed} ველი. გადახედე (მონიშნულია ✨) და დააჭირე „შენახვა“.` : "AI-მ ახალი არაფერი დაამატა." });
+      }
     } catch (err) {
       setMsg({ type: "error", text: `AI ვერ მუშაობს: ${err.message}` });
     } finally {
@@ -558,50 +594,113 @@ function AiPanel({ listing, siteTours, onImport, onApply, onUndo, canUndo }) {
     }
   };
 
+  const copy = (id, text) => {
+    navigator.clipboard?.writeText(String(text || "")).then(() => {
+      setCopied(id);
+      setTimeout(() => setCopied(""), 1300);
+    });
+  };
+
+  const blockValue = (b) => (b.sub ? f[b.key]?.[b.sub] : f[b.key]) || "";
+  const trFilled = TRIPSTER_BLOCKS.filter((b) => String(blockValue(b)).trim()).length;
+
   return (
     <fieldset className="admin-fieldset mkt-section mkt-ai">
       <legend>✨ AI-ით შევსება</legend>
       <div className="admin-field">
         <label>ტექსტი / სკრიპტი ტურზე <small className="mkt-orig">ნებისმიერ ენაზე — ქართულად, რუსულად ან ინგლისურად</small></label>
         <textarea
-          rows={6}
+          rows={7}
           value={brief}
           onChange={(e) => setBrief(e.target.value)}
           placeholder={"მაგ: ბათუმიდან მთიან აჭარაში, 8-9 საათი. მახუნცეთის ჩანჩქერი, თამარის ხიდი, ღვინის მარანი, ფერმა… ავიყვანთ სასტუმროდან, მძღოლი რუსულად და ინგლისურად ლაპარაკობს. ფასში შედის ბენზინი, არ შედის სადილი."}
         />
       </div>
-      <div className="admin-grid-2">
-        <div className="admin-field">
-          <label>ან / და ტური საიტიდან</label>
-          <select value={listing.siteTourId} onChange={(e) => onImport(e.target.value)}>
-            <option value="">— არ არის არჩეული —</option>
-            {siteTours.map((t) => (
-              <option key={t.id} value={t.id}>{asLocalizedText(t.title, "ka") || t.id}</option>
-            ))}
-          </select>
-        </div>
-        <div className="admin-field mkt-ai-actions">
-          <button type="button" className="admin-btn-primary" disabled={!!busy} onClick={() => run("empty")}>
-            {busy === "empty" ? "AI წერს… (30–90 წმ)" : "✨ ცარიელი ველების შევსება"}
+      <div className="admin-field">
+        <label>ან / და ტური საიტიდან</label>
+        <select value={listing.siteTourId} onChange={(e) => onImport(e.target.value)}>
+          <option value="">— არ არის არჩეული —</option>
+          {siteTours.map((t) => (
+            <option key={t.id} value={t.id}>{asLocalizedText(t.title, "ka") || t.id}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="mkt-ai-targets">
+        {/* GetYourGuide: one English text for GYG's own AI content creator */}
+        <div className="mkt-ai-target is-gyg">
+          <div className="mkt-ai-target-head">
+            <PlatformLogo platform="gyg" />
+            <LangBadge lang={{ code: "EN", text: "ინგლისურად" }} />
+          </div>
+          <button type="button" className="admin-btn-primary" disabled={!!busy} onClick={() => run("gyg")}>
+            {busy === "gyg" ? "AI წერს… (20–60 წმ)" : "📝 სკრიპტის გენერაცია GetYourGuide-ისთვის"}
           </button>
-          <button type="button" className="admin-btn-ghost" disabled={!!busy} onClick={() => run("fix")}>
-            {busy === "fix" ? "AI ამოწმებს… (30–90 წმ)" : "✨ ყველაფრის შემოწმება და გასწორება"}
-          </button>
-          {canUndo && !busy && (
-            <button type="button" className="admin-btn-ghost" onClick={() => { onUndo(); setMsg({ type: "info", text: "AI-ს ცვლილებები გაუქმდა." }); setNotes([]); }}>
-              ↶ AI-ს ცვლილებების გაუქმება
+          <textarea rows={9} value={script} onChange={(e) => setField("gygScript", e.target.value)} placeholder="აქ გამოჩნდება ინგლისური ტექსტი GYG-ის „AI content creator“-ისთვის (შეგიძლია ხელით შეასწორო)." />
+          <div className="mkt-under">
+            <span className={`mkt-counter${script && (n < 700 || n > 5000) ? " is-over" : ""}`}>{n} / 5000 (მინ. 700)</span>
+            <button type="button" className="admin-btn-ghost" disabled={!script} onClick={() => copy("gyg", script)}>
+              {copied === "gyg" ? "დაკოპირდა ✓" : "📋 კოპირება"}
             </button>
-          )}
+          </div>
+          <ol className="mkt-limits">
+            <li>GYG: <b>Create new product</b> → English, Tour → Continue.</li>
+            <li><b>AI content creator</b> → <b>Use AI</b> → ჩასვი ეს ტექსტი → <b>Create content</b>.</li>
+            <li>GYG შეავსებს თითქმის ყველაფერს. შენ: შეამოწმე, <b>Photos</b> (პანელში „ფოტოების ატვირთვა“) და <b>Options</b> (ფასი, განრიგი).</li>
+          </ol>
+          <p className="admin-hint">⚠ „Use AI“ მხოლოდ ახალ პროდუქტზე — შევსებულ დრაფტზე GYG ყველაფრის წაშლას გთავაზობს („Start Over“) → Cancel.</p>
+        </div>
+
+        {/* Tripster: Russian texts, one per Tripster field */}
+        <div className="mkt-ai-target is-tripster">
+          <div className="mkt-ai-target-head">
+            <PlatformLogo platform="tripster" />
+            <LangBadge lang={{ code: "RU", text: "რუსულად" }} />
+          </div>
+          <button type="button" className="admin-btn-primary" disabled={!!busy} onClick={() => run("tripster")}>
+            {busy === "tripster" ? "AI წერს… (20–60 წმ)" : "📝 ტექსტების გენერაცია Tripster-ისთვის"}
+          </button>
+          <p className="admin-hint">Tripster-ს AI-შემვსები არ აქვს — ამიტომ AI წერს თითოეულ ველს ცალ-ცალკე, Tripster-ის ფორმის თანმიმდევრობით. ჩასვი კოპირებით ან პანელის „ჩასმა“ ღილაკით ({trFilled}/{TRIPSTER_BLOCKS.length} მზადაა).</p>
+          <div className="mkt-tr-blocks">
+            {TRIPSTER_BLOCKS.map((b) => {
+              const v = String(blockValue(b));
+              return (
+                <div key={b.key} className={`mkt-tr-block${v.trim() ? "" : " is-empty"}`}>
+                  <div className="mkt-tr-block-head">
+                    <b>{b.ka}</b> <small className="mkt-orig">საიტზე: {b.label}</small>
+                    <button type="button" className="mkt-copy" disabled={!v.trim()} onClick={() => copy(b.key, v)}>
+                      {copied === b.key ? "✓" : "📋"}
+                    </button>
+                  </div>
+                  <div className="mkt-tr-block-text">{v.trim() ? v : "— ცარიელია —"}</div>
+                </div>
+              );
+            })}
+          </div>
+          <p className="admin-hint">ფოტოები, ფასი, განრიგი, ენა და ხანგრძლივობა — Tripster-ის „Фото“ და „Условия“ ეტაპებზე (პანელიდან).</p>
         </div>
       </div>
-      <p className="admin-hint">
-        AI წერს GYG-ის ველებს ინგლისურად და Tripster-ის ველებს რუსულად. ფასებს, ტელეფონს, ფოტოებს, განრიგს და თარიღებს არ ეხება — მათ შენ წერ.
-        „ცარიელი ველების შევსება“ შევსებულს არ ცვლის; „შემოწმება და გასწორება“ ყველაფერს გადახედავს და საჭიროს გადაწერს. არაფერი ინახება, სანამ „შენახვას“ არ დააჭერ.
-      </p>
+
+      <details className="mkt-ai-more">
+        <summary>ადმინის ყველა ველის შევსება AI-ით (ორივე საიტისთვის)</summary>
+        <div className="mkt-ai-actions">
+          <button type="button" className="admin-btn-ghost" disabled={!!busy} onClick={() => run("empty")}>
+            {busy === "empty" ? "AI წერს…" : "✨ ცარიელი ველების შევსება"}
+          </button>
+          <button type="button" className="admin-btn-ghost" disabled={!!busy} onClick={() => run("fix")}>
+            {busy === "fix" ? "AI ამოწმებს…" : "✨ ყველაფრის შემოწმება და გასწორება"}
+          </button>
+        </div>
+      </details>
+      {canUndo && !busy && (
+        <button type="button" className="admin-btn-ghost" onClick={() => { onUndo(); setMsg({ type: "info", text: "AI-ს ცვლილებები გაუქმდა." }); setNotes([]); }}>
+          ↶ AI-ს ცვლილებების გაუქმება
+        </button>
+      )}
       {msg && <div className={`admin-alert ${msg.type}`}>{msg.text}</div>}
       {notes.length > 0 && (
         <ul className="mkt-ai-notes">
-          {notes.map((n, i) => <li key={i}>{n}</li>)}
+          {notes.map((x, i) => <li key={i}>{x}</li>)}
         </ul>
       )}
     </fieldset>
@@ -765,7 +864,7 @@ function Editor({ initial, siteTours, rate, onSaved, onCancel, onDelete }) {
         {visible.map((p) => <Progress key={p} listing={listing} platform={p} />)}
       </div>
 
-      <AiPanel listing={listing} siteTours={siteTours} onImport={importTour} onApply={applyAi} onUndo={undoAi} canUndo={!!aiUndo} />
+      <AiPanel listing={listing} siteTours={siteTours} onImport={importTour} onApply={applyAi} onUndo={undoAi} canUndo={!!aiUndo} setField={setField} />
 
       <fieldset className="admin-fieldset mkt-section">
         <legend>ტური</legend>

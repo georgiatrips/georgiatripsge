@@ -55,15 +55,19 @@ function schemaFor(field, platform) {
   return { type: "STRING", description };
 }
 
-function buildSchema() {
+// `only` = "gyg" / "tripster": just that site's fields.
+const fieldsFor = (only) => AI_FIELDS.filter((f) => !only || f.p.includes(only));
+const platsFor = (f, only) => f.p.filter((p) => !only || p === only);
+
+function buildSchema(only) {
   const properties = {
     name: { type: "STRING", description: "Short internal name of the tour in Georgian (for our admin only)" },
     notes: { type: "ARRAY", items: { type: "STRING" }, description: "In Georgian: what you changed or fixed and anything the owner must check by hand (facts you were unsure about). Short points." },
   };
-  for (const f of AI_FIELDS) {
+  for (const f of fieldsFor(only)) {
     if (f.split) {
       const sub = {};
-      for (const p of f.p) sub[p] = schemaFor(f, p);
+      for (const p of platsFor(f, only)) sub[p] = schemaFor(f, p);
       properties[f.key] = { type: "OBJECT", properties: sub, description: f.orig || f.label };
     } else {
       properties[f.key] = schemaFor(f);
@@ -153,7 +157,8 @@ function toEditor(field, v) {
   return String(v).trim();
 }
 
-export async function generateListing({ listing, brief, tour, mode }) {
+export async function generateListing({ listing, brief, tour, mode, only }) {
+  if (!["gyg", "tripster"].includes(only)) only = undefined;
   if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY არ არის Vercel-ში.");
   brief = clip(String(brief || "").trim(), 20000);
   const tourText = siteTourText(tour);
@@ -178,15 +183,15 @@ export async function generateListing({ listing, brief, tour, mode }) {
     .filter(Boolean)
     .join("\n\n");
 
-  const { out, model } = await generate(prompt, buildSchema());
+  const { out, model } = await generate(prompt, buildSchema(only));
 
   const fields = {};
-  for (const f of AI_FIELDS) {
+  for (const f of fieldsFor(only)) {
     const raw = out[f.key];
     if (raw == null) continue;
     if (f.split) {
       const obj = {};
-      for (const p of f.p) {
+      for (const p of platsFor(f, only)) {
         const v = toEditor(f, raw?.[p]);
         if (v) obj[p] = v;
       }
@@ -311,4 +316,59 @@ export async function reviewPage({ platform, reason, page, values, options, acti
     .filter((f) => refs.has(f.ref) && String(f.value ?? "").trim())
     .map((f) => ({ ref: f.ref, value: String(f.value).slice(0, 3000) }));
   return { decision: out.decision === "stop" ? "stop" : "continue", fixes, say: String(out.say || "").slice(0, 400), model };
+}
+
+// ── Text for GetYourGuide's own "AI content creator" ──────────────────
+// GYG's product form starts with a box "copy-paste a detailed description
+// (700–5000 characters)"; GYG then fills most sections itself. This writes
+// that text in English from the owner's brief (any language), the tour on our
+// site and what the listing already has.
+const SCRIPT_SYSTEM = `You write the source text that a tour operator pastes into GetYourGuide's "AI content creator", which turns it into a full product listing (title, short and full description, highlights, itinerary, locations, inclusions, important information).
+The operator is GeorgiaTrips, Batumi, Georgia: private tours by car with a local driver (or small-group tours by minibus), pick-up from hotels in Batumi.
+Write in clear, natural English, 1500–4500 characters, plain text with short headings, no emojis, no markdown symbols like # or **, no prices, phone numbers, links or discount talk.
+Be concrete — GetYourGuide extracts facts from it. Include, when known:
+- what the experience is and why it is special (2–3 short paragraphs),
+- step-by-step itinerary with approximate times or durations at each stop,
+- every place visited with its exact, well-known English name and municipality or region (e.g. "Makhuntseti Waterfall, Keda Municipality, Adjara") so the locations can be matched,
+- total duration, languages of the driver/guide, who leads (driver, guide), private or group and the maximum people per car,
+- pick-up and drop-off, what is included and what is not, food and drinks,
+- who it is not suitable for, what to bring, what is not allowed, anything to know before booking.
+Use only facts from the brief, the website tour and the listing values, plus well-known general facts about these places. If something important is unknown, leave it out (do not invent). "notes" lists in Georgian what the owner should add or check.`;
+
+const SCRIPT_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    text: { type: "STRING" },
+    notes: { type: "ARRAY", items: { type: "STRING" } },
+  },
+  required: ["text"],
+};
+
+export async function gygScript({ listing, brief, tour }) {
+  if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY არ არის Vercel-ში.");
+  brief = clip(String(brief || "").trim(), 20000);
+  const tourText = siteTourText(tour);
+  const current = currentValues(listing || {});
+  if (!brief && !tourText && !Object.keys(current).length) {
+    throw new Error("ჩაწერე ტექსტი ზემოთ ან აირჩიე ტური საიტიდან — AI-ს მასალა არ აქვს.");
+  }
+  const vehicles = Object.entries(listing?.vehicles || {})
+    .filter(([, v]) => v?.on)
+    .map(([k, v]) => `${k} (up to ${v.pax} people)`)
+    .join(", ");
+  const prompt = [
+    `Format: ${listing?.format === "group" ? `group tour, ${listing?.group?.min || 1}–${listing?.group?.max || 19} people` : `private tour by car${vehicles ? `: ${vehicles}` : ""}`}.`,
+    brief && `Owner's brief (any language — the most important source):
+${brief}`,
+    tourText && `The tour on our website (JSON, texts in ka/en/ru):
+${tourText}`,
+    Object.keys(current).length && `Values already in the listing:
+${clip(JSON.stringify(current), 25000)}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+  const { out, model } = await generate(prompt, SCRIPT_SCHEMA, { system: SCRIPT_SYSTEM });
+  const text = String(out.text || "").trim().slice(0, 5000);
+  if (text.length < 300) throw new Error("AI-მ ტექსტი ვერ დაწერა — დაამატე მეტი დეტალი და სცადე ისევ.");
+  return { text, notes: Array.isArray(out.notes) ? out.notes.map(String).slice(0, 15) : [], model };
 }
