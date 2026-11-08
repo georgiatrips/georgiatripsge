@@ -318,31 +318,207 @@ export async function reviewPage({ platform, reason, page, values, options, acti
   return { decision: out.decision === "stop" ? "stop" : "continue", fixes, say: String(out.say || "").slice(0, 400), model };
 }
 
-// ── Text for GetYourGuide's own "AI content creator" ──────────────────
-// GYG's product form starts with a box "copy-paste a detailed description
-// (700–5000 characters)"; GYG then fills most sections itself. This writes
-// that text in English from the owner's brief (any language), the tour on our
-// site and what the listing already has.
-const SCRIPT_SYSTEM = `You write the source text that a tour operator pastes into GetYourGuide's "AI content creator", which turns it into a full product listing (title, short and full description, highlights, itinerary, locations, inclusions, important information).
-The operator is GeorgiaTrips, Batumi, Georgia: private tours by car with a local driver (or small-group tours by minibus), pick-up from hotels in Batumi.
-Write in clear, natural English, 1500–4500 characters, plain text with short headings, no emojis, no markdown symbols like # or **, no prices, phone numbers, links or discount talk.
-Be concrete — GetYourGuide extracts facts from it. Include, when known:
-- what the experience is and why it is special (2–3 short paragraphs),
-- step-by-step itinerary with approximate times or durations at each stop,
-- every place visited with its exact, well-known English name and municipality or region (e.g. "Makhuntseti Waterfall, Keda Municipality, Adjara") so the locations can be matched,
-- total duration, languages of the driver/guide, who leads (driver, guide), private or group and the maximum people per car,
-- pick-up and drop-off, what is included and what is not, food and drinks,
-- who it is not suitable for, what to bring, what is not allowed, anything to know before booking.
-Use only facts from the brief, the website tour and the listing values, plus well-known general facts about these places. If something important is unknown, leave it out (do not invent). "notes" lists in Georgian what the owner should add or check.`;
 
-const SCRIPT_SCHEMA = {
-  type: "OBJECT",
-  properties: {
-    text: { type: "STRING" },
-    notes: { type: "ARRAY", items: { type: "STRING" } },
-  },
-  required: ["text"],
-};
+// ── Script for GetYourGuide: an answer to every question of GYG's form ─
+// GYG's product form starts with an "AI content creator" box (700–5000
+// characters); GYG fills its sections from that text. The script answers
+// every question GYG asks, section by section, in the form's own order:
+// the model must answer each one (all keys are required in the schema), and
+// if it still leaves one empty, the code writes a safe default from what we
+// know about the listing / GeorgiaTrips. So no question is ever unanswered.
+
+const LANG_EN = { "Русский": "Russian", English: "English", "ქართული": "Georgian", "Türkçe": "Turkish", "العربية": "Arabic", Deutsch: "German" };
+const VEHICLE_PAX = { sedan: 3, minivan: 7, jeep: 4, sprinter: 18 };
+const YES_NO = ["Yes", "No"];
+const DEFAULT_KEYWORDS = ["Nature", "Scenic", "Day trip", "Private tour", "Local culture", "Mountains", "Waterfalls", "Countryside", "Photography", "Family friendly", "Sightseeing", "History", "Food", "Off the beaten path", "Road trip"];
+const DEFAULT_HIGHLIGHTS = [
+  "Travel at your own pace in a private car with a local driver",
+  "Convenient pick-up and drop-off at your hotel in Batumi",
+  "Stop wherever you like for photos along the way",
+];
+
+/** Facts we already know, used as defaults and given to the model. */
+function scriptFacts(listing) {
+  const f = listing?.fields || {};
+  const group = listing?.format === "group";
+  const on = Object.entries(listing?.vehicles || {}).filter(([, v]) => v?.on);
+  const maxPax = group
+    ? Number(listing?.group?.max) || 18
+    : Math.max(0, ...on.map(([k, v]) => Number(v.pax) || VEHICLE_PAX[k] || 0)) || 3;
+  const langs = (Array.isArray(f.languages) && f.languages.length ? f.languages : ["English", "Русский"]).map((l) => LANG_EN[l] || l);
+  const hours = Number(f.durationHours) || null;
+  const cutoff = Number(f.cutoffHours) || 12;
+  const pickup = f.meetingMode !== "შეხვედრის ადგილი";
+  return {
+    group,
+    maxPax,
+    langs,
+    hours,
+    cutoff,
+    pickup,
+    phone: String(f.gygEmergency || "+995 504220020").slice(0, 35),
+    vehicles: on.map(([k]) => k),
+    kidsFrom: f.kidsFrom != null && f.kidsFrom !== "" ? Number(f.kidsFrom) : null,
+  };
+}
+
+// Every question of GYG's product form. `t`: text | list | enum | number.
+// `d(facts)` = the default when the model leaves it empty. `to` = the field of
+// our editor the answer also fills (only if that field is empty).
+const GYG_QUESTIONS = [
+  // ── Product basics
+  { s: "PRODUCT", k: "category", t: "enum", o: ["Tour", "Tour (more than one day)", "Entry ticket", "Transport experience", "Other"], q: "Product category", d: () => "Tour", to: "gygCategory" },
+  { s: "PRODUCT", k: "title", q: "Title", g: "Format \"Location: Activity Type with key inclusions and unique selling points\", e.g. \"From Batumi: Private Mountain Adjara Tour with Waterfall and Wine Tasting\". Title Case, max 75 characters.", d: () => "From Batumi: Private Day Tour by Car with Local Driver", to: "title.gyg" },
+  { s: "PRODUCT", k: "short", q: "Short description", g: "2–3 sentences, max 200 characters, gives a taste of what they will do.", to: "gygShort" },
+  { s: "PRODUCT", k: "full", q: "Full description", g: "All details of what customers see and experience, in the correct order, vivid but factual, 600–950 characters.", to: "gygFull" },
+  { s: "PRODUCT", k: "highlights", t: "list", q: "Highlights", g: "3–5 sentences, each max 80 characters, what makes it stand out from competitors.", min: 3, max: 5, d: () => DEFAULT_HIGHLIGHTS, to: "gygHighlights" },
+  { s: "PRODUCT", k: "itinerary", t: "list", q: "Itinerary", g: "Every stop in order with approximate time spent, e.g. \"Pick-up from your hotel in Batumi\", \"Makhuntseti Waterfall — 40 minutes\", \"Return to Batumi\".", d: (x, a) => ["Pick-up from your hotel in Batumi", ...(a.locations || []).filter((l) => !/^batumi$/i.test(l)), "Drop-off at your hotel in Batumi"], to: "route.gyg" },
+  { s: "PRODUCT", k: "locations", t: "list", q: "Where will customers visit?", g: "Every city, site and attraction, exact well-known English name + municipality, e.g. \"Makhuntseti Waterfall, Keda\", \"Batumi\". As many relevant ones as possible.", to: "gygLocations" },
+  { s: "PRODUCT", k: "keywords", t: "list", q: "Keywords", g: "Exactly 15 short theme tags customers search by, e.g. Nature, Waterfalls, Mountains, Wine, Local culture, Scenic, Day trip, Private tour, Photography, Family friendly, History, Hiking, Countryside, Food, Off the beaten path.", min: 15, max: 15, d: () => DEFAULT_KEYWORDS, to: "gygKeywords" },
+  { s: "PRODUCT", k: "differentCity", t: "enum", o: YES_NO, q: "Travel to a different city/town", d: () => "Yes", to: "gygOutsideCity" },
+
+  // ── Inclusions & exclusions
+  { s: "INCLUSIONS & EXCLUSIONS", k: "included", t: "list", q: "What's included?", g: "Everything included in the price, one per line, consistent with the descriptions (e.g. hotel pick-up and drop-off, private air-conditioned vehicle, local driver, fuel and parking).", d: () => ["Hotel pick-up and drop-off in Batumi", "Private air-conditioned vehicle", "Local English/Russian-speaking driver", "Fuel and parking fees"], to: "gygIncl" },
+  { s: "INCLUSIONS & EXCLUSIONS", k: "notIncluded", t: "list", q: "What's not included?", g: "Optional fees customers may meet: food and drinks, entrance fees, tips, personal expenses…", d: () => ["Food and drinks", "Entrance fees (if any)", "Tips", "Personal expenses"], to: "gygExcl" },
+  { s: "INCLUSIONS & EXCLUSIONS", k: "food", t: "enum", o: YES_NO, q: "Food included", d: () => "No", to: "gygFood" },
+  { s: "INCLUSIONS & EXCLUSIONS", k: "foodDetails", q: "Food & drinks details", g: "If food is included: what exactly (e.g. wine tasting, lunch). If not: where customers can buy food on the way.", d: () => "Food is not included; there are stops where you can buy lunch and drinks at your own expense." },
+  { s: "INCLUSIONS & EXCLUSIONS", k: "transportUsed", t: "enum", o: YES_NO, q: "Transportation used during activity", d: () => "Yes", to: "gygTransportUsed" },
+  { s: "INCLUSIONS & EXCLUSIONS", k: "transportType", q: "Main transportation type", g: "Short, e.g. \"Car\", \"Minivan\", \"Minibus\", \"4x4 vehicle\".", d: (x) => (x.group ? "Minibus" : "Car") },
+
+  // ── Guide information
+  { s: "GUIDE", k: "whoLeads", t: "enum", o: ["Live guide or other staff member", "No guide", "Audio guide included"], q: "Who leads the activity", d: () => "Live guide or other staff member", to: "gygGuide" },
+  { s: "GUIDE", k: "role", t: "enum", o: ["Driver", "Tour guide", "Host or Greeter", "Instructor"], q: "Staff role", g: "Our tours are led by a local driver who shares stories → usually \"Driver\" (\"Tour guide\" only if the brief says a guide joins).", d: () => "Driver", to: "gygGuideRole" },
+  { s: "GUIDE", k: "extraStaff", q: "Additional staff", g: "Other roles if any (e.g. \"Tour guide in addition to the driver\"), otherwise \"None\".", d: () => "None" },
+  { s: "GUIDE", k: "guideDesc", q: "Guide / driver description", g: "Max 120 characters: what the driver/guide does during the activity.", d: () => "Drives you between the stops and shares local stories and tips along the way.", to: "gygGuideDesc" },
+  { s: "GUIDE", k: "years", t: "number", q: "Average years of experience", g: "Use the brief / listing value; if unknown give a realistic number for experienced local drivers and say so in notes.", d: () => 5, to: "gygGuideYears" },
+  { s: "GUIDE", k: "certs", t: "list", q: "Certifications, licenses and expertise", g: "Only credentials most of the team holds, e.g. \"Professional driving licence\". If unknown, write \"Professional driving licence\" and mention it in notes.", d: () => ["Professional driving licence"], to: "gygCerts" },
+  { s: "GUIDE", k: "firstAid", t: "enum", o: YES_NO, q: "First-aid certified", d: () => "No", to: "gygFirstAid" },
+  { s: "GUIDE", k: "local", t: "enum", o: YES_NO, q: "Guides are locals", d: () => "Yes" },
+  { s: "GUIDE", k: "team", q: "What sets our team apart", g: "Specific: local knowledge, born in Adjara, know the mountain roads, speak Russian and English…", d: () => "Our drivers were born and raised in Adjara, know every mountain road and village, and share local stories, food tips and the best photo spots.", to: "gygTeam" },
+
+  // ── Important information
+  { s: "IMPORTANT INFORMATION", k: "notSuitable", t: "list", q: "Not suitable for", g: "E.g. Wheelchair users, People with mobility impairments, Pregnant women, People with back problems, Children under 3 — only what fits this tour.", d: () => ["Wheelchair users", "People with mobility impairments"], to: "gygNotSuitable" },
+  { s: "IMPORTANT INFORMATION", k: "notAllowed", t: "list", q: "What's not allowed?", g: "Objects, clothing or actions, e.g. Smoking in the vehicle, Pets, Littering.", d: () => ["Smoking in the vehicle", "Littering"], to: "gygNotAllowed" },
+  { s: "IMPORTANT INFORMATION", k: "pets", q: "Pet policy", g: "One or two sentences, max 1000 characters.", d: () => "Pets are not allowed, except service animals.", to: "gygPets" },
+  { s: "IMPORTANT INFORMATION", k: "bring", t: "list", q: "Mandatory items to bring", g: "E.g. Comfortable shoes, Passport or ID card, Weather-appropriate clothing, Cash.", d: () => ["Comfortable shoes", "Weather-appropriate clothing", "Passport or ID card", "Cash for food and entrance fees"], to: "gygBring" },
+  { s: "IMPORTANT INFORMATION", k: "know", t: "list", q: "Know before you go", g: "Practical points: weather, road conditions, flexible stops, exact pick-up time is confirmed the day before, etc.", d: () => ["The exact pick-up time will be confirmed the day before the tour.", "Mountain roads can be winding; tell us if you get car sick.", "The itinerary may change slightly because of weather or road conditions."], to: "gygKnow" },
+  { s: "IMPORTANT INFORMATION", k: "emergency", q: "Emergency contact", g: "Our phone exactly as given, max 35 characters.", d: (x) => x.phone, to: "gygEmergency", fixed: true },
+  { s: "IMPORTANT INFORMATION", k: "ticket", q: "Ticket information", g: "Logistics customers see after booking: send hotel name via WhatsApp, driver will contact you, be ready in the lobby 10 minutes early…", d: (x) => `Please send us your hotel name or address on WhatsApp (${x.phone}) after booking. Your driver will meet you in the hotel lobby; please be ready 10 minutes before the pick-up time.`, to: "gygVoucher" },
+  { s: "IMPORTANT INFORMATION", k: "cancellation", q: "Cancellation policy", d: () => "Free cancellation up to 24 hours before the start of the activity." },
+
+  // ── Booking option
+  { s: "BOOKING OPTION", k: "optionTitle", q: "Option title", g: "E.g. \"Private Tour by Sedan (up to 3 people)\" or \"Small-Group Tour\".", d: (x) => (x.group ? "Small-Group Tour" : `Private Tour by Car (up to ${x.maxPax} people)`) },
+  { s: "BOOKING OPTION", k: "optionRef", q: "Option reference code", g: "Max 20 characters, letters/digits/dashes, e.g. BUS-ADJARA-PRIV.", d: (x) => (x.group ? "GT-GROUP" : "GT-PRIVATE") },
+  { s: "BOOKING OPTION", k: "maxGroup", t: "number", q: "Maximum group size", d: (x) => x.maxPax },
+  { s: "BOOKING OPTION", k: "languages", t: "list", q: "Languages", g: "English names of the languages the driver/guide speaks.", d: (x) => x.langs },
+  { s: "BOOKING OPTION", k: "private", t: "enum", o: YES_NO, q: "Private activity", d: (x) => (x.group ? "No" : "Yes") },
+  { s: "BOOKING OPTION", k: "skipLine", t: "enum", o: YES_NO, q: "Skip-the-line access", d: () => "No", to: "gygSkipLine" },
+  { s: "BOOKING OPTION", k: "wheelchair", t: "enum", o: YES_NO, q: "Wheelchair accessible", d: () => "No", to: "gygWheelchair" },
+  { s: "BOOKING OPTION", k: "durationType", t: "enum", o: ["Duration", "Validity"], q: "Duration or validity", d: () => "Duration" },
+  { s: "BOOKING OPTION", k: "duration", t: "number", q: "Duration (hours, incl. transfers)", d: (x) => x.hours || 8, to: "durationHours" },
+
+  // ── Meeting point or pickup
+  { s: "MEETING POINT OR PICKUP", k: "howArrive", t: "enum", o: ["They get picked up (by car, bus, etc.)", "They go to the starting point by themselves (meeting point)"], q: "How customers get there", d: (x) => (x.pickup ? "They get picked up (by car, bus, etc.)" : "They go to the starting point by themselves (meeting point)") },
+  { s: "MEETING POINT OR PICKUP", k: "pickupWhere", t: "enum", o: ["From any address within a specific area", "From a defined list of pickup locations"], q: "Pickup from", d: () => "From any address within a specific area" },
+  { s: "MEETING POINT OR PICKUP", k: "pickupArea", q: "Pickup area", d: () => "Any hotel, apartment or address in Batumi city (including Batumi Airport)", to: "gygPickupArea" },
+  { s: "MEETING POINT OR PICKUP", k: "pickupWhen", t: "enum", o: ["At the activity start time", "Before the activity starts"], q: "Pickup timing", d: () => "At the activity start time" },
+  { s: "MEETING POINT OR PICKUP", k: "pickupConfirm", t: "enum", o: ["The day before the activity takes place", "Directly after customer selects pickup location"], q: "Final pickup confirmation", d: () => "The day before the activity takes place" },
+  { s: "MEETING POINT OR PICKUP", k: "pickupTime", q: "Usual pickup time", g: "E.g. \"Between 08:30 and 09:30\" (from the schedule if given).", d: () => "Between 08:30 and 09:30" },
+  { s: "MEETING POINT OR PICKUP", k: "pickupDesc", q: "Describe your pickup", g: "What to look for and where to wait, max 1000 characters.", d: () => "Wait in your hotel lobby or at the entrance. Your driver will message you on WhatsApp when arriving and will look for you with a GeorgiaTrips sign." },
+  { s: "MEETING POINT OR PICKUP", k: "dropoff", t: "enum", o: ["At the same place you picked them up", "At a different place", "No drop-off service"], q: "Drop-off", d: () => "At the same place you picked them up" },
+  { s: "MEETING POINT OR PICKUP", k: "pickupTransport", q: "Pickup/drop-off transport", d: (x) => (x.group ? "Minibus" : "Private car") },
+
+  // ── Availability & pricing
+  { s: "AVAILABILITY & PRICING", k: "reservationSystem", t: "enum", o: ["No, I don't", "Yes, I use a reservation system"], q: "Online reservation system", d: () => "No, I don't" },
+  { s: "AVAILABILITY & PRICING", k: "availability", t: "enum", o: ["Time slots", "Opening hours"], q: "Availability type", d: () => "Time slots" },
+  { s: "AVAILABILITY & PRICING", k: "startTimes", q: "Start times / days", g: "From the schedule if given, else \"Daily at 09:00\".", d: () => "Daily at 09:00" },
+  { s: "AVAILABILITY & PRICING", k: "priceType", t: "enum", o: ["Price per person", "Price per group/vehicle"], q: "Pricing type", d: (x) => (x.group ? "Price per person" : "Price per group/vehicle") },
+  { s: "AVAILABILITY & PRICING", k: "ageGroups", q: "Age categories", g: "E.g. \"Adult 18–99, Child 4–17, Infant 0–3 (free)\".", d: (x) => (x.kidsFrom ? `Adult 18–99, Child ${x.kidsFrom}–17` : "Adult 18–99, Child 4–17, Infant 0–3 (free)"), to: "gygChildAges" },
+  { s: "AVAILABILITY & PRICING", k: "cutoff", t: "number", q: "Cut-off time (hours before start)", d: (x) => x.cutoff, to: "cutoffHours" },
+  { s: "AVAILABILITY & PRICING", k: "lastMinute", t: "enum", o: YES_NO, q: "Last-minute bookings after first booking", d: () => "Yes" },
+  { s: "AVAILABILITY & PRICING", k: "slotCutoffs", t: "enum", o: YES_NO, q: "Different cut-off per time slot", d: () => "No" },
+];
+
+const SCRIPT_SYSTEM = `You fill in the full GetYourGuide product form for GeorgiaTrips (georgiatrips.ge, Batumi, Georgia): private tours by car with a local driver, small-group tours by minibus, pick-up from hotels in Batumi, WhatsApp contact.
+You answer EVERY question of the schema — no empty answers, no "N/A", no "unknown". Write in clear, natural English, no emojis, no markdown, no prices, links or discount talk (only the emergency field and ticket info may contain our phone).
+Use the owner's brief, the website tour and the listing values first. Where they say nothing, give the answer that a typical GeorgiaTrips private car tour from Batumi would have (well-known facts about the places are fine). Never invent numbers you are not given — distances, opening hours, prices; for years of experience and certifications follow the field notes.
+Keep the whole answer set compact: total under 4500 characters.
+"notes" (Georgian, short points) lists every answer you guessed or the owner must check (e.g. years of experience, start times, inclusions).`;
+
+function scriptSchema() {
+  const properties = {};
+  for (const q of GYG_QUESTIONS) {
+    const description = [q.q, q.g].filter(Boolean).join(" — ");
+    if (q.t === "enum") properties[q.k] = { type: "STRING", enum: q.o, description };
+    else if (q.t === "list") properties[q.k] = { type: "ARRAY", items: { type: "STRING" }, description };
+    else if (q.t === "number") properties[q.k] = { type: "NUMBER", description };
+    else properties[q.k] = { type: "STRING", description };
+  }
+  properties.notes = { type: "ARRAY", items: { type: "STRING" }, description: "Georgian: what was guessed / must be checked" };
+  const keys = GYG_QUESTIONS.map((q) => q.k);
+  return { type: "OBJECT", properties, required: keys, propertyOrdering: [...keys, "notes"] };
+}
+
+/** The model's answer, or the default — never empty; lists padded / cut to GYG's counts. */
+function answerOf(q, raw, facts, answers) {
+  if (q.fixed) return q.d(facts, answers);
+  let v = raw;
+  if (q.t === "list") v = (Array.isArray(v) ? v : String(v || "").split("\n")).map((x) => String(x).trim()).filter(Boolean);
+  else if (q.t === "number") v = Number(v) > 0 ? Math.round(Number(v) * 10) / 10 : null;
+  else if (q.t === "enum") v = q.o.includes(v) ? v : null;
+  else v = String(v || "").trim();
+  const empty = v == null || v === "" || (Array.isArray(v) && !v.length) || /^(n\/?a|unknown|none\.?)$/i.test(String(v)) && q.k !== "extraStaff";
+  if (empty) return q.d ? q.d(facts, answers) : null;
+  if (q.t === "list" && q.min && v.length < q.min && q.d) {
+    const seen = new Set(v.map((x) => x.toLowerCase()));
+    for (const x of q.d(facts, answers)) if (v.length < q.min && !seen.has(x.toLowerCase())) v.push(x);
+  }
+  if (q.t === "list" && q.max) v = v.slice(0, q.max);
+  return v;
+}
+
+// Short lists go on one line ("Keywords: Nature, Scenic, …") to stay under 5000.
+const INLINE_LISTS = new Set(["keywords", "languages", "notSuitable", "notAllowed", "bring", "certs", "locations"]);
+
+function buildScriptText(answers) {
+  const lines = [];
+  let section = "";
+  for (const q of GYG_QUESTIONS) {
+    const v = answers[q.k];
+    if (v == null || v === "") continue;
+    if (q.s !== section) {
+      section = q.s;
+      lines.push("", section);
+    }
+    if (Array.isArray(v) && INLINE_LISTS.has(q.k)) lines.push(`${q.q}: ${v.join("; ")}`);
+    else if (Array.isArray(v)) lines.push(`${q.q}:`, ...v.map((x) => `- ${x}`));
+    else lines.push(`${q.q}: ${v}`);
+  }
+  return lines.join("\n").trim();
+}
+
+// Answers → the editor's own fields (applied by the panel only where empty).
+function scriptToFields(answers) {
+  const byKey = Object.fromEntries(ALL_FIELDS.map((f) => [f.key, f]));
+  const out = {};
+  for (const q of GYG_QUESTIONS) {
+    if (!q.to) continue;
+    const [key, sub] = q.to.split(".");
+    const field = byKey[key];
+    let v = answers[q.k];
+    if (!field || v == null) continue;
+    if (field.kind === "check") v = v === "Yes";
+    else if (field.kind === "chips") v = (Array.isArray(v) ? v : [v]).filter((x) => field.options.includes(x));
+    else if (field.kind === "list") v = (Array.isArray(v) ? v : [v]).join("\n");
+    else if (field.kind === "textarea" || field.kind === "text") v = Array.isArray(v) ? v.join("\n") : String(v);
+    else if (field.kind === "number") v = String(v);
+    else if (field.kind === "select" && !field.options.includes(v)) continue;
+    if (v === "" || (Array.isArray(v) && !v.length)) continue;
+    if (sub) out[key] = { ...(out[key] || {}), [sub]: v };
+    else out[key] = v;
+  }
+  return out;
+}
 
 export async function gygScript({ listing, brief, tour }) {
   if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY არ არის Vercel-ში.");
@@ -352,23 +528,33 @@ export async function gygScript({ listing, brief, tour }) {
   if (!brief && !tourText && !Object.keys(current).length) {
     throw new Error("ჩაწერე ტექსტი ზემოთ ან აირჩიე ტური საიტიდან — AI-ს მასალა არ აქვს.");
   }
-  const vehicles = Object.entries(listing?.vehicles || {})
-    .filter(([, v]) => v?.on)
-    .map(([k, v]) => `${k} (up to ${v.pax} people)`)
-    .join(", ");
+  const facts = scriptFacts(listing);
   const prompt = [
-    `Format: ${listing?.format === "group" ? `group tour, ${listing?.group?.min || 1}–${listing?.group?.max || 19} people` : `private tour by car${vehicles ? `: ${vehicles}` : ""}`}.`,
-    brief && `Owner's brief (any language — the most important source):
-${brief}`,
-    tourText && `The tour on our website (JSON, texts in ka/en/ru):
-${tourText}`,
-    Object.keys(current).length && `Values already in the listing:
-${clip(JSON.stringify(current), 25000)}`,
+    `Format: ${facts.group ? `group tour, ${listing?.group?.min || 1}–${facts.maxPax} people` : `private tour by car${facts.vehicles.length ? `: ${facts.vehicles.join(", ")}` : ""}, max ${facts.maxPax} people`}.`,
+    `Known facts: languages ${facts.langs.join(", ")}; ${facts.hours ? `duration ${facts.hours} h; ` : ""}cut-off ${facts.cutoff} h; ${facts.pickup ? "hotel pick-up in Batumi" : "meeting point"}; emergency phone ${facts.phone}${facts.kidsFrom != null ? `; children from ${facts.kidsFrom}` : ""}.`,
+    brief && `Owner's brief (any language — the most important source):\n${brief}`,
+    tourText && `The tour on our website (JSON, texts in ka/en/ru):\n${tourText}`,
+    Object.keys(current).length && `Values already in the listing:\n${clip(JSON.stringify(current), 25000)}`,
+    "Task: answer every question of the schema for this tour.",
   ]
     .filter(Boolean)
     .join("\n\n");
-  const { out, model } = await generate(prompt, SCRIPT_SCHEMA, { system: SCRIPT_SYSTEM });
-  const text = String(out.text || "").trim().slice(0, 5000);
-  if (text.length < 300) throw new Error("AI-მ ტექსტი ვერ დაწერა — დაამატე მეტი დეტალი და სცადე ისევ.");
-  return { text, notes: Array.isArray(out.notes) ? out.notes.map(String).slice(0, 15) : [], model };
+
+  const { out, model } = await generate(prompt, scriptSchema(), { system: SCRIPT_SYSTEM });
+  const answers = {};
+  const defaulted = [];
+  for (const q of GYG_QUESTIONS) {
+    const raw = out[q.k];
+    answers[q.k] = answerOf(q, raw, facts, answers);
+    const rawEmpty = raw == null || raw === "" || raw === 0 || (Array.isArray(raw) && !raw.length);
+    if (!q.fixed && rawEmpty && answers[q.k] != null) defaulted.push(q.q);
+  }
+  if (!String(answers.full || "").trim() || String(answers.full).length < 300) {
+    throw new Error("AI-მ სრული აღწერა ვერ დაწერა — დაამატე მეტი დეტალი და სცადე ისევ.");
+  }
+  const text = buildScriptText(answers);
+  const notes = Array.isArray(out.notes) ? out.notes.map(String).slice(0, 15) : [];
+  if (defaulted.length) notes.push(`სტანდარტული პასუხი ჩაიწერა (შეამოწმე): ${defaulted.join("; ")}`);
+  if (text.length > 5000) notes.push(`ტექსტი ${text.length} სიმბოლოა — GYG-ის ველში მაქს. 5000; შეამოკლე სრული აღწერა ან მარშრუტი.`);
+  return { text, answers, fields: scriptToFields(answers), notes, model };
 }

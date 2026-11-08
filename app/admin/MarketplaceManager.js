@@ -573,9 +573,11 @@ function AiPanel({ listing, siteTours, onImport, onApply, onUndo, canUndo, setFi
     try {
       if (kind === "gyg") {
         const data = await call({ action: "gyg-script" });
+        // The answers also fill the GYG fields below that are still empty.
+        const filled = data.fields ? onApply(data, "empty") : 0;
         setField("gygScript", data.text);
         setNotes(data.notes || []);
-        setMsg({ type: "success", text: `GetYourGuide-ის ტექსტი მზადაა (${data.text.length} სიმბოლო). შეამოწმე, დააკოპირე და ჩასვი GYG-ის „AI content creator“-ში. არ დაგავიწყდეს „შენახვა“.` });
+        setMsg({ type: "success", text: `GetYourGuide-ის ტექსტი მზადაა (${data.text.length} სიმბოლო) — პასუხი აქვს GYG-ის ფორმის ყველა კითხვას${filled ? `, ქვემოთ შეივსო ${filled} ცარიელი ველი (✨)` : ""}. შეამოწმე, დააკოპირე და ჩასვი GYG-ის „AI content creator“-ში. არ დაგავიწყდეს „შენახვა“.` });
       } else if (kind === "tripster") {
         const data = await call({ action: "ai", mode: "fix", only: "tripster" });
         const changed = onApply(data, "fix");
