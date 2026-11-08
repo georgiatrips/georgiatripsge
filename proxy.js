@@ -142,6 +142,8 @@ const API_LIMITS = {
   "/api/messenger/webhook": { max: 1200, methods: ["GET", "POST"] },
   // Admin AI tour planner: each plan is a paid Claude request that runs for minutes.
   "/api/admin/tour-planner": { max: 15, windowMs: 60 * 60 * 1000, methods: ["POST"] },
+  // Admin photo search: each search calls five photo sites.
+  "/api/admin/photo-search": { max: 30, methods: ["GET"] },
 };
 
 export async function proxy(request) {

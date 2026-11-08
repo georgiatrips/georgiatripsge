@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "google-oauth": "node scripts/google-oauth.js"
+    "google-oauth": "node scripts/google-oauth.js",
+    "photos": "node scripts/find-photos.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",

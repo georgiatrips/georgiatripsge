@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { BarChartIcon, BedIcon, CarIcon, ClipboardIcon, GlobeIcon, LocationIcon, MessageIcon, MessengerIcon, MountainIcon, RouteIcon, TicketIcon } from "../components/Icons";
+import { BarChartIcon, BedIcon, CameraIcon, CarIcon, ClipboardIcon, GlobeIcon, LocationIcon, MessageIcon, MessengerIcon, MountainIcon, RouteIcon, TicketIcon } from "../components/Icons";
 import DatePicker from "../components/DatePicker";
 import { GEORGIA_REGIONS } from "../lib/placesMeta";
 import { listPlaces } from "../lib/placesFirestore";
@@ -23,6 +23,7 @@ import InboxManager from "./InboxManager";
 import GetTransferManager from "./GetTransferManager";
 import TourTransfersManager from "./TourTransfersManager";
 import MarketplaceManager from "./MarketplaceManager";
+import PhotoSearchManager from "./PhotoSearchManager";
 import { collection, getCountFromServer, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { WA_CONNECT_STATE } from "../lib/whatsappConfig";
@@ -959,6 +960,7 @@ export default function AdminPage() {
         { key: "hotels", label: "სასტუმროები", Icon: BedIcon, badge: { text: String(hotelsCount) } },
         { key: "places", label: "ადგილები", Icon: LocationIcon, badge: { text: String(placesCount) } },
         { key: "reviews", label: "მიმოხილვები", Icon: MessageIcon, badge: { text: String(reviewsCount) } },
+        { key: "photoSearch", label: "ფოტოების ძებნა", Icon: CameraIcon },
       ],
     },
   ];
@@ -975,6 +977,7 @@ export default function AdminPage() {
     tours: ["ტურები", "ტურის დამატება, რედაქტირება და კატალოგი."],
     hotels: ["სასტუმროები", "სასტუმროების სია საიტზე."],
     places: ["ადგილები", "ტურისტული ადგილები ფოტოებითა და აღწერით."],
+    photoSearch: ["ფოტოების ძებნა", "ჩაწერე ადგილი — ვეძებ Wikimedia Commons, Flickr, Unsplash, Pexels და Pixabay-ზე და ვტოვებ მხოლოდ იმ ფოტოებს, რომელთა სათაური, აღწერა ან GPS ამ ადგილს ადასტურებს."],
     reviews: ["მიმოხილვები", "სტუმრების შეფასებები და Google-ის სინქრონიზაცია."],
   };
   const [sectionTitle, sectionText] = SECTION_INFO[activeTab] || SECTION_INFO.tours;
@@ -2325,6 +2328,10 @@ export default function AdminPage() {
           )}
 
           {/* TAB: TOURS ON OTHER SITES (GetYourGuide, Tripster) */}
+          {activeTab === "photoSearch" && (
+            <PhotoSearchManager />
+          )}
+
           {activeTab === "marketplaces" && (
             <MarketplaceManager />
           )}

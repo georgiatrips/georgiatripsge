@@ -49,3 +49,6 @@ next-env.d.ts
 
 # Claude Code local session files (worktrees, local settings)
 .claude/
+
+# photos downloaded by `npm run photos -- <place> --download`
+/photo-search/
