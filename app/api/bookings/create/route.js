@@ -1,8 +1,9 @@
 import { NextResponse, after } from "next/server";
-import { setDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { generateBookingId, generateAccessToken, isValidPhone, BOOKING_STATUSES } from "../../../lib/bookingModel";
-import { validateCouponServer, recordCouponUsage } from "../../../lib/coupons";
+import { validateCouponServer, recordCouponUsage } from "../../../lib/server/couponUsage";
+import { SERVER_TIME, readDoc, writeDoc } from "../../../lib/server/serverStore";
 import { VEHICLES, getPrivateVehiclePrices } from "../../../lib/vehicles";
 import { notifyNewBooking } from "../../../lib/server/notifyBooking";
 import { requireAuthenticatedUser } from "../../../lib/server/adminAuth";
@@ -164,7 +165,6 @@ export async function POST(request) {
       const couponValidation = await validateCouponServer({
         code: couponCode,
         baseTotalPrice,
-        ip: clientIp,
         userId: couponUser.uid || couponUser.user_id || "",
       });
 
@@ -182,7 +182,7 @@ export async function POST(request) {
     // another customer's booking.
     let bookingId = generateBookingId();
     for (let attempt = 0; attempt < 3; attempt++) {
-      const taken = await getDoc(doc(db, "bookings", bookingId)).then((snap) => snap.exists()).catch(() => false);
+      const taken = await readDoc("bookings", bookingId).then(Boolean).catch(() => false);
       if (!taken) break;
       bookingId = generateBookingId();
     }
@@ -256,13 +256,13 @@ export async function POST(request) {
         completedAt: null,
       },
 
-      createdAt: serverTimestamp(),
+      createdAt: SERVER_TIME,
       createdAtMillis: Date.now(),
-      updatedAt: serverTimestamp(),
+      updatedAt: SERVER_TIME,
     };
 
     // 7. Save to Firestore (doc ID = bookingId)
-    await setDoc(doc(db, "bookings", bookingId), bookingDoc);
+    await writeDoc("bookings", bookingId, bookingDoc);
 
     // Alert the team after the response is sent, so the customer never waits on it.
     after(() => notifyNewBooking(bookingDoc));
@@ -302,7 +302,7 @@ export async function POST(request) {
   } catch (error) {
     console.error("[api/bookings/create] Error:", error);
     return NextResponse.json(
-      { success: false, error: "ჯავშნის შექმნა ვერ მოხერხდა. გთხოვთ სცადოთ ხელახლა.", details: error.message },
+      { success: false, error: "ჯავშნის შექმნა ვერ მოხერხდა. გთხოვთ სცადოთ ხელახლა." },
       { status: 500 }
     );
   }

@@ -677,8 +677,16 @@ export function getTrafficSource() {
 }
 
 // ── Fetch GeoIP Metadata ────────────────────────────────────
-export async function getGeoData() {
-  if (typeof window === "undefined") return null;
+// One lookup per tab: the session tracker and the welcome popup both ask for
+// it during page load, and used to send two identical requests.
+let geoPromise;
+export function getGeoData() {
+  if (typeof window === "undefined") return Promise.resolve(null);
+  geoPromise ??= fetchGeoData();
+  return geoPromise;
+}
+
+async function fetchGeoData() {
 
   try {
     const cached = sessionStorage.getItem(GEO_CACHE_KEY);

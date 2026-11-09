@@ -13,7 +13,6 @@ import {
   where,
   getCountFromServer,
 } from "firebase/firestore";
-import { recordClaimedIp } from "./couponSettings";
 
 export const COUPONS_COLLECTION = "coupons";
 
@@ -21,8 +20,8 @@ export const COUPONS_COLLECTION = "coupons";
 // Kept in claimed_coupon_ips because its rules already let anyone create a
 // document but only an admin change or delete one, so a user cannot erase
 // their own record to use a single-use coupon again.
-const REDEMPTIONS_COLLECTION = "claimed_coupon_ips";
-const redemptionId = (code, uid) =>
+export const REDEMPTIONS_COLLECTION = "claimed_coupon_ips";
+export const redemptionId = (code, uid) =>
   `use__${String(code).trim().toUpperCase()}__${String(uid).replace(/[^A-Za-z0-9_-]/g, "_")}`;
 
 /** True when this user has already booked with this coupon. */
@@ -37,12 +36,6 @@ export async function hasUserUsedCoupon(code, uid) {
   }
 }
 
-async function recordUse(id, code, data) {
-  const ref = doc(db, REDEMPTIONS_COLLECTION, id);
-  const snap = await getDoc(ref);
-  if (snap.exists()) return;
-  await setDoc(ref, { type: "coupon_use", code: String(code).trim().toUpperCase(), usedAt: serverTimestamp(), ...data });
-}
 
 /**
  * How many bookings have used this coupon, counted from the usage records
@@ -195,124 +188,4 @@ export async function deleteCoupon(code) {
   const docRef = doc(db, COUPONS_COLLECTION, cleanCode);
   await deleteDoc(docRef);
   return true;
-}
-
-/**
- * 🔒 SECURE SERVER-SIDE COUPON VALIDATOR
- * Called in API route before applying discounts.
- * NEVER trusts numbers inside the code. Strictly checks Firestore / Whitelist rules.
- */
-export async function validateCouponServer({
-  code,
-  baseTotalPrice = 0,
-  ip = "",
-  userId = "",
-}) {
-  if (!code || typeof code !== "string") {
-    return { valid: false, discountPercent: 0, discountAmount: 0, reason: "კუპონი არ არის მითითებული" };
-  }
-
-  const cleanCode = code.trim().toUpperCase();
-  const coupon = await getCouponByCode(cleanCode);
-
-  if (!coupon) {
-    return {
-      valid: false,
-      discountPercent: 0,
-      discountAmount: 0,
-      reason: "კუპონი ვერ მოიძებნა ან არასწორია",
-    };
-  }
-
-  if (!coupon.active) {
-    return {
-      valid: false,
-      discountPercent: 0,
-      discountAmount: 0,
-      reason: "მოცემული კუპონი დეაქტივირებულია",
-    };
-  }
-
-  // Check expiration date
-  if (coupon.expiresAt) {
-    const expDate = new Date(coupon.expiresAt);
-    if (!isNaN(expDate.getTime()) && expDate.getTime() < Date.now()) {
-      return {
-        valid: false,
-        discountPercent: 0,
-        discountAmount: 0,
-        reason: "კუპონის მოქმედების ვადა ამოიწურა",
-      };
-    }
-  }
-
-  // Single use = every signed-in user may use it, each of them once. It has
-  // no overall limit (older single coupons were saved with maxUses 1).
-  if (coupon.usageType === "single") {
-    if (!userId) {
-      return { valid: false, discountPercent: 0, discountAmount: 0, reason: "კუპონის გამოსაყენებლად შედით ანგარიშში" };
-    }
-    if (await hasUserUsedCoupon(cleanCode, userId)) {
-      return { valid: false, discountPercent: 0, discountAmount: 0, reason: "ეს კუპონი უკვე გამოიყენეთ" };
-    }
-  } else if (coupon.usageType !== "unlimited") {
-    // Multiple use: a shared limit for everyone together.
-    const maxUses = parseInt(coupon.maxUses, 10) || 0;
-    const usedCount = maxUses > 0
-      ? Math.max(parseInt(coupon.usedCount, 10) || 0, await countCouponUses(cleanCode))
-      : 0;
-    if (maxUses > 0 && usedCount >= maxUses) {
-      return {
-        valid: false,
-        discountPercent: 0,
-        discountAmount: 0,
-        reason: "კუპონის გამოყენების ლიმიტი ამოწურულია",
-      };
-    }
-  }
-
-  // Calculate discount
-  const discountPercent = Math.min(50, Math.max(1, Number(coupon.discountPercent) || 10));
-  let discountAmount = Math.round(baseTotalPrice * (discountPercent / 100));
-
-  // Apply maximum GEL cap if configured
-  if (coupon.maxDiscountGEL && coupon.maxDiscountGEL > 0) {
-    discountAmount = Math.min(discountAmount, coupon.maxDiscountGEL);
-  }
-
-  return {
-    valid: true,
-    code: cleanCode,
-    coupon,
-    discountPercent,
-    discountAmount,
-    reason: "კუპონი ვალიდურია",
-  };
-}
-
-/**
- * Increment coupon usage upon confirmed booking
- */
-export async function recordCouponUsage({ code, ip = "", userId = "", bookingId = "" }) {
-  if (!code) return;
-  const cleanCode = String(code).trim().toUpperCase();
-
-  // One usage record per use. Single-use coupons are keyed by the user, so the
-  // same person cannot use them twice; the others by booking, so they count
-  // towards the shared limit.
-  try {
-    const coupon = await getCouponByCode(cleanCode);
-    if (coupon?.usageType === "single") {
-      if (userId) await recordUse(redemptionId(cleanCode, userId), cleanCode, { userId, bookingId });
-    } else if (bookingId) {
-      await recordUse(redemptionId(cleanCode, `bk_${bookingId}`), cleanCode, { userId, bookingId });
-    }
-  } catch (err) {
-    console.error("recordCouponUsage: usage record failed:", err);
-  }
-
-  // Record IP in claimed IPs list
-  if (ip) {
-    await recordClaimedIp(ip, userId);
-  }
 }

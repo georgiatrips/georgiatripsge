@@ -28,7 +28,7 @@ import SeasonalEffects from "./SeasonalEffects";
 const notoGeorgian = Noto_Sans_Georgian({
   variable: "--font-noto-georgian",
   subsets: ["georgian"],
-  display: "swap",
+  display: "fallback",
   preload: true,
   adjustFontFallback: true,
 });
@@ -38,7 +38,7 @@ const notoGeorgian = Noto_Sans_Georgian({
 const notoSerifGeorgian = Noto_Serif_Georgian({
   variable: "--font-noto-serif-georgian",
   subsets: ["georgian"],
-  display: "swap",
+  display: "fallback",
   preload: true,
   adjustFontFallback: true,
 });
@@ -46,7 +46,7 @@ const notoSerifGeorgian = Noto_Serif_Georgian({
 const playfair = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin"],
-  display: "swap",
+  display: "fallback",
   preload: true,
   adjustFontFallback: true,
 });
@@ -56,7 +56,7 @@ const playfair = Playfair_Display({
 const playfairCyrillic = Playfair_Display({
   variable: "--font-playfair-cyrillic",
   subsets: ["cyrillic"],
-  display: "swap",
+  display: "fallback",
   preload: false,
   adjustFontFallback: false,
 });
@@ -64,7 +64,7 @@ const playfairCyrillic = Playfair_Display({
 const notoNaskhArabic = Noto_Naskh_Arabic({
   variable: "--font-noto-naskh-arabic",
   subsets: ["arabic"],
-  display: "swap",
+  display: "fallback",
   preload: false,
   adjustFontFallback: false,
 });
@@ -75,7 +75,7 @@ const notoArabic = Noto_Sans_Arabic({
   variable: "--font-noto-arabic",
   subsets: ["arabic"],
   weight: ["400", "500", "600", "700", "800"],
-  display: "swap",
+  display: "fallback",
   preload: false,
   adjustFontFallback: true,
 });

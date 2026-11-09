@@ -9,6 +9,8 @@ import { useCoupon } from "../lib/CouponContext";
 const loadCouponSettings = () => import("../lib/couponSettings");
 import CouponTicket from "./CouponTicket";
 
+const CLAIMED_KEY = "gt_welcome_ip_claimed";
+
 // Welcome coupon for visitors who are not signed in.
 //
 // The previous version showed a 30-minute countdown that silently restarted
@@ -58,26 +60,27 @@ export default function WelcomeCouponPopup() {
 
     (async () => {
       try {
-        let ip = "";
-        try {
-          const cached = sessionStorage.getItem("gt_geo_cache");
-          if (cached) ip = JSON.parse(cached).ip || "";
-          if (!ip) {
-            const res = await fetch("/api/analytics/track");
-            if (res.ok) {
-              const data = await res.json();
-              ip = data.ip || "";
-              sessionStorage.setItem("gt_geo_cache", JSON.stringify(data));
-            }
-          }
-        } catch (_) {}
+        const { getGeoData } = await import("../lib/analytics");
+        const geoIp = (await getGeoData())?.ip || "";
+        const ip = geoIp === "Unknown" ? "" : geoIp;
         if (cancelled) return;
         if (ip) setClientIp(ip);
 
-        const { getCouponSettings, isIpClaimed } = await loadCouponSettings();
-        const settings = await getCouponSettings();
-        if (settings.limitOnePerIp && ip && (await isIpClaimed(ip))) return;
-        if (cancelled) return;
+        // Asked once per tab, not on every page change: the answer cannot
+        // change while the visitor browses, and each check is a Firestore read.
+        let claimed = null;
+        try {
+          claimed = sessionStorage.getItem(CLAIMED_KEY);
+        } catch (_) {}
+        if (claimed === null) {
+          const { getCouponSettings, isIpClaimed } = await loadCouponSettings();
+          const settings = await getCouponSettings();
+          claimed = settings.limitOnePerIp && ip && (await isIpClaimed(ip)) ? "1" : "0";
+          try {
+            sessionStorage.setItem(CLAIMED_KEY, claimed);
+          } catch (_) {}
+        }
+        if (claimed === "1" || cancelled) return;
 
         // Never on top of the cookie banner: if it is still open, wait until
         // the visitor answers it, then show the coupon shortly after.
