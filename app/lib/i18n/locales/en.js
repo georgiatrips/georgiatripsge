@@ -927,6 +927,7 @@ export const en = {
     "transferRoutes": "Transfer routes"
   },
   "tourCard": {
+    "hotUntil": "until {date}",
     "hotOffer": "Hot offer",
     "bookAria": "Book “{title}”",
     "book": "Book",
@@ -1008,6 +1009,7 @@ export const en = {
   },
   "homepage": {
     "hotEyebrow": "Limited time",
+    "hotTitleOne": "Hot offer",
     "hotTitle": "Hot offers",
     "hotLead": "Tours with a special deal right now — book while the offer lasts.",
     "heroSlideGo": "Show photo: {place}",

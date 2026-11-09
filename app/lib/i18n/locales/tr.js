@@ -927,6 +927,7 @@ export const tr = {
     "transferRoutes": "Transfer rotaları"
   },
   "tourCard": {
+    "hotUntil": "{date} tarihine kadar",
     "hotOffer": "Sıcak fırsat",
     "bookAria": "“{title}” turunu ayırtın",
     "book": "Rezervasyon",
@@ -1008,6 +1009,7 @@ export const tr = {
   },
   "homepage": {
     "hotEyebrow": "Sınırlı süre",
+    "hotTitleOne": "Sıcak fırsat",
     "hotTitle": "Sıcak fırsatlar",
     "hotLead": "Şu anda özel fırsatlı turlar — fırsat sürerken rezervasyon yapın.",
     "heroSlideGo": "Fotoğraf: {place}",

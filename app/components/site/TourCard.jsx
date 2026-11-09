@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import TourPrice from "../TourPrice";
-import { formatTourDate } from "../../lib/tourView";
+import { excerpt, formatTourDate } from "../../lib/tourView";
 import { interpolate } from "../../lib/i18n/translateCore";
 import { getLocalizedHref } from "../../lib/siteConfig";
 import { ArrowRightIcon, CalendarIcon, ClockIcon, LocationIcon, RouteIcon, UsersIcon } from "../Icons";
@@ -11,7 +11,9 @@ import "../../styles/tour-card.css";
 // (catalog). Takes a view model from toTourView() and a translate function.
 // `dateMatch` ("group" | "private") is set by the catalog when a date filter is
 // active, so the card explains why it matches that day.
-export default function TourCard({ tour, lang, t, headingLevel = 3, eager = false, sizes, dateMatch = null }) {
+// `showDesc` adds a short description that only shows when the card is laid
+// out wide (the hot-offers spotlight, see HotOffers.jsx).
+export default function TourCard({ tour, lang, t, headingLevel = 3, eager = false, sizes, dateMatch = null, showDesc = false }) {
   const Heading = `h${headingLevel}`;
   const tourHref = getLocalizedHref(`/tours/${encodeURIComponent(tour.slug || tour.id)}`, lang);
   // The group price leads only while a group departure with free seats is
@@ -20,6 +22,10 @@ export default function TourCard({ tour, lang, t, headingLevel = 3, eager = fals
   const groupBookable = Boolean(tour.groupPrice && tour.departures?.some((d) => d.freeSeats !== 0));
   const leadGroup = groupBookable || (tour.groupPrice && !tour.privatePrice);
   const peopleMax = leadGroup ? tour.groupMax : tour.privateMax || tour.groupMax;
+  const hotUntil = tour.isHotOffer && tour.hotOfferUntil
+    ? interpolate(t("tourCard.hotUntil"), { date: formatTourDate(tour.hotOfferUntil, lang, { day: "numeric", month: "short" }) })
+    : "";
+  const desc = showDesc ? excerpt(tour.desc, 220) : "";
   const nextDate = tour.nextDeparture
     ? formatTourDate(tour.nextDeparture.date, lang, { day: "numeric", month: "short" })
     : "";
@@ -38,7 +44,7 @@ export default function TourCard({ tour, lang, t, headingLevel = 3, eager = fals
         )}
         {(tour.isHotOffer || tour.badge) && (
           <span className="gt-tour-card-badges">
-            {tour.isHotOffer && <span className="gt-chip gt-tour-card-hot">🔥 {t("tourCard.hotOffer")}</span>}
+            {tour.isHotOffer && <span className="gt-chip gt-tour-card-hot">🔥 {t("tourCard.hotOffer")}{hotUntil ? ` · ${hotUntil}` : ""}</span>}
             {tour.badge && <span className="gt-chip gt-chip--light">{tour.badge}</span>}
           </span>
         )}
@@ -67,6 +73,8 @@ export default function TourCard({ tour, lang, t, headingLevel = 3, eager = fals
           {peopleMax && <li><UsersIcon size={15} />{interpolate(t("tourCard.upTo"), { count: peopleMax })}</li>}
           {tour.stops.length > 1 && <li><RouteIcon size={15} />{interpolate(t("tourCard.stops"), { count: tour.stops.length })}</li>}
         </ul>
+
+        {desc && <p className="gt-tour-card-desc gt-tour-card-desc--wide">{desc}</p>}
 
         {dateMatch ? (
           <div className="gt-tour-card-dates">

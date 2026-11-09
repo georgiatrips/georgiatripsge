@@ -251,3 +251,58 @@
   .gt-tour-card-foot { flex-direction: column; align-items: stretch; }
   .gt-tour-card-cta { width: 100%; }
 }
+
+/* ---- Hot offers grid (HotOffers.jsx) ------------------------------------
+   Never leaves an empty cell beside a lone card: 1 = spotlight, 2 = halves,
+   4 = 2 x 2, 5 = 2 on top + 3 below, 3 / 6 = thirds. */
+.gt-hot-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(1rem, 2.2vw, 1.5rem);
+}
+
+.gt-hot-cell { container: gt-hot-cell / inline-size; min-width: 0; }
+
+@container gt-tours (min-width: 40rem) {
+  .gt-hot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gt-hot-grid[data-odd] > .gt-hot-cell:first-child { grid-column: 1 / -1; }
+}
+
+@container gt-tours (min-width: 60rem) {
+  .gt-hot-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .gt-hot-grid > .gt-hot-cell,
+  .gt-hot-grid[data-odd] > .gt-hot-cell:first-child { grid-column: span 2; }
+  .gt-hot-grid[data-count="1"] > .gt-hot-cell:first-child { grid-column: 1 / -1; }
+  .gt-hot-grid[data-count="2"] > .gt-hot-cell,
+  .gt-hot-grid[data-count="4"] > .gt-hot-cell,
+  .gt-hot-grid[data-count="5"] > .gt-hot-cell:nth-child(-n + 2) { grid-column: span 3; }
+}
+
+/* The description is only for the wide layout. */
+.gt-tour-card-desc--wide { display: none; }
+
+/* Wide card: photo beside the details. Applies whenever a hot card is wide
+   enough (a single offer, or the first of an odd count on tablets). */
+@container gt-hot-cell (min-width: 44rem) {
+  .gt-hot-cell .gt-tour-card { flex-direction: row; min-height: 22rem; }
+
+  .gt-hot-cell .gt-tour-card-media {
+    flex: 0 0 56%;
+    aspect-ratio: auto;
+  }
+
+  .gt-hot-cell .gt-tour-card-body {
+    justify-content: center;
+    gap: 0.95rem;
+    padding: clamp(1.4rem, 3cqi, 2.4rem);
+  }
+
+  .gt-hot-cell .gt-tour-card-title { font-size: clamp(1.35rem, 2.6cqi, 1.75rem); line-height: 1.25; }
+  .gt-hot-cell .gt-tour-card-desc--wide { display: block; }
+  .gt-hot-cell .gt-tour-price-main strong { font-size: 1.85rem; }
+}
+
+/* Two cards side by side: a slightly taller photo so the pair fills the row. */
+@container gt-hot-cell (min-width: 30rem) and (max-width: 43.99rem) {
+  .gt-hot-cell .gt-tour-card-media { aspect-ratio: 16 / 10; }
+}

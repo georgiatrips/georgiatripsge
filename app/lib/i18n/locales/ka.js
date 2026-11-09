@@ -927,6 +927,7 @@ export const ka = {
     "transferRoutes": "ტრანსფერის მარშრუტები"
   },
   "tourCard": {
+    "hotUntil": "{date}-მდე",
     "hotOffer": "ცხელი შეთავაზება",
     "bookAria": "ტურის „{title}“ დაჯავშნა",
     "book": "დაჯავშნა",
@@ -1008,6 +1009,7 @@ export const ka = {
   },
   "homepage": {
     "hotEyebrow": "შეზღუდული დროით",
+    "hotTitleOne": "ცხელი შეთავაზება",
     "hotTitle": "ცხელი შეთავაზებები",
     "hotLead": "ამ ტურებს ახლა განსაკუთრებულ პირობებს გთავაზობთ — დაჯავშნეთ, სანამ შეთავაზება მოქმედებს.",
     "heroSlideGo": "ფოტო: {place}",

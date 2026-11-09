@@ -927,6 +927,7 @@ export const ar = {
     "transferRoutes": "مسارات التوصيل"
   },
   "tourCard": {
+    "hotUntil": "حتى {date}",
     "hotOffer": "عرض ساخن",
     "bookAria": "احجز «{title}»",
     "book": "احجز",
@@ -1008,6 +1009,7 @@ export const ar = {
   },
   "homepage": {
     "hotEyebrow": "لفترة محدودة",
+    "hotTitleOne": "عرض ساخن",
     "hotTitle": "عروض ساخنة",
     "hotLead": "جولات بعرض خاص الآن — احجز قبل انتهاء العرض.",
     "heroSlideGo": "صورة: {place}",

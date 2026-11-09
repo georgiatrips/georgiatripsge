@@ -927,6 +927,7 @@ export const ru = {
     "transferRoutes": "Маршруты трансферов"
   },
   "tourCard": {
+    "hotUntil": "до {date}",
     "hotOffer": "Горячее предложение",
     "bookAria": "Забронировать «{title}»",
     "book": "Забронировать",
@@ -1008,6 +1009,7 @@ export const ru = {
   },
   "homepage": {
     "hotEyebrow": "Ограниченное время",
+    "hotTitleOne": "Горячее предложение",
     "hotTitle": "Горячие предложения",
     "hotLead": "Туры с особыми условиями прямо сейчас — бронируйте, пока действует предложение.",
     "heroSlideGo": "Фото: {place}",

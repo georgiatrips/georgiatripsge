@@ -5,6 +5,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import TourPrice from "../components/TourPrice";
 import TourGrid from "../components/site/TourGrid";
+import HotOffers from "../components/site/HotOffers";
 import ReviewsSection, { visibleReviews } from "../components/site/ReviewsSection";
 import TripPlannerForm from "../components/homepage/TripPlannerForm";
 import HeroSearch from "../components/homepage/HeroSearch";
@@ -358,13 +359,13 @@ export default async function HomePage({ params }) {
               <div className="gt-section-head gt-section-head--duo" data-reveal>
                 <div>
                   <p className="gt-eyebrow gt-hot-eyebrow">🔥 {t("homepage.hotEyebrow")}</p>
-                  <h2 id="hot-title" className="gt-h2">{t("homepage.hotTitle")}</h2>
+                  <h2 id="hot-title" className="gt-h2">{t(hotTours.length === 1 ? "homepage.hotTitleOne" : "homepage.hotTitle")}</h2>
                 </div>
                 <div className="gt-section-head-aside">
                   <p className="gt-lead">{t("homepage.hotLead")}</p>
                 </div>
               </div>
-              <TourGrid items={hotTours.map((tour) => ({ tour }))} lang={lang} t={t} reveal />
+              <HotOffers tours={hotTours} lang={lang} t={t} />
             </div>
           </section>
         )}

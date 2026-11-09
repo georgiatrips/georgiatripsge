@@ -117,6 +117,7 @@ export function toTourView(raw, lang = "en", places = [], badges = null) {
     badge,
     isPopular: Boolean(raw.isPopular),
     isHotOffer: isHotOfferActive(raw),
+    hotOfferUntil: isHotOfferActive(raw) && typeof raw.hotOfferUntil === "string" ? raw.hotOfferUntil : "",
   };
 }
 
