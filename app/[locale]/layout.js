@@ -9,8 +9,10 @@ export { viewport } from "../lib/baseMetadata";
 // This is the root layout for all public pages (there is no app/layout.js), so
 // the <html lang> comes straight from the URL without reading request headers
 // or cookies. That keeps these pages statically rendered and CDN-cacheable;
-// cached data is refreshed hourly or on demand via /api/admin/revalidate.
-export const revalidate = 3600;
+// cached data is refreshed on demand via /api/admin/revalidate whenever the
+// admin saves something. The daily rebuild is only a safety net: hourly
+// rebuilds of ~950 pages used 4x the Vercel plan's ISR writes (2026-11).
+export const revalidate = 86400;
 import { SOCIAL_PROFILES, EMAIL } from "../lib/shared";
 import { COMPANY_PROFILE } from "../lib/companyProfile";
 

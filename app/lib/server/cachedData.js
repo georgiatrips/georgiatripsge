@@ -50,7 +50,7 @@ export function serializeForClient(data) {
 
 /**
  * Cached getter for all Tours across the site — switched-off tours
- * (`active: false`) are left out. Cached for 1 hour, tagged with 'tours'.
+ * (`active: false`) are left out. Cached for 1 day, tagged with 'tours'.
  */
 export const getCachedTours = unstable_cache(
   async () => {
@@ -67,7 +67,7 @@ export const getCachedTours = unstable_cache(
   },
   ["all-tours-cache"],
   {
-    revalidate: 3600, // 1 hour
+    revalidate: 86400, // 1 day; admin saves refresh it at once
     tags: ["tours"],
   }
 );
@@ -96,7 +96,7 @@ const cachedTourById = (tourId) =>
     },
     [`tour-detail-${tourId}`],
     {
-      revalidate: 3600,
+      revalidate: 86400,
       tags: ["tours", `tour-${tourId}`],
     }
   )();
@@ -116,7 +116,7 @@ export async function getCachedTourById(tourId) {
 
 /**
  * Cached getter for all Places.
- * Cached for 1 hour, tagged with 'places'.
+ * Cached for 1 day, tagged with 'places'.
  */
 export const getCachedPlaces = unstable_cache(
   async () => {
@@ -130,14 +130,14 @@ export const getCachedPlaces = unstable_cache(
   },
   ["all-places-cache"],
   {
-    revalidate: 3600,
+    revalidate: 86400,
     tags: ["places"],
   }
 );
 
 /**
  * Cached getter for Blog Posts.
- * Cached for 1 hour, tagged with 'posts'.
+ * Cached for 1 day, tagged with 'posts'.
  */
 export const getCachedPosts = (limitCount = 6) =>
   unstable_cache(
@@ -152,14 +152,14 @@ export const getCachedPosts = (limitCount = 6) =>
     },
     [`all-posts-cache-${limitCount}`],
     {
-      revalidate: 3600,
+      revalidate: 86400,
       tags: ["posts"],
     }
   )();
 
 /**
  * Cached getter for Hotels.
- * Cached for 1 hour, tagged with 'hotels'.
+ * Cached for 1 day, tagged with 'hotels'.
  */
 export const getCachedHotels = unstable_cache(
   async () => {
@@ -173,14 +173,14 @@ export const getCachedHotels = unstable_cache(
   },
   ["all-hotels-cache"],
   {
-    revalidate: 3600,
+    revalidate: 86400,
     tags: ["hotels"],
   }
 );
 
 /**
  * Cached getter for site-wide reviews (admin-entered or synced from Google).
- * Cached for 1 hour, tagged with 'reviews'. Returns [] when none exist, so
+ * Cached for 1 day, tagged with 'reviews'. Returns [] when none exist, so
  * pages can simply omit review UI instead of showing placeholders.
  */
 export const getCachedReviews = unstable_cache(
@@ -195,7 +195,7 @@ export const getCachedReviews = unstable_cache(
   },
   ["site-reviews-cache"],
   {
-    revalidate: 3600,
+    revalidate: 86400,
     tags: ["reviews"],
   }
 );
@@ -203,7 +203,7 @@ export const getCachedReviews = unstable_cache(
 /**
  * Cached getter for the transfer calculator's distance-band prices, as
  * finished ₾/km rates (the markup formula stays in the admin panel).
- * Cached for 1 minute, tagged with 'transfers' (the admin pricing tab revalidates it).
+ * Cached for 1 day, tagged with 'transfers' (the admin pricing tab revalidates it).
  */
 export const getCachedTransferPricing = unstable_cache(
   async () => {
@@ -216,9 +216,10 @@ export const getCachedTransferPricing = unstable_cache(
   },
   ["transfer-pricing-cache-v3"],
   {
-    // Short, so saved prices show up within a minute even if the admin's
-    // revalidate call does not get through.
-    revalidate: 60,
+    // The admin pricing tab refreshes this tag on save. It was 60 seconds,
+    // which rebuilt all ~150 transfer pages every minute (ISR writes over the
+    // plan limit); a day is enough as a fallback.
+    revalidate: 86400,
     tags: ["transfers"],
   }
 );
@@ -237,7 +238,7 @@ export const getCachedCustomTransferPlaces = unstable_cache(
     }
   },
   ["transfer-custom-places-cache"],
-  { revalidate: 60, tags: ["transfers"] }
+  { revalidate: 86400, tags: ["transfers"] }
 );
 
 /**
