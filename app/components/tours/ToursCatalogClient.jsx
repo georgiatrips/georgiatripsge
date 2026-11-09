@@ -146,6 +146,7 @@ export default function ToursCatalogClient({ initialTours = [] }) {
       }))
       .sort((a, b) => {
         if (a.dateMatch !== b.dateMatch) return a.dateMatch === "group" ? -1 : 1;
+        if (a.view.isHotOffer !== b.view.isHotOffer) return a.view.isHotOffer ? -1 : 1;
         if (a.view.isPopular !== b.view.isPopular) return a.view.isPopular ? -1 : 1;
         return (a.view.nextDeparture?.date || "9999").localeCompare(b.view.nextDeparture?.date || "9999");
       });

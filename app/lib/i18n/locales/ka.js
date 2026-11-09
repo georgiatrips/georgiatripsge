@@ -927,6 +927,7 @@ export const ka = {
     "transferRoutes": "ტრანსფერის მარშრუტები"
   },
   "tourCard": {
+    "hotOffer": "ცხელი შეთავაზება",
     "bookAria": "ტურის „{title}“ დაჯავშნა",
     "book": "დაჯავშნა",
     "perPerson": "ერთ ადამიანზე",
@@ -1006,6 +1007,9 @@ export const ka = {
     "styleVipDesc": "პრემიუმ ავტომობილები და კორპორატიული ვიზიტები"
   },
   "homepage": {
+    "hotEyebrow": "შეზღუდული დროით",
+    "hotTitle": "ცხელი შეთავაზებები",
+    "hotLead": "ამ ტურებს ახლა განსაკუთრებულ პირობებს გთავაზობთ — დაჯავშნეთ, სანამ შეთავაზება მოქმედებს.",
     "heroSlideGo": "ფოტო: {place}",
     "heroSlideAlt": "{place}, საქართველო",
     "heroSlideAdjara": "აჭარა",

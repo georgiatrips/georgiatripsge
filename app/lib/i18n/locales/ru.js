@@ -927,6 +927,7 @@ export const ru = {
     "transferRoutes": "Маршруты трансферов"
   },
   "tourCard": {
+    "hotOffer": "Горячее предложение",
     "bookAria": "Забронировать «{title}»",
     "book": "Забронировать",
     "perPerson": "за человека",
@@ -1006,6 +1007,9 @@ export const ru = {
     "styleVipDesc": "Премиум-автомобили и корпоративные поездки"
   },
   "homepage": {
+    "hotEyebrow": "Ограниченное время",
+    "hotTitle": "Горячие предложения",
+    "hotLead": "Туры с особыми условиями прямо сейчас — бронируйте, пока действует предложение.",
     "heroSlideGo": "Фото: {place}",
     "heroSlideAlt": "{place}, Грузия",
     "heroSlideAdjara": "Аджария",

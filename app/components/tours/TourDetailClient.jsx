@@ -21,7 +21,7 @@ import { useAuth } from "../../lib/AuthContext";
 import { useCoupon } from "../../lib/CouponContext";
 import { trackEvent } from "../../lib/analytics";
 import { getStoredMarketingAttribution } from "../../lib/utmTracker";
-import { toTourViews, getUpcomingDepartures } from "../../lib/tourView";
+import { compareRecommended, toTourViews, getUpcomingDepartures } from "../../lib/tourView";
 import { interpolate } from "../../lib/i18n/translateCore";
 
 import TourDetailHero from "../tour-detail/TourDetailHero";
@@ -181,7 +181,7 @@ export default function TourDetailClient({
   const otherTourViews = useMemo(
     () =>
       toTourViews((allFsTours || []).filter((item) => item?.id !== currentTourId), lang, placesList, t("tourBadges"))
-        .sort((a, b) => Number(b.isPopular) - Number(a.isPopular))
+        .sort(compareRecommended)
         .slice(0, 3),
     [allFsTours, currentTourId, lang, placesList, t]
   );

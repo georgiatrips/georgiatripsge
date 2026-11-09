@@ -25,7 +25,7 @@ export default function TourCard({ tour, lang, t, headingLevel = 3, eager = fals
     : "";
 
   return (
-    <article className="gt-card gt-card--interactive gt-tour-card">
+    <article className={`gt-card gt-card--interactive gt-tour-card${tour.isHotOffer ? " is-hot" : ""}`}>
       <div className="gt-card-media gt-tour-card-media">
         {tour.img && (
           <Image
@@ -36,7 +36,12 @@ export default function TourCard({ tour, lang, t, headingLevel = 3, eager = fals
             loading={eager ? "eager" : "lazy"}
           />
         )}
-        {tour.badge && <span className="gt-chip gt-chip--light gt-tour-card-badge">{tour.badge}</span>}
+        {(tour.isHotOffer || tour.badge) && (
+          <span className="gt-tour-card-badges">
+            {tour.isHotOffer && <span className="gt-chip gt-tour-card-hot">🔥 {t("tourCard.hotOffer")}</span>}
+            {tour.badge && <span className="gt-chip gt-chip--light">{tour.badge}</span>}
+          </span>
+        )}
         {tour.region && (
           // Several regions: the first by name, the rest as a "+N" pill (all
           // of them in the tooltip) so a long list never covers the photo.

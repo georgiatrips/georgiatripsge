@@ -1131,3 +1131,6 @@ html[dir="rtl"] .gt-wizard-body { animation-name: gt-step-in-rtl; }
 main:has(.gt-hero) #tours + #multiday-tours {
   padding-block-start: 0;
 }
+
+/* Hot offers section */
+.gt-hot-eyebrow { color: #c2361b; }

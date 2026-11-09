@@ -927,6 +927,7 @@ export const tr = {
     "transferRoutes": "Transfer rotaları"
   },
   "tourCard": {
+    "hotOffer": "Sıcak fırsat",
     "bookAria": "“{title}” turunu ayırtın",
     "book": "Rezervasyon",
     "perPerson": "kişi başı",
@@ -1006,6 +1007,9 @@ export const tr = {
     "styleVipDesc": "Premium araçlar ve kurumsal geziler"
   },
   "homepage": {
+    "hotEyebrow": "Sınırlı süre",
+    "hotTitle": "Sıcak fırsatlar",
+    "hotLead": "Şu anda özel fırsatlı turlar — fırsat sürerken rezervasyon yapın.",
     "heroSlideGo": "Fotoğraf: {place}",
     "heroSlideAlt": "{place}, Gürcistan",
     "heroSlideAdjara": "Acara",

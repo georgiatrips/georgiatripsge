@@ -927,6 +927,7 @@ export const en = {
     "transferRoutes": "Transfer routes"
   },
   "tourCard": {
+    "hotOffer": "Hot offer",
     "bookAria": "Book “{title}”",
     "book": "Book",
     "perPerson": "per person",
@@ -1006,6 +1007,9 @@ export const en = {
     "styleVipDesc": "Premium vehicles and corporate trips"
   },
   "homepage": {
+    "hotEyebrow": "Limited time",
+    "hotTitle": "Hot offers",
+    "hotLead": "Tours with a special deal right now — book while the offer lasts.",
     "heroSlideGo": "Show photo: {place}",
     "heroSlideAlt": "{place}, Georgia",
     "heroSlideAdjara": "Adjara",

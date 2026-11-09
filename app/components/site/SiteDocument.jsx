@@ -22,6 +22,7 @@ import CookieConsent from "../CookieConsent";
 import AnalyticsTracker from "../AnalyticsTracker";
 import WelcomeCouponPopup from "../WelcomeCouponPopup";
 import ScrollReveal from "./ScrollReveal";
+import SeasonalEffects from "./SeasonalEffects";
 
 // Variable fonts: one file per family/subset instead of one per weight.
 const notoGeorgian = Noto_Sans_Georgian({
@@ -149,6 +150,7 @@ export default function SiteDocument({ lang, children }) {
                 <Suspense fallback={null}>
                   <ScrollReveal />
                 </Suspense>
+                <SeasonalEffects />
               </CouponProvider>
             </AuthProvider>
           </CurrencyProvider>

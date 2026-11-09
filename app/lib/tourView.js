@@ -10,6 +10,20 @@ function positiveNumber(value) {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
+/** Hot offer flag from the admin, off once its optional end date has passed. */
+export function isHotOfferActive(raw) {
+  if (!raw?.isHotOffer) return false;
+  const until = typeof raw.hotOfferUntil === "string" ? raw.hotOfferUntil : "";
+  return !until || until >= todayIso();
+}
+
+/** Recommendation order: hot offers first, then popular tours. */
+export function compareRecommended(a, b) {
+  if (a.isHotOffer !== b.isHotOffer) return a.isHotOffer ? -1 : 1;
+  if (a.isPopular !== b.isPopular) return a.isPopular ? -1 : 1;
+  return 0;
+}
+
 function todayIso() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -102,6 +116,7 @@ export function toTourView(raw, lang = "en", places = [], badges = null) {
     stops: (tour.itinerary || []).map((stop) => stop.title).filter(Boolean),
     badge,
     isPopular: Boolean(raw.isPopular),
+    isHotOffer: isHotOfferActive(raw),
   };
 }
 

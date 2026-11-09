@@ -4,7 +4,7 @@
 // search actually read.
 
 const TOUR_CARD_FIELDS = [
-  "id", "slug", "title", "img", "badge", "duration", "type", "isPopular", "isVip", "active", "hasGroup", "hasPrivate",
+  "id", "slug", "title", "img", "badge", "duration", "type", "isPopular", "isHotOffer", "hotOfferUntil", "isVip", "active", "hasGroup", "hasPrivate",
   "priceGroup", "pricePrivate", "groupMin", "groupMax", "privateGroupMin", "privateGroupMax", "departureDates",
   "destination", "destinations", "destinationLabel", "tourSection", "tourSectionLabel", "category", "tourNumber",
 ];

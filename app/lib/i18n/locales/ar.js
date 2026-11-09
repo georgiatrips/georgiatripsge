@@ -927,6 +927,7 @@ export const ar = {
     "transferRoutes": "مسارات التوصيل"
   },
   "tourCard": {
+    "hotOffer": "عرض ساخن",
     "bookAria": "احجز «{title}»",
     "book": "احجز",
     "perPerson": "للشخص الواحد",
@@ -1006,6 +1007,9 @@ export const ar = {
     "styleVipDesc": "سيارات فاخرة ورحلات للشركات"
   },
   "homepage": {
+    "hotEyebrow": "لفترة محدودة",
+    "hotTitle": "عروض ساخنة",
+    "hotLead": "جولات بعرض خاص الآن — احجز قبل انتهاء العرض.",
     "heroSlideGo": "صورة: {place}",
     "heroSlideAlt": "{place}، جورجيا",
     "heroSlideAdjara": "أجاريا",

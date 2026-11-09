@@ -16,6 +16,7 @@ import HotelManager from "./HotelManager";
 import ReviewManager from "./ReviewManager";
 import AnalyticsManager from "./AnalyticsManager";
 import CouponManager from "./CouponManager";
+import SiteEffectsManager from "./SiteEffectsManager";
 import BookingManager from "./BookingManager";
 import TransferPricingManager from "./TransferPricingManager";
 import TransferPlacesManager from "./TransferPlacesManager";
@@ -111,6 +112,10 @@ export default function AdminPage() {
   const effectivePricePrivate = hasVehiclePrices ? Math.min(...Object.values(filledVehiclePrices)) : pricePrivate;
   const [isVip, setIsVip] = useState(false);
   const [isPopular, setIsPopular] = useState(false);
+  // Hot offer: shown first in recommendations with a 🔥 label, optionally
+  // until a date (YYYY-MM-DD, inclusive); after it the label goes away on its own.
+  const [isHotOffer, setIsHotOffer] = useState(false);
+  const [hotOfferUntil, setHotOfferUntil] = useState("");
   // "" = no badge. A badge is a claim ("top pick"), so it is opt-in.
   const [selectedBadge, setSelectedBadge] = useState("");
   const [tourSection, setTourSection] = useState("");
@@ -478,6 +483,8 @@ export default function AdminPage() {
     setVehiclePrices(emptyVehiclePrices());
     setIsVip(false);
     setIsPopular(false);
+    setIsHotOffer(false);
+    setHotOfferUntil("");
     setSelectedBadge("");
     setTourSection("");
     setTourNumber("");
@@ -537,6 +544,8 @@ export default function AdminPage() {
       if (data.privateGroupMin) setPrivateGroupMin(String(data.privateGroupMin));
       if (data.privateGroupMax) setPrivateGroupMax(String(data.privateGroupMax));
       setIsPopular(Boolean(data.isPopular));
+      setIsHotOffer(Boolean(data.isHotOffer));
+      setHotOfferUntil(typeof data.hotOfferUntil === "string" ? data.hotOfferUntil : "");
       setIsVip(Boolean(data.isVip));
       setSelectedBadge(TOUR_BADGE_OPTIONS.includes(data.badge) ? data.badge : "");
       setTourSection(TOUR_SECTIONS.some((section) => section.value === data.tourSection) ? data.tourSection : "");
@@ -709,6 +718,8 @@ export default function AdminPage() {
       privateVehiclePrices: hasPrivate && hasVehiclePrices ? filledVehiclePrices : null,
       isVip,
       isPopular,
+      isHotOffer,
+      hotOfferUntil: isHotOffer && /^\d{4}-\d{2}-\d{2}$/.test(hotOfferUntil) ? hotOfferUntil : null,
       itinerary,
       // Store a URL, never the gallery object itself. Older records can contain
       // gallery metadata objects, while next/image requires a string source.
@@ -790,7 +801,9 @@ export default function AdminPage() {
     setPriceGroup(tour.priceGroup ?? ""); setPricePrivate(tour.pricePrivate ?? "");
     const savedVehiclePrices = getPrivateVehiclePrices(tour);
     setVehiclePrices(Object.fromEntries(VEHICLE_KEYS.map((key) => [key, savedVehiclePrices[key] != null ? String(savedVehiclePrices[key]) : ""])));
-    setIsVip(!!tour.isVip); setIsPopular(!!tour.isPopular); setSelectedBadge(asLocalizedText(tour.badge) || "");
+    setIsVip(!!tour.isVip); setIsPopular(!!tour.isPopular);
+    setIsHotOffer(!!tour.isHotOffer); setHotOfferUntil(typeof tour.hotOfferUntil === "string" ? tour.hotOfferUntil : "");
+    setSelectedBadge(asLocalizedText(tour.badge) || "");
     setTourSection(tour.tourSection || tour.category || "");
     setTourNumber(parseInt(tour.tourNumber, 10) > 0 ? String(parseInt(tour.tourNumber, 10)) : "");
     setIsActive(isTourActive(tour));
@@ -961,6 +974,7 @@ export default function AdminPage() {
         { key: "places", label: "ადგილები", Icon: LocationIcon, badge: { text: String(placesCount) } },
         { key: "reviews", label: "მიმოხილვები", Icon: MessageIcon, badge: { text: String(reviewsCount) } },
         { key: "photoSearch", label: "ფოტოების ძებნა", Icon: CameraIcon },
+        { key: "siteEffects", label: "სეზონური ეფექტები", Icon: GlobeIcon },
       ],
     },
   ];
@@ -978,6 +992,7 @@ export default function AdminPage() {
     hotels: ["სასტუმროები", "სასტუმროების სია საიტზე."],
     places: ["ადგილები", "ტურისტული ადგილები ფოტოებითა და აღწერით."],
     photoSearch: ["ფოტოების ძებნა", "ჩაწერე ადგილი — ვეძებ Wikimedia Commons, Flickr, Unsplash, Pexels და Pixabay-ზე და ვტოვებ მხოლოდ იმ ფოტოებს, რომელთა სათაური, აღწერა ან GPS ამ ადგილს ადასტურებს."],
+    siteEffects: ["სეზონური ეფექტები", "თოვლი, ფურცლები, ნაპერწკლები ან ფოთლები საიტზე — ჩართვა და გამორთვა."],
     reviews: ["მიმოხილვები", "სტუმრების შეფასებები და Google-ის სინქრონიზაცია."],
   };
   const [sectionTitle, sectionText] = SECTION_INFO[activeTab] || SECTION_INFO.tours;
@@ -1289,6 +1304,19 @@ export default function AdminPage() {
                 <input type="checkbox" checked={isPopular} onChange={(e) => setIsPopular(e.target.checked)} />
                 <span>პოპულარული ტური — გამოჩნდეს მთავარ გვერდზე</span>
               </label>
+              <label className="admin-check admin-popular-tour-check admin-hot-offer-check">
+                <input type="checkbox" checked={isHotOffer} onChange={(e) => setIsHotOffer(e.target.checked)} />
+                <span>🔥 ცხელი შეთავაზება — პირველი გამოჩნდეს რეკომენდაციებში</span>
+              </label>
+              {isHotOffer && (
+                <label className="admin-hot-offer-until">
+                  <span>მოქმედებს (ჩათვლით) — არასავალდებულო</span>
+                  <input type="date" value={hotOfferUntil} onChange={(e) => setHotOfferUntil(e.target.value)} />
+                  {hotOfferUntil && (
+                    <button type="button" className="admin-btn-ghost" onClick={() => setHotOfferUntil("")}>ვადის მოხსნა</button>
+                  )}
+                </label>
+              )}
               <p className="admin-hint">სად უნდა გამოჩნდეს ტური — აირჩიეთ შესაბამისი სექცია.</p>
               <div className="admin-section-grid">
                 <button
@@ -2234,6 +2262,7 @@ export default function AdminPage() {
                                 </span>
                               )}
                               {tItem.badge && <span className="admin-tag-pill badge">{asLocalizedText(tItem.badge)}</span>}
+                              {tItem.isHotOffer && <span className="admin-tag-pill is-hot">🔥 ცხელი{tItem.hotOfferUntil ? ` · ${tItem.hotOfferUntil}-მდე` : ""}</span>}
                             </div>
                           </div>
                         </div>
@@ -2293,6 +2322,8 @@ export default function AdminPage() {
           )}
 
           {/* TAB 6: COUPONS & IP MANAGEMENT */}
+          {activeTab === "siteEffects" && <SiteEffectsManager />}
+
           {activeTab === "coupons" && (
             <CouponManager />
           )}

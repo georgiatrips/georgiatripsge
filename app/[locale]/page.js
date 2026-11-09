@@ -11,7 +11,7 @@ import HeroSearch from "../components/homepage/HeroSearch";
 import GeorgiaMap from "../components/homepage/GeorgiaMap";
 import HeroSlides from "../components/homepage/HeroSlides";
 import { getCachedPlaces, getCachedReviews, getCachedTours } from "../lib/server/cachedData";
-import { formatTourDate, isLowSeats, toTourViews } from "../lib/tourView";
+import { compareRecommended, formatTourDate, isLowSeats, toTourViews } from "../lib/tourView";
 import { tourPath, placePath } from "../lib/slugs";
 import { getTranslator, interpolate } from "../lib/i18n/translate";
 import { getLocalizedHref, getRequestLocale, SITE_URL } from "../lib/siteConfig";
@@ -103,7 +103,8 @@ export default async function HomePage({ params }) {
   const places = Array.isArray(rawPlaces) ? rawPlaces : [];
 
   const tours = toTourViews(rawList, lang, places, t("tourBadges")).sort((a, b) => {
-    if (a.isPopular !== b.isPopular) return a.isPopular ? -1 : 1;
+    const rec = compareRecommended(a, b);
+    if (rec) return rec;
     return (a.nextDeparture?.date || "9999").localeCompare(b.nextDeparture?.date || "9999");
   });
 
@@ -133,8 +134,12 @@ export default async function HomePage({ params }) {
   const hasHeroCard = nextDepartures.length > 0 || heroPicks.length > 0;
 
   // Tours with 2+ days (or marked multi-day) get their own homepage section.
-  const dayTours = tours.filter((tour) => !tour.isMultiDay);
-  const multiDayTours = tours.filter((tour) => tour.isMultiDay);
+  // Hot offers (set per tour in the admin) get their own section near the top
+  // and are not repeated in the day / multi-day sections below.
+  const hotTours = tours.filter((tour) => tour.isHotOffer).slice(0, 6);
+  const hotIds = new Set(hotTours.map((tour) => tour.id));
+  const dayTours = tours.filter((tour) => !tour.isMultiDay && !hotIds.has(tour.id));
+  const multiDayTours = tours.filter((tour) => tour.isMultiDay && !hotIds.has(tour.id));
   const helpCard = (hasTours) => ({
     id: "custom-title",
     title: t(hasTours ? "homepage.customTitle" : "homepage.toursEmptyHelpTitle"),
@@ -347,10 +352,27 @@ export default async function HomePage({ params }) {
 
         </section>
 
+        {hotTours.length > 0 && (
+          <section className="gt-section gt-section--paper gt-hot-section" id="hot-offers" aria-labelledby="hot-title">
+            <div className="gt-container">
+              <div className="gt-section-head gt-section-head--duo" data-reveal>
+                <div>
+                  <p className="gt-eyebrow gt-hot-eyebrow">🔥 {t("homepage.hotEyebrow")}</p>
+                  <h2 id="hot-title" className="gt-h2">{t("homepage.hotTitle")}</h2>
+                </div>
+                <div className="gt-section-head-aside">
+                  <p className="gt-lead">{t("homepage.hotLead")}</p>
+                </div>
+              </div>
+              <TourGrid items={hotTours.map((tour) => ({ tour }))} lang={lang} t={t} reveal />
+            </div>
+          </section>
+        )}
+
         {/* 2. Bookable tours: day trips, then multi-day tours in their own
             section. Shown whenever there are day trips, or when there are no
             tours at all (the empty state invites a private trip instead). */}
-        {(dayTours.length > 0 || multiDayTours.length === 0) && (
+        {(dayTours.length > 0 || (multiDayTours.length === 0 && hotTours.length === 0)) && (
         <section className="gt-section gt-section--paper" id="tours" aria-labelledby="tours-title">
           <div className="gt-container">
             <div className="gt-section-head gt-section-head--duo" data-reveal>
