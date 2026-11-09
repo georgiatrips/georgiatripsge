@@ -60,6 +60,97 @@ export default function SeasonalEffects() {
 const rand = (min, max) => min + Math.random() * (max - min);
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
+// ---- Snow sprites (drawn once, then reused) --------------------------------
+
+const FLAKE_VARIANTS = 3;
+const SPRITE = 64; // px; drawn scaled down, so edges stay smooth
+let snowSprites = null;
+
+function makeCanvas(size) {
+  const c = document.createElement("canvas");
+  c.width = size;
+  c.height = size;
+  return c;
+}
+
+// One arm of a crystal: a spine with side branches, mirrored on both sides.
+// `branches` = [[position along the arm 0..1, branch length 0..1], ...].
+function armPath(ctx, len, branches) {
+  ctx.moveTo(0, 0);
+  ctx.lineTo(0, -len);
+  for (const [at, size] of branches) {
+    const y = -len * at;
+    const b = len * size;
+    ctx.moveTo(0, y);
+    ctx.lineTo(-b * 0.75, y - b * 0.65);
+    ctx.moveTo(0, y);
+    ctx.lineTo(b * 0.75, y - b * 0.65);
+  }
+}
+
+const FLAKE_SHAPES = [
+  { branches: [[0.42, 0.32], [0.7, 0.22]], tip: 0 },
+  { branches: [[0.35, 0.22], [0.58, 0.3], [0.8, 0.16]], tip: 0 },
+  { branches: [[0.5, 0.38]], tip: 0.09 },
+];
+
+function drawFlake(shape) {
+  const c = makeCanvas(SPRITE);
+  const ctx = c.getContext("2d");
+  const len = SPRITE * 0.44;
+  ctx.translate(SPRITE / 2, SPRITE / 2);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  const path = () => {
+    ctx.beginPath();
+    for (let i = 0; i < 6; i += 1) {
+      ctx.save();
+      ctx.rotate((i * Math.PI) / 3);
+      armPath(ctx, len, shape.branches);
+      if (shape.tip) {
+        ctx.moveTo(len * shape.tip, -len);
+        ctx.arc(0, -len, len * shape.tip, 0, Math.PI * 2);
+      }
+      ctx.restore();
+    }
+  };
+  // A soft blue-grey edge first so the flake is visible on white sections,
+  // then the white crystal on top, then a small glowing centre.
+  path();
+  ctx.strokeStyle = "rgba(105, 135, 170, 0.55)";
+  ctx.lineWidth = 5;
+  ctx.stroke();
+  path();
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 2.6;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, 0, len * 0.14, 0, Math.PI * 2);
+  ctx.fillStyle = "#ffffff";
+  ctx.fill();
+  return c;
+}
+
+function drawSoftDot() {
+  const c = makeCanvas(32);
+  const ctx = c.getContext("2d");
+  const g = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+  g.addColorStop(0, "rgba(255, 255, 255, 1)");
+  g.addColorStop(0.45, "rgba(255, 255, 255, 0.95)");
+  g.addColorStop(0.62, "rgba(160, 182, 210, 0.45)");
+  g.addColorStop(1, "rgba(160, 182, 210, 0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 32, 32);
+  return c;
+}
+
+function getSnowSprites() {
+  if (!snowSprites) {
+    snowSprites = { flakes: FLAKE_SHAPES.slice(0, FLAKE_VARIANTS).map(drawFlake), dot: drawSoftDot() };
+  }
+  return snowSprites;
+}
+
 const KINDS = {
   // A mix of six-armed crystal snowflakes (~40%) and soft round snow. Each
   // particle has a depth: nearer ones are bigger, faster and more opaque.
