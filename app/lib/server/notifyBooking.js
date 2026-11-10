@@ -26,7 +26,10 @@ function formatMessage(booking) {
     `🆕 New booking ${booking.bookingId}\n\n` +
     line("Tour", booking.tourTitle) +
     line("Type", `${booking.type}${booking.tourType ? ` · ${booking.tourType}` : ""}${trip.vehicle ? ` · ${trip.vehicle}` : ""}`) +
-    line("Date", trip.date) +
+    line("Date", trip.time ? `${trip.date} ${trip.time}` : trip.date) +
+    line("Pickup", trip.pickup) +
+    line("Dropoff", trip.dropoff) +
+    line("Distance", trip.distanceKm ? `~${trip.distanceKm} km` : "") +
     line("People", trip.totalPeople) +
     line("Price", price) +
     (pricing.clientPriced ? "⚠️ Price sent by the browser — check it\n" : "") +
@@ -52,7 +55,8 @@ export async function sendTelegram(text, label = "telegram") {
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true }),
+      // Telegram rejects anything over 4096 characters outright.
+      body: JSON.stringify({ chat_id: chatId, text: String(text).slice(0, 4000), disable_web_page_preview: true }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     if (!res.ok) console.error(`[${label}] Telegram responded`, res.status);

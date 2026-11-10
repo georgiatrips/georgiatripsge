@@ -734,7 +734,10 @@ export default function BookingManager() {
                   </h4>
                   <div style={{ display: "grid", gap: "0.5rem", fontSize: "0.88rem" }}>
                     <div><strong>ტური:</strong> {selectedBooking.tourTitle}</div>
-                    <div><strong>თარიღი:</strong> {selectedBooking.trip?.date || selectedBooking.date}</div>
+                    <div><strong>თარიღი:</strong> {selectedBooking.trip?.date || selectedBooking.date}{selectedBooking.trip?.time ? `, ${selectedBooking.trip.time}` : ""}</div>
+                    {selectedBooking.trip?.pickup && <div><strong>საიდან:</strong> {selectedBooking.trip.pickup}</div>}
+                    {selectedBooking.trip?.dropoff && <div><strong>სად:</strong> {selectedBooking.trip.dropoff}</div>}
+                    {selectedBooking.trip?.distanceKm && <div><strong>მანძილი:</strong> ~{selectedBooking.trip.distanceKm} კმ</div>}
                     <div><strong>ტიპი:</strong> {selectedBooking.tourType === "group" ? "ჯგუფური" : "ინდივიდუალური"}</div>
                     {selectedBooking.trip?.vehicle && (
                       <div><strong>ავტომობილი:</strong> {VEHICLES[selectedBooking.trip.vehicle]?.nameKa || selectedBooking.trip.vehicle}</div>

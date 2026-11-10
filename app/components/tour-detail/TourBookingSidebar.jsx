@@ -84,6 +84,9 @@ export default function TourBookingSidebar({
   // the form shows only what a booking needs. Opens by itself when in use.
   const [moreOpen, setMoreOpen] = useState(false);
   const showMore = moreOpen || Boolean(bookingNotes);
+  // The coupon box took a fifth of the form for a field most bookings leave
+  // empty; it now opens on request, and by itself once a code is in play.
+  const [couponOpen, setCouponOpen] = useState(false);
   const offeredVehicles = VEHICLE_KEYS.filter((key) => vehiclePrices[key] != null);
   const vehicleName = (key) => t(`transfersPage.vehicles.${key}.name`) || VEHICLES[key]?.nameKa || key;
 
@@ -155,21 +158,6 @@ export default function TourBookingSidebar({
         >
           <h3>{t("tourDetail.onlineBooking")}</h3>
           <p className="form-sub">{t("tourDetail.formSubtitle")}</p>
-
-          <div className="tdp-form-group">
-            {/* Optional: the server books it as "Guest" and the team confirms by phone. */}
-            <label htmlFor="booking-name">
-              {t("tourDetail.yourName")} <span className="tdp-optional">{t("tourDetail.nameOptional")}</span>
-            </label>
-            <input
-              id="booking-name"
-              type="text"
-              autoComplete="name"
-              placeholder={t("tourDetail.namePlaceholder")}
-              value={bookingName}
-              onChange={(e) => setBookingName(e.target.value)}
-            />
-          </div>
 
           <div className="tdp-form-group">
             <span className="tdp-form-label" id="booking-type-label">{t("tourDetail.tourType")}</span>
@@ -308,6 +296,22 @@ export default function TourBookingSidebar({
             )}
           </div>
 
+          <div className="tdp-form-group">
+            {/* Optional, so it comes after the fields a booking needs: the server
+                books it as "Guest" and the team confirms by phone. */}
+            <label htmlFor="booking-name">
+              {t("tourDetail.yourName")} <span className="tdp-optional">{t("tourDetail.nameOptional")}</span>
+            </label>
+            <input
+              id="booking-name"
+              type="text"
+              autoComplete="name"
+              placeholder={t("tourDetail.namePlaceholder")}
+              value={bookingName}
+              onChange={(e) => setBookingName(e.target.value)}
+            />
+          </div>
+
           {/* Coupons are for signed-in visitors only. A signed-out visitor saw an
               empty code field, left to look for a code and got "sign in" back;
               now they get the way to the discount instead. */}
@@ -317,11 +321,16 @@ export default function TourBookingSidebar({
               <span>{t("tourDetail.guestCoupon")}</span>
             </Link>
           ) : (
+          <details
+            className="tdp-more-options"
+            open={couponOpen || Boolean(appliedCoupon || couponError || couponCodeInput)}
+            onToggle={(e) => setCouponOpen(e.currentTarget.open)}
+          >
+            <summary>
+              {t("bookingCoupon.title")}
+              {appliedCoupon && <span className="tdp-coupon-active-badge"> ✓ {appliedCoupon.discount || 10}% OFF</span>}
+            </summary>
           <div className="tdp-coupon-section">
-            <div className="tdp-coupon-label-row">
-              <label htmlFor="booking-coupon">{t("bookingCoupon.title")}</label>
-              {appliedCoupon && <span className="tdp-coupon-active-badge">✓ {appliedCoupon.discount || 10}% OFF</span>}
-            </div>
 
             {appliedCoupon ? (
               <div className="tdp-coupon-applied-box">
@@ -372,6 +381,7 @@ export default function TourBookingSidebar({
               </div>
             )}
           </div>
+          </details>
           )}
 
           <details className="tdp-more-options" open={showMore} onToggle={(e) => setMoreOpen(e.currentTarget.open)}>

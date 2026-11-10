@@ -133,6 +133,10 @@ const API_LIMITS = {
   "/api/translate": { max: 120, methods: ["POST"] },
   "/api/google-reviews": { max: 30, methods: ["GET"] },
   "/api/analytics/track": { max: 60, methods: ["GET", "POST"] },
+  // Every booking alerts the team on Telegram; no visitor sends ten a minute.
+  "/api/bookings/create": { max: 10, methods: ["POST"] },
+  // Bounded so booking IDs cannot be tried in bulk against a phone number.
+  "/api/bookings/status": { max: 30, methods: ["GET"] },
   // Transfer calculator: place search runs as the visitor types.
   "/api/transfers/places": { max: 120, methods: ["GET"] },
   "/api/transfers/route": { max: 60, methods: ["GET"] },

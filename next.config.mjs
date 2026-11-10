@@ -72,6 +72,9 @@ const nextConfig = {
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          // No other site may show these pages in a frame (clickjacking). Our
+          // own /__/auth sign-in iframe is same-origin, so it still loads.
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
         ],
       },
     ];
