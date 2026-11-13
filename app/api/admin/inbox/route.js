@@ -33,8 +33,8 @@ import { AI_MODES, MAX_INSTRUCTIONS, getAiSettings, learnPending, saveLearned, t
 //   POST { action: "forward-status" | "forward-template" }    the WhatsApp template: status / submit
 //   POST { action: "ai-learned", text }              save the owner's edits of what it learned
 export const dynamic = "force-dynamic";
-// The AI test may wait on two Gemini models in turn.
-export const maxDuration = 60;
+// The AI test and a round of learning may wait on three Gemini models in turn.
+export const maxDuration = 120;
 
 function fail(err) {
   if (!(err instanceof InboxError)) console.error("[admin inbox]", err);

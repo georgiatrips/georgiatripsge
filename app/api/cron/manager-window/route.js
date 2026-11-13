@@ -9,7 +9,7 @@ import { learnPending } from "../../../lib/server/inboxAi";
 // The same call lets the inbox assistant read the replies the team wrote
 // since last time (inboxAi.js learnPending); each reply is read only once.
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 export async function GET() {
   try {

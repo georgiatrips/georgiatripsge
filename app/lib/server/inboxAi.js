@@ -319,10 +319,15 @@ const LEARN_SCHEMA = {
 
 const LEARN_LOCK = "ai_learn_lock";
 // Team replies read per request to Gemini.
-const LEARN_BATCH = 15;
-// Two models at most, so one batch never takes longer than this.
-const LEARN_MODELS = 2;
-const LEARN_TIMEOUT_MS = 18000;
+const LEARN_BATCH = 10;
+// Learning can wait, so the two quick models go first and the slow one gets
+// more time (Flash-Lite often answers 503 "high demand", and Flash needed
+// more than 18 s for a batch). The sum stays under the routes' 120 s.
+const LEARN_MODELS = [
+  { ...MODELS[0], timeoutMs: 20000 },
+  { ...MODELS[2], timeoutMs: 20000 },
+  { ...MODELS[1], timeoutMs: 40000 },
+];
 const LEARN_WINDOW_MS = 12 * 60 * 60 * 1000;
 
 const noteLines = (text) => String(text || "").split("\n").map((l) => l.trim()).filter(Boolean);
@@ -383,7 +388,7 @@ function applyChanges(current, changes, allowDelete) {
 // and writes what each one teaches into the notes. Runs on the admin's
 // button, after every answered customer message and every 20 minutes
 // (api/cron/manager-window). Stops starting new batches after `budgetMs`.
-export async function learnPending({ budgetMs = 15000, maxBatches = 20 } = {}) {
+export async function learnPending({ budgetMs = 30000, maxBatches = 20, models = LEARN_MODELS } = {}) {
   if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY არ არის Vercel-ში.");
   const started = Date.now();
   const run = { read: 0, added: 0, changed: 0, pending: 0, busy: false };
@@ -399,14 +404,25 @@ export async function learnPending({ budgetMs = 15000, maxBatches = 20 } = {}) {
       if (!batch.length) break;
       const excerpts = await excerptsFor(batch);
       if (excerpts.length) {
+        // Read again each time: the owner may have edited the notes meanwhile.
+        if (i > 0) learned = String((await getConfig("ai"))?.learned || "");
         const full = learned.length > MAX_LEARNED * 0.8;
         const numbered = noteLines(learned).map((l, n) => `${n + 1}. ${l.replace(/^-\s*/, "")}`).join("\n");
-        const { out } = await generate(
-          LEARN_PROMPT + (full ? LEARN_FULL : ""),
-          [{ role: "user", parts: [{ text: `Current notes:\n${numbered || "(empty)"}\n\nNew chat excerpts:\n\n${excerpts.join("\n\n---\n\n")}` }] }],
-          LEARN_SCHEMA,
-          { models: LEARN_MODELS, timeoutMs: LEARN_TIMEOUT_MS }
-        );
+        let out;
+        try {
+          ({ out } = await generate(
+            LEARN_PROMPT + (full ? LEARN_FULL : ""),
+            [{ role: "user", parts: [{ text: `Current notes:\n${numbered || "(empty)"}\n\nNew chat excerpts:\n\n${excerpts.join("\n\n---\n\n")}` }] }],
+            LEARN_SCHEMA,
+            { models }
+          ));
+        } catch (err) {
+          // What was read so far is saved; these replies stay in the queue.
+          if (run.read) break;
+          throw new Error(
+            `Gemini ახლა ვერ პასუხობს (გადატვირთულია ან ლიმიტი ამოიწურა). წასაკითხი პასუხები რიგში რჩება: AI თვითონ სცდის 20 წუთში ერთხელ, ან ცოტა ხანში ისევ დააჭირეთ. [${err.message}]`
+          );
+        }
         const result = applyChanges(learned, out.changes, full);
         learned = result.text;
         run.added += result.added;
@@ -467,12 +483,11 @@ const REPLY_SCHEMA = {
 };
 
 // One JSON answer from Gemini in the given shape; { out, model }.
-// `models` limits how many of MODELS are tried, `timeoutMs` replaces theirs.
-async function generate(system, contents, schema = REPLY_SCHEMA, { models = MODELS.length, timeoutMs = 0 } = {}) {
+// `models` are tried in turn (learning has its own order and timeouts).
+async function generate(system, contents, schema = REPLY_SCHEMA, { models = MODELS } = {}) {
   // Every model's error, so the panel shows why the first one failed too.
   const errors = [];
-  for (const base of MODELS.slice(0, models)) {
-    const model = timeoutMs ? { ...base, timeoutMs } : base;
+  for (const model of models) {
     let res;
     try {
       res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model.name}:generateContent`, {
@@ -654,8 +669,9 @@ export async function answerNewMessages(chats) {
     )
   );
   // One batch of the team's unread replies, if answering left time for it
-  // (the route has 60 s); the rest waits for the 20-minute cron.
+  // (the webhook route has 60 s, so only the two quick models); the rest
+  // waits for the 20-minute cron.
   if (Date.now() - started < 15000) {
-    await learnPending({ maxBatches: 1 }).catch((err) => console.error("[inbox ai] learning failed:", err?.message || err));
+    await learnPending({ maxBatches: 1, models: LEARN_MODELS.slice(0, 2) }).catch((err) => console.error("[inbox ai] learning failed:", err?.message || err));
   }
 }
