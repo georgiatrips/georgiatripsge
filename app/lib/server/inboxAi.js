@@ -14,20 +14,28 @@
 // so prices and tours are current, and it learns from the team's own replies
 // (sent from the phone, the apps or this site):
 //   - with every answer it is shown how the team answered similar questions
-//   - once a day it writes what it learned into short notes the owner can
-//     read and correct in the admin panel ("ai".learned)
+//   - it reads every reply the team writes, once, a few at a time, and adds
+//     what that reply teaches (a price, a detail, a correction of its own
+//     answer) to short notes the owner can read and correct in the admin
+//     panel ("ai".learned); see learnPending()
 
 import { buildSiteBrief } from "./siteBrief";
 import { sendTelegram } from "./notifyBooking";
 import { SITE_URL } from "../siteConfig";
 import {
   claimAiTurn,
+  claimLock,
+  countTeamMessagesAfter,
   getConfig,
   getConversation,
   listMessages,
+  listMessagesBetween,
+  listTeamMessagesAfter,
   listTeamReplies,
+  releaseLock,
   setAiDraft,
   setConfig,
+  teamMessageTimeFromEnd,
 } from "./inboxStore";
 import { sendText as sendWhatsApp } from "./whatsapp";
 import { sendText as sendPageMessage } from "./messenger";
@@ -55,13 +63,16 @@ export const AI_MODES = ["off", "suggest", "auto"];
 // The owner's own rules for the assistant (spelling, tone, what to say).
 export const MAX_INSTRUCTIONS = 8000;
 // What the assistant learned from the team's replies; the owner may edit it.
-export const MAX_LEARNED = 8000;
-// The notes are rewritten at most this often, and only when the team wrote more.
-const LEARN_EVERY_MS = 24 * 60 * 60 * 1000;
+export const MAX_LEARNED = 12000;
+// Team replies read the first time the assistant learns (the latest ones).
+const LEARN_BACKLOG = 300;
 const EXAMPLES_PER_REPLY = 8;
 
 export async function getAiSettings() {
   const [saved, usage] = await Promise.all([getConfig("ai"), getConfig(USAGE_KEY)]);
+  // Team replies the assistant has not read yet.
+  const cursor = Number(saved?.learnedUpTo) || 0;
+  const unread = await countTeamMessagesAfter(cursor).catch(() => 0);
   return {
     mode: AI_MODES.includes(saved?.mode) ? saved.mode : "off",
     channels: { whatsapp: true, messenger: true, instagram: true, ...saved?.channels },
@@ -69,7 +80,9 @@ export async function getAiSettings() {
     instructions: String(saved?.instructions || ""),
     learned: String(saved?.learned || ""),
     learnedAt: saved?.learnedAt || null,
-    learnedFrom: saved?.learnedFrom || 0,
+    learnedCount: Number(saved?.learnedCount) || 0,
+    learnPending: cursor ? unread : Math.min(unread, LEARN_BACKLOG),
+    maxLearned: MAX_LEARNED,
     forward: forwardSettingsFrom(saved),
     usage: usageView(usage),
   };
@@ -269,40 +282,149 @@ function pickExamples(pairs, message, conversationId) {
   return (scored.length ? scored : others).slice(0, EXAMPLES_PER_REPLY);
 }
 
-const LEARN_PROMPT = `You read the past chats of GeorgiaTrips (a tour and transfer company in Batumi, Georgia): customer messages and the answers the company's team wrote itself. Write short notes that will teach a virtual assistant to answer customers the way this team does.
+const LEARN_PROMPT = `You keep the notes of the virtual assistant of GeorgiaTrips (a tour and transfer company in Batumi, Georgia). The assistant answers customers from these notes, so they must hold every price and detail the company's own team tells customers.
 
-Write the notes in Georgian, as a plain list, one point per line starting with "- ". Up to 40 points. Cover:
-- facts the team states again and again: prices they quote, what is included, pickup, timing, group sizes, how booking and payment work, routes they offer that customers ask about
-- how they answer: tone, greeting, length, what they ask the customer, how they close
-- typical questions and the team's usual answer to each
+You get the current notes (numbered lines) and new chat excerpts. In the excerpts "Customer" is the customer, "AI" is the virtual assistant's own earlier answer, and "Team" is a person of the company: what Team writes is always right. Read every Team message, one by one, and decide what the assistant should learn from it:
+- Prices. Every price the team quotes, always with what it is for: tour or route, car type, number of people, per person or per car, season. Example: "ბათუმი–თბილისი ტრანსფერი სედანით: 350 ₾ მანქანაზე". A price said only once is still a note.
+- Details. Duration, start and return time, what is included or not, pickup, cars and seats, group sizes, payment, how booking works, which routes and places they offer, road and season conditions, rules and refusals.
+- Mistakes. Where Team answers after an "AI" message and says something different, or the customer was confused or unhappy with what "AI" wrote, the assistant was wrong: write the right answer as a rule ("როცა კითხულობენ X-ს, პასუხი არის Y, არა Z").
+- Manner. How the team greets, what it asks, how it closes, only when the notes do not say it yet.
 
-Leave out: one-off deals or discounts for one person, customer names, phone numbers, addresses, dates of single trips, anything the team said only once and that may not hold for others. Do not invent anything that is not in the chats.
+Do not note: customer names, phone numbers, addresses, the date of one customer's trip, greetings and small talk, or a discount clearly given to one customer as an exception. Never invent anything that Team did not write. A Team message that teaches nothing new (already in the notes, or no fact in it) gets no change; an empty "changes" list is a fine answer.
 
-If current notes are given, update them: keep every point that still holds (the owner may have written or corrected some of them by hand), add what is new, and change a point only where newer team answers clearly say otherwise.`;
+Answer with "changes", each { "line", "text" }:
+- "line": 0 adds a new point.
+- "line": N with a text replaces point N. Do this when the team now gives a different price or fact for the same thing, or to add a detail to a point about the same thing. Prefer this to adding a near-duplicate.
+- "line": N with an empty text deletes point N. Only when told below that the notes are nearly full.
+Every point is one line in Georgian, at most 200 characters, complete by itself (it names the tour, route or situation it is about). Keep prices and numbers exactly as the team wrote them.`;
 
-// Rewrites the notes from the team's replies. Runs on the admin's button and
-// by itself at most once a day (after an answer, when the team wrote more).
-export async function learnFromTeam() {
-  if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY არ არის Vercel-ში.");
-  teamCache.at = 0;
-  const pairs = (await teamReplies()).slice(0, 250);
-  if (!pairs.length) throw new Error("გუნდის პასუხები ჯერ არ არის — AI-ს შესასწავლი არაფერი აქვს.");
-  const settings = await getAiSettings();
-  const chats = pairs
-    .slice()
-    .reverse()
-    .map((p) => `Customer: ${clip(p.question, 400)}\nTeam: ${clip(p.reply, 700)}`)
-    .join("\n\n");
-  const current = settings.learned.trim() ? `\n\nCurrent notes:\n${settings.learned.trim()}` : "";
-  const { out } = await generate(
-    LEARN_PROMPT,
-    [{ role: "user", parts: [{ text: `Chats (oldest first):\n\n${chats}${current}` }] }],
-    NOTES_SCHEMA
+const LEARN_FULL = `
+
+The notes are nearly full. In this answer also make room: merge points that say the same thing into one (replace one, delete the others) and delete the points least useful for answering customers, until at least 1500 characters are freed. Never drop a price.`;
+
+const LEARN_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    changes: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: { line: { type: "INTEGER" }, text: { type: "STRING" } },
+        required: ["line", "text"],
+      },
+    },
+  },
+  required: ["changes"],
+};
+
+const LEARN_LOCK = "ai_learn_lock";
+// Team replies read per request to Gemini.
+const LEARN_BATCH = 15;
+// Two models at most, so one batch never takes longer than this.
+const LEARN_MODELS = 2;
+const LEARN_TIMEOUT_MS = 18000;
+const LEARN_WINDOW_MS = 12 * 60 * 60 * 1000;
+
+const noteLines = (text) => String(text || "").split("\n").map((l) => l.trim()).filter(Boolean);
+const asPoint = (text) => `- ${clip(String(text || "").replace(/\s+/g, " ").replace(/^(?:[-•*]\s*|\d{1,3}[.)]\s+)+/, "").trim(), 300)}`;
+
+// The team's unread replies as chat excerpts, with the customer's and the
+// assistant's messages around them.
+async function excerptsFor(batch) {
+  const chats = new Map();
+  for (const m of batch) {
+    const key = `${m.channel}:${m.conversationId}`;
+    const chat = chats.get(key) || { channel: m.channel, id: m.conversationId, from: m.timestamp, to: m.timestamp };
+    chat.to = m.timestamp;
+    chats.set(key, chat);
+  }
+  const texts = await Promise.all(
+    [...chats.values()].map(async (chat) => {
+      // The manager's own chat (forwarded requests) is not a customer chat.
+      if (await isForwardTarget(chat.channel, chat.id)) return "";
+      const messages = await listMessagesBetween(chat.channel, chat.id, chat.from - LEARN_WINDOW_MS, chat.to);
+      return messages
+        .filter((m) => m.text)
+        .map((m) => `${m.direction === "in" ? "Customer" : m.source === "ai" ? "AI" : "Team"}: ${clip(m.text, 500)}`)
+        .join("\n");
+    })
   );
-  const learned = clip(String(out.notes || "").trim(), MAX_LEARNED);
-  if (!learned) throw new Error("AI-მ ჩანაწერები ვერ დაწერა, სცადეთ ცოტა ხანში.");
-  await setConfig("ai", { learned, learnedAt: Date.now(), learnedFrom: pairs.length });
-  return getAiSettings();
+  return texts.filter(Boolean);
+}
+
+// Applies the model's changes to the notes; { text, added, changed }.
+function applyChanges(current, changes, allowDelete) {
+  const lines = noteLines(current);
+  const fresh = [];
+  let changed = 0;
+  for (const c of Array.isArray(changes) ? changes : []) {
+    const n = Number(c?.line) || 0;
+    const text = String(c?.text || "").trim();
+    if (n >= 1 && n <= lines.length) {
+      if (text) lines[n - 1] = asPoint(text);
+      else if (allowDelete) lines[n - 1] = "";
+      else continue;
+      changed++;
+    } else if (text) fresh.push(asPoint(text));
+  }
+  let out = lines.filter(Boolean);
+  let added = 0;
+  for (const point of fresh) {
+    if (out.includes(point)) continue;
+    // Full: the next round is asked to make room first.
+    if ([...out, point].join("\n").length > MAX_LEARNED) break;
+    out.push(point);
+    added++;
+  }
+  return { text: out.join("\n"), added, changed };
+}
+
+// Reads the team's replies the assistant has not read yet, oldest first,
+// and writes what each one teaches into the notes. Runs on the admin's
+// button, after every answered customer message and every 20 minutes
+// (api/cron/manager-window). Stops starting new batches after `budgetMs`.
+export async function learnPending({ budgetMs = 15000, maxBatches = 20 } = {}) {
+  if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY არ არის Vercel-ში.");
+  const started = Date.now();
+  const run = { read: 0, added: 0, changed: 0, pending: 0, busy: false };
+  if (!(await claimLock(LEARN_LOCK, 90 * 1000))) return { ...(await getAiSettings()), run: { ...run, busy: true } };
+  try {
+    const saved = (await getConfig("ai")) || {};
+    let learned = String(saved.learned || "");
+    // The first time: start from the team's latest LEARN_BACKLOG replies.
+    let cursor = Number(saved.learnedUpTo) || Math.max(0, (await teamMessageTimeFromEnd(LEARN_BACKLOG)) - 1);
+    let total = Number(saved.learnedCount) || 0;
+    for (let i = 0; i < maxBatches && Date.now() - started < budgetMs; i++) {
+      const batch = await listTeamMessagesAfter(cursor, LEARN_BATCH);
+      if (!batch.length) break;
+      const excerpts = await excerptsFor(batch);
+      if (excerpts.length) {
+        const full = learned.length > MAX_LEARNED * 0.8;
+        const numbered = noteLines(learned).map((l, n) => `${n + 1}. ${l.replace(/^-\s*/, "")}`).join("\n");
+        const { out } = await generate(
+          LEARN_PROMPT + (full ? LEARN_FULL : ""),
+          [{ role: "user", parts: [{ text: `Current notes:\n${numbered || "(empty)"}\n\nNew chat excerpts:\n\n${excerpts.join("\n\n---\n\n")}` }] }],
+          LEARN_SCHEMA,
+          { models: LEARN_MODELS, timeoutMs: LEARN_TIMEOUT_MS }
+        );
+        const result = applyChanges(learned, out.changes, full);
+        learned = result.text;
+        run.added += result.added;
+        run.changed += result.changed;
+      }
+      cursor = batch[batch.length - 1].timestamp;
+      total += batch.length;
+      run.read += batch.length;
+      // Saved after every batch, so a later failure loses nothing.
+      await setConfig("ai", { learned, learnedAt: Date.now(), learnedUpTo: cursor, learnedCount: total });
+      await claimLock(LEARN_LOCK, 0);
+    }
+    teamCache.at = 0;
+  } finally {
+    await releaseLock(LEARN_LOCK).catch(() => {});
+  }
+  const settings = await getAiSettings();
+  return { ...settings, run: { ...run, pending: settings.learnPending } };
 }
 
 export async function saveLearned(text) {
@@ -310,14 +432,6 @@ export async function saveLearned(text) {
   if (learned.length > MAX_LEARNED) throw new Error(`ტექსტი ძალიან გრძელია (მაქს. ${MAX_LEARNED} სიმბოლო).`);
   await setConfig("ai", { learned });
   return getAiSettings();
-}
-
-async function learnIfDue() {
-  const settings = await getAiSettings();
-  if (settings.learnedAt && Date.now() - settings.learnedAt < LEARN_EVERY_MS) return;
-  const pairs = await teamReplies();
-  if (pairs.length <= settings.learnedFrom) return;
-  await learnFromTeam();
 }
 
 // Chat history as Gemini turns: the customer is "user", the company "model".
@@ -351,13 +465,14 @@ const REPLY_SCHEMA = {
   required: ["language", "reply", "handoff", "requestReady"],
   propertyOrdering: ["language", "reply", "handoff", "reason", "requestReady", "requestSummary", "tripKind", "tripDate"],
 };
-const NOTES_SCHEMA = { type: "OBJECT", properties: { notes: { type: "STRING" } }, required: ["notes"] };
 
 // One JSON answer from Gemini in the given shape; { out, model }.
-async function generate(system, contents, schema = REPLY_SCHEMA) {
+// `models` limits how many of MODELS are tried, `timeoutMs` replaces theirs.
+async function generate(system, contents, schema = REPLY_SCHEMA, { models = MODELS.length, timeoutMs = 0 } = {}) {
   // Every model's error, so the panel shows why the first one failed too.
   const errors = [];
-  for (const model of MODELS) {
+  for (const base of MODELS.slice(0, models)) {
+    const model = timeoutMs ? { ...base, timeoutMs } : base;
     let res;
     try {
       res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model.name}:generateContent`, {
@@ -526,6 +641,7 @@ async function answerChat(channel, id) {
 // Called after a webhook delivery with its new customer messages, as
 // [{ channel, id }]. Runs in after(), once the webhook has been answered.
 export async function answerNewMessages(chats) {
+  const started = Date.now();
   const unique = [...new Map(chats.map((c) => [`${c.channel}:${c.id}`, c])).values()];
   if (!unique.length || !process.env.GEMINI_API_KEY) return;
   await new Promise((resolve) => setTimeout(resolve, SETTLE_MS));
@@ -537,6 +653,9 @@ export async function answerNewMessages(chats) {
       })
     )
   );
-  // Fresh notes from the team's replies, at most once a day.
-  await learnIfDue().catch((err) => console.error("[inbox ai] learning failed:", err?.message || err));
+  // One batch of the team's unread replies, if answering left time for it
+  // (the route has 60 s); the rest waits for the 20-minute cron.
+  if (Date.now() - started < 15000) {
+    await learnPending({ maxBatches: 1 }).catch((err) => console.error("[inbox ai] learning failed:", err?.message || err));
+  }
 }

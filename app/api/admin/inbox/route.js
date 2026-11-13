@@ -15,7 +15,7 @@ import {
 } from "../../../lib/server/inboxStore";
 import { importFromFirestore } from "../../../lib/server/inboxImport";
 import { saveForwardSettings, submitTemplate, templateStatus } from "../../../lib/server/tourRequests";
-import { AI_MODES, MAX_INSTRUCTIONS, getAiSettings, learnFromTeam, saveLearned, testAi } from "../../../lib/server/inboxAi";
+import { AI_MODES, MAX_INSTRUCTIONS, getAiSettings, learnPending, saveLearned, testAi } from "../../../lib/server/inboxAi";
 
 // Admin panel → WhatsApp / Messenger chats (Neon). The tabs poll this.
 //   GET ?counts=1                          chats with unread messages, per channel
@@ -28,7 +28,7 @@ import { AI_MODES, MAX_INSTRUCTIONS, getAiSettings, learnFromTeam, saveLearned, 
 //   POST { action: "ai-draft-clear", channel, id }  drop a suggested reply
 //   POST { action: "ai-test", question? }            one test request to Gemini
 //   POST { action: "ai-instructions", text }         the owner's own rules for the assistant
-//   POST { action: "ai-learn" }                      learn from the team's replies now
+//   POST { action: "ai-learn" }                      read the team's unread replies now (a few batches; .run says what is left)
 //   POST { action: "forward-settings", enabled, phone, name }  where ready tour requests go
 //   POST { action: "forward-status" | "forward-template" }    the WhatsApp template: status / submit
 //   POST { action: "ai-learned", text }              save the owner's edits of what it learned
@@ -111,7 +111,7 @@ export async function POST(request) {
     }
     if (payload.action === "ai-learn" || payload.action === "ai-learned") {
       try {
-        return NextResponse.json(payload.action === "ai-learn" ? await learnFromTeam() : await saveLearned(payload.text));
+        return NextResponse.json(payload.action === "ai-learn" ? await learnPending() : await saveLearned(payload.text));
       } catch (err) {
         return NextResponse.json({ error: err.message }, { status: 400 });
       }

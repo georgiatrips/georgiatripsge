@@ -665,24 +665,55 @@ function AiLearned({ ai }) {
     }
   };
 
+  // Reads the team's unread replies a few at a time, until none are left.
+  const learn = async () => {
+    const sum = { read: 0, added: 0, changed: 0 };
+    const report = (pending) =>
+      `წაკითხულია ${sum.read} პასუხი: ${sum.added} ახალი ჩანაწერი, ${sum.changed} შესწორებული` +
+      (pending ? ` — დარჩა ${pending}` : "");
+    setStatus({ busy: "ai-learn", progress: "კითხულობს..." });
+    try {
+      for (let i = 0; i < 40; i++) {
+        const data = await inboxAction({ action: "ai-learn" });
+        const r = data.run || {};
+        if (r.busy) return setStatus({ error: "AI ახლა უკვე კითხულობს (ავტომატურად) — სცადეთ ერთ წუთში." });
+        sum.read += r.read || 0;
+        sum.added += r.added || 0;
+        sum.changed += r.changed || 0;
+        if (!r.pending || !r.read) {
+          return setStatus({ ok: sum.read ? `✓ ${report(r.pending)}.` : "✓ ახალი პასუხები არ არის — ყველაფერი წაკითხულია." });
+        }
+        setStatus({ busy: "ai-learn", progress: `${report(r.pending)}...` });
+      }
+      setStatus({ ok: `✓ ${report(0)}. დანარჩენს თვითონ წაიკითხავს.` });
+    } catch (err) {
+      setStatus({ error: sum.read ? `${report(0)}. შემდეგ შეცდომა: ${err.message}` : err.message });
+    }
+  };
+
+  const max = ai.maxLearned || 12000;
   return (
     <details className="inbox-ai-rules">
       <summary>
         📚 რა ისწავლა AI-მ თქვენი პასუხებიდან{" "}
-        {ai.learnedAt ? `(${ai.learnedFrom} პასუხიდან, ${new Date(ai.learnedAt).toLocaleDateString("ka-GE")})` : "(ჯერ არაფერი)"}
+        {ai.learnedCount
+          ? `(წაკითხულია ${ai.learnedCount} პასუხი${ai.learnPending ? `, წასაკითხია ${ai.learnPending}` : ""}, ${new Date(ai.learnedAt).toLocaleString("ka-GE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })})`
+          : `(ჯერ არაფერი წაუკითხავს${ai.learnPending ? `, წასაკითხია ${ai.learnPending}` : ""})`}
       </summary>
       <p className="admin-hint">
-        AI კითხულობს, რას პასუხობთ კლიენტებს ტელეფონიდან, Facebook-იდან, Instagram-იდან და საიტიდან. ყოველ პასუხზე
-        უყურებს, როგორ უპასუხეთ მსგავს კითხვას, და დღეში ერთხელ აქ წერს, რა ისწავლა. თუ რამე არასწორია, შეასწორეთ ან
-        წაშალეთ და შეინახეთ — მომდევნო სწავლისას თქვენს შესწორებას დაიტოვებს.
+        AI კითხულობს ყველა პასუხს, რომელსაც კლიენტებს წერთ ტელეფონიდან, Facebook-იდან, Instagram-იდან და საიტიდან —
+        თითოს ერთხელ, თვითონ, 20 წუთში ერთხელ და ყოველი ახალი შეტყობინების შემდეგ. თითო პასუხიდან აქ იწერს, რა
+        ისწავლა: ფასი (რაზეა და რამდენი), დეტალი (დრო, აყვანა, რა შედის) ან საკუთარი შეცდომა — თუ AI-მ ერთი უპასუხა
+        და თქვენ სხვანაირად გაასწორეთ. თუ რამე არასწორია, შეასწორეთ ან წაშალეთ და შეინახეთ; თქვენს ჩანაწერს AI მხოლოდ
+        მაშინ შეცვლის, თუ მოგვიანებით კლიენტს სხვა ფასს ან სხვა პასუხს მისწერთ.
       </p>
       <textarea
         className="tpl-input"
         rows={10}
         value={text}
         onChange={(e) => setText(e.target.value)}
-        maxLength={8000}
-        placeholder="ჯერ ცარიელია — დააჭირეთ „ახლავე შეისწავლე“."
+        maxLength={max}
+        placeholder="ჯერ ცარიელია — დააჭირეთ „ახლავე წაიკითხე“."
       />
       <div className="admin-form-actions">
         <button
@@ -696,13 +727,16 @@ function AiLearned({ ai }) {
         <button
           type="button"
           className="admin-btn-ghost"
-          onClick={() => run({ action: "ai-learn" }, "✓ AI-მ მიმოწერა ხელახლა შეისწავლა.")}
+          onClick={learn}
           disabled={Boolean(status?.busy) || changed}
           title={changed ? "ჯერ შეინახეთ ცვლილებები" : ""}
         >
-          {status?.busy === "ai-learn" ? "სწავლობს..." : "ახლავე შეისწავლე"}
+          {status?.busy === "ai-learn" ? "კითხულობს..." : "ახლავე წაიკითხე"}
         </button>
-        <small>{text.length} / 8000</small>
+        <small>
+          {text.length} / {max}
+        </small>
+        {status?.progress && <span>{status.progress}</span>}
         {status?.ok && !changed && <span className="wa-connected">{status.ok}</span>}
         {status?.error && <span className="wa-warn">{status.error}</span>}
       </div>

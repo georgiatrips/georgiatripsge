@@ -338,6 +338,65 @@ export async function listTeamReplies(limit = 400) {
     }));
 }
 
+// ── The assistant's reading queue (inboxAi.js learnPending) ──────────
+// Every reply the team wrote itself is read once, oldest first; "ai".learnedUpTo
+// is the timestamp of the last one read.
+
+const TEAM_TEXT = `direction = 'out' and coalesce(source, '') <> 'ai' and coalesce(text, '') <> ''`;
+
+export async function listTeamMessagesAfter(after, limit = 15) {
+  const rows = await query(
+    `select channel, conversation_id, timestamp from inbox_messages
+     where ${TEAM_TEXT} and timestamp > $1 order by timestamp asc limit $2`,
+    [after, limit]
+  );
+  return rows.map((r) => ({ channel: r.channel, conversationId: r.conversation_id, timestamp: Number(r.timestamp) || 0 }));
+}
+
+export async function countTeamMessagesAfter(after) {
+  const rows = await query(`select count(*)::int as n from inbox_messages where ${TEAM_TEXT} and timestamp > $1`, [after]);
+  return rows[0]?.n || 0;
+}
+
+// Timestamp of the team's n-th newest reply (0 when there are fewer).
+export async function teamMessageTimeFromEnd(n) {
+  const rows = await query(
+    `select timestamp from inbox_messages where ${TEAM_TEXT} order by timestamp desc offset $1 limit 1`,
+    [Math.max(0, n - 1)]
+  );
+  return Number(rows[0]?.timestamp) || 0;
+}
+
+// The latest `limit` messages of one chat sent between two moments, oldest first.
+export async function listMessagesBetween(channel, conversationId, from, to, limit = 12) {
+  const rows = await query(
+    `select direction, source, text, timestamp from (
+       select * from inbox_messages
+       where channel = $1 and conversation_id = $2 and timestamp >= $3 and timestamp <= $4
+       order by timestamp desc limit $5
+     ) latest order by timestamp asc`,
+    [channel, conversationId, from, to, limit]
+  );
+  return rows.map((r) => ({ direction: r.direction, source: r.source || "", text: r.text || "", timestamp: Number(r.timestamp) || 0 }));
+}
+
+// True for one caller at a time: a lock that frees itself after `ms`.
+export async function claimLock(key, ms) {
+  const now = Date.now();
+  const rows = await query(
+    `insert into inbox_config (key, value) values ($1, $2::jsonb)
+     on conflict (key) do update set value = excluded.value, updated_at = now()
+     where coalesce((inbox_config.value->>'at')::bigint, 0) < $3
+     returning key`,
+    [key, JSON.stringify({ at: now }), now - ms]
+  );
+  return rows.length > 0;
+}
+
+export async function releaseLock(key) {
+  await query(`update inbox_config set value = '{"at":0}'::jsonb where key = $1`, [key]);
+}
+
 // Number of chats with unread messages, per channel (admin menu badges).
 export async function unreadCounts() {
   const rows = await query(`select channel, count(*)::int as n from inbox_conversations where unread > 0 group by channel`);
