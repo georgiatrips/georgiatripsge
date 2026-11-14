@@ -71,6 +71,21 @@ const SCHEMA = [
     value jsonb not null default '{}'::jsonb,
     updated_at timestamptz not null default now()
   )`,
+  // E-mails read from Gmail with the assistant's Georgian summary
+  // (mailReader.js). importance: 3 high, 2 medium, 1 low.
+  `create table if not exists mail_digest (
+    id text primary key,
+    thread_id text,
+    received_at bigint not null,
+    from_name text,
+    from_email text,
+    subject text,
+    importance integer not null default 1,
+    data jsonb not null default '{}'::jsonb,
+    done boolean not null default false,
+    created_at timestamptz not null default now()
+  )`,
+  `create index if not exists mail_digest_recent on mail_digest (received_at desc)`,
 ];
 
 let client = null;
@@ -422,6 +437,48 @@ export async function saveContacts(changes) {
 export async function listContacts() {
   const rows = await query(`select phone, name from inbox_contacts`);
   return Object.fromEntries(rows.map((r) => [r.phone, r.name]));
+}
+
+// ── E-mail digest (mailReader.js) ────────────────────────────────────
+
+// Which of these Gmail message ids are already summarized.
+export async function knownMailIds(ids) {
+  if (!ids.length) return new Set();
+  const rows = await query(`select id from mail_digest where id = any($1::text[])`, [ids]);
+  return new Set(rows.map((r) => r.id));
+}
+
+export async function saveMailDigest(m) {
+  await query(
+    `insert into mail_digest (id, thread_id, received_at, from_name, from_email, subject, importance, data)
+     values ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)
+     on conflict (id) do nothing`,
+    [m.id, m.threadId || "", m.receivedAt, m.fromName || "", m.fromEmail || "", m.subject || "", m.importance, JSON.stringify(m.data || {})]
+  );
+}
+
+// Unhandled first, then the most important, then the newest.
+export async function listMailDigests({ sinceMs = 0, limit = 150 } = {}) {
+  const rows = await query(
+    `select * from mail_digest where received_at >= $1
+     order by done asc, importance desc, received_at desc limit $2`,
+    [sinceMs, limit]
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    threadId: r.thread_id || "",
+    receivedAt: Number(r.received_at) || 0,
+    fromName: r.from_name || "",
+    fromEmail: r.from_email || "",
+    subject: r.subject || "",
+    importance: r.importance,
+    done: r.done,
+    ...r.data,
+  }));
+}
+
+export async function setMailDone(id, done) {
+  await query(`update mail_digest set done = $2 where id = $1`, [id, Boolean(done)]);
 }
 
 // ── Config (access tokens; never sent to the browser) ────────────────

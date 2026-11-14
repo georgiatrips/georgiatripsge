@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { BarChartIcon, BedIcon, CameraIcon, CarIcon, ClipboardIcon, GlobeIcon, LocationIcon, MessageIcon, MessengerIcon, MountainIcon, RouteIcon, TicketIcon } from "../components/Icons";
+import { BarChartIcon, BedIcon, CameraIcon, CarIcon, ClipboardIcon, GlobeIcon, LocationIcon, MailIcon, MessageIcon, MessengerIcon, MountainIcon, RouteIcon, TicketIcon } from "../components/Icons";
 import DatePicker from "../components/DatePicker";
 import { GEORGIA_REGIONS } from "../lib/placesMeta";
 import { listPlaces } from "../lib/placesFirestore";
@@ -25,6 +25,7 @@ import GetTransferManager from "./GetTransferManager";
 import TourTransfersManager from "./TourTransfersManager";
 import MarketplaceManager from "./MarketplaceManager";
 import PhotoSearchManager from "./PhotoSearchManager";
+import MailManager from "./MailManager";
 import { collection, getCountFromServer, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { WA_CONNECT_STATE } from "../lib/whatsappConfig";
@@ -152,7 +153,10 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("tours");
   // Back from Meta's WhatsApp signup page (?state=wa-connect&code=…).
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("state") === WA_CONNECT_STATE) setActiveTab("inbox");
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("state") === WA_CONNECT_STATE) setActiveTab("inbox");
+    // Back from Google's Gmail consent page (?mail=connected|error).
+    if (params.get("mail")) setActiveTab("mail");
   }, []);
   const [tourSearchQuery, setTourSearchQuery] = useState("");
   const [tourRegionFilter, setTourRegionFilter] = useState("all");
@@ -958,6 +962,7 @@ export default function AdminPage() {
       items: [
         { key: "bookings", label: "ჯავშნები", Icon: ClipboardIcon, badge: pendingBookingsCount > 0 ? { text: String(pendingBookingsCount), tone: "warn" } : null },
         { key: "inbox", label: "შეტყობინებები", Icon: MessengerIcon, badge: unreadChatsCount > 0 ? { text: String(unreadChatsCount), tone: "warn" } : null },
+        { key: "mail", label: "მეილები", Icon: MailIcon },
         { key: "gettransfer", label: "GetTransfer", Icon: CarIcon },
         { key: "tourTransfers", label: "ტურტრანსფერები", Icon: RouteIcon },
         { key: "coupons", label: "კუპონები", Icon: TicketIcon },
@@ -983,6 +988,7 @@ export default function AdminPage() {
     analytics: ["ანალიტიკა", "ვინ არის საიტზე, საიდან მოვიდა და რას აკეთებს."],
     bookings: ["ჯავშნები", "ახალი მოთხოვნები, დადასტურება და სტატუსები."],
     inbox: ["შეტყობინებები", "WhatsApp, Messenger და Instagram ერთად — ყოველ ჩატს აწერია, საიდან მოგვწერეს."],
+    mail: ["მეილები", "Gmail-ის შემოსული წერილები ქართულად შეჯამებული: რა არის, რას გვთხოვენ, რატომ არის მნიშვნელოვანი და რა გავაკეთოთ — მნიშვნელოვანი ზემოთ."],
     tourTransfers: ["ტურტრანსფერები", "GetTransfer-ის შეკვეთები, რომლებსაც ერთი მანქანა ერთად ან მიყოლებით შეასრულებს — ცარიელი გზის გარეშე."],
     gettransfer: ["GetTransfer", "GetTransfer-ის შეკვეთები ფასებით — ოფერს აქედან აგზავნი, გაფართოება GT Sync მას GetTransfer-ზე დადებს."],
     coupons: ["კუპონები", "ფასდაკლების კოდები და IP შეზღუდვები."],
@@ -2359,6 +2365,8 @@ export default function AdminPage() {
           )}
 
           {/* TAB: TOURS ON OTHER SITES (GetYourGuide, Tripster) */}
+          {activeTab === "mail" && <MailManager />}
+
           {activeTab === "photoSearch" && (
             <PhotoSearchManager />
           )}
