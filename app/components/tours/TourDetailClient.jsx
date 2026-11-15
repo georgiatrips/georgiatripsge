@@ -89,7 +89,7 @@ export default function TourDetailClient({
   const [lightboxImgIndex, setLightboxImgIndex] = useState(null);
   const [bookingSubmitting, setBookingSubmitting] = useState(false);
   const [bookingError, setBookingError] = useState("");
-  // The 24-hour rule: shown under the date field.
+  // The 8-hour booking rule: shown under the date field.
   const [dateError, setDateError] = useState("");
   const bookingSidebarRef = useRef(null);
   // Funnel events fire once per tour page view.
@@ -536,7 +536,7 @@ export default function TourDetailClient({
       trackEvent("booking_form_invalid", { tourId: tour.id, fields: "phone", label: "phone" }).catch?.(() => {});
       return;
     }
-    // Group and private tours are booked at least 24 hours before the start.
+    // Group and private tours are booked at least 8 hours before the start.
     if (isTooLateToBook(selectedDate, tour.startTime)) {
       setDateError(tooLateMessage(lang));
       trackEvent("booking_form_invalid", { tourId: tour.id, fields: "date", label: "too_late" }).catch?.(() => {});

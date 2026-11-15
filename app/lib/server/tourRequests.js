@@ -10,6 +10,11 @@
 // request goes as plain text when the manager wrote recently, else as the
 // "tour_request" template (created from the admin panel, approved by Meta).
 // If neither works, the Telegram copy says so and carries the whole request.
+//
+// Every request that reached the manager is remembered ("manager_requests"),
+// so the manager's answer (a price, a confirmation, another offer, a
+// question) can be passed back to that customer: see relayManagerReply() in
+// inboxAi.js.
 
 import { sendTelegram } from "./notifyBooking";
 import { SITE_URL } from "../siteConfig";
@@ -90,7 +95,7 @@ const oneLine = (text, max) => {
 // Sends one ready request on, once a day per chat; within that day only an
 // update whose details changed (the customer added or corrected something)
 // goes again, as the whole updated request. Returns how it went.
-export async function forwardTourRequest({ channel, id, name, summary, customerText }) {
+export async function forwardTourRequest({ channel, id, name, summary, customerText, language = "" }) {
   const settings = await getForwardSettings();
   if (!settings.enabled || !settings.phone) return null;
   const details = withoutContacts(summary);
@@ -107,13 +112,14 @@ export async function forwardTourRequest({ channel, id, name, summary, customerT
     : `${GREETING} გიგზავნით კლიენტის მოთხოვნას ტურზე:\n\n${lines}\n\nგთხოვთ, მოამზადოთ შეთავაზება და გამოგვიგზავნოთ ფასი.`;
 
   let how;
+  let sent;
   try {
     const manager = await getConversation("whatsapp", settings.phone);
     if (manager?.lastIncomingAt && Date.now() - manager.lastIncomingAt < WINDOW_MS) {
-      await sendText({ to: settings.phone, text, source: "ai" });
+      sent = await sendText({ to: settings.phone, text, source: "ai" });
       how = "ტექსტით";
     } else {
-      await sendTemplate({
+      sent = await sendTemplate({
         to: settings.phone,
         name: TEMPLATE_NAME,
         language: TEMPLATE_LANGUAGE,
@@ -130,6 +136,7 @@ export async function forwardTourRequest({ channel, id, name, summary, customerT
   }
 
   const ok = !how.startsWith("ვერ");
+  if (ok) await rememberOpenRequest({ channel, id, name, summary: details, language, messageId: sent?.id || "" }).catch(() => {});
   await sendTelegram(
     `${ok ? "📨" : "⚠️"} ${update ? "მოთხოვნის განახლება" : "მზა მოთხოვნა"} ${ok ? "გადაეგზავნა" : "ვერ გადაეგზავნა"} ${settings.name || "მენეჯერს"}-ს (+${settings.phone}) — ${how}\n\n` +
       `${text}\n\nკლიენტი (მხოლოდ თქვენთვის): ${who}` +
@@ -138,6 +145,38 @@ export async function forwardTourRequest({ channel, id, name, summary, customerT
     "tour-request"
   );
   return { ok, how };
+}
+
+// ── Requests waiting for the manager's answer ────────────────────────
+const OPEN_KEY = "manager_requests";
+// A request older than this no longer takes the manager's answers.
+const OPEN_FOR_MS = 7 * 24 * 60 * 60 * 1000;
+const MAX_OPEN = 20;
+
+// The requests forwarded in the last week, newest first:
+// [{ channel, id, name, summary, language, messageIds, at, answeredAt? }].
+export async function listOpenRequests() {
+  const items = (await getConfig(OPEN_KEY))?.items || [];
+  return items.filter((r) => Date.now() - r.at < OPEN_FOR_MS).sort((a, b) => b.at - a.at);
+}
+
+async function saveOpenRequests(items) {
+  await setConfig(OPEN_KEY, { items: items.slice(0, MAX_OPEN) }, { replace: true });
+}
+
+// A new request, or an update of the same customer's, joins the list.
+async function rememberOpenRequest({ channel, id, name, summary, language, messageId }) {
+  const items = await listOpenRequests();
+  const old = items.find((r) => r.channel === channel && r.id === id);
+  const rest = items.filter((r) => r !== old);
+  const messageIds = [messageId, ...(old?.messageIds || [])].filter(Boolean).slice(0, 10);
+  await saveOpenRequests([{ channel, id, name, summary, language: language || old?.language || "", messageIds, at: Date.now() }, ...rest]);
+}
+
+// Marks a request as answered by the manager (it stays open for follow-ups).
+export async function markRequestAnswered(channel, id) {
+  const items = await listOpenRequests();
+  await saveOpenRequests(items.map((r) => (r.channel === channel && r.id === id ? { ...r, answeredAt: Date.now() } : r)));
 }
 
 // Keeps the manager's 24-hour window open: some 22 hours after their last

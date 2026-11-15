@@ -61,7 +61,7 @@ function weekdayNames(lang, dictionary) {
  *  availableDates     optional restriction: when given and non-empty, ONLY
  *                     these dates can be picked (booking form, group mode).
  *  minDate            optional "YYYY-MM-DD": earlier days can't be picked
- *                     (tours are booked 24 hours ahead)
+ *                     (tours are booked 8 hours ahead)
  *  highlightLabel     legend text for highlighted days
  *  anyDayLabel        optional legend text for ordinary days
  *  variant            "form" | "hero" | "filter" (trigger styling only)

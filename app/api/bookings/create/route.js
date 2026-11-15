@@ -93,7 +93,7 @@ export async function POST(request) {
     // True whenever the total below comes from the request body instead of
     // Firestore, so the team knows to check it before confirming.
     let clientPriced = false;
-    // The tour's start time from the admin panel, for the 24-hour rule.
+    // The tour's start time from the admin panel, for the 8-hour booking rule.
     let tourStartTime = "";
 
     if (type === "tour" && tourId) {
@@ -172,7 +172,7 @@ export async function POST(request) {
       calculatedTourTitle = `Transfer: ${placeName(transfer.pickup)} → ${placeName(transfer.dropoff)}`;
     }
 
-    // Group and private tours are booked at least 24 hours before the start.
+    // Group and private tours are booked at least 8 hours before the start.
     if (type === "tour" && isTooLateToBook(date, tourStartTime)) {
       return NextResponse.json(
         { success: false, code: "too_late", error: tooLateMessage(language) },

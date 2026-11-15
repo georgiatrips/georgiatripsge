@@ -199,6 +199,7 @@ const toConversation = (row) => ({
   aiOff: Boolean(row.ai_off),
   aiDraft: row.ai_draft || "",
   aiDraftAt: Number(row.ai_draft_at) || 0,
+  aiHandledAt: Number(row.ai_handled_at) || 0,
   requestForwardedAt: Number(row.request_forwarded_at) || 0,
   requestSummary: row.request_summary || "",
 });
@@ -237,6 +238,7 @@ export async function listMessages(channel, conversationId, limit = 300) {
     timestamp: Number(r.timestamp) || 0,
     mediaId: r.media_id || "",
     mediaUrl: r.media_url || "",
+    replyTo: r.reply_to || "",
     status: r.status || "",
     error: r.error || "",
   }));

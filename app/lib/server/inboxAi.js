@@ -39,7 +39,7 @@ import {
 } from "./inboxStore";
 import { sendText as sendWhatsApp } from "./whatsapp";
 import { sendText as sendPageMessage } from "./messenger";
-import { forwardSettingsFrom, forwardTourRequest, isForwardTarget } from "./tourRequests";
+import { forwardSettingsFrom, forwardTourRequest, isForwardTarget, listOpenRequests, markRequestAnswered } from "./tourRequests";
 import { isTooLateToBook, tooLateMessage } from "../bookingLeadTime";
 
 // Flash-Lite with minimal thinking answers a chat in about a second; the
@@ -165,7 +165,7 @@ Ready requests: a manager needs four things to prepare an offer: what the custom
 - write "requestSummary": one line with every trip detail from the whole chat (earlier messages too, with later corrections winning), as "label: value; label: value" (თარიღი, ხალხი, ადგილები/მარშრუტი, აყვანა, დრო, სასტუმრო, and any wishes or questions such as car type, language, budget, entrance tickets, currency). It goes to a partner manager, so write it in clear, correct Georgian, translating everything the customer wrote (place names too, e.g. Diamond Bridge → ბრილიანტის ხიდი, Tbilisi → თბილისი; dates as "3 ნოემბერი"), and never include the customer's name, phone, e-mail, profile or any other contact detail;
 - in "reply", tell the customer in their language that their request has been received and passed to a manager who is now preparing their trip and price, and that they will hear back soon. Do not quote a price yourself unless it is a listed price from the brief, and do not set "handoff".
 
-24-hour rule: tours, group and private alike, must be booked at least 24 hours before they start (a tour without a stated start time starts at 09:00). A tour on 3 November can no longer be booked on 2 November at 23:00. If the customer wants a tour that starts less than 24 hours from now, do not take or forward the request: set "requestReady" to false, and in "reply" tell them in their language that tours must be booked at least 24 hours in advance, so that date is no longer possible, and offer a later date. Transfers are not covered by this rule.
+8-hour rule: tours, group and private alike, must be booked at least 8 hours before they start (a tour without a stated start time starts at 09:00). A tour on 3 November at 09:00 can still be booked on 2 November at 23:00, but no longer on 3 November at 02:00. Booking for tomorrow is normally fine. If the customer wants a tour that starts less than 8 hours from now, do not take or forward the request: set "requestReady" to false, and in "reply" tell them in their language that tours must be booked at least 8 hours in advance, so that date is no longer possible, and offer a later date. Transfers are not covered by this rule.
 For every request, set "tripKind" ("tour" for a group or private tour, "transfer", "package" for a multi-day trip, or "other") and "tripDate" (the first trip date as YYYY-MM-DD, empty if not known yet).
 
 Unless the request is ready (then always forward it instead), set "handoff" to true (a team member must answer) when the customer: complains or is unhappy, asks about a refund or cancelling or changing an existing booking, asks to talk to a person, asks for a specific date's availability or a confirmation, sends something you cannot understand (only a photo, a voice message), or asks anything that neither the brief nor the team's answers below cover. With handoff, still write a short polite reply saying the team will answer shortly, plus any facts that help.
@@ -204,7 +204,7 @@ function chatSoFar(messages, conversation) {
   // A request already with the manager: only new or changed details go again.
   const forwarded =
     conversation?.requestForwardedAt && Date.now() - conversation.requestForwardedAt < 24 * 60 * 60 * 1000
-      ? `\n\nThis customer's request has already been passed to the manager as: "${conversation.requestSummary || "(details not saved)"}". Set "requestReady" to true again only if the customer's newer messages add or change trip details; then "requestSummary" is the whole updated request and "reply" says the change was passed on to the manager. Otherwise keep "requestReady" false and do not say again that the request was passed on.`
+      ? `\n\nThis customer's request has already been passed to the manager as: "${conversation.requestSummary || "(details not saved)"}". Set "requestReady" to true again only if the customer's newer messages add or change trip details; then "requestSummary" is the whole updated request and "reply" says the change was passed on to the manager. If we already passed the manager's answer (a price, an offer, a confirmation or a question) to the customer and the customer now answers it (accepts, declines, asks for a change, or answers the question), set "requestReady" to true, make "requestSummary" the whole request plus "კლიენტის პასუხი: <their answer in Georgian>", and in "reply" say you passed it on. Otherwise keep "requestReady" false and do not say again that the request was passed on.`
       : "";
   if (!ours.length) return forwarded;
   const done = [
@@ -529,7 +529,7 @@ async function generate(system, contents, schema = REPLY_SCHEMA, { models = MODE
   throw new Error(`Gemini ${message}`);
 }
 
-// The 24-hour rule, checked in code too: a tour that starts too soon is
+// The 8-hour booking rule, checked in code too: a tour that starts too soon is
 // never forwarded, and the customer is told why.
 function withLeadTime(out) {
   if (out.tripKind !== "tour" || !isTooLateToBook(out.tripDate, "")) return out;
@@ -586,6 +586,113 @@ async function recordFailure(err) {
   } catch {}
 }
 
+// ── The manager's answers, passed back to the customer ───────────────
+// When the manager answers a forwarded request on WhatsApp (a price, a
+// confirmation, another tour or date, a question), the assistant tells the
+// customer the same in the customer's language: what the manager said, no
+// more and no less. Which customer: the forwarded message the manager
+// replied to (swipe-reply), else the assistant's judgement from the open
+// requests; when it can't tell, it asks the manager and alerts the owner.
+
+const RELAY_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    relay: { type: "BOOLEAN", description: "true when the manager's message is meant for a customer" },
+    request: { type: "INTEGER", description: "Number of the request it answers, 0 if unclear" },
+    reply: { type: "STRING", description: "The message to the customer, in the customer's language" },
+    note: { type: "STRING", description: "Short note for the owner, in Georgian" },
+  },
+  required: ["relay", "request", "reply"],
+  propertyOrdering: ["relay", "request", "reply", "note"],
+};
+
+const RELAY_RULES = `You are the virtual assistant of GeorgiaTrips, a tour and transfer company in Batumi, Georgia. You forwarded customers' trip requests to the company's partner manager on WhatsApp; the manager now wrote back (usually in Georgian). Today is {TODAY} in Batumi.
+
+Decide:
+- "relay": true if the manager's message answers a customer's request or is meant for the customer: a price or offer, a confirmation, "no free seats" or "not possible", another tour, date, time or vehicle, the pickup time, or a question the customer must answer (e.g. children's ages, hotel name). false for messages that are not for a customer: "ok", "კარგი", "მივიღე", thanks, an answer to the assistant's test message, or a question to the company itself.
+- "request": the number of the open request below that the manager answers. {QUOTED}If several requests are open and nothing in the message (the place, date, number of people, vehicle) tells which one, write 0. Never guess between two customers.
+- "reply": the message to that customer, in the customer's language (given with each request), written as the GeorgiaTrips team ("we"). Pass on exactly what the manager said: the same prices with currency, dates, times, conditions and options, nothing added, nothing left out, nothing invented, no price changed. Short and warm, 1-5 sentences, plain text, no markdown, no greeting or introduction. If the manager confirmed, say the trip is confirmed with the details; if they offer something else, offer it; if they ask a question, ask the customer; end with one short question when the customer must answer (e.g. whether the offer suits them). Never mention "the manager", a partner, their name or number, commissions, cost prices or internal remarks; leave out anything that is clearly only for the company.
+- "note": one short line in Georgian for the owner (what was passed on, or why not).`;
+
+async function relayManagerReply(managerId, settings) {
+  const conversation = await getConversation("whatsapp", managerId);
+  const messages = await listMessages("whatsapp", managerId, 20);
+  const last = messages[messages.length - 1];
+  if (!conversation || !last || last.direction !== "in") return;
+  const since = conversation.aiHandledAt || 0;
+  if (!(await claimAiTurn("whatsapp", managerId, last.timestamp))) return;
+  const fresh = messages.filter((m) => m.direction === "in" && m.text && m.timestamp > since && Date.now() - m.timestamp < 24 * 60 * 60 * 1000);
+  if (!fresh.length) return;
+  const open = (await listOpenRequests()).slice(0, 6);
+  if (!open.length) return;
+
+  // The forwarded message the manager swipe-replied to, if any.
+  const quotedIndex = open.findIndex((r) => fresh.some((m) => m.replyTo && r.messageIds?.includes(m.replyTo)));
+  const chats = await Promise.all(open.map((r) => listMessages(r.channel, r.id, 6).catch(() => [])));
+  const list = open
+    .map((r, i) => {
+      const lines = chats[i]
+        .filter((m) => m.text)
+        .slice(-4)
+        .map((m) => `    ${m.direction === "in" ? "Customer" : "We"}: ${clip(m.text, 200)}`)
+        .join("\n");
+      const when = new Date(r.at).toLocaleString("en-GB", { timeZone: "Asia/Tbilisi", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+      return `${i + 1}. Forwarded ${when}${r.answeredAt ? " (manager already answered once)" : ""}; customer's language: ${r.language || "the language of their messages"}\n  Request: ${r.summary}\n  Latest messages in that chat:\n${lines || "    (none)"}`;
+    })
+    .join("\n\n");
+  const today = new Date().toLocaleString("en-GB", { timeZone: "Asia/Tbilisi", weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
+  const quoted = quotedIndex >= 0 ? `The manager replied directly to the forwarded message of request ${quotedIndex + 1}, so it is that one. ` : "";
+  const system = `${RELAY_RULES.replace("{TODAY}", today).replace("{QUOTED}", quoted)}\n\nOpen requests:\n\n${list}`;
+  const managerText = fresh.map((m) => m.text).join("\n");
+  const { out } = await generate(system, [{ role: "user", parts: [{ text: `Manager's message:\n${managerText}` }] }], RELAY_SCHEMA);
+
+  const reply = String(out.reply || "").trim();
+  if (!out.relay || !reply) return;
+  const number = quotedIndex >= 0 ? quotedIndex + 1 : Number(out.request) || 0;
+  const target = open[number - 1];
+  const managerLabel = settings.forward?.name || "მენეჯერი";
+
+  if (!target) {
+    await sendWhatsApp({
+      to: managerId,
+      text: "🤖 ვერ მივხვდი, რომელ მოთხოვნას ეხება თქვენი პასუხი. გთხოვთ, უპასუხოთ (reply / swipe) იმ მოთხოვნის შეტყობინებას, რომელსაც ეხება.",
+      source: "ai",
+    }).catch(() => {});
+    await sendTelegram(
+      `❓ ${managerLabel}-მა უპასუხა, მაგრამ AI-მ ვერ გაარკვია რომელ კლიენტს ეხება.\n\nპასუხი:\n${clip(managerText, 1500)}\n\nადმინი: ${SITE_URL}/admin`,
+      "inbox-ai"
+    );
+    return;
+  }
+
+  const name = (await getConversation(target.channel, target.id).catch(() => null))?.profileName || (target.channel === "whatsapp" ? `+${target.id}` : "მომხმარებელი");
+  let how;
+  try {
+    if (settings.mode === "auto") {
+      if (target.channel === "whatsapp") await sendWhatsApp({ to: target.id, text: reply, source: "ai" });
+      else await sendPageMessage({ to: target.id, text: reply, channel: target.channel, source: "ai" });
+      how = "გაეგზავნა კლიენტს";
+    } else {
+      await setAiDraft(target.channel, target.id, reply);
+      how = "მონახაზად ჩაიწერა კლიენტის ჩატში";
+    }
+  } catch (err) {
+    how = `ვერ გაეგზავნა კლიენტს: ${err.message}`;
+  }
+  const ok = !how.startsWith("ვერ");
+  if (ok) {
+    await markRequestAnswered(target.channel, target.id).catch(() => {});
+    await sendWhatsApp({ to: managerId, text: "✅ თქვენი პასუხი კლიენტს გადავეცით. მისი პასუხი რომ მოვა, მოგწერთ.", source: "ai" }).catch(() => {});
+  }
+  await sendTelegram(
+    `${ok ? "↩️" : "⚠️"} ${managerLabel}-ის პასუხი ${how} — ${CHANNEL_LABELS[target.channel]}, ${name}\n\n` +
+      `მოთხოვნა: ${target.summary}\n\n${managerLabel}: ${clip(managerText, 1000)}\n\nკლიენტს: ${reply}` +
+      (out.note ? `\n\nშენიშვნა: ${out.note}` : "") +
+      `\n\nადმინი: ${SITE_URL}/admin`,
+    "inbox-ai"
+  );
+}
+
 // Answers the latest customer message of one chat, if the settings allow.
 async function answerChat(channel, id) {
   const settings = await getAiSettings();
@@ -593,7 +700,8 @@ async function answerChat(channel, id) {
 
   const conversation = await getConversation(channel, id);
   if (!conversation || conversation.aiOff) return;
-  if (await isForwardTarget(channel, id)) return;
+  // The manager's chat: their answers go back to the customers.
+  if (await isForwardTarget(channel, id)) return relayManagerReply(id, settings);
   const messages = await listMessages(channel, id, HISTORY);
   const last = messages[messages.length - 1];
   // Someone already answered while we waited.
@@ -640,7 +748,7 @@ async function answerChat(channel, id) {
       .filter((m) => m.direction === "in" && Date.now() - m.timestamp < 24 * 60 * 60 * 1000)
       .map((m) => m.text)
       .join("\n");
-    await forwardTourRequest({ channel, id, name, summary: out.requestSummary, customerText: recent });
+    await forwardTourRequest({ channel, id, name, summary: out.requestSummary, customerText: recent, language: out.language });
     return;
   }
   if (handoff) {
