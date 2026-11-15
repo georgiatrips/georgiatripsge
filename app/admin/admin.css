@@ -1889,6 +1889,36 @@
 .phs-rejected ul { margin: 0.6rem 0 0; padding-left: 1.1rem; font-size: 0.82rem; display: grid; gap: 0.2rem; }
 @media (max-width: 560px) { .phs-form { flex-direction: column; } .phs-toolbar button { margin-left: 0; } }
 
+/* Mail reader (MailManager.js) */
+.mlr { display: grid; gap: 0.9rem; }
+.mlr-bar { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; }
+.mlr-setup { border: 1px solid var(--gt-line); border-radius: 12px; background: var(--gt-stone); padding: 1rem 1.2rem; font-size: 0.9rem; }
+.mlr-setup h3 { margin: 0 0 0.5rem; font-size: 1rem; }
+.mlr-setup ol { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.4rem; }
+.mlr-section { display: grid; gap: 0.7rem; }
+.mlr-heading { margin: 0.4rem 0 0; font-size: 1.05rem; color: var(--gt-ink); }
+.mlr-heading.is-high { color: #9b1c1c; }
+.mlr-toggle { text-align: left; border: 1px solid var(--gt-line); background: var(--gt-paper); color: var(--gt-ink-2); border-radius: 10px; padding: 0.6rem 0.9rem; font: inherit; font-weight: 600; cursor: pointer; }
+.mlr-list { display: grid; gap: 0.7rem; }
+.mlr-card { border: 1px solid var(--gt-line); border-left: 4px solid var(--gt-line); border-radius: 12px; background: var(--gt-paper); padding: 0.9rem 1rem; display: grid; gap: 0.45rem; }
+.mlr-card.is-high { border-left-color: #d92d20; background: #fffafa; }
+.mlr-card.is-medium { border-left-color: #f0a400; }
+.mlr-card.is-done { opacity: 0.65; }
+.mlr-card-head { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; font-size: 0.78rem; }
+.mlr-level, .mlr-cat, .mlr-deadline { padding: 0.15rem 0.55rem; border-radius: 999px; font-weight: 600; background: var(--gt-stone); color: var(--gt-ink-2); }
+.mlr-level.is-high { background: #fdecec; color: #9b1c1c; }
+.mlr-level.is-medium { background: #fff4e0; color: #8a5300; }
+.mlr-deadline { background: #fff1e8; color: #b4441b; }
+.mlr-time { margin-left: auto; color: var(--gt-muted); }
+.mlr-subject { margin: 0; font-size: 1rem; color: var(--gt-ink); overflow-wrap: anywhere; }
+.mlr-from { margin: 0; font-size: 0.82rem; color: var(--gt-muted); overflow-wrap: anywhere; }
+.mlr-summary { margin: 0; color: var(--gt-ink); }
+.mlr-facts { margin: 0; display: grid; gap: 0.35rem; font-size: 0.9rem; }
+.mlr-facts dt { font-weight: 700; color: var(--gt-ink-2); font-size: 0.8rem; }
+.mlr-facts dd { margin: 0; color: var(--gt-ink); overflow-wrap: anywhere; }
+.mlr-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.mlr-actions > * { font-size: 0.82rem; padding: 0.35rem 0.7rem; text-decoration: none; }
+
 /* Hot offer (tour form + tour list) */
 .admin-hot-offer-check span { color: #b4441b; }
 .admin-hot-offer-until { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0.15rem 0 0.75rem 1.9rem; font-size: 0.9rem; }

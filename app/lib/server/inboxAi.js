@@ -484,7 +484,7 @@ const REPLY_SCHEMA = {
 
 // One JSON answer from Gemini in the given shape; { out, model }.
 // `models` are tried in turn (learning has its own order and timeouts).
-async function generate(system, contents, schema = REPLY_SCHEMA, { models = MODELS } = {}) {
+export async function generate(system, contents, schema = REPLY_SCHEMA, { models = MODELS } = {}) {
   // Every model's error, so the panel shows why the first one failed too.
   const errors = [];
   for (const model of models) {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { keepManagerWindowOpen } from "../../../lib/server/tourRequests";
 import { learnPending } from "../../../lib/server/inboxAi";
+import { mailReady, syncMail } from "../../../lib/server/mailReader";
 
 // Keeps the tour-request manager's WhatsApp window open (tourRequests.js).
 // Called every 20 minutes by .github/workflows/manager-window.yml and after
@@ -12,6 +13,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 export async function GET() {
+  const started = Date.now();
   try {
     const result = await keepManagerWindowOpen();
     const learned = process.env.GEMINI_API_KEY
@@ -22,7 +24,18 @@ export async function GET() {
             return { error: true };
           })
       : null;
-    return NextResponse.json({ ...result, learned });
+    // New e-mails are read and summarized on the same schedule (mailReader.js).
+    const ready = await mailReady().catch(() => ({}));
+    const mail =
+      ready.gmail && ready.gemini && Date.now() - started < 40000
+        ? await syncMail({ budgetMs: 30000 })
+            .then(({ added, remaining }) => ({ added, remaining }))
+            .catch((err) => {
+              console.error("[manager window] mail:", err?.message || err);
+              return { error: true };
+            })
+        : null;
+    return NextResponse.json({ ...result, learned, mail });
   } catch (err) {
     console.error("[manager window]", err?.message || err);
     return NextResponse.json({ error: "failed" }, { status: 500 });
