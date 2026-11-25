@@ -41,9 +41,9 @@ const SUPPORTED_LANGUAGES = ["ka", "en", "ru", "tr", "ar"];
 // CDN-cached /content-index.json, gives unknown URLs a real 404 and sends old
 // Firestore-ID URLs to their slug with a 308 before any HTML is rendered.
 const DETAIL_PATH = /^\/(ka|en|ru|tr|ar)\/(tours|places)\/([^/]+)\/?$/;
-const INDEX_TTL_MS = 60 * 1000;
+const INDEX_TTL_MS = 5 * 60 * 1000;
 // A miss refetches sooner, so a tour saved a moment ago is not a 404.
-const INDEX_MISS_REFRESH_MS = 10 * 1000;
+const INDEX_MISS_REFRESH_MS = 60 * 1000;
 
 let contentIndex = null;
 let contentIndexFetchedAt = 0;
@@ -294,5 +294,7 @@ export async function proxy(request) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|__/|.*\\..*).*)"],
+  // Skip static assets, webhooks (signature-checked in their route handlers),
+  // and cron endpoints (secret-checked) so proxy.js Node.js CPU is not billed on them.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|__/|api/whatsapp/webhook|api/messenger/webhook|api/cron/|.*\\..*).*)"],
 };

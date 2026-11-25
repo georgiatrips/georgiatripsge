@@ -4,13 +4,10 @@ import { tourPath, placePath } from "./lib/slugs";
 import { ROUTE_PAGES, routePagePath } from "./lib/transfers/routePages";
 import { BLOG_SLUGS, articlePath, getArticle, localizeArticle } from "./lib/blog";
 
-// sitemap.js is a metadata route: Next caches it at build time unless it opts
-// into dynamic rendering, and revalidatePath("/sitemap.xml") does not reach it.
-// That left tours and places added after the last deploy out of the sitemap
-// entirely. Rendering per request keeps it in step with Firestore; the data
-// itself still comes from the 1-hour cached getters, so crawls do not turn
-// into Firestore reads.
-export const dynamic = "force-dynamic";
+// Cache the generated sitemap for 1 hour instead of rendering per request:
+// keeps crawls from invoking a serverless function on every /sitemap.xml hit
+// while still picking up new tours and places within an hour.
+export const revalidate = 3600;
 
 // Public, content-marketing routes only. Deliberately excludes /admin, /login,
 // /booking, /coupons (transactional/account-bound, not localized, no SEO

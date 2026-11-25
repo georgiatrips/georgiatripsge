@@ -50,6 +50,8 @@ const HOME_COPY = {
   },
 };
 
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   return SUPPORTED_LANGUAGES.map((locale) => ({ locale }));
 }

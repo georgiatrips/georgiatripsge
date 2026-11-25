@@ -95,6 +95,17 @@ const BLOCKED_BOTS = [
   "ahrefsbot",        // Ahrefs
   "sitecheckerbotcrawler", // SiteChecker
   "nimbot",           // Nimble
+  "ccbot",            // Common Crawl
+  "meta-externalagent",   // Meta AI training scraper
+  "meta-externalfetcher", // Meta AI fetcher
+  "dataforseobot",    // DataForSEO scraper
+  "blexbot",          // BLEXBot
+  "barkrowler",       // Babbar
+  "seekport",         // Seekport
+  "serpstatbot",      // Serpstat
+  "censysinspect",    // Security scanner
+  "zgrab",            // Scanner
+  "masscan",          // Port/HTTP scanner
 ];
 
 // ძიებითი სისტემებისა და აუდიტის ბოტები, რომლებსაც ვუშვებთ
